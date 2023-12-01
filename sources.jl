@@ -86,18 +86,14 @@ function SourceEffect(s::CurrentSource, dx, sz, start)
     start = start .+ round.(Int, center ./ dx .- (n .- 1) ./ 2)
     SourceEffect(f, g, C, start)
 end
-function apply(s::AbstractVector{<:SourceEffect}, fields, t)
-    for s = s
-        fields = apply(s, fields, t)
-    end
-    fields
-end
 
-function apply(s::SourceEffect, fields::T, t) where {T}
-    @unpack g, C, f, start = s
-    for f = keys(C)
-        fields = merge(fields, (; f => place(fields[f], real(C[f] * s.f(t) .* g), start .+ left(fields[f]))))
-        # fields = ComponentArray(fields; (; f => place(fields[f], real(C[f] * s.f(t) .* g), start .+ left(fields[f])))...)
+function apply(s::AbstractVector{<:SourceEffect}, fields, t)
+    res = deepcopy(fields)
+    for s = s
+        @unpack g, C, f, start = s
+        for f = keys(C)
+            res = merge(res, (; f => place(res[f], real(C[f] * s.f(t) .* g), start .+ left(res[f]))))
+        end
     end
-    fields
+    res
 end

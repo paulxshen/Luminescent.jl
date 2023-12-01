@@ -5,22 +5,9 @@ include("sources.jl")
 include("monitors.jl")
 include("../ArrayPadding.jl/src/pad.jl")
 # using ArrayPadding
-# function Geometry(; ϵ, μ=1, σ=0, σm=0)
 
-# end
-Base.round(x::AbstractFloat) = round(Int, x)
-Base.round(x::AbstractVector) = round.(x)
-function setup(boundaries, sources, monitors, L, dx, polarization=nothing)
-    # geometry = merge((; ϵ=1, μ=1, σ=0, σm=0), geometry)
-    # sz = nothing
-    # for x = geometry
-    #     if isa(x, AbstractArray)
-    #         sz = size(x)
-    #     end
-    # end
-    # geometry = NamedTuple([k => isa(geometry[k], Number) ? fill(geometry[k], sz) : geometry[k] for k = keys(geometry)])
-    # @unpack ϵ, μ, σ, σm = geometry
-    sz = round.(L ./ dx)
+function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
+    sz = round.(Int, L ./ dx)
     d = length(sz)
     esz = collect(sz)
     hsz = copy(esz)
@@ -111,35 +98,34 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing)
     hsz = Tuple(hsz)
     if d == 1
         fields = (;
-            Ez=zeros(esz),
-            Hy=zeros(hsz),
-            Jz=zeros(esz),)
+            Ez=zeros(F, esz),
+            Hy=zeros(F, hsz),
+            Jz=zeros(F, esz),)
     elseif d == 2
         if polarization == :TMz
             fields = (;
-                Ez=zeros(esz),
-                Hx=zeros(hsz),
-                Hy=zeros(hsz),
-                Jz=zeros(esz),)
+                Ez=zeros(F, esz),
+                Hx=zeros(F, hsz),
+                Hy=zeros(F, hsz),
+                Jz=zeros(F, esz),)
         elseif polarization == :TEz
             fields = (;
-                Ex=zeros(esz),
-                Ey=zeros(esz),
-                Hz=zeros(hsz),
-                Jx=zeros(esz),
-                Jy=zeros(esz),
+                Ex=zeros(F, esz),
+                Ey=zeros(F, esz),
+                Hz=zeros(F, hsz),
+                Jx=zeros(F, esz),
+                Jy=zeros(F, esz),
             )
         end
     else
         fields = (;
-            Ex=zeros(esz),
-            Ey=zeros(esz),
-            Ez=zeros(esz),
-            Hx=zeros(hsz), Hy=zeros(hsz), Hz=zeros(hsz),
-            Jx=zeros(esz),
-            Jy=zeros(esz),
-            Jz=zeros(esz),)
-
+            Ex=zeros(F, esz),
+            Ey=zeros(F, esz),
+            Ez=zeros(F, esz),
+            Hx=zeros(F, hsz), Hy=zeros(F, hsz), Hz=zeros(F, hsz),
+            Jx=zeros(F, esz),
+            Jy=zeros(F, esz),
+            Jz=zeros(F, esz),)
     end
     fields = ComponentArray(fields)
 
@@ -154,16 +140,16 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing)
             b = db[i, j]
             if isa(b, PML)
                 n = round(Int, b.d / dx)
-                l = j == 1 ? [i == a ? n : 0 for a = 1:d] : zeros(d)
-                r = j == 2 ? [i == a ? n : 0 for a = 1:d] : zeros(d)
+                l = j == 1 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
+                r = j == 2 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 push!(geometry_effects, Padding(:ϵ, :replicate, l, r))
                 push!(geometry_effects, Padding(:μ, :replicate, l, r))
                 push!(geometry_effects, Padding(:σ, ReplicateRamp(4), l, r))
                 push!(geometry_effects, Padding(:σm, ReplicateRamp(4), l, r))
                 println(size(ϵ))
             end
-            l = j == 1 ? (1:d) .== i : zeros(d)
-            r = j == 2 ? (1:d) .== i : zeros(d)
+            l = j == 1 ? Int.((1:d) .== i) : zeros(Int, d)
+            r = j == 2 ? Int.((1:d) .== i) : zeros(Int, d)
             t = typeof(b)
 
             ignore() do
@@ -193,7 +179,7 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing)
         for m = monitors
             @unpack span, fn = m
             sz = length.(filter(x -> !isa(x, Number), span))
-            span = map(start, round.(span / dx)) do s, x
+            span = map(start, round.(Int, span / dx)) do s, x
                 s .+ x
             end
             pos = [i:j for (i, j) = zip(first.(span), last.(span))]
@@ -220,12 +206,12 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing)
     (; geometry_effects, boundary_effects, source_effects, monitor_configs, save_idxs, fields, Ie, Ih)
 end
 
-function group(fields::T, f) where {T}
+function group(fields::F, f) where {F}
     fields = NamedTuple(fields)
     [fields[k] for k = keys(fields) if startswith(String(k), String(f))]
     # ComponentArray(NamedTuple([k => fields[k] for k = keys(fields) if startswith(String(k), String(f))]))
 end
-# struct _T
+# struct _F
 #     v
 # end
 
@@ -236,9 +222,40 @@ end
 # function Base.getindex(a::ComponentArray, b::Tuple{ComponentArray})
 #     getindex.((a,), b,)
 # end
-# function Base.getindex(a::ComponentArray, b::_T)
+# function Base.getindex(a::ComponentArray, b::_F)
 #     getindex.((a,), b.v,)
 # end
-# function Base.getindex(a, b::_T)
+# function Base.getindex(a, b::_F)
 #     getindex.((a,), b.v,)
 # end
+
+using ChainRulesCore
+comp_vec(A) = ComponentVector((; A))
+comp_vec(A, B) = ComponentVector((; A, B))
+comp_vec(A, B, C, D, a, b, c, d) = ComponentVector((; a => A, b => B, c => C, d => D))
+# comp_vec(A, B) = ComponentVector((; A, B))
+# comp_vec(A, B) = ComponentVector((; A, B))
+function ChainRulesCore.rrule(::typeof(comp_vec), A)
+    out = comp_vec(A)
+    T = typeof(out)
+    return out, Δ -> begin
+        _Δ = convert(T, Δ)
+        (NoTangent(), _Δ.A)
+    end
+end
+function ChainRulesCore.rrule(::typeof(comp_vec), A, B)
+    out = comp_vec(A, B)
+    T = typeof(out)
+    return out, Δ -> begin
+        _Δ = convert(T, Δ)
+        (NoTangent(), _Δ.A, _Δ.B)
+    end
+end
+function ChainRulesCore.rrule(::typeof(comp_vec), A, B, C, D, a, b, c, d)
+    out = comp_vec(A, B, C, D, a, b, c, d)
+    T = typeof(out)
+    return out, Δ -> begin
+        _Δ = convert(T, Δ)
+        (NoTangent(), _Δ[a], _Δ[b], _Δ[c], _Δ[d])
+    end
+end

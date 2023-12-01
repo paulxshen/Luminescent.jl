@@ -28,15 +28,11 @@ struct Padding
     r
 
 end
-function apply(b::AbstractVector{<:Padding}, fields,)
-    for b = b
-        fields = apply(b, fields,)
+function apply(p::AbstractVector{<:Padding}, fields,)
+    res = deepcopy(fields)
+    for p = p
+        @unpack l, r, b, k = p
+        res = merge(NamedTuple(res), (; k => pad(PaddedArray, res[k], b, l, r)))
     end
-    fields
-end
-function apply(p::Padding, fields::T,) where {T}
-    @unpack l, r, b, k = p
-    fields = merge(NamedTuple(fields), (; k => pad(PaddedArray, fields[k], b, l, r)))
-    # ComponentArray(fields; (; k => pad(PaddedArray, fields[k], b, l, r))...)
-    # ComponentArray(fields)
+    res
 end
