@@ -75,7 +75,7 @@ function SourceEffect(s::GaussianBeam, dx, sz, start)
     n = round(Int, 2σ / dx)
     r = n * dx
     I = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(center)]
-    g = [gaussian(norm(collect(v))) for v = Iterators.product(I...)]
+    g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(I...)]
     start = start .+ round.(Int, center ./ dx) .- n
     SourceEffect(f, g, C, start)
 end

@@ -127,7 +127,7 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
             Jy=zeros(F, esz),
             Jz=zeros(F, esz),)
     end
-    fields = ComponentArray(fields)
+    fields = ComponentArray(merge(fields, (; t=F(0))))
 
     boundary_effects = Padding[]
     geometry_effects = Padding[]
@@ -144,8 +144,8 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 r = j == 2 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 push!(geometry_effects, Padding(:ϵ, :replicate, l, r))
                 push!(geometry_effects, Padding(:μ, :replicate, l, r))
-                push!(geometry_effects, Padding(:σ, ReplicateRamp(4), l, r))
-                push!(geometry_effects, Padding(:σm, ReplicateRamp(4), l, r))
+                push!(geometry_effects, Padding(:σ, ReplicateRamp(F(4)), l, r))
+                push!(geometry_effects, Padding(:σm, ReplicateRamp(F(4)), l, r))
                 println(size(ϵ))
             end
             l = j == 1 ? Int.((1:d) .== i) : zeros(Int, d)
@@ -230,32 +230,42 @@ end
 # end
 
 using ChainRulesCore
-comp_vec(A) = ComponentVector((; A))
-comp_vec(A, B) = ComponentVector((; A, B))
-comp_vec(A, B, C, D, a, b, c, d) = ComponentVector((; a => A, b => B, c => C, d => D))
+# comp_vec(A) = ComponentVector((; A))
+# comp_vec(A, B) = ComponentVector((; A, B))
+# comp_vec(A, B, C, D, a, b, c, d) = ComponentVector((; a => A, b => B, c => C, d => D))
 # comp_vec(A, B) = ComponentVector((; A, B))
 # comp_vec(A, B) = ComponentVector((; A, B))
-function ChainRulesCore.rrule(::typeof(comp_vec), A)
-    out = comp_vec(A)
+# function ChainRulesCore.rrule(::typeof(comp_vec), A)
+#     out = comp_vec(A)
+#     T = typeof(out)
+#     return out, Δ -> begin
+#         _Δ = convert(T, Δ)
+#         (NoTangent(), _Δ.A)
+#     end
+# end
+# function ChainRulesCore.rrule(::typeof(comp_vec), A, B)
+#     out = comp_vec(A, B)
+#     T = typeof(out)
+#     return out, Δ -> begin
+#         _Δ = convert(T, Δ)
+#         (NoTangent(), _Δ.A, _Δ.B)
+#     end
+# end
+# function ChainRulesCore.rrule(::typeof(comp_vec), A, B, C, D, a, b, c, d)
+#     out = comp_vec(A, B, C, D, a, b, c, d)
+#     T = typeof(out)
+#     return out, Δ -> begin
+#         _Δ = convert(T, Δ)
+#         (NoTangent(), _Δ[a], _Δ[b], _Δ[c], _Δ[d])
+#     end
+# end
+comp_vec(s, a...) = ComponentVector(NamedTuple([s => a for (s, a) = zip(s, a)]))
+function ChainRulesCore.rrule(::typeof(comp_vec), s, a...)
+    out = comp_vec(s, a...)
     T = typeof(out)
     return out, Δ -> begin
         _Δ = convert(T, Δ)
-        (NoTangent(), _Δ.A)
-    end
-end
-function ChainRulesCore.rrule(::typeof(comp_vec), A, B)
-    out = comp_vec(A, B)
-    T = typeof(out)
-    return out, Δ -> begin
-        _Δ = convert(T, Δ)
-        (NoTangent(), _Δ.A, _Δ.B)
-    end
-end
-function ChainRulesCore.rrule(::typeof(comp_vec), A, B, C, D, a, b, c, d)
-    out = comp_vec(A, B, C, D, a, b, c, d)
-    T = typeof(out)
-    return out, Δ -> begin
-        _Δ = convert(T, Δ)
-        (NoTangent(), _Δ[a], _Δ[b], _Δ[c], _Δ[d])
+        # n=length(a)÷2
+        (NoTangent(), getindex.((_Δ,), s)...)
     end
 end
