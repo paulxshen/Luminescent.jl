@@ -4,31 +4,15 @@ struct Monitor
     fn
 end
 
-function make(m, sol, t)
+function make(m, sol,)
     map(m) do m
         @unpack sz, idxs = m
-        # NamedTuple([f => stack(
-        #     map(sol.(t)) do v
-        #         v = v[idxs[f]]
-        #         if isempty(sz)
-        #             v[1]
-        #         else
-        #             reshape(v, sz)
-        #         end
-        #     end
-        # )
-        #             for f = keys(idxs)])
-
-        #         end
         r = (;)
         for f = keys(idxs)
-            r = merge(r, (; f => map(sol.(t)) do v
-                v = v[idxs[f]][1]
+            r = merge(r, (; f => begin
+                v = sol[idxs[f], :]
+                isempty(sz) ? vec(v) : reshape(v, sz..., size(sol, 2))
             end))
-            # r = merge(r, (; f => stack(map(sol.(t)) do v
-            #     v = v[idxs[f]]
-            #     isempty(sz) ? v[1] : reshape(v, sz)
-            # end)))
         end
         r
     end

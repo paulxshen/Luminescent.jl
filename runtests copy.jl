@@ -30,7 +30,7 @@ mask = place(bg, mask, mstart)
 geometry = (; ϵ)
 boundaries = [Periodic(2), PEC(1)]
 sources = [PlaneWave(cos, (; E=(; z=1)), -1)]
-@unpack padded_geometry, boundary_effects, source_effects, fields = setup(geometry, boundaries, sources, dx, polarization)
+@unpack padded_geometry, field_padding, source_effects, fields = setup(geometry, boundaries, sources, dx, polarization)
 
 
 ∇ = Del([dx, dx])
@@ -42,7 +42,7 @@ function f(fields, p, t)
     @unpack E, H, J = fields
 
     fields = apply(Array, deepcopy(fields))
-    fields = apply(boundary_effects, fields)
+    fields = apply(field_padding, fields)
     E_ = values(fields.E)
     H_ = values(fields.H)
 

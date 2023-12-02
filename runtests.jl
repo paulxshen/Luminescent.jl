@@ -13,6 +13,13 @@ include("invrs.jl")
 
 Random.seed!(1)
 
+train = true
+
+T = 14.0f0
+tspan = (0.0f0, T)
+dx = 1.0f0 / 40
+dt = dx / 2
+
 base, design_start, design_sz, microns_dx = invrs_load("bend")
 L = size(base) .* microns_dx
 
@@ -20,32 +27,29 @@ L = size(base) .* microns_dx
 L = L ./ λ
 l, _ = L
 lc = (57.5f0 / 108) * l
-dx = 1.0f0 / 4
 sz = round.(Int, L ./ dx)
 design_sz = round.(Int, design_sz .* microns_dx ./ λ ./ dx)
 design_start = round.(Int, design_start .* microns_dx ./ λ ./ dx)
 base = imresize(base, sz)
 base[[a:b for (a, b) = zip(design_start, design_start .+ design_sz .- 1)]...] .= 0
+if train
+    model = Mask(design_sz, 0.2f0 / dx)
+end
 
 polarization = :TMz
 ϵ1 = 2.25f0
 ϵ2 = 12.25f0
-
-model = Mask(design_sz, 0.2 / dx)
-T = 1.0f0
-# T = 16.0
-tspan = (0.0f0, T)
-dt = dx / 2
 ϵ = ϵ2 * base + ϵ1 * (1 .- base)
 geometry = (; ϵ)
 boundaries = []
 monitors = [Monitor([0.15f0l, lc], [:Ez, :Hx, :Hy]), Monitor([lc, 0.1f0], [:Ez, :Hx, :Hy])]
-sources = [GaussianBeam(t -> cos(F(2π) * t), 0.15f0, (0.0f0, lc), -1; Ez=1)]
-@unpack geometry_effects, boundary_effects, source_effects, monitor_configs, save_idxs, fields =
+sources = [GaussianBeam(t -> cos(F(2π) * t), 0.05f0, (0.0f0, lc), -1; Ez=1)]
+@unpack geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields =
     setup(boundaries, sources, monitors, L, dx, polarization; F)
 
-geometry = (; ϵ, μ=ones(F, sz), σ=zeros(F, sz), σm=zeros(F, sz))
-geometry = apply(geometry_effects, geometry)
+static_geometry = (; μ=ones(F, sz), σ=zeros(F, sz), σm=zeros(F, sz))
+geometry = (; ϵ, static_geometry...)
+geometry = apply(geometry_padding, geometry)
 @unpack ϵ, μ, σ, σm = geometry
 _sz = size(ϵ)
 
@@ -64,7 +68,7 @@ function (m::Du)(u)
     u = NamedTuple(u)
     u = apply(source_effects, u, u.t)
     E, H, J = group.((u,), [:E, :H, :J])
-    u = apply(boundary_effects, u)
+    u = apply(field_padding, u)
     E_, H_ = group.((u,), [:E, :H,])
 
     Ez, = (∇ × H_ - σ * E - J) / ϵ
@@ -76,59 +80,52 @@ end
 
 dudt = Du(p)
 u0 = fields
-prob_neuralode = NeuralODE(dudt, tspan; save_idxs, saveat=dt)
-# prob_neuralode = NeuralODE(dudt, tspan, Tsit5(); saveat=dt)
-# geometry = ComponentArray(; ϵ, μ=ones(sz), σ=zeros(sz), σm=zeros(sz))
-# geometry = (; ϵ, μ=ones(F, sz), σ=zeros(F, sz), σm=zeros(F, sz))
-# geometry = ComponentArray(apply(geometry_effects, geometry))
-# prob = ODEProblem(dudt, fields, tspan, p;)
+tstops = range(tspan..., length=8 + 1)
+callback = train ? nothing : PresetTimeCallback(tstops, saveimg)
+prob_neuralode = NeuralODE(dudt, tspan, Tsit5(), ; save_idxs, dt, callback, saveat=dt)
 function loss(model)
     b = place(base, model(), design_start)
     ϵ = ϵ2 * b + ϵ1 * (1 .- b)
-    geometry = (; ϵ, μ=ones(F, sz), σ=zeros(F, sz), σm=zeros(F, sz))
-    geometry = apply(geometry_effects, geometry)
+    geometry = (; ϵ, static_geometry...)
+    geometry = apply(geometry_padding, geometry)
     @unpack ϵ, μ, σ, σm = geometry
 
-    p = comp_vec(Array(ϵ), Array(μ), Array(σ), Array(σm), :ϵ, :μ, :σ, :σm)
-    # geometry=merge(geometry,(;ϵ))
+    p = comp_vec((:ϵ, :μ, :σ, :σm), Array(ϵ), Array(μ), Array(σ), Array(σm),)
+    global sol = Array(prob_neuralode(u0, p, ;))
+    res = make(monitor_configs, sol,)
 
-    # _prob = remake(prob; p=geometry)
-    # sol = solve(prob,
-    #     Euler();
-    #     # Tsit5();
-    #     # save_idxs,
-    #     dt,
-    #     saveat=dt,
-    #     p=model,
-    #     # dense=false,
-    #     sensealg=BacksolveAdjoint(autojacvec=ZygoteVJP()),
-    # )
-    global sol = Array(prob_neuralode(u0, p,))
-    sol[1]
-    # sol(T)[1]
-    # t = 0:dt:T
-    # res = make(monitor_configs, sol, t)
-
-    # n = round(Int, 1 / dt)
-    # res[2].Ez[end-n+1:end] ⋅ res[2].Hx[end-n+1:end]
+    n = round(Int, 1 / dt)
+    res[2].Ez[end-n+1:end] ⋅ res[2].Hx[end-n+1:end]
 end
-tstops = range(tspan..., length=8)
-callback = PresetTimeCallback(tstops, saveimg)
 
-loss(model)
 
-opt = Adam(0.1)
-opt_state = Flux.setup(opt, model)
-data = [[]]
+if train
+    opt = Adam(0.1)
+    opt_state = Flux.setup(opt, model)
+    data = [[]]
 
-# fig = Figure()
-# heatmap(fig[1, 1], m(0), axis=(; title="start of training"))
-for i = 1:1
-    Flux.train!(model, data, opt_state) do m, _
-        l = loss(m)
-        println(l)
-        l
+    # fig = Figure()
+    # heatmap(fig[1, 1], m(0), axis=(; title="start of training"))
+    for i = 1:1
+        l, (dldm,) = withgradient(loss, model,)
+        update!(opt_state, model, dldm)
+        println("$i $l")
     end
+    # heatmap(fig[1, 2], m(0), axis=(; title="end of training"))
+else
+
+    loss(model)
 end
-# heatmap(fig[1, 2], m(0), axis=(; title="end of training"))
 # display(fig)
+
+
+using CairoMakie
+using CairoMakie: Axis
+# t = 0.0f0:dt:T
+t = range(0, T, length=size(sol, 2))
+res = make(monitor_configs, sol,)
+fig = Figure()
+ax = Axis(fig[1, 1], title="")
+lines!(ax, res[1].Ez)
+lines!(ax, res[2].Hx)
+display(fig)

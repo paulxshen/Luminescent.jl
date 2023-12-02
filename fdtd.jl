@@ -129,8 +129,8 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
     end
     fields = ComponentArray(merge(fields, (; t=F(0))))
 
-    boundary_effects = Padding[]
-    geometry_effects = Padding[]
+    field_padding = Padding[]
+    geometry_padding = Padding[]
     for i = 1:d
         xyz = para = perp = [:x, :y, :z]
         ignore() do
@@ -142,10 +142,10 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 n = round(Int, b.d / dx)
                 l = j == 1 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 r = j == 2 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
-                push!(geometry_effects, Padding(:ϵ, :replicate, l, r))
-                push!(geometry_effects, Padding(:μ, :replicate, l, r))
-                push!(geometry_effects, Padding(:σ, ReplicateRamp(F(4)), l, r))
-                push!(geometry_effects, Padding(:σm, ReplicateRamp(F(4)), l, r))
+                push!(geometry_padding, Padding(:ϵ, :replicate, l, r))
+                push!(geometry_padding, Padding(:μ, :replicate, l, r))
+                push!(geometry_padding, Padding(:σ, ReplicateRamp(F(4)), l, r))
+                push!(geometry_padding, Padding(:σm, ReplicateRamp(F(4)), l, r))
                 println(size(ϵ))
             end
             l = j == 1 ? Int.((1:d) .== i) : zeros(Int, d)
@@ -157,9 +157,9 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 for k = keys(fields)
                     if startswith(String(k), String(f)) && k[2] in para
                         if t == Periodic
-                            push!(boundary_effects, Padding(k, :periodic, l, r,))
+                            push!(field_padding, Padding(k, :periodic, l, r,))
                         else
-                            push!(boundary_effects, Padding(k, 0, l, r,))
+                            push!(field_padding, Padding(k, 0, l, r,))
                         end
                     end
                 end
@@ -179,6 +179,9 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
         for m = monitors
             @unpack span, fn = m
             sz = length.(filter(x -> !isa(x, Number), span))
+            if isempty(sz)
+                sz = Int[]
+            end
             span = map(start, round.(Int, span / dx)) do s, x
                 s .+ x
             end
@@ -196,14 +199,14 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 end
                 for f = fn
             ]
-            stops = cumsum(length.(save_idxs))
+            stops = cumsum(length.(fi))
             starts = [1, (stops[1:end-1] .+ 1)...]
-            idxs = NamedTuple([f => i:j.+length(save_idxs) for (f, i, j) = zip(fn, starts, stops)])
+            idxs = NamedTuple([f => (i:j) .+ length(save_idxs) for (f, i, j) = zip(fn, starts, stops)])
             append!(save_idxs, reduce(vcat, fi))
             push!(monitor_configs, (; sz, pos, idxs))
         end
     end
-    (; geometry_effects, boundary_effects, source_effects, monitor_configs, save_idxs, fields, Ie, Ih)
+    (; geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields, Ie, Ih)
 end
 
 function group(fields::F, f) where {F}
@@ -211,54 +214,8 @@ function group(fields::F, f) where {F}
     [fields[k] for k = keys(fields) if startswith(String(k), String(f))]
     # ComponentArray(NamedTuple([k => fields[k] for k = keys(fields) if startswith(String(k), String(f))]))
 end
-# struct _F
-#     v
-# end
-
-# function Base.getindex(a::ComponentArray, b::ComponentArray)
-#     ComponentArray([k => a[k][b[k]] for k = keys(b)])
-#     println("a")
-# end
-# function Base.getindex(a::ComponentArray, b::Tuple{ComponentArray})
-#     getindex.((a,), b,)
-# end
-# function Base.getindex(a::ComponentArray, b::_F)
-#     getindex.((a,), b.v,)
-# end
-# function Base.getindex(a, b::_F)
-#     getindex.((a,), b.v,)
-# end
 
 using ChainRulesCore
-# comp_vec(A) = ComponentVector((; A))
-# comp_vec(A, B) = ComponentVector((; A, B))
-# comp_vec(A, B, C, D, a, b, c, d) = ComponentVector((; a => A, b => B, c => C, d => D))
-# comp_vec(A, B) = ComponentVector((; A, B))
-# comp_vec(A, B) = ComponentVector((; A, B))
-# function ChainRulesCore.rrule(::typeof(comp_vec), A)
-#     out = comp_vec(A)
-#     T = typeof(out)
-#     return out, Δ -> begin
-#         _Δ = convert(T, Δ)
-#         (NoTangent(), _Δ.A)
-#     end
-# end
-# function ChainRulesCore.rrule(::typeof(comp_vec), A, B)
-#     out = comp_vec(A, B)
-#     T = typeof(out)
-#     return out, Δ -> begin
-#         _Δ = convert(T, Δ)
-#         (NoTangent(), _Δ.A, _Δ.B)
-#     end
-# end
-# function ChainRulesCore.rrule(::typeof(comp_vec), A, B, C, D, a, b, c, d)
-#     out = comp_vec(A, B, C, D, a, b, c, d)
-#     T = typeof(out)
-#     return out, Δ -> begin
-#         _Δ = convert(T, Δ)
-#         (NoTangent(), _Δ[a], _Δ[b], _Δ[c], _Δ[d])
-#     end
-# end
 comp_vec(s, a...) = ComponentVector(NamedTuple([s => a for (s, a) = zip(s, a)]))
 function ChainRulesCore.rrule(::typeof(comp_vec), s, a...)
     out = comp_vec(s, a...)

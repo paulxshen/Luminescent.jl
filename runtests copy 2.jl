@@ -45,7 +45,7 @@ function f(fields, p, t)
     E, H, J = collect.([E, H, J])
 
     fields = deepcopy(fields)
-    fields = apply(boundary_effects, fields)
+    fields = apply(field_padding, fields)
     E_ = values(fields.E)
     H_ = values(fields.H)
 
@@ -68,7 +68,7 @@ b = place(bg, model(), mstart)
 
 geometry = (; ϵ)
 # sources = [CurrentSource(t->cos(2π*t), (.2, 0.2), (0.2, l / 2); Ez=1)]
-@unpack padded_geometry, boundary_effects, source_effects, monitor_configs, save_idxs, fields =
+@unpack padded_geometry, field_padding, source_effects, monitor_configs, save_idxs, fields =
     setup(geometry, boundaries, sources, monitors, dx, polarization)
 
 
