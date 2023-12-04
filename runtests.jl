@@ -17,11 +17,11 @@ train = true
 
 @load "bend.bson" base design_start design_sz dx
 # heatmap(base)
-T = 4.0f0
+T = 14.0f0
 tspan = (0.0f0, T)
 microns_dx = dx
 dx = 1.0f0 / 16
-dt = dx / 2
+dt = dx / 4
 solver = Euler()
 
 L = size(base) .* microns_dx
@@ -100,7 +100,7 @@ function loss(model; withsol=false)
     res = make(monitor_configs, sol,)
 
     n = round(Int, 1 / dt)
-    l = res[2].Ez[end-n+1:end] ⋅ res[2].Hx[end-n+1:end]
+    l = 1mean(res[2].Ez[end-n+1:end] .* res[2].Hx[end-n+1:end])
 
     withsol ? (l, sol) : l
 end
@@ -109,16 +109,16 @@ end
 if train
     g = Zygote.gradient(loss, model)[1]
     error()
-    opt = Adam(0.1)
+    opt = Adam(0.01)
     opt_state = Flux.setup(opt, model)
 
     # fig = Figure()
     # heatmap(fig[1, 1], m(0), axis=(; title="start of training"))
-    for i = 1:4
-        global sol
+    for i = 1:1
+        global sol, l, dldm
         l, (dldm,) = withgradient(loss, model,)
         # (l, sol), (dldm,) = withgradient(loss, model,)
-        update!(opt_state, model, dldm)
+        Flux.update!(opt_state, model, dldm)
         println("$i $l")
     end
     # heatmap(fig[1, 2], m(0), axis=(; title="end of training"))
