@@ -142,10 +142,11 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 n = round(Int, b.d / dx)
                 l = j == 1 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 r = j == 2 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
-                push!(geometry_padding, Padding(:ϵ, :replicate, l, r))
-                push!(geometry_padding, Padding(:μ, :replicate, l, r))
-                push!(geometry_padding, Padding(:σ, ReplicateRamp(F(4)), l, r))
-                push!(geometry_padding, Padding(:σm, ReplicateRamp(F(4)), l, r))
+                info = lazy = false
+                push!(geometry_padding, Padding(:ϵ, :replicate, l, r, info, lazy))
+                push!(geometry_padding, Padding(:μ, :replicate, l, r, info, lazy))
+                push!(geometry_padding, Padding(:σ, ReplicateRamp(F(4)), l, r, info, lazy))
+                push!(geometry_padding, Padding(:σm, ReplicateRamp(F(4)), l, r, info, lazy))
                 println(size(ϵ))
             end
             l = j == 1 ? Int.((1:d) .== i) : zeros(Int, d)
@@ -156,10 +157,12 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 f = nodes[i, j]
                 for k = keys(fields)
                     if startswith(String(k), String(f)) && k[2] in para
+                        info = true
+                        lazy = false
                         if t == Periodic
-                            push!(field_padding, Padding(k, :periodic, l, r,))
+                            push!(field_padding, Padding(k, :periodic, l, r, info, lazy))
                         else
-                            push!(field_padding, Padding(k, 0, l, r,))
+                            push!(field_padding, Padding(k, 0, l, r, info, lazy))
                         end
                     end
                 end

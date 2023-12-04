@@ -5,9 +5,9 @@ include("../ArrayPadding.jl/src/pad.jl")
 
 gaussian(x; μ=0, σ=1) = exp(-((x - μ) / σ)^2)
 
-function place(a, b, start)
+function place(a, b, start; lazy=false)
     # @show size(a), size(b), start
-    a + pad(b, 0, Tuple(start) .- 1, size(a) .- size(b) .- Tuple(start) .+ 1)
+    a + pad(b, 0, Tuple(start) .- 1, size(a) .- size(b) .- Tuple(start) .+ 1; lazy)
 end
 
 function place(a, b; center)
@@ -87,13 +87,13 @@ function SourceEffect(s::CurrentSource, dx, sz, start)
     SourceEffect(f, g, C, start)
 end
 
-function apply(s::AbstractVector{<:SourceEffect}, fields, t)
-    res = deepcopy(fields)
+function apply(s::AbstractVector{<:SourceEffect}, u, t)
+    u = NamedTuple(deepcopy(u))
     for s = s
         @unpack g, C, f, start = s
         for f = keys(C)
-            res = merge(res, (; f => place(res[f], real(C[f] * s.f(t) .* g), start .+ left(res[f]))))
+            u = merge(u, (; f => place(u[f], real(C[f] * s.f(t) .* g), start .+ left(u[f]))))
         end
     end
-    res
+    u
 end

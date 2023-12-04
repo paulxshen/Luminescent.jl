@@ -1,5 +1,6 @@
 using CairoMakie
-using DifferentialEquations, ComponentArrays, UnPack, LinearAlgebra, Random, DiffEqFlux
+using BSON: @save, @load
+using DifferentialEquations, OrdinaryDiffEq, ComponentArrays, UnPack, LinearAlgebra, Random, DiffEqFlux
 
 # using Jello
 using Images
@@ -9,18 +10,20 @@ include("../Jello.jl/src/mask.jl")
 F = Float32
 include("fdtd.jl")
 include("saveimg.jl")
-include("invrs.jl")
 
 Random.seed!(1)
-
 train = true
+# train = false
 
-T = 14.0f0
+@load "bend.bson" base design_start design_sz dx
+# heatmap(base)
+T = 4.0f0
 tspan = (0.0f0, T)
-dx = 1.0f0 / 40
+microns_dx = dx
+dx = 1.0f0 / 16
 dt = dx / 2
+solver = Euler()
 
-base, design_start, design_sz, microns_dx = invrs_load("bend")
 L = size(base) .* microns_dx
 
 λ = 1.28f0
@@ -29,17 +32,17 @@ l, _ = L
 lc = (57.5f0 / 108) * l
 sz = round.(Int, L ./ dx)
 design_sz = round.(Int, design_sz .* microns_dx ./ λ ./ dx)
-design_start = round.(Int, design_start .* microns_dx ./ λ ./ dx)
+design_start = 1 .+ round.(Int, (design_start .- 1) .* microns_dx ./ λ ./ dx)
 base = imresize(base, sz)
-base[[a:b for (a, b) = zip(design_start, design_start .+ design_sz .- 1)]...] .= 0
+model = Mask(design_sz, 0.2f0 / dx)
 if train
-    model = Mask(design_sz, 0.2f0 / dx)
 end
-
+# heatmap(base)
 polarization = :TMz
 ϵ1 = 2.25f0
 ϵ2 = 12.25f0
-ϵ = ϵ2 * base + ϵ1 * (1 .- base)
+b = place(base, model(), design_start)
+ϵ = ϵ2 * b + ϵ1 * (1 .- b)
 geometry = (; ϵ)
 boundaries = []
 monitors = [Monitor([0.15f0l, lc], [:Ez, :Hx, :Hy]), Monitor([lc, 0.1f0], [:Ez, :Hx, :Hy])]
@@ -65,56 +68,63 @@ function (m::Du)(u)
     # @unpack ϵ, μ, σ, σm=m.p
     ϵ, μ, σ, σm = [ϵ], [μ], [σ], [σm]
 
-    u = NamedTuple(u)
     u = apply(source_effects, u, u.t)
     E, H, J = group.((u,), [:E, :H, :J])
-    u = apply(field_padding, u)
-    E_, H_ = group.((u,), [:E, :H,])
 
-    Ez, = (∇ × H_ - σ * E - J) / ϵ
-    Hx, Hy = -(∇ × E_ + σm * H) / μ
-    Jz = zeros(F, size(Ez))
+    H_ = apply(field_padding, (; Hx=u.Hx, Hy=u.Hy);)
+    dEzdt, = (∇ × H_ - σ * E - J) / ϵ
+    E += [dEzdt * dt]
+
+    E_ = apply(field_padding, (; Ez=E[1]);)
+    dHxdt, dHydt = -(∇ × E_ + σm * H) / μ
+    dJzdt = zeros(F, size(dEzdt))
     # ComponentArray((; Ez, Hx, Hy, Jz,))
-    comp_vec((:Ez, :Hx, :Hy, :Jz, :t), Ez, Hx, Hy, Jz, 1.0f0,)
+    comp_vec((:Ez, :Hx, :Hy, :Jz, :t), dEzdt, dHxdt, dHydt, dJzdt, 1.0f0,)
 end
 
 dudt = Du(p)
 u0 = fields
 tstops = range(tspan..., length=8 + 1)
 callback = train ? nothing : PresetTimeCallback(tstops, saveimg)
-prob_neuralode = NeuralODE(dudt, tspan, Tsit5(), ; save_idxs, dt, callback, saveat=dt)
-function loss(model)
+prob_neuralode = NeuralODE(dudt, tspan, solver, ; save_idxs, dt, callback, saveat=dt)
+function loss(model; withsol=false)
     b = place(base, model(), design_start)
     ϵ = ϵ2 * b + ϵ1 * (1 .- b)
     geometry = (; ϵ, static_geometry...)
     geometry = apply(geometry_padding, geometry)
-    @unpack ϵ, μ, σ, σm = geometry
+    # @unpack ϵ, μ, σ, σm = geometry
 
-    p = comp_vec((:ϵ, :μ, :σ, :σm), Array(ϵ), Array(μ), Array(σ), Array(σm),)
-    global sol = Array(prob_neuralode(u0, p, ;))
+    # p = comp_vec((:ϵ, :μ, :σ, :σm), Array(ϵ), Array(μ), Array(σ), Array(σm),)
+    p = reduce(vcat, vec.(values(geometry)))
+    sol = Array(prob_neuralode(u0, p, ;))
     res = make(monitor_configs, sol,)
 
     n = round(Int, 1 / dt)
-    res[2].Ez[end-n+1:end] ⋅ res[2].Hx[end-n+1:end]
+    l = res[2].Ez[end-n+1:end] ⋅ res[2].Hx[end-n+1:end]
+
+    withsol ? (l, sol) : l
 end
 
 
 if train
+    g = Zygote.gradient(loss, model)[1]
+    error()
     opt = Adam(0.1)
     opt_state = Flux.setup(opt, model)
-    data = [[]]
 
     # fig = Figure()
     # heatmap(fig[1, 1], m(0), axis=(; title="start of training"))
-    for i = 1:1
+    for i = 1:4
+        global sol
         l, (dldm,) = withgradient(loss, model,)
+        # (l, sol), (dldm,) = withgradient(loss, model,)
         update!(opt_state, model, dldm)
         println("$i $l")
     end
     # heatmap(fig[1, 2], m(0), axis=(; title="end of training"))
 else
 
-    loss(model)
+    l, sol = loss(model; withsol=true)
 end
 # display(fig)
 
@@ -125,7 +135,16 @@ using CairoMakie: Axis
 t = range(0, T, length=size(sol, 2))
 res = make(monitor_configs, sol,)
 fig = Figure()
-ax = Axis(fig[1, 1], title="")
-lines!(ax, res[1].Ez)
-lines!(ax, res[2].Hx)
+for i = 1:2
+    ax = Axis(fig[i, 1], title="")
+    m = res[i]
+    E, H = if i == 1
+        m.Ez, m.Hy
+    elseif i == 2
+        m.Ez, m.Hx
+    end
+    lines!(ax, t, E)
+    lines!(ax, t, H)
+    lines!(ax, t, H .* E)
+end
 display(fig)

@@ -4,7 +4,7 @@ function saveimg(integrator)
     ignore() do
         @unpack t, u = integrator
         fig = Figure()
-        ax = Axis(fig; title="t = $t\nEz")
+        ax = Axis(fig[1, 1]; title="t = $t\nEz")
         heatmap!(ax, u.Ez, colormap=:seismic, colorrange=(-0.5, 0.5))
         heatmap!(ax, Array(σ), alpha=0.2, colormap=:binary, colorrange=(0, 4),)
         heatmap!(ax, Array(ϵ), alpha=0.5, colormap=:speed, colorrange=(ϵ1, ϵ2))
