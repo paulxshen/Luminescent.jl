@@ -11,9 +11,9 @@ function saveimg(integrator)
 
         a = zeros(size(ϵ))
         for m = monitor_configs
-            a[m.pos...] .= 1
+            a[m.idxs...] = 1
         end
-        heatmap!(ax, a, alpha=0.2, colormap=:speed, colorrange=(0, 1))
+        heatmap!(ax, a, alpha=0.6, colormap=:speed, colorrange=(0, 1))
         # fig = heatmap(a.E.z,colorrange=(-.5,.5))
         save("temp/$t.png", fig)
     end

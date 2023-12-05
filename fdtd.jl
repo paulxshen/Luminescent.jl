@@ -13,7 +13,7 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
     hsz = copy(esz)
     npad = zeros(Int, d, 2)
     nodes = fill(:U, d, 2)
-    db = Any[PML(j * i, 1) for i = 1:d, j = (-1, 1)]
+    db = Any[PML(j * i,) for i = 1:d, j = (-1, 1)]
 
     ignore() do
         for b = boundaries
@@ -145,8 +145,8 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 info = lazy = false
                 push!(geometry_padding, Padding(:ϵ, :replicate, l, r, info, lazy))
                 push!(geometry_padding, Padding(:μ, :replicate, l, r, info, lazy))
-                push!(geometry_padding, Padding(:σ, ReplicateRamp(F(4)), l, r, info, lazy))
-                push!(geometry_padding, Padding(:σm, ReplicateRamp(F(4)), l, r, info, lazy))
+                push!(geometry_padding, Padding(:σ, ReplicateRamp(F(b.σ)), l, r, info, lazy))
+                push!(geometry_padding, Padding(:σm, ReplicateRamp(F(b.σ)), l, r, info, lazy))
                 println(size(ϵ))
             end
             l = j == 1 ? Int.((1:d) .== i) : zeros(Int, d)
@@ -180,33 +180,29 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
     monitor_configs = []
     ignore() do
         for m = monitors
-            @unpack span, fn = m
+            @unpack span, f = m
             sz = length.(filter(x -> !isa(x, Number), span))
             if isempty(sz)
                 sz = Int[]
             end
-            span = map(start, round.(Int, span / dx)) do s, x
-                s .+ x
+            idxs = map(start, span) do s, x
+                x = round.(Int, x / dx)
+                if length(x) == 1
+                    s + x
+                end
             end
-            pos = [i:j for (i, j) = zip(first.(span), last.(span))]
-            fi = [
+
+            fi = NamedTuple([f =>
                 begin
                     fa = fields[f]
                     fcinds = label2index(fields, "$f")
                     linds = LinearIndices(fa)
-                    I = Iterators.product(span...)
-                    I = map(I) do I
-                        fcinds[linds[(I)...]]
-
-                    end
+                    fcinds[linds[(idxs)...]]
                 end
-                for f = fn
-            ]
-            stops = cumsum(length.(fi))
-            starts = [1, (stops[1:end-1] .+ 1)...]
-            idxs = NamedTuple([f => (i:j) .+ length(save_idxs) for (f, i, j) = zip(fn, starts, stops)])
-            append!(save_idxs, reduce(vcat, fi))
-            push!(monitor_configs, (; sz, pos, idxs))
+                             for f = f
+            ])
+
+            push!(monitor_configs, (; sz, f, fi, idxs))
         end
     end
     (; geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields, Ie, Ih)

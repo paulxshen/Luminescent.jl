@@ -16,9 +16,10 @@ end
 struct PML
     dims
     d::Real
-    # function PML(dims, dx)
-    #     new(dims, round(Int, 1 / dx))
-    # end
+    σ::Real
+    function PML(dims, d=0.5f0, σ=2.0f0)
+        new(dims, d, σ)
+    end
 end
 
 struct Padding
