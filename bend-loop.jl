@@ -1,6 +1,6 @@
 using CairoMakie
 using BSON: @save, @load
-using DifferentialEquations, OrdinaryDiffEq, ComponentArrays, UnPack, LinearAlgebra, Random, DiffEqFlux
+using ComponentArrays, UnPack, LinearAlgebra, Random, LazyStack
 
 # using Jello
 using Images
@@ -23,7 +23,7 @@ microns_dx = dx
 dx = 1.0f0 / 16
 dt = dx / 2
 saveat = 1 / 16.0f0
-solver = Euler()
+callbackat = 1.0f0
 
 L = size(base) .* microns_dx
 
@@ -52,68 +52,59 @@ sources = [GaussianBeam(t -> cos(F(2π) * t), 0.05f0, (0.0f0, lc), -1; Ez=1)]
 @unpack geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields =
     setup(boundaries, sources, monitors, L, dx, polarization; F)
 
-static_geometry = (; μ=ones(Int, sz), σ=zeros(Int, sz), σm=zeros(Int, sz))
-geometry = (; ϵ, static_geometry...)
-geometry = apply(geometry_padding, geometry)
-@unpack ϵ, μ, σ, σm = geometry
-_sz = size(ϵ)
+static_geometry = (; μ=ones(F, sz), σ=zeros(F, sz), σm=zeros(F, sz))
 
-p = comp_vec((:ϵ, :μ, :σ, :σm), Array.((ϵ, μ, σ, σm))...,)
-
+# Base.eachslice(a) = eachslice(a, dims=ndims(a))
 ∇ = Del([dx, dx])
-function dudt(u, p, t)
-    ϵ, μ, σ, σm = eachslice(reshape(p, _sz..., 4), dims=3)
-    # @unpack ϵ, μ, σ, σm=m.p
-    ϵ, μ, σ, σm = [ϵ], [μ], [σ], [σm]
+function step(u, p, t)
+    ϵ, μ, σ, σm = eachslice(p, dims=ndims(p)) |> a -> [[a] for a = a]
 
-    u = apply(source_effects, u, u.t)
-    E, H, J = group.((u,), [:E, :H, :J])
+    Ez, Hx, Hy, Jz = apply(source_effects, (:Ez, :Hx, :Hy, :Jz), eachslice(u, dims=ndims(u)), t)
 
-    H_ = apply(field_padding, (; Hx=u.Hx, Hy=u.Hy);)
-    dEzdt, = (∇ × H_) / ϵ
-    # dEzdt, = (∇ × H_ - σ * E - J) / ϵ
-    E += [dEzdt * dt]
+    H_ = apply(field_padding, (:Hx, :Hy), PaddedArray.((Hx, Hy)))
+    E = [Ez]
+    J = [Jz]
+    dEdt = (∇ × H_ - σ * E - J) / ϵ
+    E += dEdt * dt
+    Ez, = E
 
-    E_ = apply(field_padding, (; Ez=E[1]);)
-    dHxdt, dHydt = -(∇ × E_ + σm * H) / μ
-    dJzdt = zeros(Int, size(dEzdt))
-    # ComponentArray((; Ez, Hx, Hy, Jz,))
-    comp_vec((:Ez, :Hx, :Hy, :Jz, :t), dEzdt, dHxdt, dHydt, dJzdt, 1.0f0,)
+    E_ = apply(field_padding, (:Ez,), PaddedArray.((Ez,)))
+    H = [Hx, Hy]
+    dHdt = -(∇ × E_ + σm * H) / μ
+    H += dHdt * dt
+    Hx, Hy = H
+    lazystack([Ez, Hx, Hy, Jz])
 end
 
-fields = ComponentArray(merge(fields, (; t=F(0))))
-u0 = fields
-tstops = range(tspan..., length=8 + 1)
-callback = train ? nothing : PresetTimeCallback(tstops, saveimg)
-prob_neuralode = ODEProblem(dudt, u0, tspan, p,)
+callback = train ? nothing : saveimg
+dsaveat = round(Int, saveat / dt)
+dcallbackat = round(Int, callbackat / dt)
 function loss(model; withsol=false)
     b = place(base, model(), design_start)
     ϵ = ϵ2 * b + ϵ1 * (1 .- b)
-    geometry = (; ϵ, static_geometry...)
-    geometry = apply(geometry_padding, geometry)
-    # @unpack ϵ, μ, σ, σm = geometry
+    geometry = (ϵ, values(static_geometry)...)
+    geometry = apply(geometry_padding, (:ϵ, :μ, :σ, :σm), geometry)
 
-    # p = comp_vec((:ϵ, :μ, :σ, :σm), Array(ϵ), Array(μ), Array(σ), Array(σm),)
-    p = reduce(vcat, vec.(values(geometry)))
-    # global sol = Array(solve(prob_neuralode, solver; dt, p,
-    sol = solve(
-        prob_neuralode,
-        solver;
-        dt,
-        p,
-        callback,
-        saveat,
-        sensealg=QuadratureAdjoint(autojacvec=ZygoteVJP(), abstol=1e-2,
-            reltol=1e-1),
-    )
+    u = lazystack(values(fields))
+    sol = [u]
+    p = lazystack(values(geometry))
+    for (i, t) = enumerate(0:dt:T)
+        u = step(u, p, t)
+        if mod1(i, dsaveat) == 1
+            sol = vcat(sol, [u])
+        end
+        if mod1(i, dcallbackat) == 1 && !isnothing(callback)
+            callback(u, p, t)
+        end
+    end
 
+    # # sol = reduce(hcat, reduce.(vcat, values.(sol)))
     t = (round(Int, (T - 1) / saveat):round(Int, T / saveat)) .+ 1
-    res = get(Array(sol), monitor_configs[2], t)
-    # t = T-1:dt:T
-    # res = get(sol, monitor_configs, t)
+    sol = lazystack(Array.(sol))
+    Ez, Hx = get(sol, monitor_configs[2], t)
 
-    l = 1mean(res.Ez .* res.Hx)
-
+    l = 1mean(Ez .* Hx)
+    # maximum(sol[end].Ez)
     withsol ? (l, sol) : l
 end
 
@@ -128,7 +119,7 @@ if train
     # fig = Figure()
     # heatmap(fig[1, 1], m(0), axis=(; title="start of training"))
     for i = 1:2
-        global sol, l, dldm
+        global dldm
         l, (dldm,) = withgradient(loss, model,)
         # (l, sol), (dldm,) = withgradient(loss, model,)
         Flux.update!(opt_state, model, dldm)
@@ -145,16 +136,16 @@ end
 using CairoMakie
 using CairoMakie: Axis
 # t = 0.0f0:dt:T
-t = range(0, T, length=size(sol, 2))
+t = range(0, T, length=size(sol)[end])
 fig = Figure()
 for i = 1:2
     ax = Axis(fig[i, 1], title="")
-    m = get(sol, monitor_configs[i], :)
-    E, H = if i == 1
-        m.Ez, m.Hy
-    elseif i == 2
-        m.Ez, m.Hx
-    end
+    E, H = get(sol, monitor_configs[i],)
+    #  = if i == 1
+    #     m.Ez, m.Hy
+    # elseif i == 2
+    #     m.Ez, m.Hx
+    # end
     lines!(ax, t, E)
     lines!(ax, t, H)
     lines!(ax, t, H .* E)

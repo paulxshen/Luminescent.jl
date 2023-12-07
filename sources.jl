@@ -87,13 +87,27 @@ function SourceEffect(s::CurrentSource, dx, sz, start)
     SourceEffect(f, g, C, start)
 end
 
-function apply(s::AbstractVector{<:SourceEffect}, u, t)
-    u = NamedTuple(deepcopy(u))
-    for s = s
-        @unpack g, C, f, start = s
-        for f = keys(C)
-            u = merge(u, (; f => place(u[f], real(C[f] * s.f(t) .* g), start .+ left(u[f]))))
-        end
-    end
-    u
+function apply(s::AbstractVector{<:SourceEffect}, k, u, t)
+    [
+        begin
+            r = a
+            for s = s
+                @unpack g, C, f, start = s
+                if k in keys(C)
+                    r = place(r, real(C[k] * f(t) .* g), start)
+                end
+            end
+            r
+        end for (k, a) = zip(k, u)
+    ]
 end
+# function apply(s::AbstractVector{<:SourceEffect}, u, t)
+#     u = NamedTuple(deepcopy(u))
+#     for s = s
+#         @unpack g, C, f, start = s
+#         for f = keys(C)
+#             u = merge(u, (; f => place(u[f], real(C[f] * s.f(t) .* g), start .+ left(u[f]))))
+#         end
+#     end
+#     u
+# end

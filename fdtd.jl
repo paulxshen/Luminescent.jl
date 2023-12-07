@@ -127,7 +127,7 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
             Jy=zeros(F, esz),
             Jz=zeros(F, esz),)
     end
-    fields = ComponentArray(merge(fields, (; t=F(0))))
+    # fields = ComponentArray(fields)
 
     field_padding = Padding[]
     geometry_padding = Padding[]
@@ -180,11 +180,12 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
     monitor_configs = []
     ignore() do
         for m = monitors
-            @unpack span, f = m
+            @unpack span, k = m
             sz = length.(filter(x -> !isa(x, Number), span))
             if isempty(sz)
                 sz = Int[]
             end
+
             idxs = map(start, span) do s, x
                 x = round.(Int, x / dx)
                 if length(x) == 1
@@ -192,17 +193,22 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 end
             end
 
-            fi = NamedTuple([f =>
-                begin
-                    fa = fields[f]
-                    fcinds = label2index(fields, "$f")
-                    linds = LinearIndices(fa)
-                    fcinds[linds[(idxs)...]]
-                end
-                             for f = f
-            ])
+            # if isa(fields, NamedTuple)
+            #     fi = 0
+            # else
 
-            push!(monitor_configs, (; sz, f, fi, idxs))
+            # ki = NamedTuple([k =>
+            #     begin
+            #         fa = fields[k]
+            #         # fcinds = label2index(fields, "$f")
+            #         linds = LinearIndices(fa)
+            #         fcinds[linds[(idxs)...]]
+            #     end
+            #                  for (k,start,stop)=k
+            # ])
+            # end
+            i = findfirst.(isequal.(k), (keys(fields),))
+            push!(monitor_configs, (; sz, k, i, idxs))
         end
     end
     (; geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields, Ie, Ih)
@@ -215,13 +221,22 @@ function group(fields::F, f) where {F}
 end
 
 using ChainRulesCore
-comp_vec(s, a...) = ComponentVector(NamedTuple([s => a for (s, a) = zip(s, a)]))
-function ChainRulesCore.rrule(::typeof(comp_vec), s, a...)
-    out = comp_vec(s, a...)
+comp_vec(A, B, C, D, a, b, c, d) = ComponentVector((; a => A, b => B, c => C, d => D))
+function ChainRulesCore.rrule(::typeof(comp_vec), A, B, C, D, a, b, c, d)
+    out = comp_vec(A, B, C, D, a, b, c, d)
     T = typeof(out)
     return out, Δ -> begin
         _Δ = convert(T, Δ)
-        # n=length(a)÷2
-        (NoTangent(), getindex.((_Δ,), s)...)
+        (NoTangent(), _Δ[a], _Δ[b], _Δ[c], _Δ[d])
     end
 end
+# comp_vec(s::Tuple, a...) = ComponentVector(NamedTuple([s => a for (s, a) = zip(s, a)]))
+# function ChainRulesCore.rrule(::typeof(comp_vec), s, a...)
+#     out = comp_vec(s, a...)
+#     T = typeof(out)
+#     return out, Δ -> begin
+#         _Δ = convert(T, Δ)
+#         # n=length(a)÷2
+#         (NoTangent(), getindex.((_Δ,), s)...)
+#     end
+# end
