@@ -10,18 +10,21 @@ function saveimg(u::AbstractArray, p::AbstractArray, t)
     #     ignore() do
     #         @unpack ϵ, μ, σ, σm = p
     ϵ, μ, σ, σm = eachslice(p, dims=ndims(p))
-    Ez, Hx, Hy, Jz = eachslice(u)
+    Ez, Hx, Hy, Jz = eachslice(u, dims=ndims(u))
+    a = deepcopy(Array(Ez))
     fig = Figure()
     ax = Axis(fig[1, 1]; title="t = $t\nEz")
-    heatmap!(ax, Ez, colormap=:seismic, colorrange=(-0.5, 0.5))
-    heatmap!(ax, Array(σ), alpha=0.2, colormap=:binary, colorrange=(0, 4),)
-    heatmap!(ax, Array(ϵ), alpha=0.5, colormap=:speed, colorrange=(ϵ1, ϵ2))
+    heatmap!(ax, a, colormap=:seismic, colorrange=(-5, 5))
+    # heatmap!(ax, Array(σ), alpha=0.2, colormap=:binary, colorrange=(0, 4),)
+    heatmap!(ax, Array(ϵ), colormap=[(:white, 0), (:gray, 0.6)], colorrange=(ϵ1, ϵ2))
 
-    a = zeros(size(ϵ))
+    marker = :rect
     for m = monitor_configs
-        a[m.idxs...] = 1
+        x, y = m.idxs
+        scatter!(ax, [x], [y]; marker)
     end
-    heatmap!(ax, a, alpha=0.6, colormap=:speed, colorrange=(0, 1))
+    scatter!(ax, [1], [1])
+    # heatmap!(ax, a, alpha=0.6, colormap=:speed, colorrange=(0, 1))
     # fig = heatmap(a.E.z,colorrange=(-.5,.5))
     save("temp/$t.png", fig)
 end

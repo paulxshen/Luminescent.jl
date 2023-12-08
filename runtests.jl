@@ -8,13 +8,14 @@ include("startup.jl")
 include("../Porcupine.jl/src/del.jl")
 include("../Jello.jl/src/mask.jl")
 F = Float32
+include("utils.jl")
 include("fdtd.jl")
 include("saveimg.jl")
 
 Random.seed!(1)
 
 train = true
-# train = false
+train = false
 @load "bend0.bson" base design_start design_sz dx
 # heatmap(base)
 T = 5.0f0

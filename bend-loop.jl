@@ -8,6 +8,7 @@ include("startup.jl")
 include("../Porcupine.jl/src/del.jl")
 include("../Jello.jl/src/mask.jl")
 F = Float32
+include("utils.jl")
 include("fdtd.jl")
 include("saveimg.jl")
 
@@ -15,30 +16,26 @@ Random.seed!(1)
 
 train = true
 # train = false
-@load "bend0.bson" base design_start design_sz dx
+nepochs = 8
+T = 8.0f0
+opt = Adam(0.01)
+
+λ = 1.28f0
+dx = 1.0f0 / 32
+_dx = λ * dx
+@unpack base, design_start, design_sz, l = load("bend0", _dx)
+L = size(base) .* dx
+l = l ./ λ
+sz = size(base)
 # heatmap(base)
-T = 5.0f0
 tspan = (0.0f0, T)
-microns_dx = dx
-dx = 1.0f0 / 16
 dt = dx / 2
 saveat = 1 / 16.0f0
 callbackat = 1.0f0
 
-L = size(base) .* microns_dx
-
-λ = 1.28f0
-L = L ./ λ
-l, _ = L
-lc = (57.5f0 / 108) * l
-sz = round.(Int, L ./ dx)
-design_sz = round.(Int, design_sz .* microns_dx ./ λ ./ dx)
-design_start = 1 .+ round.(Int, (design_start .- 1) .* microns_dx ./ λ ./ dx)
-base = imresize(base, sz)
 model = Mask(design_sz, 0.2f0 / dx)
 if train
 end
-# heatmap(base)
 polarization = :TMz
 ϵ1 = 2.25f0
 ϵ2 = 12.25f0
@@ -47,8 +44,8 @@ b = place(base, model(), design_start)
 # extrema(ϵ)
 
 boundaries = []
-monitors = [Monitor([0.0f0l, lc], [:Ez, :Hx, :Hy]), Monitor([lc, 0.0f0], [:Ez, :Hx, :Hy])]
-sources = [GaussianBeam(t -> cos(F(2π) * t), 0.05f0, (0.0f0, lc), -1; Ez=1)]
+monitors = [Monitor([0.0f0, l], [:Ez, :Hx, :Hy]), Monitor([l, 0.0f0], [:Ez, :Hx, :Hy])]
+sources = [GaussianBeam(t -> cos(F(2π) * t), 0.05f0, (0.0f0, l), -1; Ez=1)]
 @unpack geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields =
     setup(boundaries, sources, monitors, L, dx, polarization; F)
 
@@ -79,7 +76,7 @@ end
 callback = train ? nothing : saveimg
 dsaveat = round(Int, saveat / dt)
 dcallbackat = round(Int, callbackat / dt)
-function loss(model; withsol=false)
+function loss(model; withsol=false, callback=nothing)
     b = place(base, model(), design_start)
     ϵ = ϵ2 * b + ϵ1 * (1 .- b)
     geometry = (ϵ, values(static_geometry)...)
@@ -110,27 +107,24 @@ end
 
 
 if train
-    # g = Zygote.gradient(loss, model)[1]
-    # error()
-    opt = Adam(0.1)
-    # opt = AdaGrad()
     opt_state = Flux.setup(opt, model)
 
     # fig = Figure()
     # heatmap(fig[1, 1], m(0), axis=(; title="start of training"))
-    for i = 1:2
-        global dldm
-        l, (dldm,) = withgradient(loss, model,)
-        # (l, sol), (dldm,) = withgradient(loss, model,)
-        Flux.update!(opt_state, model, dldm)
-        println("$i $l")
+    for i = 1:2nepochs
+        @time begin
+
+            global dldm
+            l, (dldm,) = withgradient(loss, model,)
+            # (l, sol), (dldm,) = withgradient(loss, model,)
+            Flux.update!(opt_state, model, dldm)
+            println("$i $l")
+        end
     end
     # heatmap(fig[1, 2], m(0), axis=(; title="end of training"))
-else
-
-    l, sol = loss(model; withsol=true)
 end
-# display(fig)
+train = false
+@showtime l, sol = loss(model; withsol=true, callback)
 
 
 using CairoMakie
