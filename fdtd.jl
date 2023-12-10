@@ -1,11 +1,11 @@
-using Zygote, LinearAlgebra, UnPack
-using Zygote: ignore
-include("boundaries.jl")
-include("sources.jl")
-include("monitors.jl")
-include("../ArrayPadding.jl/src/pad.jl")
-# using ArrayPadding
+"""
+    function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
 
+Args
+...
+- L: vector of lengths in wavelengths of simulation domain
+- polarization: only applies to 2d which can be :TMz (Ez, Hx, Hy) or :TEz (Hz, Ex, Ey)
+"""
 function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
     sz = round.(Int, L ./ dx)
     d = length(sz)
@@ -15,74 +15,62 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
     nodes = fill(:U, d, 2)
     db = Any[PML(j * i,) for i = 1:d, j = (-1, 1)]
 
-    ignore() do
-        for b = boundaries
-            for i = b.dims
-                if typeof(b) == Periodic
-                    db[i, :] = [b, b]
+    for b = boundaries
+        for i = b.dims
+            if typeof(b) == Periodic
+                db[i, :] = [b, b]
+            else
+                if i > 0
+                    db[i, 2] = b
                 else
-                    if i > 0
-                        db[i, 2] = b
-                    else
-                        db[abs(i), 1] = b
+                    db[abs(i), 1] = b
 
-                    end
-                end
-            end
-        end
-    end
-
-    ignore() do
-        for i = 1:d
-            for j = 1:2
-                b = db[i, j]
-                t = typeof(b)
-                if t == PML
-                    npad[i, j] += round(Int, b.d / dx)
-                    # hpad[i, j] .+= b.d
-                elseif t == PEC
-                    nodes[i, j] = :E
-                elseif t == PMC
-                    nodes[i, j] = :H
                 end
             end
         end
     end
 
     for i = 1:d
+        for j = 1:2
+            b = db[i, j]
+            t = typeof(b)
+            if t == PML
+                npad[i, j] += round(Int, b.d / dx)
+                # hpad[i, j] .+= b.d
+            elseif t == PEC
+                nodes[i, j] = :E
+            elseif t == PMC
+                nodes[i, j] = :H
+            end
+        end
+    end
+
+    for i = 1:d
         if nodes[i, :] == [:U, :E]
-            ignore() do
-                nodes[i, 1] = :H
-            end
+
+            nodes[i, 1] = :H
         elseif nodes[i, :] == [:U, :H]
-            ignore() do
-                nodes[i, 1] = :E
-            end
+
+            nodes[i, 1] = :E
         elseif nodes[i, :] == [:E, :U]
-            ignore() do
-                nodes[i, 2] = :H
-            end
+
+            nodes[i, 2] = :H
         elseif nodes[i, :] == [:H, :U]
-            ignore() do
-                nodes[i, 2] = :E
-            end
+
+            nodes[i, 2] = :E
         elseif nodes[i, :] == [:U, :U]
-            ignore() do
-                nodes[i, :] = [:E, :H]
-            end
+
+            nodes[i, :] = [:E, :H]
         elseif nodes[i, :] == [:U, :U]
-            ignore() do
-                nodes[i, :] = [:E, :H]
-            end
+
+            nodes[i, :] = [:E, :H]
         elseif nodes[i, :] == [:E, :E]
-            ignore() do
-                hsz[i] += 1
-            end
+
+            hsz[i] += 1
             μ = pad(μ, :replicate, fill(0, d), Int.(1:d .== i))
         elseif nodes[i, :] == [:H, :H]
-            ignore() do
-                esz[i] += 1
-            end
+
+            esz[i] += 1
             ϵ = pad(ϵ, :replicate, fill(0, d), Int.(1:d .== i))
             σ = pad(σ, :replicate, fill(0, d), Int.(1:d .== i))
         end
@@ -127,15 +115,14 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
             Jy=zeros(F, esz),
             Jz=zeros(F, esz),)
     end
-    # fields = ComponentArray(fields)
+    fields = NamedTuple([k => collect(v) for (k, v) = pairs(fields)])
 
     field_padding = Padding[]
     geometry_padding = Padding[]
     for i = 1:d
         xyz = para = perp = [:x, :y, :z]
-        ignore() do
-            perp = [popat!(para, i)]
-        end
+
+        perp = [popat!(para, i)]
         for j = 1:2
             b = db[i, j]
             if isa(b, PML)
@@ -147,96 +134,62 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 push!(geometry_padding, Padding(:μ, :replicate, l, r, info, lazy))
                 push!(geometry_padding, Padding(:σ, ReplicateRamp(F(b.σ)), l, r, info, lazy))
                 push!(geometry_padding, Padding(:σm, ReplicateRamp(F(b.σ)), l, r, info, lazy))
-                println(size(ϵ))
             end
             l = j == 1 ? Int.((1:d) .== i) : zeros(Int, d)
             r = j == 2 ? Int.((1:d) .== i) : zeros(Int, d)
             t = typeof(b)
 
-            ignore() do
-                f = nodes[i, j]
-                for k = keys(fields)
-                    if startswith(String(k), String(f)) && k[2] in para
-                        info = true
-                        lazy = false
-                        if t == Periodic
-                            push!(field_padding, Padding(k, :periodic, l, r, info, lazy))
-                        else
-                            push!(field_padding, Padding(k, 0, l, r, info, lazy))
-                        end
+
+            f = nodes[i, j]
+            for k = keys(fields)
+                if startswith(String(k), String(f)) && k[2] in para
+                    info = true
+                    lazy = false
+                    if t == Periodic
+                        push!(field_padding, Padding(k, :periodic, l, r, info, lazy))
+                    else
+                        push!(field_padding, Padding(k, 0, l, r, info, lazy))
                     end
                 end
             end
         end
     end
-
-    source_effects = 0
-    ignore() do
-        source_effects = [SourceEffect(s, dx, sz, start) for s = sources]
-    end
+    source_effects = [SourceEffect(s, dx, sz, start) for s = sources]
 
     c = 0
     save_idxs = Int[]
     monitor_configs = []
-    ignore() do
-        for m = monitors
-            @unpack span, k = m
-            sz = length.(filter(x -> !isa(x, Number), span))
-            if isempty(sz)
-                sz = Int[]
-            end
 
-            idxs = map(start, span) do s, x
-                x = round.(Int, x / dx)
-                if length(x) == 1
-                    s + x
-                end
-            end
-
-            # if isa(fields, NamedTuple)
-            #     fi = 0
-            # else
-
-            # ki = NamedTuple([k =>
-            #     begin
-            #         fa = fields[k]
-            #         # fcinds = label2index(fields, "$f")
-            #         linds = LinearIndices(fa)
-            #         fcinds[linds[(idxs)...]]
-            #     end
-            #                  for (k,start,stop)=k
-            # ])
-            # end
-            i = findfirst.(isequal.(k), (keys(fields),))
-            push!(monitor_configs, (; sz, k, i, idxs))
+    for m = monitors
+        @unpack span, k = m
+        sz = length.(filter(x -> !isa(x, Number), span))
+        if isempty(sz)
+            sz = Int[]
         end
+
+        idxs = map(start, span) do s, x
+            x = round.(Int, x / dx)
+            if length(x) == 1
+                s + x
+            end
+        end
+
+        # if isa(fields, NamedTuple)
+        #     fi = 0
+        # else
+
+        # ki = NamedTuple([k =>
+        #     begin
+        #         fa = fields[k]
+        #         # fcinds = label2index(fields, "$f")
+        #         linds = LinearIndices(fa)
+        #         fcinds[linds[(idxs)...]]
+        #     end
+        #                  for (k,start,stop)=k
+        # ])
+        # end
+        i = findfirst.(isequal.(k), (keys(fields),))
+        push!(monitor_configs, (; sz, k, i, idxs))
     end
     (; geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields, Ie, Ih)
 end
-
-function group(fields::F, f) where {F}
-    fields = NamedTuple(fields)
-    [fields[k] for k = keys(fields) if startswith(String(k), String(f))]
-    # ComponentArray(NamedTuple([k => fields[k] for k = keys(fields) if startswith(String(k), String(f))]))
-end
-
-using ChainRulesCore
-comp_vec(A, B, C, D, a, b, c, d) = ComponentVector((; a => A, b => B, c => C, d => D))
-function ChainRulesCore.rrule(::typeof(comp_vec), A, B, C, D, a, b, c, d)
-    out = comp_vec(A, B, C, D, a, b, c, d)
-    T = typeof(out)
-    return out, Δ -> begin
-        _Δ = convert(T, Δ)
-        (NoTangent(), _Δ[a], _Δ[b], _Δ[c], _Δ[d])
-    end
-end
-# comp_vec(s::Tuple, a...) = ComponentVector(NamedTuple([s => a for (s, a) = zip(s, a)]))
-# function ChainRulesCore.rrule(::typeof(comp_vec), s, a...)
-#     out = comp_vec(s, a...)
-#     T = typeof(out)
-#     return out, Δ -> begin
-#         _Δ = convert(T, Δ)
-#         # n=length(a)÷2
-#         (NoTangent(), getindex.((_Δ,), s)...)
-#     end
-# end

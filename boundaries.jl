@@ -31,10 +31,14 @@ struct Padding
     lazy
 end
 
-function apply(p::AbstractVector{<:Padding}, k, u, ;)
+function apply(p::AbstractVector{<:Padding}, ; kw...)
+    k = 0
+    ignore() do
+        k = keys(kw)
+    end
     [
         begin
-            y = a
+            y = kw[k]
             for p = p
                 @unpack l, r, b, lazy, info = p
                 if k == p.k
@@ -42,7 +46,8 @@ function apply(p::AbstractVector{<:Padding}, k, u, ;)
                 end
             end
             y
-        end for (k, a) = zip(k, u)
+        end for k = k
+        # end for (k, a) = pairs(kw)
     ]
 end
 # function apply(p::AbstractVector{<:Padding}, u, ;)

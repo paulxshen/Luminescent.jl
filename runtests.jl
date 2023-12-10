@@ -10,7 +10,7 @@ include("../Jello.jl/src/mask.jl")
 F = Float32
 include("utils.jl")
 include("fdtd.jl")
-include("saveimg.jl")
+include("plotstep.jl")
 
 Random.seed!(1)
 
@@ -85,7 +85,7 @@ end
 fields = ComponentArray(merge(fields, (; t=F(0))))
 u0 = fields
 tstops = range(tspan..., length=8 + 1)
-callback = train ? nothing : PresetTimeCallback(tstops, saveimg)
+callback = train ? nothing : PresetTimeCallback(tstops, plotstep)
 prob_neuralode = ODEProblem(dudt, u0, tspan, p,)
 function loss(model; withsol=false)
     b = place(base, model(), design_start)

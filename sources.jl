@@ -1,13 +1,19 @@
-using LinearAlgebra, UnPack, NamedTupleTools
-# ArrayPadding,
-include("../ArrayPadding.jl/src/pad.jl")
 # __precompile__(false)
 
 gaussian(x; μ=0, σ=1) = exp(-((x - μ) / σ)^2)
 
 function place(a, b, start; lazy=false)
-    # @show size(a), size(b), start
-    a + pad(b, 0, Tuple(start) .- 1, size(a) .- size(b) .- Tuple(start) .+ 1; lazy)
+    # a + pad(b, 0, Tuple(start) .- 1, size(a) .- size(b) .- Tuple(start) .+ 1; lazy)
+    buf = Buffer(a)
+    for i = eachindex(a)
+        buf[i] = a[i]
+    end
+    buf[[i:j for (i, j) = zip(start, start .+ size(b) .- 1)]...] += b
+    copy(buf)
+    # stop = start .+ size(b) .- 1
+    # map(Iterators.product(axes(a)...)) do I
+    #     all(start .<= I .<= stop) ? b[(I .- start .+ 1)...] + a[I...] : a[I...]
+    # end
 end
 
 function place(a, b; center)
@@ -15,19 +21,6 @@ function place(a, b; center)
     place(a, b, center .- floor.((size(b) .- 1) .÷ 2))
 end
 
-function fnt(a::NamedTuple)
-    r = (;)
-    ignore() do
-        for (k, v) = pairs(a)
-            f, c = String(k)
-            f, c = Symbol.([f, c])
-            r = merge_recursive(r, (; f => (; c => v)))
-        end
-    end
-    r
-    # NamedTuple([s[1] => (; s[2] => 1 for )) for s = String.(a)])
-
-end
 
 struct PlaneWave
     f
@@ -76,7 +69,7 @@ function SourceEffect(s::GaussianBeam, dx, sz, start)
     r = n * dx
     I = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(center)]
     g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(I...)]
-    start = start .- 1 .+ index(center, dx) .- n
+    start = start .- 1 .+ index(center, dx) .- round.(Int, (size(g) .- 1) ./ 2)
     SourceEffect(f, g, C, start)
 end
 function SourceEffect(s::CurrentSource, dx, sz, start)
@@ -87,10 +80,14 @@ function SourceEffect(s::CurrentSource, dx, sz, start)
     SourceEffect(f, g, C, start)
 end
 
-function apply(s::AbstractVector{<:SourceEffect}, k, u, t)
+function apply(s::AbstractVector{<:SourceEffect}, t; kw...)
+    k = 0
+    ignore() do
+        k = keys(kw)
+    end
     [
         begin
-            r = a
+            r = kw[k]
             for s = s
                 @unpack g, C, f, start = s
                 if k in keys(C)
@@ -98,7 +95,8 @@ function apply(s::AbstractVector{<:SourceEffect}, k, u, t)
                 end
             end
             r
-        end for (k, a) = zip(k, u)
+        end for k = k
+        # end for (k, a) = pairs(kw)
     ]
 end
 # function apply(s::AbstractVector{<:SourceEffect}, u, t)

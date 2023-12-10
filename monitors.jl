@@ -29,8 +29,10 @@ function get(sol::AbstractArray, m, t=axes(sol)[end])
     end
     [
         begin
-
             v = sol[idxs..., i, t]
+            # v = map(sol[t]) do v
+            #     v[i][idxs...]
+            # end
             isempty(sz) ? vec(v) : reshape(v, sz..., size(v, 2))
         end for i = i
     ]

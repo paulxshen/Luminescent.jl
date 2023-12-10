@@ -6,7 +6,7 @@ using Images
 include("../Porcupine.jl/src/del.jl")
 include("../Jello.jl/src/mask.jl")
 include("fdtd.jl")
-include("saveimg.jl")
+include("plotstep.jl")
 
 Random.seed!(1)
 
@@ -81,7 +81,7 @@ saveat = 0:dt:T
 tstops = range(tspan..., length=8)
 @unpack ϵ, μ, σ, σm = padded_geometry
 global ϵ, μ, σ, σm
-callback = PresetTimeCallback(tstops, saveimg)
+callback = PresetTimeCallback(tstops, plotstep)
 
 
 prob = ODEProblem(f, u0, tspan)

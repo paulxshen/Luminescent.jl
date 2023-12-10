@@ -11,3 +11,4 @@ end
 
 index(v, dx) = round.(Int, v ./ dx .+ 1)
 reindex(i, ratio) = round.(Int, (i .- 1) .* ratio .+ 1)
+Base.size(x::NamedTuple) = (length(x),)

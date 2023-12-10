@@ -13,4 +13,6 @@ Base.round(x::AbstractFloat) = Base.round(Int, x)
 # Base.:/(x::Float64, y::Float32) = Float32(x) / y
 # Base.:/(x::Float32, y::Float64) = x / Float32(y)
 
+# Base.eachslice(a) = eachslice(a, dims=ndims(a))
+
 Base.getindex(s::Symbol, i) = Symbol(String(s)[i])
