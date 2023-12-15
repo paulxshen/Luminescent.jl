@@ -7,9 +7,9 @@ Args
 - polarization: only applies to 2d which can be :TMz (Ez, Hx, Hy) or :TEz (Hz, Ex, Ey)
 """
 function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
-    sz = round.(Int, L ./ dx)
-    d = length(sz)
-    esz = collect(sz)
+    sz0 = round.(Int, L ./ dx)
+    d = length(sz0)
+    esz = collect(sz0)
     hsz = copy(esz)
     npad = zeros(Int, d, 2)
     nodes = fill(:U, d, 2)
@@ -88,21 +88,23 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
         fields = (;
             Ez=zeros(F, esz),
             Hy=zeros(F, hsz),
-            Jz=zeros(F, esz),)
+            # Jz=zeros(F, esz),
+        )
     elseif d == 2
         if polarization == :TMz
             fields = (;
                 Ez=zeros(F, esz),
                 Hx=zeros(F, hsz),
                 Hy=zeros(F, hsz),
-                Jz=zeros(F, esz),)
+                # Jz=zeros(F, esz),
+            )
         elseif polarization == :TEz
             fields = (;
                 Ex=zeros(F, esz),
                 Ey=zeros(F, esz),
                 Hz=zeros(F, hsz),
-                Jx=zeros(F, esz),
-                Jy=zeros(F, esz),
+                # Jx=zeros(F, esz),
+                # Jy=zeros(F, esz),
             )
         end
     else
@@ -111,9 +113,10 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
             Ey=zeros(F, esz),
             Ez=zeros(F, esz),
             Hx=zeros(F, hsz), Hy=zeros(F, hsz), Hz=zeros(F, hsz),
-            Jx=zeros(F, esz),
-            Jy=zeros(F, esz),
-            Jz=zeros(F, esz),)
+            # Jx=zeros(F, esz),
+            # Jy=zeros(F, esz),
+            # Jz=zeros(F, esz),
+        )
     end
     fields = NamedTuple([k => collect(v) for (k, v) = pairs(fields)])
 
@@ -154,7 +157,8 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
             end
         end
     end
-    source_effects = [SourceEffect(s, dx, sz, start) for s = sources]
+    stop = start .+ sz0 .- 1
+    source_effects = [SourceEffect(s, dx, esz, start, stop) for s = sources]
 
     c = 0
     save_idxs = Int[]

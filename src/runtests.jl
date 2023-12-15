@@ -16,7 +16,7 @@ Random.seed!(1)
 
 train = true
 train = false
-@load "bend0.bson" base design_start design_sz dx
+@load "waveguide_bend.bson" base design_start design_sz dx
 # heatmap(base)
 T = 5.0f0
 tspan = (0.0f0, T)

@@ -35,7 +35,7 @@ solver = Euler()
 
 # loads Google's Ceviche challenge
 _dx = λ * dx
-@unpack base, design_start, design_sz, l = load("bend0", _dx)
+@unpack base, design_start, design_sz, l = load("waveguide_bend", _dx)
 L = size(base) .* dx # domain dimensions [wavelength]
 l = l ./ λ
 sz0 = size(base)

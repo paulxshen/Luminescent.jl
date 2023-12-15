@@ -7,7 +7,7 @@ end
 function plotstep(u::AbstractArray, p::AbstractArray, t; ax=nothing, colorrange)
 
     ϵ, μ, σ, σm = p
-    Ez, Hx, Hy, Jz = u
+    Ez, Hx, Hy = u
     # ϵ, μ, σ, σm = eachslice(p, dims=ndims(p))
     # Ez, Hx, Hy, Jz = eachslice(u, dims=ndims(u))
     a = deepcopy(Array(Ez))
@@ -26,16 +26,17 @@ function plotstep(u::AbstractArray, p::AbstractArray, t; ax=nothing, colorrange)
     # save("temp/$t.png", fig)
 end
 
-function recordsim(sol, fn; title="")
+function recordsim(sol, p, fn; title="", frameat=1 / 16, framerate=16)
 
 
-    frameat = 1 / 4
+
     t = 0:frameat:T
-    i = round.(Int, t ./ dt) .+ 1
-    framerate = round(Int, 1 / frameat)
+
     fig = Figure()
     umax = maximum(sol[end][1])
-    record(fig, fn, collect(zip(i, t)); framerate) do (i, t)
+    record(fig, fn, t; framerate) do t
+        # i = round.(Int, t ./ dt) .+ 1
+        i = round(Int, t / dt + 1)
         empty!(fig)
         ax = Axis(fig[1, 1]; title="t = $t\nEz\n$title")
         u = sol[i]

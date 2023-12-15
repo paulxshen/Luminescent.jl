@@ -38,12 +38,22 @@ struct GaussianBeam
         new(f, σ, C, center, dims)
     end
 end
-struct CurrentSource
+struct CenteredSource
+    f
+    g
+    C
+    center
+    L
+    function CenteredSource(f, g, center, L; C...)
+        new(f, g, C, center, L)
+    end
+end
+struct UniformSource
     f
     C
     lengths
     center
-    function CurrentSource(f, lengths, center; C...)
+    function UniformSource(f, lengths, center; C...)
         new(f, C, lengths, center)
     end
 end
@@ -51,11 +61,12 @@ end
 struct SourceEffect
     f
     g
+    _g
     C
     start
 end
 
-function SourceEffect(s::PlaneWave, dx, sz, start)
+function SourceEffect(s::PlaneWave, dx, sz, start, stop)
     @unpack f, C, dims = s
     d = length(sz)
     g = ones([i == abs(dims) ? 1 : sz[i] for i = 1:d]...)
@@ -63,21 +74,32 @@ function SourceEffect(s::PlaneWave, dx, sz, start)
     SourceEffect(f, g, C, start)
 end
 
-function SourceEffect(s::GaussianBeam, dx, sz, start)
+function SourceEffect(s::GaussianBeam, dx, sz, start, stop)
     @unpack f, σ, C, center, dims = s
     n = round(Int, 2σ / dx)
     r = n * dx
     I = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(center)]
     g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(I...)]
     start = start .- 1 .+ index(center, dx) .- round.(Int, (size(g) .- 1) ./ 2)
-    SourceEffect(f, g, C, start)
+    _g = place(zeros(F, sz), g, start)
+    SourceEffect(f, g, _g, C, start)
 end
-function SourceEffect(s::CurrentSource, dx, sz, start)
+function SourceEffect(s::CenteredSource, dx, sz, start, stop)
+    @unpack f, g, C, center, L = s
+    R = round.(Int, L ./ 2 / dx)
+    I = range.(-R, R)
+    g = [g(dx .* v...) for v = Iterators.product(I...)]
+    start = start .- 1 .+ index(center, dx) .- round.(Int, (size(g) .- 1) ./ 2)
+    _g = place(zeros(F, sz), g, start)
+    SourceEffect(f, g, _g, C, start)
+end
+function SourceEffect(s::UniformSource, dx, sz, start, stop)
     @unpack f, C, center, lengths = s
     n = round.(Int, lengths ./ dx)
     g = ones(n...)
     start = start .+ round.(Int, center ./ dx .- (n .- 1) ./ 2)
-    SourceEffect(f, g, C, start)
+    _g = place(zeros(F, sz), g, start)
+    SourceEffect(f, g, _g, C, start)
 end
 
 function apply(s::AbstractVector{<:SourceEffect}, t; kw...)
@@ -89,9 +111,10 @@ function apply(s::AbstractVector{<:SourceEffect}, t; kw...)
         begin
             r = kw[k]
             for s = s
-                @unpack g, C, f, start = s
+                @unpack g, _g, C, f, start = s
                 if k in keys(C)
-                    r = place(r, real(C[k] * f(t) .* g), start)
+                    # r = place(r, real(C[k] * f(t) .* g), start)
+                    r = r .+ real(C[k] * f(t) .* _g)
                 end
             end
             r
