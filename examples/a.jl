@@ -61,14 +61,15 @@ function loss(u0, design, static_geometry, fdtd_configs,)
     # reduce(((u, l), t) -> (step_TMz(u, p, t), l + (u[1][idxs...])*u[2][idxs...]), T-1+dt:dt:T, init=(u, 0.0f0))[2]
 end
 
+# schedule=[(8,.1,150),(16,.1,50),(32,.1,8)]
+schedule = [(8, 0.1, 1)]#, (16, 0.1, 1),]
+schedule = [(8, 0.1, 1), (16, 0.1, 1),]
 model = nothing
-schedule = [(8, 0.1, 100), (16, 0.1, 100), (32, 0.1, 1)]
-# schedule = [(8, 0.1, 1), (16, 0.1, 1),]
 # α = 0.2 # grayscale gradient in design mask
 for (nres, α, nepochs) in schedule
     # tunable configs
     T = 10.0f0 # simulation duration in [periods]
-    opt = Adam(0.2) # higher learning rate helps
+    opt = Adam(1) # higher learning rate helps
     dx = 1.0f0 / nres # pixel resolution in [wavelengths]
     lmin = 0.2f0  # minimum feature length in design region [microns]
     Courant = 0.5f0 # Courant number
@@ -122,7 +123,7 @@ for (nres, α, nepochs) in schedule
     # pre-optimization simulation
     p0 = make_geometry(model0(0), static_geometry, fdtd_configs.geometry_padding)
     @showtime global sol0 = sim(u0, p0, T, fdtd_configs)
-    recordsim(sol0, p0, fdtd_configs, "bend-pre_$nres.gif", title="start of training"; frameat, framerate)
+    # recordsim(sol0, p0, "bend-pre.gif", title="start of training"; frameat, framerate)
 
     opt_state = Flux.setup(opt, model)
     # for i = 1:32
@@ -142,7 +143,7 @@ for (nres, α, nepochs) in schedule
         @showtime global sol = sim(u0, p, T, fdtd_configs)
 
         # save movies of simulation
-        recordsim(sol, p, fdtd_configs, "bend-post_$nres.gif", title="after some training"; frameat, framerate)
+        # recordsim(sol, p, "bend-post.gif", title="after some training"; frameat, framerate)
     end
 end
 

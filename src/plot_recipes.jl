@@ -4,7 +4,7 @@ function plotstep(integrator)
     @unpack t, p, u = integrator
     plotstep(u, p, t)
 end
-function plotstep(u::AbstractArray, p::AbstractArray, t; ax=nothing, colorrange)
+function plotstep(u::AbstractArray, p::AbstractArray, t, configs; ax=nothing, colorrange)
 
     ϵ, μ, σ, σm = p
     Ez, Hx, Hy = u
@@ -13,10 +13,10 @@ function plotstep(u::AbstractArray, p::AbstractArray, t; ax=nothing, colorrange)
     a = deepcopy(Array(Ez))
     heatmap!(ax, a; colormap=:seismic, colorrange)
     # heatmap!(ax, Array(σ), alpha=0.2, colormap=:binary, colorrange=(0, 4),)
-    heatmap!(ax, Array(ϵ), colormap=[(:white, 0), (:gray, 0.6)], colorrange=(ϵ1, ϵ2))
+    heatmap!(ax, Array(ϵ), colormap=[(:white, 0), (:gray, 0.6)])#, colorrange=(ϵ1, ϵ2))
 
     marker = :rect
-    for m = monitor_configs
+    for m = configs.monitor_configs
         x, y = m.idxs
         scatter!(ax, [x], [y]; marker)
     end
@@ -26,8 +26,8 @@ function plotstep(u::AbstractArray, p::AbstractArray, t; ax=nothing, colorrange)
     # save("temp/$t.png", fig)
 end
 
-function recordsim(sol, p, fn; title="", frameat=1 / 16, framerate=16)
-
+function recordsim(sol, p, fdtd_configs, fn; title="", frameat=1 / 16, framerate=16)
+    @unpack dt, T = fdtd_configs
 
 
     t = 0:frameat:T
@@ -42,7 +42,7 @@ function recordsim(sol, p, fn; title="", frameat=1 / 16, framerate=16)
         u = sol[i]
         colorrange = (-1, 1) .* umax
         # u = sol[:, :, :, i]
-        plotstep(u, p, t; ax, colorrange)
+        plotstep(u, p, t, fdtd_configs; ax, colorrange)
     end
 end
 

@@ -6,7 +6,7 @@ Args
 - L: vector of lengths in wavelengths of simulation domain
 - polarization: only applies to 2d which can be :TMz (Ez, Hx, Hy) or :TEz (Hz, Ex, Ey)
 """
-function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
+function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32, Courant=0.5f0, kw...)# Courant number)
     sz0 = round.(Int, L ./ dx)
     d = length(sz0)
     esz = collect(sz0)
@@ -195,5 +195,6 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
         ki = findfirst.(isequal.(k), (keys(fields),))
         push!(monitor_configs, MonitorConfig(idxs, ki))
     end
-    (; geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields, Ie, Ih)
+    dt = dx * Courant
+    (; geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields, Ie, Ih, dx, dt, kw...)
 end
