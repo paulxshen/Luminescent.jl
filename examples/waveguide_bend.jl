@@ -3,15 +3,16 @@ Solves first photonics inverse design problem in Google's Ceviche challenges.
 Design is a tight right angle waveguide bend.
 """
 
-using UnPack, LinearAlgebra, Random, Images, Interpolations, Flux
+using UnPack, LinearAlgebra, Random, Images, Interpolations, Flux, Optim
 using Flux: withgradient
+using Optim: Options, minimizer
 using Zygote: ignore, Buffer
 using BSON: @save, @load
 # using Jello, ArrayPadding
 
-include("../../ArrayPadding.jl/src/ArrayPadding.jl")
-include("../../Jello.jl/src/Jello.jl")
-using .Jello, .ArrayPadding
+include("../../ArrayPadding.jl/src/utils.jl")
+include("../../ArrayPadding.jl/src/pad.jl")
+include("../../Jello.jl/src/mask.jl")
 
 p = "../src"
 include("$p/startup.jl")
@@ -28,6 +29,7 @@ include("$p/plot_recipes.jl")
 
 F = Float32
 Random.seed!(1)
+
 function make_geometry(design, static_geometry, geometry_padding)
     @unpack start, μ, σ, σm, ϵ1, ϵ2, base = static_geometry
     b = place(base, design, start)
@@ -35,16 +37,14 @@ function make_geometry(design, static_geometry, geometry_padding)
     ϵ, = apply(geometry_padding; ϵ)
     p = [ϵ, μ, σ, σm]
 end
+
 # pre/post-optimization simulation
-function sim(u0, p, T, fdtd_configs)
-    @unpack dt, = fdtd_configs
+function sim(u0, p, fdtd_configs)
+    @unpack dt, T = fdtd_configs
     u = u0
-    [
-        begin
-            u = step_TMz(u, p, t, fdtd_configs)
-        end for t = 0:dt:T
-    ]
+    [u = step_TMz(u, p, t, fdtd_configs) for t = 0:dt:T]
 end
+
 function loss(u0, design, static_geometry, fdtd_configs,)
     @unpack dt, T, monitor_configs = fdtd_configs
     u = u0
@@ -62,10 +62,9 @@ function loss(u0, design, static_geometry, fdtd_configs,)
 end
 
 model = nothing
-schedule = [(8, 0.1, 100), (16, 0.1, 100), (32, 0.1, 1)]
-# schedule = [(8, 0.1, 1), (16, 0.1, 1),]
-# α = 0.2 # grayscale gradient in design mask
-for (nres, α, nepochs) in schedule
+# schedule = [(8, 1f-2, 100), (16,1f-4, 400), (32,1f-3, 1)]
+schedule = [(16, 0.2, 1.0f-2, 50), (16, 0.4, 5.0f-3, 50)]
+for (nres, contrast, f_reltol, iterations) in schedule
     # tunable configs
     T = 10.0f0 # simulation duration in [periods]
     opt = Adam(0.2) # higher learning rate helps
@@ -91,7 +90,7 @@ for (nres, α, nepochs) in schedule
     v /= maximum(v)
     global model
     if isnothing(model)
-        model = Jello.Mask(design_sz, lmin / λ / dx; diagonal_symmetry=true) # parameterized binary mask for design region
+        model = Mask(design_sz, 3, contrast; diagonal_symmetry=true) # parameterized binary mask for design region
     else
         global model.sz = design_sz
     end
@@ -120,25 +119,30 @@ for (nres, α, nepochs) in schedule
     static_geometry = (; base, start=design_start, ϵ1, ϵ2, μ, σ, σm)
 
     # pre-optimization simulation
-    p0 = make_geometry(model0(0), static_geometry, fdtd_configs.geometry_padding)
+    p0 = make_geometry(model0(), static_geometry, fdtd_configs.geometry_padding)
     @showtime global sol0 = sim(u0, p0, T, fdtd_configs)
     recordsim(sol0, p0, fdtd_configs, "bend-pre_$nres.gif", title="start of training"; frameat, framerate)
 
-    opt_state = Flux.setup(opt, model)
-    # for i = 1:32
+    # opt_state = Flux.setup(opt, model)
+    # for i = 1:iterations
+    #     @time begin
+    #         l, (dldm,) = withgradient(m -> loss(u0, m(), static_geometry, fdtd_configs), model,)
+    #         Flux.update!(opt_state, model, dldm)
+    #         println("$i $l")
+    #     end
+    # end
+    x0, re = destructure(model)
+    _loss = m -> C * loss(u0, m(), static_geometry, fdtd_configs)
+    f, g!, fg! = optimfuncs(_loss, re)
+    od = OnceDifferentiable(f, g!, fg!, x0)
+    @showtime res = optimize(od, x0, LBFGS(), Optim.Options(; f_reltol, g_tol=0, iterations, show_every=1, show_trace=true))
+    # res = 
 
-    for i = 1:nepochs
-        @time begin
-            l, (dldm,) = withgradient(m -> loss(u0, m(α), static_geometry, fdtd_configs), model,)
-            Flux.update!(opt_state, model, dldm)
-            println("$i $l")
-        end
-    end
+    model = re(minimizer(res))
 
-
-    if nepochs > 0
+    if iterations > 0
         # post-optimization simulation
-        p = make_geometry(model(0), static_geometry, fdtd_configs.geometry_padding)
+        p = make_geometry(model(), static_geometry, fdtd_configs.geometry_padding)
         @showtime global sol = sim(u0, p, T, fdtd_configs)
 
         # save movies of simulation
