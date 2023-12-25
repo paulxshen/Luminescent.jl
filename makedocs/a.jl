@@ -41,7 +41,7 @@ function sim(u0, p, T, fdtd_configs)
     u = u0
     [
         begin
-            u = step_TMz(u, p, t, fdtd_configs)
+            u = stepTMz(u, p, t, fdtd_configs)
         end for t = 0:dt:T
     ]
 end
@@ -52,13 +52,13 @@ function loss(u0, design, static_geometry, fdtd_configs,)
 
     # run first T - 1 periods
     for t = 0:dt:T-1
-        u = step_TMz(u, p, t, fdtd_configs)
+        u = stepTMz(u, p, t, fdtd_configs)
     end
 
     # objective to maximize outgoing power at port 2 during last period
     idxs = monitor_configs[2].idxs
-    reduce(((u, l), t) -> (step_TMz(u, p, t, fdtd_configs), l - (u[1][idxs...])^2), T-1+dt:dt:T, init=(u, 0.0f0))[2]
-    # reduce(((u, l), t) -> (step_TMz(u, p, t), l + (u[1][idxs...])*u[2][idxs...]), T-1+dt:dt:T, init=(u, 0.0f0))[2]
+    reduce(((u, l), t) -> (stepTMz(u, p, t, fdtd_configs), l - (u[1][idxs...])^2), T-1+dt:dt:T, init=(u, 0.0f0))[2]
+    # reduce(((u, l), t) -> (stepTMz(u, p, t), l + (u[1][idxs...])*u[2][idxs...]), T-1+dt:dt:T, init=(u, 0.0f0))[2]
 end
 
 # schedule=[(8,.1,150),(16,.1,50),(32,.1,8)]

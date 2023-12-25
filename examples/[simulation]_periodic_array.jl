@@ -57,6 +57,6 @@ b = F.([norm([x, y] .- esz0 ./ 2) < 0.25 / dx for x = 1:esz0[1], y = 1:esz0[2]])
 p = [ϵ, μ, σ, σm]
 u0 = collect(values(fields))
 
-@showtime sol = accumulate((u, t) -> step_TMz(u, p, t, fdtd_configs), 0:dt:T, init=u0)
+@showtime sol = accumulate((u, t) -> stepTMz(u, p, t, fdtd_configs), 0:dt:T, init=u0)
 recordsim(sol, p, fdtd_configs, "$(name)_nres_$nres.gif", title="$name"; frameat, framerate)
 # plotmonitors(sol0, monitor_configs,)

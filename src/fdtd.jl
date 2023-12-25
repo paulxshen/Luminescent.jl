@@ -163,13 +163,15 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
     source_effects = [SourceEffect(s, dx, esz, start, stop) for s = sources]
 
     c = 0
-    save_idxs = Int[]
-    monitor_idxs = [
-        map(start, span) do s, x
-            s .+ round.(Int, x / dx)
-        end for span = monitors
+    save_info = Int[]
+    monitor_info = [
+        map(start, m.span) do s, x
+            idxs = s .+ round.(Int, x / dx)
+            center = round.(Int, mean.(idxs))
+            (; idxs, center)
+        end for m = monitors
     ]
     dt = dx * Courant
     sz0 = Tuple(sz0)
-    (; geometry_padding, field_padding, source_effects, monitor_idxs, save_idxs, fields, Ie, Ih, dx, esz0, hsz0, esz, hsz, dt, kw...)
+    (; geometry_padding, field_padding, source_effects, monitor_info, save_info, fields, Ie, Ih, dx, esz0, hsz0, esz, hsz, dt, kw...)
 end

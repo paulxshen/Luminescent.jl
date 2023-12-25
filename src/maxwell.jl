@@ -1,4 +1,4 @@
-function step_TMz(u, p, t, configs)
+function stepTMz(u, p, t, configs)
     @unpack dx, dt, field_padding, source_effects = configs
     ∇ = Del([dx, dx])
     ϵ, μ, σ, σm = [[a] for a = p]

@@ -43,35 +43,36 @@ end
 function sim(u0, p, fdtd_configs)
     @unpack dt, T = fdtd_configs
     u = u0
-    [u = step_TMz(u, p, t, fdtd_configs) for t = 0:dt:T]
+    [u = stepTMz(u, p, t, fdtd_configs) for t = 0:dt:T]
 end
 
 function loss(u0, design, static_geometry, fdtd_configs,)
-    @unpack dx, dt, T, monitor_idxs = fdtd_configs
+    @unpack dx, dt, T, monitor_info = fdtd_configs
     u = u0
     p = make_geometry(design, static_geometry, fdtd_configs.geometry_padding)
 
     # run first T - 1 periods
     for t = 0:dt:T-1
-        u = step_TMz(u, p, t, fdtd_configs)
+        u = stepTMz(u, p, t, fdtd_configs)
     end
 
     # objective to maximize outgoing power at port 2 during last period
-    # reduce(((u, l), t) -> (step_TMz(u, p, t, fdtd_configs), l - (u[1][idxs...])^2), T-1+dt:dt:T, init=(u, 0.0f0))[2]
-    reduce(((u, l), t) -> (step_TMz(u, p, t, fdtd_configs), begin
+    # reduce(((u, l), t) -> (stepTMz(u, p, t, fdtd_configs), l - (u[1][idxs...])^2), T-1+dt:dt:T, init=(u, 0.0f0))[2]
+    reduce(((u, l), t) -> (stepTMz(u, p, t, fdtd_configs), begin
             for i = 3:7
-                Ez, Hx, Hy = getindex.(u, Ref.(monitor_idxs[i])...)
-                l += if i == 3
-                    2sum(Ez .* Hx + 0 * Hy) # must include all fields otherwise Zygote fails
-                elseif i == 4
-                    sum(Ez .* Hy + 0 * Hx)
-                elseif i == 5
-                    -sum(Ez .* Hy + 0 * Hx)
-                elseif i == 6
-                    sum(Ez .* Hx + 0 * Hy)
-                elseif i == 7
-                    -sum(Ez .* Hx + 0 * Hy)
-                end
+                Ez, Hx, Hy = getindex.(u, Ref.(monitor_info[i].idxs)...)
+                l +=
+                    if i == 2
+                        sum(Ez .* Hx + 0 * Hy) # must include all fields otherwise Zygote fails
+                    elseif i == 3
+                        sum(Ez .* Hy + 0 * Hx)
+                    elseif i == 4
+                        -sum(Ez .* Hy + 0 * Hx)
+                    elseif i == 5
+                        sum(Ez .* Hx + 0 * Hy)
+                    elseif i == 6 || i == 7
+                        -sum(Ez .* Hx + 0 * Hy)
+                    end
             end
             l
         end),
@@ -118,20 +119,20 @@ for (nres, contrast, f_reltol, iterations) in schedule
     polarization = :TMz
     boundaries = [] # unspecified boundaries default to PML
     r = 1.6wwg / 2
-    append!(ports, [
-        [lp-r:_dx:lp+r, lwg],
-        [lwg, lwg:_dx:lwg+ld],
-        [lwg + ld, lwg:_dx:lwg+ld],
-        # [lwg, lp:_dx:lp+r],
-        [lwg:_dx:lwg+ld, lwg + ld,],
-        [lwg:_dx:lwg+ld, lwg,],
-        # [lwg + ld, lwg:_dx:lwg+ld,],
-    ])
-    monitors = ports ./ λ
+    monitors = Monitor.([
+        [lwg / 2, [lp - r, lp + r]],
+        [[lp - r, lp + r], lwg / 2],
+        [lwg, [lwg, lwg + ld]],
+        [lwg + ld, [lwg, lwg + ld]],
+        [[lwg, lwg + ld], lwg + ld,],
+        [[lwg, lp - r], lwg,],
+        [[lp + r, lwg + ld], lwg,],
+        # [lwg + ld, lwg,lwg+ld,],
+    ] ./ λ)
     g = linear_interpolation(x, v)
     sources = [CenteredSource(t -> cos(F(2π) * t), (x, y) -> g(y), ports[1] / λ, [0, 0.6 / λ]; Jz=1)]
     global fdtd_configs = setup(boundaries, sources, monitors, L, dx, polarization; F, Courant, T)
-    @unpack dt, geometry_padding, field_padding, source_effects, monitor_idxs, fields = fdtd_configs
+    @unpack dt, geometry_padding, field_padding, source_effects, monitor_info, fields = fdtd_configs
 
     μ = apply(geometry_padding[:μ], ones(F, sz0))
     σ = apply(geometry_padding[:σ], zeros(F, sz0))
@@ -183,4 +184,4 @@ end
 
 
 
-# plotmonitors(sol0, monitor_idxs,)
+# plotmonitors(sol0, monitor_info,)
