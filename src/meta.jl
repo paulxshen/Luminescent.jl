@@ -3,13 +3,13 @@ include("del.jl")
 
 dx = 1 / 16.0f0
 lx = ly = lz = 4.0f0
-sz = round(Int, [lx, ly, lz] / dx)
+dims = round(Int, [lx, ly, lz] / dx)
 
-ϵ = ones(sz)
-μ = ones(sz)
-σ = zeros(sz)
+ϵ = ones(dims)
+μ = ones(dims)
+σ = zeros(dims)
 
-u0 = zeros(sz..., 6)
+u0 = zeros(dims..., 6)
 τ = 1.0f0
 f(t) = exp(-((t - τ))^2)
 datasize = 8
@@ -19,13 +19,13 @@ tsteps = range(tspan[1], tspan[2], length=datasize)
 function trueODEfunc(du, u, p, t)
     Ex, Ey, Ez, Hx, Hy, Hz = eachslice(u)
 
-    Ex = cat(zeros(sz[2:3]), Ex, dims=3)
-    Ey = cat(zeros(sz[2:3]), Ey, dims=3)
-    Ez = cat(f(t) * ones(sz[2:3]), Ez, dims=3)
+    Ex = cat(zeros(dims[2:3]), Ex, dims=3)
+    Ey = cat(zeros(dims[2:3]), Ey, dims=3)
+    Ez = cat(f(t) * ones(dims[2:3]), Ez, dims=3)
 
-    Hx = cat(zeros(sz[2:3]), Hx, dims=3)
-    Hy = cat(zeros(sz[2:3]), Hy, dims=3)
-    Hz = cat(zeros(sz[2:3]), Hz, dims=3)
+    Hx = cat(zeros(dims[2:3]), Hx, dims=3)
+    Hy = cat(zeros(dims[2:3]), Hy, dims=3)
+    Hz = cat(zeros(dims[2:3]), Hz, dims=3)
 
     Ex = pad(Ex, :periodic, (0, 1, 1), (0, 0, 0))
     Ey = pad(Ey, :periodic, (0, 1, 1), (0, 0, 0))

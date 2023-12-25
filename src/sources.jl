@@ -26,6 +26,9 @@ struct PlaneWave
     f
     C
     dims
+    function PlaneWave(f, dims; C...)
+        new(f, C, dims)
+    end
 end
 
 struct GaussianBeam
@@ -70,8 +73,9 @@ function SourceEffect(s::PlaneWave, dx, sz, start, stop)
     @unpack f, C, dims = s
     d = length(sz)
     g = ones([i == abs(dims) ? 1 : sz[i] for i = 1:d]...)
-    start = start .+ dims < 0 ? 0 : [i == abs(dims) ? sz[i] - 1 : 0 for i = 1:d]
-    SourceEffect(f, g, C, start)
+    start = start .+ (dims < 0 ? 0 : [i == abs(dims) ? sz[i] - 1 : 0 for i = 1:d])
+    _g = place(zeros(F, sz), g, start)
+    SourceEffect(f, g, _g, C, start)
 end
 
 function SourceEffect(s::GaussianBeam, dx, sz, start, stop)

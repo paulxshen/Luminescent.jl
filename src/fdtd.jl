@@ -80,6 +80,8 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
     Ie = [a:b for (a, b) = zip(start, start .+ esz .- 1)] # end
     Ih = [a:b for (a, b) = zip(start, start .+ hsz .- 1)] # end
 
+    esz0 = Tuple(esz)
+    hsz0 = Tuple(hsz)
     esz += sum(npad, dims=2)
     hsz += sum(npad, dims=2)
     esz = Tuple(esz)
@@ -120,8 +122,8 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
     end
     fields = NamedTuple([k => collect(v) for (k, v) = pairs(fields)])
 
-    field_padding = Padding[]
-    geometry_padding = Padding[]
+    field_padding = DefaultDict(() -> Padding[])
+    geometry_padding = DefaultDict(() -> Padding[])
     for i = 1:d
         xyz = para = perp = [:x, :y, :z]
 
@@ -133,10 +135,10 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 l = j == 1 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 r = j == 2 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 info = lazy = false
-                push!(geometry_padding, Padding(:ϵ, :replicate, l, r, info, lazy))
-                push!(geometry_padding, Padding(:μ, :replicate, l, r, info, lazy))
-                push!(geometry_padding, Padding(:σ, ReplicateRamp(F(b.σ)), l, r, info, lazy))
-                push!(geometry_padding, Padding(:σm, ReplicateRamp(F(b.σ)), l, r, info, lazy))
+                push!(geometry_padding[:ϵ], Padding(:ϵ, :replicate, l, r, info, lazy))
+                push!(geometry_padding[:μ], Padding(:μ, :replicate, l, r, info, lazy))
+                push!(geometry_padding[:σ], Padding(:σ, ReplicateRamp(F(b.σ)), l, r, info, lazy))
+                push!(geometry_padding[:σm], Padding(:σm, ReplicateRamp(F(b.σ)), l, r, info, lazy))
             end
             l = j == 1 ? Int.((1:d) .== i) : zeros(Int, d)
             r = j == 2 ? Int.((1:d) .== i) : zeros(Int, d)
@@ -149,9 +151,9 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                     info = true
                     lazy = false
                     if t == Periodic
-                        push!(field_padding, Padding(k, :periodic, l, r, info, lazy))
+                        push!(field_padding[k], Padding(k, :periodic, l, r, info, lazy))
                     else
-                        push!(field_padding, Padding(k, 0, l, r, info, lazy))
+                        push!(field_padding[k], Padding(k, 0, l, r, info, lazy))
                     end
                 end
             end
@@ -162,39 +164,12 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
 
     c = 0
     save_idxs = Int[]
-    monitor_configs = MonitorConfig[]
-
-    for m = monitors
-        @unpack span, k = m
-        sz = length.(filter(x -> !isa(x, Number), span))
-        if isempty(sz)
-            sz = Int[]
-        end
-
-        idxs = map(start, span) do s, x
-            x = round.(Int, x / dx)
-            if length(x) == 1
-                s + x
-            end
-        end
-
-        # if isa(fields, NamedTuple)
-        #     fi = 0
-        # else
-
-        # ki = NamedTuple([k =>
-        #     begin
-        #         fa = fields[k]
-        #         # fcinds = label2index(fields, "$f")
-        #         linds = LinearIndices(fa)
-        #         fcinds[linds[(idxs)...]]
-        #     end
-        #                  for (k,start,stop)=k
-        # ])
-        # end
-        ki = findfirst.(isequal.(k), (keys(fields),))
-        push!(monitor_configs, MonitorConfig(idxs, ki))
-    end
+    monitor_idxs = [
+        map(start, span) do s, x
+            s .+ round.(Int, x / dx)
+        end for span = monitors
+    ]
     dt = dx * Courant
-    (; geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields, Ie, Ih, dx, dt, kw...)
+    sz0 = Tuple(sz0)
+    (; geometry_padding, field_padding, source_effects, monitor_idxs, save_idxs, fields, Ie, Ih, dx, esz0, hsz0, esz, hsz, dt, kw...)
 end

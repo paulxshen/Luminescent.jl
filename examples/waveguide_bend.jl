@@ -3,7 +3,7 @@ Solves first photonics inverse design problem in Google's Ceviche challenges.
 Design is a tight right angle waveguide bend.
 """
 
-using UnPack, LinearAlgebra, Random, Images, Interpolations, Flux, Optim
+using UnPack, LinearAlgebra, Random, Images, Interpolations, Flux, Optim, DataStructures
 using Flux: withgradient
 using Optim: Options, minimizer
 using Zygote: ignore, Buffer
@@ -14,27 +14,28 @@ include("../../ArrayPadding.jl/src/utils.jl")
 include("../../ArrayPadding.jl/src/pad.jl")
 include("../../Jello.jl/src/mask.jl")
 
-p = "../src"
-include("$p/startup.jl")
-include("$p/del.jl")
-include("$p/maxwell.jl")
-include("$p/boundaries.jl")
-include("$p/sources.jl")
-include("$p/monitors.jl")
-include("$p/utils.jl")
-include("$p/fdtd.jl")
+dir = "../src"
+include("$dir/startup.jl")
+include("$dir/del.jl")
+include("$dir/maxwell.jl")
+include("$dir/boundaries.jl")
+include("$dir/sources.jl")
+include("$dir/monitors.jl")
+include("$dir/utils.jl")
+include("$dir/fdtd.jl")
 
 using CairoMakie
-include("$p/plot_recipes.jl")
+include("$dir/plot_recipes.jl")
 
 F = Float32
 Random.seed!(1)
+name = "waveguide_bend"
 
 function make_geometry(design, static_geometry, geometry_padding)
     @unpack start, μ, σ, σm, ϵ1, ϵ2, base = static_geometry
     b = place(base, design, start)
     ϵ = ϵ2 * b + ϵ1 * (1 .- b)
-    ϵ, = apply(geometry_padding; ϵ)
+    ϵ = apply(geometry_padding[:ϵ], ϵ)
     p = [ϵ, μ, σ, σm]
 end
 
@@ -46,7 +47,7 @@ function sim(u0, p, fdtd_configs)
 end
 
 function loss(u0, design, static_geometry, fdtd_configs,)
-    @unpack dt, T, monitor_configs = fdtd_configs
+    @unpack dx, dt, T, monitor_idxs = fdtd_configs
     u = u0
     p = make_geometry(design, static_geometry, fdtd_configs.geometry_padding)
 
@@ -56,20 +57,37 @@ function loss(u0, design, static_geometry, fdtd_configs,)
     end
 
     # objective to maximize outgoing power at port 2 during last period
-    idxs = monitor_configs[2].idxs
-    reduce(((u, l), t) -> (step_TMz(u, p, t, fdtd_configs), l - (u[1][idxs...])^2), T-1+dt:dt:T, init=(u, 0.0f0))[2]
-    # reduce(((u, l), t) -> (step_TMz(u, p, t), l + (u[1][idxs...])*u[2][idxs...]), T-1+dt:dt:T, init=(u, 0.0f0))[2]
+    # reduce(((u, l), t) -> (step_TMz(u, p, t, fdtd_configs), l - (u[1][idxs...])^2), T-1+dt:dt:T, init=(u, 0.0f0))[2]
+    reduce(((u, l), t) -> (step_TMz(u, p, t, fdtd_configs), begin
+            for i = 3:7
+                Ez, Hx, Hy = getindex.(u, Ref.(monitor_idxs[i])...)
+                l += if i == 3
+                    2sum(Ez .* Hx + 0 * Hy) # must include all fields otherwise Zygote fails
+                elseif i == 4
+                    sum(Ez .* Hy + 0 * Hx)
+                elseif i == 5
+                    -sum(Ez .* Hy + 0 * Hx)
+                elseif i == 6
+                    sum(Ez .* Hx + 0 * Hy)
+                elseif i == 7
+                    -sum(Ez .* Hx + 0 * Hy)
+                end
+            end
+            l
+        end),
+        T-1+dt:dt:T, init=(u, 0.0f0))[2] * dx
 end
 
 model = nothing
-# schedule = [(8, 1f-2, 100), (16,1f-4, 400), (32,1f-3, 1)]
-schedule = [(16, 0.2, 1.0f-2, 50), (16, 0.4, 5.0f-3, 50)]
+schedule = [(16, 0.9, 5.0f-3, 50)]
+# schedule = [(16, 0.5, 1.0f-2, 50), (16, 0.8, 5.0f-3, 50)]
 for (nres, contrast, f_reltol, iterations) in schedule
     # tunable configs
     T = 10.0f0 # simulation duration in [periods]
-    opt = Adam(0.2) # higher learning rate helps
     dx = 1.0f0 / nres # pixel resolution in [wavelengths]
-    lmin = 0.2f0  # minimum feature length in design region [microns]
+    nbasis = 4 # complexity of design region
+    doflux = false
+    η = 0.2
     Courant = 0.5f0 # Courant number
     C = 1000 # scale loss
 
@@ -80,7 +98,7 @@ for (nres, contrast, f_reltol, iterations) in schedule
     # loads Google's Ceviche challenge
     λ = 1.28f0 # wavelength in microns
     _dx = λ * dx
-    @unpack base, design_start, design_sz, ports, TE0 = load("waveguide_bend.bson", _dx)
+    @unpack base, design_start, design_sz, wwg, ports, TE0, wwg, lwg, ld, lp = load("examples", "$name.bson", _dx)
     L = size(base) .* dx # domain dimensions [wavelength]
     sz0 = size(base)
     tspan = (0.0f0, T)
@@ -88,29 +106,39 @@ for (nres, contrast, f_reltol, iterations) in schedule
     x, v = TE0
     x ./= λ
     v /= maximum(v)
+
     global model
     if isnothing(model)
-        model = Mask(design_sz, 3, contrast; diagonal_symmetry=true) # parameterized binary mask for design region
+        model = Mask(design_sz, nbasis, contrast; diagonal_symmetry=true) # parameterized binary mask for design region
     else
-        global model.sz = design_sz
+        model = Mask(model; dims=design_sz)
     end
+
     # setup FDTD
     polarization = :TMz
     boundaries = [] # unspecified boundaries default to PML
-    monitors = [Monitor(ports[1] / λ, [:Ez, :Hy]), Monitor(ports[2] / λ, [:Ez, :Hx,])]
+    r = 1.6wwg / 2
+    append!(ports, [
+        [lp-r:_dx:lp+r, lwg],
+        [lwg, lwg:_dx:lwg+ld],
+        [lwg + ld, lwg:_dx:lwg+ld],
+        # [lwg, lp:_dx:lp+r],
+        [lwg:_dx:lwg+ld, lwg + ld,],
+        [lwg:_dx:lwg+ld, lwg,],
+        # [lwg + ld, lwg:_dx:lwg+ld,],
+    ])
+    monitors = ports ./ λ
     g = linear_interpolation(x, v)
     sources = [CenteredSource(t -> cos(F(2π) * t), (x, y) -> g(y), ports[1] / λ, [0, 0.6 / λ]; Jz=1)]
-    fdtd_configs = setup(boundaries, sources, monitors, L, dx, polarization; F, Courant, T)
-    @unpack dt, geometry_padding, field_padding, source_effects, monitor_configs, fields = fdtd_configs
+    global fdtd_configs = setup(boundaries, sources, monitors, L, dx, polarization; F, Courant, T)
+    @unpack dt, geometry_padding, field_padding, source_effects, monitor_idxs, fields = fdtd_configs
 
-    a = ones(F, sz0)
-    μ = 1a
-    σ = 0a
-    σm = 0a
-    μ, σ, σm = apply(geometry_padding; μ, σ, σm)
+    μ = apply(geometry_padding[:μ], ones(F, sz0))
+    σ = apply(geometry_padding[:σ], zeros(F, sz0))
+    σm = apply(geometry_padding[:σm], zeros(F, sz0))
 
     u0 = collect(values(fields))
-    sz = size(first(fields)) # full field size including PML padding
+    dims = size(first(fields)) # full field size including PML padding
 
     # setup design region to be optimized
     model0 = deepcopy(model)
@@ -120,36 +148,39 @@ for (nres, contrast, f_reltol, iterations) in schedule
 
     # pre-optimization simulation
     p0 = make_geometry(model0(), static_geometry, fdtd_configs.geometry_padding)
-    @showtime global sol0 = sim(u0, p0, T, fdtd_configs)
-    recordsim(sol0, p0, fdtd_configs, "bend-pre_$nres.gif", title="start of training"; frameat, framerate)
-
-    # opt_state = Flux.setup(opt, model)
-    # for i = 1:iterations
-    #     @time begin
-    #         l, (dldm,) = withgradient(m -> loss(u0, m(), static_geometry, fdtd_configs), model,)
-    #         Flux.update!(opt_state, model, dldm)
-    #         println("$i $l")
-    #     end
-    # end
-    x0, re = destructure(model)
-    _loss = m -> C * loss(u0, m(), static_geometry, fdtd_configs)
-    f, g!, fg! = optimfuncs(_loss, re)
-    od = OnceDifferentiable(f, g!, fg!, x0)
-    @showtime res = optimize(od, x0, LBFGS(), Optim.Options(; f_reltol, g_tol=0, iterations, show_every=1, show_trace=true))
-    # res = 
-
-    model = re(minimizer(res))
-
+    @showtime global sol0 = sim(u0, p0, fdtd_configs)
+    recordsim(sol0, p0, fdtd_configs, "$name-pre_$nres.gif", title="start of training"; frameat, framerate)
+    if doflux
+        "Flux.jl train"
+        opt = Adam(η)
+        opt_state = Flux.setup(opt, model)
+        for i = 1:iterations
+            @time begin
+                l, (dldm,) = withgradient(model -> C * loss(u0, model(), static_geometry, fdtd_configs), model)
+                # l, dldm = withgradient(() -> loss(u0, model(), static_geometry, fdtd_configs), params(model),)
+                Flux.update!(opt_state, model, dldm)
+                println("$i $l")
+            end
+        end
+    else
+        "Optim.jl train"
+        x0, re = destructure(model)
+        _loss = m -> C * loss(u0, m(), static_geometry, fdtd_configs)
+        f, g!, fg! = optimfuncs(_loss, re)
+        od = OnceDifferentiable(f, g!, fg!, x0)
+        @showtime res = optimize(od, x0, LBFGS(), Optim.Options(; f_reltol, g_tol=0, iterations, show_every=1, show_trace=true))
+        model = re(minimizer(res))
+    end
     if iterations > 0
         # post-optimization simulation
         p = make_geometry(model(), static_geometry, fdtd_configs.geometry_padding)
-        @showtime global sol = sim(u0, p, T, fdtd_configs)
+        @showtime global sol = sim(u0, p, fdtd_configs)
 
         # save movies of simulation
-        recordsim(sol, p, fdtd_configs, "bend-post_$nres.gif", title="after some training"; frameat, framerate)
+        recordsim(sol, p, fdtd_configs, "$name-post_$nres.gif", title="after some training"; frameat, framerate)
     end
 end
 
 
 
-plotmonitors(sol0, monitor_configs,)
+# plotmonitors(sol0, monitor_idxs,)

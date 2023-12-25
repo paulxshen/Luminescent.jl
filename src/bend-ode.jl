@@ -35,7 +35,7 @@ solver = Euler()
 
 # loads Google's Ceviche challenge
 _dx = λ * dx
-@unpack base, design_start, design_sz, l = load("waveguide_bend", _dx)
+@unpack base, design_start, design_dims, l = load("waveguide_bend", _dx)
 L = size(base) .* dx # domain dimensions [wavelength]
 l = l ./ λ
 sz0 = size(base)
@@ -43,7 +43,7 @@ tspan = (0.0f0, T)
 dt = dx * Courant
 saveat = 1 / 16.0f0
 
-model = Mask(design_sz, lmin / dx) # parameterized binary mask for design region
+model = Mask(design_dims, lmin / dx) # parameterized binary mask for design region
 model0 = deepcopy(model)
 polarization = :TMz
 ϵ1 = 2.25f0
@@ -55,7 +55,7 @@ sources = [GaussianBeam(t -> cos(F(2π) * t), 0.1f0 / λ, (0.0f0, l), 1; Jz=1)]
 @unpack geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields =
     setup(boundaries, sources, monitors, L, dx, polarization; F)
 nf = length(fields)
-sz = size(first(fields))
+dims = size(first(fields))
 nd = length(L)
 np = 4
 
@@ -74,9 +74,9 @@ p = make_geometry(model, base, design_start, static_geometry)
 # Base.Vector{F}(a::AbstractArray)=vec(a)
 Base.:+(x::Tuple, y::Vector) = x .+ y
 function dudt(u, p, t)
-    p = reshape(p, sz..., np)
+    p = reshape(p, dims..., np)
     ϵ, μ, σ, σm = eachslice(p, dims=ndims(p)) |> a -> [[a] for a = a]
-    u = reshape(u, sz..., nf)
+    u = reshape(u, dims..., nf)
     Ez, Hx, Hy, Jz0 = eachslice(u, dims=ndims(u))
     Jz, = apply(source_effects, t; Jz=Jz0)
 
@@ -95,7 +95,7 @@ function dudt(u, p, t)
     dHdt = -(∇ × E_ + σm * H) / μ
     dHxdt, dHydt = dHdt
 
-    dJzdt = zeros(F, sz)
+    dJzdt = zeros(F, dims)
     reduce(vcat, vec.((dEzdt, dHxdt, dHydt, dJzdt)))
     # reduce(vcat,vec.((dEdt..., dHdt..., dJzdt)))
     # cat(dEdt..., dHdt..., dJzdt,dims=nd+1)
@@ -118,7 +118,7 @@ function loss(model; withsol=false, callback=nothing)
     )
     sol = Array(sol)
     nt = size(sol)[end]
-    sol = reshape(sol, sz..., nf, nt)
+    sol = reshape(sol, dims..., nf, nt)
 
     t = (round(Int, (T - 1) / saveat):round(Int, T / saveat)) .+ 1
     Ez, Hx = get(sol, monitor_configs[2], t)
@@ -153,11 +153,11 @@ i = round.(Int, t ./ saveat) .+ 1
 framerate = round(Int, 1 / frameat)
 fig = Figure()
 umax = maximum(sol)
-p = reshape(p, sz..., np)
+p = reshape(p, dims..., np)
 record(fig, "bend.gif", collect(zip(i, t)); framerate) do (i, t)
     ax = Axis(fig[1, 1]; title="t = $t\nEz")
 
-    # u = reshape(sol[:,i],sz...,nf,nt)
+    # u = reshape(sol[:,i],dims...,nf,nt)
     u = sol[:, :, :, i]
     plotstep(u, p, t; ax, colorrange=(-1, 1) .* umax)
 end

@@ -6,15 +6,20 @@ function step_TMz(u, p, t, configs)
     Jz, = apply(source_effects, t; Jz=0)
 
     # first update E
-    H_ = apply(field_padding, ; Hx=PaddedArray(Hx), Hy=PaddedArray(Hy))
+    Hx_ = apply(field_padding[:Hx], PaddedArray(Hx))
+    Hy_ = apply(field_padding[:Hy], PaddedArray(Hy))
+    H_ = [Hx_, Hy_]
+
     E = [Ez]
     J = [Jz]
+
     dEdt = (∇ × H_ - σ * E - J) / ϵ
     E += dEdt * dt
     Ez, = E
 
     # then update H
-    E_ = apply(field_padding, ; Ez=PaddedArray(Ez))
+    Ez_ = apply(field_padding[:Ez], PaddedArray(Ez))
+    E_ = [Ez_]
     H = [Hx, Hy]
     dHdt = -(∇ × E_ + σm * H) / μ
     H += dHdt * dt
@@ -22,3 +27,5 @@ function step_TMz(u, p, t, configs)
 
     [Ez, Hx, Hy,]
 end
+
+Flux.trainable(m::PaddedArray) = (; a=m.a)

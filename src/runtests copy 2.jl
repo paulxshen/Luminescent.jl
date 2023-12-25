@@ -14,7 +14,7 @@ bg = npzread("bend.npy")
 heatmap(bg)
 f(x) = 0.1 < x < 0.9
 mstart = Tuple(findfirst(f, bg))
-msz = 1 .+ Tuple(Tuple(findlast(f, bg)) .- mstart)
+mdims = 1 .+ Tuple(Tuple(findlast(f, bg)) .- mstart)
 dx_ = 1.6 / 40
 L = size(bg) .* dx_
 
@@ -23,17 +23,17 @@ L = L ./ λ
 l, _ = L
 lc = (57.5 / 108) * l
 dx = 1 / 40
-sz = round.(Int, L ./ dx)
-msz = round.(Int, msz .* dx_ ./ λ ./ dx)
+dims = round.(Int, L ./ dx)
+mdims = round.(Int, mdims .* dx_ ./ λ ./ dx)
 mstart = round.(Int, mstart .* dx_ ./ λ ./ dx)
-bg = imresize(bg, sz)
-bg[[a:b for (a, b) = zip(mstart, mstart .+ msz .- 1)]...] .= 0
+bg = imresize(bg, dims)
+bg[[a:b for (a, b) = zip(mstart, mstart .+ mdims .- 1)]...] .= 0
 
 polarization = :TMz
 ϵ1 = 2.25
 ϵ2 = 12.25
 # l = 32
-model = Mask(msz, 0.2 / dx)
+model = Mask(mdims, 0.2 / dx)
 
 ∇ = Del([dx, dx])
 function f(fields, p, t)

@@ -11,11 +11,11 @@ bg = npzread("bend.npy")
 heatmap(bg)
 f(x) = 0.1 < x < 0.9
 mstart = findfirst(f, bg)
-msz = 1 .+ collect(findlast(f, bg) - mstart)
+mdims = 1 .+ collect(findlast(f, bg) - mstart)
 dx = 1.6 / 40
 
 λ = 1.28
-sz = round.(Int, size(bg) .* dx / λ)
+dims = round.(Int, size(bg) .* dx / λ)
 bg = resize(bg, dz)
 
 dx = 1 / 16
@@ -24,7 +24,7 @@ polarization = :TMz
 ϵ2 = 12.25
 # l = 32
 # geometry = (; ϵ=ones(l, l))
-mask = Mask(msz, 0.2 / dx)
+mask = Mask(mdims, 0.2 / dx)
 mask = place(bg, mask, mstart)
 ϵ = ϵ2 * mask + ϵ1 * (1 .- mask)
 geometry = (; ϵ)

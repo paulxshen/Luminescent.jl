@@ -82,7 +82,7 @@ for (nres, α, nepochs) in schedule
     # loads Google's Ceviche challenge
     λ = 1.28f0 # wavelength in microns
     _dx = λ * dx
-    @unpack base, design_start, design_sz, ports, TE0 = load("waveguide_bend.bson", _dx)
+    @unpack base, design_start, design_dims, ports, TE0 = load("waveguide_bend.bson", _dx)
     L = size(base) .* dx # domain dimensions [wavelength]
     sz0 = size(base)
     tspan = (0.0f0, T)
@@ -92,9 +92,9 @@ for (nres, α, nepochs) in schedule
     v /= maximum(v)
     global model
     if isnothing(model)
-        model = Jello.Mask(design_sz, lmin / λ / dx; diagonal_symmetry=true) # parameterized binary mask for design region
+        model = Jello.Mask(design_dims, lmin / λ / dx; diagonal_symmetry=true) # parameterized binary mask for design region
     else
-        global model.sz = design_sz
+        global model.dims = design_dims
     end
     # setup FDTD
     polarization = :TMz
@@ -112,7 +112,7 @@ for (nres, α, nepochs) in schedule
     μ, σ, σm = apply(geometry_padding; μ, σ, σm)
 
     u0 = collect(values(fields))
-    sz = size(first(fields)) # full field size including PML padding
+    dims = size(first(fields)) # full field size including PML padding
 
     # setup design region to be optimized
     model0 = deepcopy(model)

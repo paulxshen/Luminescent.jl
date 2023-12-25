@@ -16,7 +16,7 @@ Random.seed!(1)
 
 train = true
 train = false
-@load "waveguide_bend.bson" base design_start design_sz dx
+@load "waveguide_bend.bson" base design_start design_dims dx
 # heatmap(base)
 T = 5.0f0
 tspan = (0.0f0, T)
@@ -32,11 +32,11 @@ L = size(base) .* microns_dx
 L = L ./ λ
 l, _ = L
 lc = (57.5f0 / 108) * l
-sz = round.(Int, L ./ dx)
-design_sz = round.(Int, design_sz .* microns_dx ./ λ ./ dx)
+dims = round.(Int, L ./ dx)
+design_dims = round.(Int, design_dims .* microns_dx ./ λ ./ dx)
 design_start = 1 .+ round.(Int, (design_start .- 1) .* microns_dx ./ λ ./ dx)
-base = imresize(base, sz)
-model = Mask(design_sz, 0.2f0 / dx)
+base = imresize(base, dims)
+model = Mask(design_dims, 0.2f0 / dx)
 if train
 end
 # heatmap(base)
@@ -53,17 +53,17 @@ sources = [GaussianBeam(t -> cos(F(2π) * t), 0.05f0, (0.0f0, lc), -1; Ez=1)]
 @unpack geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields =
     setup(boundaries, sources, monitors, L, dx, polarization; F)
 
-static_geometry = (; μ=ones(Int, sz), σ=zeros(Int, sz), σm=zeros(Int, sz))
+static_geometry = (; μ=ones(Int, dims), σ=zeros(Int, dims), σm=zeros(Int, dims))
 geometry = (; ϵ, static_geometry...)
 geometry = apply(geometry_padding, geometry)
 @unpack ϵ, μ, σ, σm = geometry
-_sz = size(ϵ)
+_dims = size(ϵ)
 
 p = comp_vec((:ϵ, :μ, :σ, :σm), Array.((ϵ, μ, σ, σm))...,)
 
 ∇ = Del([dx, dx])
 function dudt(u, p, t)
-    ϵ, μ, σ, σm = eachslice(reshape(p, _sz..., 4), dims=3)
+    ϵ, μ, σ, σm = eachslice(reshape(p, _dims..., 4), dims=3)
     # @unpack ϵ, μ, σ, σm=m.p
     ϵ, μ, σ, σm = [ϵ], [μ], [σ], [σm]
 
