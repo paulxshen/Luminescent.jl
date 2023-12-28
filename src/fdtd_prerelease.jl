@@ -1,5 +1,5 @@
 module fdtd_prerelease
-using UnPack, LinearAlgebra, Random, StatsBase, Images, Interpolations, Flux, Optim, DataStructures
+using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Flux, Optim, DataStructures
 using Flux: withgradient
 using Optim: Options, minimizer
 using Zygote: ignore, Buffer
@@ -23,4 +23,4 @@ export Monitor
 export setup, apply
 end
 
-# ]add UnPack,StatsBase, DataStructures, LinearAlgebra, Random, Images, Interpolations, Flux,Zygote, Optim,ArrayPadding, Jello
+# ]add UnPack,StatsBase, DataStructures, LinearAlgebra, Random,  Interpolations, Flux,Zygote, Optim,ArrayPadding, Jello

@@ -31,7 +31,7 @@ frameat = 1 / 4 # captures frame every _ periods
 framerate = 16 # playback speed
 ########################
 
-using UnPack, LinearAlgebra, Random, StatsBase, Images, Interpolations, Flux, Optim, Jello
+using UnPack, LinearAlgebra, Random, StatsBase, ImageTransformations, Interpolations, Flux, Optim, Jello
 using Flux: withgradient
 using Optim: Options, minimizer
 
