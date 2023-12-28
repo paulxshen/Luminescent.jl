@@ -1,4 +1,3 @@
-using LinearAlgebra, Functors
 
 VF = Union{AbstractVector{<:AbstractArray},Tuple{<:AbstractArray},NamedTuple}
 struct Del

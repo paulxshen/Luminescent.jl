@@ -1,5 +1,5 @@
 module fdtd_prerelease
-using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Flux, Optim, DataStructures
+using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Flux, Functors, Optim, DataStructures
 using Flux: withgradient
 using Optim: Options, minimizer
 using Zygote: ignore, Buffer
