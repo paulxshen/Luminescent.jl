@@ -165,8 +165,16 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
     c = 0
     save_info = Int[]
     monitor_info = [
-        map(start, m.span) do s, x
-            idxs = s .+ round.(Int, x / dx)
+        begin
+
+            idxs = map(start, m.span) do s, x
+                x = round.(Int, x / dx)
+                if isa(x, Real)
+                    s .+ x
+                else
+                    s+x[1]:s+x[2]
+                end
+            end
             center = round.(Int, mean.(idxs))
             (; idxs, center)
         end for m = monitors

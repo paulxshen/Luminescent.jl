@@ -1,4 +1,5 @@
 using DelimitedFiles
+using BSON: @load
 
 function load(dir, s, _dx;)
     @load "$dir/$s" base design_start design_sz dx
