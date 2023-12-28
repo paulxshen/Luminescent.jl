@@ -28,7 +28,7 @@ function recordsim(sol, p, fdtd_configs, fn; title="", frameat=1 / 16, framerate
         maximum(abs, v[1])
     end)
     # umax = maximum(sol[end][1])
-    record(fig, fn, t; framerate) do t
+    r = record(fig, fn, t; framerate) do t
         # i = round.(Int, t ./ dt) .+ 1
         i = round(Int, t / dt + 1)
         empty!(fig)
@@ -38,6 +38,7 @@ function recordsim(sol, p, fdtd_configs, fn; title="", frameat=1 / 16, framerate
         plotstep!(ax, u, p, fdtd_configs; colorrange)
     end
     println("saved simulation recording to $fn")
+    r
 end
 
 function plotmonitors(sol, monitor_info)
