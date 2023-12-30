@@ -63,6 +63,17 @@ struct GaussianBeam
         new(f, σ, fields, center, dims)
     end
 end
+"""
+    function CenteredSource(f, g, center, L; fields...)
+
+Constructs custom centered source. Can be used to specify modal sources
+
+Args
+- f: time function
+- g: spatial function
+- L: source dimensions in [wavelengths]
+- fields: which fields to excite & their scaling constants (typically a current source, eg Jz=1)
+"""
 struct CenteredSource
     f
     g

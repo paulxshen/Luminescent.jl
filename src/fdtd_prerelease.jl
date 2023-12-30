@@ -16,7 +16,7 @@ include("monitors.jl")
 include("fdtd.jl")
 
 export reindex
-export Del, stepTMz
+export Del, stepTMz, step1, step3, stepTEz
 export Periodic, PML, PEC, PMC, Padding
 export PlaneWave, GaussianBeam, UniformSource, CenteredSource, place
 export Monitor

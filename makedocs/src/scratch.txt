@@ -1,0 +1,3 @@
+ <!-- uses DiffEqFlux.jl neural ODEs and fits within the SciML ecosystem. We have fully featured boundary conditions and support dispersive lossy materials (had to pull some hacks to appease Zygote.jl here). Meant as a differentiable, inverse design focused version of a commercial solver like Ansys Lumerical.
+Documentation for _fdtd.jl
+I’ll include examples on designing stacks, gratings and couplers as well as meta-materials and meta-surfaces. The electromagnetic FDTD update is simple, drawing on earlier patterns in FDTD.jl and uFDTD.jl based on Schneider’s uFDTD book -->

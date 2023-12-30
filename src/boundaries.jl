@@ -1,18 +1,37 @@
 using LinearAlgebra, UnPack
 
+"""
+    Periodic(dims)
+
+periodic boundary
+"""
 struct Periodic
     dims
 end
+"""
+    PEC(dims)
 
+perfect electrical conductor
+"""
 struct PEC
     dims
 end
+"""
+    PMC(dims)
+
+perfect magnetic conductor
+"""
 struct PMC
     dims
 end
 struct PEMC
     dims
 end
+"""
+    function PML(dims, d=0.5f0, σ=8.0f0)
+
+Constructs perfectly matched layers (PML aka ABC, RBC) boundary of depth `d` wavelengths 
+"""
 struct PML
     dims
     d::Real

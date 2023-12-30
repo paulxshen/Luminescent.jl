@@ -164,7 +164,7 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
 
     c = 0
     save_info = Int[]
-    monitor_info = [
+    monitor_instances = [
         begin
 
             idxs = map(start, m.span) do s, x
@@ -176,10 +176,10 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 end
             end
             center = round.(Int, mean.(idxs))
-            (; idxs, center)
+            (; idxs, center, dx)
         end for m = monitors
     ]
     dt = dx * Courant
     sz0 = Tuple(sz0)
-    (; geometry_padding, field_padding, source_effects, monitor_info, save_info, fields, Ie, Ih, dx, esz0, hsz0, esz, hsz, dt, kw...)
+    (; geometry_padding, field_padding, source_effects, monitor_instances, save_info, fields, Ie, Ih, dx, esz0, hsz0, esz, hsz, dt, kw...)
 end

@@ -2,4 +2,6 @@
 /recycle
 /.venv
 /*.gif
+/*.mp4
 /.vscode
+docs/build/

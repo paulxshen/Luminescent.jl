@@ -1,10 +1,14 @@
 using Documenter
-using _fdtd
+include("../src/fdtd_prerelease.jl")
+using .fdtd_prerelease
 
 makedocs(
-    sitename = "_fdtd",
-    format = Documenter.HTML(),
-    modules = [_fdtd]
+    sitename="fdtd_prerelease",
+    format=Documenter.HTML(),
+    # modules=[fdtd_prerelease],
+    pages=[
+        "index.md",
+    ]
 )
 
 # Documenter can also automatically deploy documentation to gh-pages.
@@ -13,3 +17,4 @@ makedocs(
 #=deploydocs(
     repo = "<repository url>"
 )=#
+run(`mv makedocs/build docs`)

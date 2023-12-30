@@ -21,7 +21,7 @@ framerate = 16 # playback speed
 using UnPack, LinearAlgebra
 include("../src/fdtd_prerelease.jl")
 using .fdtd_prerelease
-include("utils/plot_recipes.jl")
+include("$data_dir/plot_recipes.jl")
 
 F = Float32
 name = "periodic_array"
@@ -33,9 +33,10 @@ L = F[8, 8] # domain dimensions in [wavelengths]
 polarization = :TMz
 boundaries = [Periodic(2), PEC(1)] # unspecified boundaries default to PML
 monitors = [Monitor(L / 2)]
+# monitors = [Monitor([6, [3, 5]])]
 sources = [PlaneWave(t -> exp(-((t - 1) / 1)^2) * cos(F(2π) * t), -1; Jz=1)]
 fdtd_configs = setup(boundaries, sources, monitors, L, dx, polarization; F, Courant, T)
-@unpack esz0, hsz0, dt, geometry_padding, field_padding, source_effects, monitor_info, fields = fdtd_configs
+@unpack esz0, hsz0, dt, geometry_padding, field_padding, source_effects, monitor_instances, fields = fdtd_configs
 
 ϵ1 = 1 #
 ϵ2 = 2.25f0 # 

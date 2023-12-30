@@ -9,7 +9,7 @@ function plotstep!(ax, u::AbstractVector, p::AbstractVector, configs; colorrange
 
     "plot monitors"
     marker = :rect
-    for (i, m) = enumerate(configs.monitor_info)
+    for (i, m) = enumerate(configs.monitor_instances)
         x, y = m.idxs
         scatter!.(ax, x, y, ; marker, color=:yellow)
         x, y = m.center
@@ -38,13 +38,13 @@ function recordsim(sol, p, fdtd_configs, fn; title="", frameat=1 / 16, framerate
     r
 end
 
-# function plotmonitors(sol, monitor_info)
+# function plotmonitors(sol, monitor_instances)
 
 #     t = range(0, T, length=size(sol)[end])
 #     fig = Figure()
 #     for i = 1:2
 #         ax = Axis(fig[i, 1], title="Monitor $i")
-#         E, H = get(sol, monitor_info[i],)
+#         E, H = get(sol, monitor_instances[i],)
 #         lines!(ax, t, E)
 #         lines!(ax, t, H)
 #         # lines!(ax, t, H .* E)

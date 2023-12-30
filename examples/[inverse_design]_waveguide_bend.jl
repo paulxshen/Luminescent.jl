@@ -94,7 +94,7 @@ for (nres, contrast, f_reltol, iterations) in schedule
     polarization = :TMz # Ez, Hx, Hy
     boundaries = [] # unspecified boundaries default to PML
     global fdtd_configs = setup(boundaries, sources, monitors, L, dx, polarization; F, Courant, T)
-    @unpack Ie, Ih, dx, esz0, hsz0, esz, hsz, dt, geometry_padding, field_padding, source_effects, monitor_info, fields = fdtd_configs
+    @unpack Ie, Ih, dx, esz0, hsz0, esz, hsz, dt, geometry_padding, field_padding, source_effects, monitor_instances, fields = fdtd_configs
 
     μ = apply(geometry_padding[:μ], ones(F, hsz0))
     σ = apply(geometry_padding[:σ], zeros(F, esz0))
@@ -129,7 +129,7 @@ for (nres, contrast, f_reltol, iterations) in schedule
     The latter auxiliary objectives reduce local minima
     """
     function loss(u0, design, static_geometry, fdtd_configs,)
-        @unpack dx, dt, T, monitor_info = fdtd_configs
+        @unpack dx, dt, T, monitor_instances = fdtd_configs
         u = u0
         p = make_geometry(design, static_geometry, fdtd_configs.geometry_padding)
 
@@ -139,7 +139,7 @@ for (nres, contrast, f_reltol, iterations) in schedule
         end
         reduce(((u, l), t) -> (stepTMz(u, p, t, fdtd_configs), begin
                 for i = 3:7
-                    Ez, Hx, Hy = getindex.(u, Ref.(monitor_info[i].idxs)...)
+                    Ez, Hx, Hy = getindex.(u, Ref.(monitor_instances[i].idxs)...)
                     l +=
                         if i == 2
                             sum(Ez .* Hx + 0 * Hy) # must include all fields otherwise Zygote fails
@@ -199,4 +199,4 @@ end
 
 
 
-# plotmonitors(sol0, monitor_info,)
+# plotmonitors(sol0, monitor_instances,)
