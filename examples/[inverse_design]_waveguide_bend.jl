@@ -35,8 +35,8 @@ using UnPack, LinearAlgebra, Random, StatsBase, ImageTransformations, Interpolat
 using Flux: withgradient
 using Optim: Options, minimizer
 
-include("../src/fdtd_prerelease.jl")
-using .fdtd_prerelease
+include("../src/FDTDEngine.jl")
+using .FDTDEngine
 
 include("utils/invrs_load.jl")
 include("utils/plot_recipes.jl")
@@ -87,7 +87,7 @@ for (nres, contrast, f_reltol, iterations) in schedule
     x ./= λ
     v /= maximum(v)
     g = linear_interpolation(x, v)
-    sources = [CenteredSource(t -> cos(F(2π) * t), (x, y) -> g(y), [lwg / 2, lp] / λ, [0, 0.6 / λ]; Jz=1)]
+    sources = [Source(t -> cos(F(2π) * t), (x, y) -> g(y), [lwg / 2, lp] / λ, [0, 0.6 / λ]; Jz=1)]
 
 
     # setup FDTD

@@ -6,14 +6,24 @@ Args
 - L: vector of lengths in wavelengths of simulation domain
 - polarization: only applies to 2d which can be :TMz (Ez, Hx, Hy) or :TEz (Hz, Ex, Ey)
 """
-function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32, Courant=0.5f0, kw...)# Courant number)
-    sz0 = round.(Int, L ./ dx)
+function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=1, μ=1, σ=0, σm=0, F=Float32, Courant=0.5f0, kw...)# Courant number)
+    # sz0 = round.(Int, L ./ dx)
+    # sz0=size(ϵ)
+    a = ones(F, sz0)
+    # if isa(μ,Number+)
+    μ *= a
+    σ *= a
+    σm *= a
+    ϵ *= a
+
     d = length(sz0)
     esz = collect(sz0)
     hsz = copy(esz)
     npad = zeros(Int, d, 2)
     nodes = fill(:U, d, 2)
     db = Any[PML(j * i,) for i = 1:d, j = (-1, 1)]
+    field_padding = DefaultDict(() -> Padding[])
+    geometry_padding = DefaultDict(() -> Padding[])
 
     for b = boundaries
         for i = b.dims
@@ -67,12 +77,13 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
         elseif nodes[i, :] == [:E, :E]
 
             hsz[i] += 1
-            μ = pad(μ, :replicate, fill(0, d), Int.(1:d .== i))
+            push!(geometry_padding[:μ], Padding(:μ, :replicate, fill(0, d), Int.(1:d .== i)))
+            push!(geometry_padding[:σm], Padding(:σm, :replicate, fill(0, d), Int.(1:d .== i)))
         elseif nodes[i, :] == [:H, :H]
 
             esz[i] += 1
-            ϵ = pad(ϵ, :replicate, fill(0, d), Int.(1:d .== i))
-            σ = pad(σ, :replicate, fill(0, d), Int.(1:d .== i))
+            push!(geometry_padding[:σ], Padding(:σ, :replicate, fill(0, d), Int.(1:d .== i)))
+            push!(geometry_padding[:ϵ], Padding(:ϵ, :replicate, fill(0, d), Int.(1:d .== i)))
         end
     end
 
@@ -122,8 +133,7 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
     end
     fields = NamedTuple([k => collect(v) for (k, v) = pairs(fields)])
 
-    field_padding = DefaultDict(() -> Padding[])
-    geometry_padding = DefaultDict(() -> Padding[])
+
     for i = 1:d
         xyz = para = perp = [:x, :y, :z]
 
@@ -135,10 +145,10 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 l = j == 1 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 r = j == 2 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 info = lazy = false
-                push!(geometry_padding[:ϵ], Padding(:ϵ, :replicate, l, r, info, lazy))
-                push!(geometry_padding[:μ], Padding(:μ, :replicate, l, r, info, lazy))
-                push!(geometry_padding[:σ], Padding(:σ, ReplicateRamp(F(b.σ)), l, r, info, lazy))
-                push!(geometry_padding[:σm], Padding(:σm, ReplicateRamp(F(b.σ)), l, r, info, lazy))
+                push!(geometry_padding[:ϵ], Padding(:ϵ, :replicate, l, r))
+                push!(geometry_padding[:μ], Padding(:μ, :replicate, l, r))
+                push!(geometry_padding[:σ], Padding(:σ, ReplicateRamp(F(b.σ)), l, r))
+                push!(geometry_padding[:σm], Padding(:σm, ReplicateRamp(F(b.σ)), l, r))
             end
             l = j == 1 ? Int.((1:d) .== i) : zeros(Int, d)
             r = j == 2 ? Int.((1:d) .== i) : zeros(Int, d)
@@ -151,9 +161,9 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                     info = true
                     lazy = false
                     if t == Periodic
-                        push!(field_padding[k], Padding(k, :periodic, l, r, info, lazy))
+                        push!(field_padding[k], Padding(k, :periodic, l, r))
                     else
-                        push!(field_padding[k], Padding(k, 0, l, r, info, lazy))
+                        push!(field_padding[k], Padding(k, 0, l, r))
                     end
                 end
             end
@@ -164,6 +174,21 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
 
     c = 0
     save_info = Int[]
+    if d == 1
+        step = step1
+        pf = u -> [u[1] .* u[2]]
+    elseif d == 3
+        step = step3
+        pf = u -> u[1:3] × u[4:6]
+    else
+        step = step2
+        if polarization == :TMz
+            pf = u -> [-u[1] .* u[3], u[2] .* u[1]]
+        else
+            pf = u -> [u[1] .* u[3], -u[2] .* u[1]]
+        end
+    end
+    power(m, u) = sum(sum(pf(getindex.(u, Ref.(m.idxs)...)) .* m.normal))
     monitor_instances = [
         begin
 
@@ -176,10 +201,10 @@ function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Flo
                 end
             end
             center = round.(Int, mean.(idxs))
-            (; idxs, center, dx)
+            (; idxs, center, normal=m.normal, dx)
         end for m = monitors
     ]
     dt = dx * Courant
     sz0 = Tuple(sz0)
-    (; geometry_padding, field_padding, source_effects, monitor_instances, save_info, fields, Ie, Ih, dx, esz0, hsz0, esz, hsz, dt, kw...)
+    (; μ, σ, σm, ϵ, geometry_padding, field_padding, source_effects, monitor_instances, step, power, save_info, fields, Ie, Ih, dx, esz0, hsz0, esz, hsz, dt, kw...)
 end

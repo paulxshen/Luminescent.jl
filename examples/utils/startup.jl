@@ -1,19 +1,18 @@
-using AbbreviatedStackTraces
+using AbbreviatedStackTraces, ReverseStackTraces, Pkg
+ENV["JULIA_PKG_PRECOMPILE_AUTO"]
 ENV["JULIA_PKG_PRECOMPILE_AUTO"] = 0
-# using ReverseStackTraces
+Pkg.UPDATED_REGISTRY_THIS_SESSION[] = true
+# using 
 
 Base.round(x::AbstractFloat) = Base.round(Int, x)
 
-# T = Float32
-# Base.:+(x::Float64, y::Float32) = Float32(x) + y
-# Base.:+(x::Float32, y::Float64) = x + Float32(y)
-# Base.:-(x::Float64, y::Float32) = Float32(x) - y
-# Base.:-(x::Float32, y::Float64) = x - Float32(y)
-# Base.:*(x::Float64, y::Float32) = Float32(x) * y
-# Base.:*(x::Float32, y::Float64) = x * Float32(y)
-# Base.:/(x::Float64, y::Float32) = Float32(x) / y
-# Base.:/(x::Float32, y::Float64) = x / Float32(y)
+T = Float32
 
-Base.eachslice(a) = eachslice(a, dims=ndims(a))
+# Base.eachslice(a) = eachslice(a, dims=ndims(a))
 
 Base.getindex(s::Symbol, i) = Symbol(String(s)[i])
+
+Base.:+(x::AbstractArray, y::Number) = x .+ y
+Base.:+(x::Number, y::AbstractArray) = x .+ y
+Base.:-(x::AbstractArray, y::Number) = x .- y
+Base.:-(x::Number, y::AbstractArray) = x .- y

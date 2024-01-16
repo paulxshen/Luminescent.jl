@@ -19,8 +19,8 @@ framerate = 16 # playback speed
 ########################
 
 using UnPack, LinearAlgebra
-include("../src/fdtd_prerelease.jl")
-using .fdtd_prerelease
+include("../src/FDTDEngine.jl")
+using .FDTDEngine
 include("$data_dir/plot_recipes.jl")
 
 F = Float32

@@ -65,7 +65,11 @@ function (m::Del)(a, p=*)
         end
     end
 end
-
+function LinearAlgebra.cross(a::VF, b::VF)
+    u, v, w = b
+    x, y, z = a
+    return [w .* y - v .* z, u .* z - w .* x, v .* x - u .* y]
+end
 function LinearAlgebra.dot(m::Del, a)
     m(a, dot)
 end

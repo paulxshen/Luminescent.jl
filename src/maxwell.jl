@@ -113,7 +113,7 @@ function step3(u, p, t, configs)
     E = [Ex, Ey, Ez]
     J = [Jx, Jy, Jz]
 
-    dEdt = (∇ × H_ - σ * E - J) / ϵ
+    dEdt = (∇ × H_ - σ * E .- J) / ϵ
     E += dEdt * dt
     Ex, Ey, Ez, = E
 

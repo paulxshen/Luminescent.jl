@@ -1,4 +1,4 @@
-# fdtd_prerelease.jl
+# FDTDEngine.jl
 Prerelease. Expect breaking changes
 ## Overview
 Differentiable FDTD package for inverse design & topology optimization in photonics, acoustics and RF. Uses automatic differentiation by `Zygote.jl` for adjoint optimization. Integrates with `Jello.jl` to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources. Customizable physics to potentially incorporate dynamics like heat transfer, charge transport.
@@ -8,7 +8,7 @@ We do a quick 2d simulation of plane wave on periodic array of dielectric pillar
 ![](assets/periodic_array_nres_32.mp4)
 ```julia
 name = "periodic_array"
-using UnPack,fdtd_prerelease
+using UnPack,LinearAlgebra,FDTDEngine
 include("examples/utils/plot_recipes.jl")
 
 "simulation params"
@@ -56,11 +56,12 @@ Install via `Pkg.add(url="https://github.com/paulxshen/differentiable-fdtd-beta-
 Supports 1d (Ez, Hy), 2d TMz (Ez, Hx, Hy), 2d TEz (Hz, Ex, Ey) and 3d. Length and time are in units of wavelength and period. This normalization allows usage of relative  permitivity and permeability  in equations . Fields including electric, magnetic and current density are simply bundled as a vector of arrays . Boundary conditions pad the field arrays . PML paddings are multilayered, stateful and permanent, increasing size of field and geometry arrays. All other boundaries only add transient single layers which are subsequently consumed by finite differencing  every update step. Paddings are coordinated to implictly implement staggered Yee's grid for finite differencing.
 
 ## Sources
+If a source has fewer nonzero dimensions than the simulation domain, its signal will get normalized along its singleton dimensions. For example, all planar sources in 3d or line sources in 2d will get scaled up by a factor of `1/dx`. This way, discretisation would not affect radiated power.
 ```@docs
 PlaneWave
 GaussianBeam
 UniformSource
-CenteredSource
+Source
 ```
 
 ## Boundaries

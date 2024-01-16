@@ -28,7 +28,7 @@ struct PEMC
     dims
 end
 """
-    function PML(dims, d=0.5f0, σ=8.0f0)
+    function PML(dims, d=0.25f0, σ=20.0f0)
 
 Constructs perfectly matched layers (PML aka ABC, RBC) boundary of depth `d` wavelengths 
 """
@@ -36,7 +36,7 @@ struct PML
     dims
     d::Real
     σ::Real
-    function PML(dims, d=0.5f0, σ=8.0f0)
+    function PML(dims, d=0.25f0, σ=20.0f0)
         new(dims, d, σ)
     end
 end
@@ -46,12 +46,13 @@ struct Padding
     b
     l
     r
-    info
-    lazy
+    # info
+    # lazy
 end
 
 function apply(p; kw...)
-    [apply(p[k], v) for (k, v) = pairs(kw)]
+    [apply(p[k], kw[k]) for k = keys(kw)]
+    # [apply(p[k], v) for (k, v) = pairs(kw)]
 end
 function apply(p::AbstractVector{<:Padding}, a)
     y = a
