@@ -127,4 +127,4 @@ function step3(u, p, t, configs)
     [Ex, Ey, Ez, Hx, Hy, Hz]
 end
 
-Flux.trainable(m::PaddedArray) = (; a=m.a)
+# Flux.trainable(m::PaddedArray) = (; a=m.a)

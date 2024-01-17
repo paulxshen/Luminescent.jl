@@ -1,8 +1,5 @@
-using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Flux, Functors, Optim, DataStructures
-using Flux: withgradient
-using Optim: Options, minimizer
-using Zygote: ignore, Buffer
-using Jello, ArrayPadding,Porcupine
+using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Functors, Porcupine, DataStructures
+using Jello, ArrayPadding, Porcupine
 
 F = Float32
 Random.seed!(1)
