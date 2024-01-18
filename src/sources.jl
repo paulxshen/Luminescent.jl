@@ -151,10 +151,6 @@ function SourceEffect(s::Source, dx, sz, start, stop)
 end
 
 function apply(s::AbstractVector{<:SourceEffect}, t; kw...)
-    k = 0
-    ignore() do
-        k = keys(kw)
-    end
     [
         begin
             r = kw[k]
@@ -166,7 +162,7 @@ function apply(s::AbstractVector{<:SourceEffect}, t; kw...)
                 end
             end
             r
-        end for k = k
+        end for k = keys(kw)
         # end for (k, a) = pairs(kw)
     ]
 end
