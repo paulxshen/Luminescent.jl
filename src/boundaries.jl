@@ -42,10 +42,11 @@ struct PML
 end
 
 struct Padding
-    k
+
     b
     l
     r
+    out
     # info
     # lazy
 end
@@ -57,8 +58,8 @@ end
 function apply(p::AbstractVector{<:Padding}, a)
     y = a
     for p = p
-        @unpack l, r, b = p
-        y = pad(y, b, l, r;)
+        @unpack l, r, b, out = p
+        y = out ? pad(y, b, l, r;) : pad!(y, b, l, r;)
     end
     y
 end

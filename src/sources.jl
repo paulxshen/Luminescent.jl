@@ -134,7 +134,7 @@ function SourceEffect(s::GaussianBeam, dx, sz, start, stop)
     _g = place(zeros(F, sz), g, start)
     SourceEffect(f, g, _g, fields, start)
 end
-function SourceEffect(s::Source, dx, sz, start, stop)
+function SourceEffect(s::Source, dx, sizes, starts, stop)
     @unpack f, fields, center, bounds = s
     # R = round.(Int, L ./ 2 / dx)
     # I = range.(-R, R)
@@ -142,9 +142,10 @@ function SourceEffect(s::Source, dx, sz, start, stop)
     bounds = [isa(b, Number) ? [b, b] : b for b = bounds]
     I = [b[1]:dx:b[2] for b = bounds]
     g = Dict([k => [fields[k](v...) for v = Iterators.product(I...)] / dx^count(getindex.(bounds, 1) .== getindex.(bounds, 2)) for k = keys(fields)])
-    start = start .- 1 .+ index(center, dx) .- round.(Int, (length.(I) .- 1) ./ 2)
-    _g = Dict([k => place(zeros(F, sz), g[k], start) for k = keys(fields)])
-    SourceEffect(f, g, _g, fields, start)
+    o = -1 .+ index(center, dx) .- round.(Int, (length.(I) .- 1) ./ 2)
+    starts = NamedTuple([k => starts[k] .+ o for k = keys(starts)])
+    _g = Dict([k => place(zeros(F, sizes[k]), g[k], starts[k]) for k = keys(fields)])
+    SourceEffect(f, g, _g, fields, starts)
     # n = max.(1, round.(Int, L ./ dx))
     # g = ones(n...) / dx^count(L .== 0)
     # start = start .+ round.(Int, center ./ dx .- (n .- 1) ./ 2)

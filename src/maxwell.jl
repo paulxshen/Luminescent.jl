@@ -1,3 +1,4 @@
+# Base.-()
 """
     function step1(u, p, t, configs)
 
@@ -102,25 +103,28 @@ Updates fields for 3d
 function step3(u, p, t, configs)
     @unpack dx, dt, field_padding, source_effects = configs
     ∇ = Del([dx, dx, dx])
-    ϵ, μ, σ, σm = [[a] for a = p]
+    ϵ, μ, σ, σm = p
     Ex, Ey, Ez, Hx, Hy, Hz = u
     Jx, Jy, Jz, = apply(source_effects, t; Jx=0, Jy=0, Jz=0)
 
     # first update E
-    Hx_, Hy_, Hz_ = apply(field_padding; Hx=PaddedArray(Hx), Hy=PaddedArray(Hy), Hz=PaddedArray(Hz))
-    H_ = [Hx_, Hy_, Hz_]
-
-    E = [Ex, Ey, Ez]
+    # H = [Hx, Hy, Hz]
+    E = apply(field_padding; Ex=PaddedArray(Ex), Ey=PaddedArray(Ey), Ez=PaddedArray(Ez))
+    H = apply(field_padding; Hx=PaddedArray(Hx), Hy=PaddedArray(Hy), Hz=PaddedArray(Hz))
+    le = left.(E)
+    re = right.(E)
+    lh = left.(H)
+    rh = right.(H)
     J = [Jx, Jy, Jz]
+    ϵ, σ = [strip.((a,), 1 .- le, 1 .- re) for a = (ϵ, σ)]
 
-    dEdt = (∇ × H_ - σ * E .- J) / ϵ
+    dEdt = (∇ × H - σ * E .- J) / ϵ
     E += dEdt * dt
-    Ex, Ey, Ez, = E
+    E = PaddedArray.(E, le, re)
 
     # then update H
-    E_ = apply(field_padding; Ex=PaddedArray(Ex), Ey=PaddedArray(Ey), Ez=PaddedArray(Ez))
-    H = [Hx, Hy, Hz]
-    dHdt = -(∇ × E_ + σm * H) / μ
+    μ, σm = [strip.((a,), 1 .- lh, 1 .- rh) for a = (μ, σm)]
+    dHdt = -(∇ × E + σm * H) / μ
     H += dHdt * dt
     Hx, Hy, Hz = H
 

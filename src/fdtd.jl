@@ -15,15 +15,25 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     σ *= a
     σm *= a
     ϵ *= a
-
     d = length(sz0)
-    esz = collect(sz0)
-    hsz = copy(esz)
-    npad = zeros(Int, d, 2)
+    if d == 1
+        fk = (:Ez, :Hy)
+    elseif d == 2
+        if polarization == :TMz
+            fk = (:Ez, :Hx, :Hy)
+        elseif polarization == :TEz
+            fk = (:Ex, :Ey, :Hz)
+        end
+    else
+        fk = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz)
+    end
+
     nodes = fill(:U, d, 2)
     db = Any[PML(j * i,) for i = 1:d, j = (-1, 1)]
     field_padding = DefaultDict(() -> Padding[])
     geometry_padding = DefaultDict(() -> Padding[])
+    starts = Dict([k => ones(Int, d) for k = fk])
+    sizes = Dict([k => collect(sz0) for k = fk])
 
     for b = boundaries
         for i = b.dims
@@ -45,8 +55,6 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
             b = db[i, j]
             t = typeof(b)
             if t == PML
-                npad[i, j] += round(Int, b.d / dx)
-                # hpad[i, j] .+= b.d
             elseif t == PEC
                 nodes[i, j] = :E
             elseif t == PMC
@@ -76,62 +84,21 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
             nodes[i, :] = [:E, :H]
         elseif nodes[i, :] == [:E, :E]
 
-            hsz[i] += 1
-            push!(geometry_padding[:μ], Padding(:μ, :replicate, fill(0, d), Int.(1:d .== i)))
-            push!(geometry_padding[:σm], Padding(:σm, :replicate, fill(0, d), Int.(1:d .== i)))
         elseif nodes[i, :] == [:H, :H]
 
-            esz[i] += 1
-            push!(geometry_padding[:σ], Padding(:σ, :replicate, fill(0, d), Int.(1:d .== i)))
-            push!(geometry_padding[:ϵ], Padding(:ϵ, :replicate, fill(0, d), Int.(1:d .== i)))
+        end
+        if d == 3
+            l = Padding(:replicate, Int.(1:d .== i), fill(0, d), true)
+            r = Padding(:replicate, fill(0, d), Int.(1:d .== i), true)
+            p = [l, r]
+            append!(geometry_padding[:μ], p)
+            append!(geometry_padding[:σm], p)
+            append!(geometry_padding[:σ], p)
+            append!(geometry_padding[:ϵ], p)
+            # push!(geometry_padding[:ϵ], p)
         end
     end
 
-    start = npad[:, 1] .+ 1
-    Ie = [a:b for (a, b) = zip(start, start .+ esz .- 1)] # end
-    Ih = [a:b for (a, b) = zip(start, start .+ hsz .- 1)] # end
-
-    esz0 = Tuple(esz)
-    hsz0 = Tuple(hsz)
-    esz += sum(npad, dims=2)
-    hsz += sum(npad, dims=2)
-    esz = Tuple(esz)
-    hsz = Tuple(hsz)
-    if d == 1
-        fields = (;
-            Ez=zeros(F, esz),
-            Hy=zeros(F, hsz),
-            # Jz=zeros(F, esz),
-        )
-    elseif d == 2
-        if polarization == :TMz
-            fields = (;
-                Ez=zeros(F, esz),
-                Hx=zeros(F, hsz),
-                Hy=zeros(F, hsz),
-                # Jz=zeros(F, esz),
-            )
-        elseif polarization == :TEz
-            fields = (;
-                Ex=zeros(F, esz),
-                Ey=zeros(F, esz),
-                Hz=zeros(F, hsz),
-                # Jx=zeros(F, esz),
-                # Jy=zeros(F, esz),
-            )
-        end
-    else
-        fields = (;
-            Ex=zeros(F, esz),
-            Ey=zeros(F, esz),
-            Ez=zeros(F, esz),
-            Hx=zeros(F, hsz), Hy=zeros(F, hsz), Hz=zeros(F, hsz),
-            # Jx=zeros(F, esz),
-            # Jy=zeros(F, esz),
-            # Jz=zeros(F, esz),
-        )
-    end
-    fields = NamedTuple([k => collect(v) for (k, v) = pairs(fields)])
 
 
     for i = 1:d
@@ -145,10 +112,18 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
                 l = j == 1 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 r = j == 2 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 info = lazy = false
-                push!(geometry_padding[:ϵ], Padding(:ϵ, :replicate, l, r))
-                push!(geometry_padding[:μ], Padding(:μ, :replicate, l, r))
-                push!(geometry_padding[:σ], Padding(:σ, ReplicateRamp(F(b.σ)), l, r))
-                push!(geometry_padding[:σm], Padding(:σm, ReplicateRamp(F(b.σ)), l, r))
+                push!(geometry_padding[:ϵ], Padding(:replicate, l, r, true))
+                push!(geometry_padding[:μ], Padding(:replicate, l, r, true))
+                push!(geometry_padding[:σ], Padding(ReplicateRamp(F(b.σ)), l, r, true))
+                push!(geometry_padding[:σm], Padding(ReplicateRamp(F(b.σ)), l, r, true))
+                if j == 1
+                    for k = keys(starts)
+                        starts[k][i] += n
+                    end
+                end
+                for k = keys(sizes)
+                    sizes[k][i] += n
+                end
             end
             l = j == 1 ? Int.((1:d) .== i) : zeros(Int, d)
             r = j == 2 ? Int.((1:d) .== i) : zeros(Int, d)
@@ -156,21 +131,46 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
 
 
             f = nodes[i, j]
-            for k = keys(fields)
-                if startswith(String(k), String(f)) && k[2] in para
-                    info = true
-                    lazy = false
+            for k = fk
+                q = startswith(String(k), String(f))
+                if (q ? k[2] in para : k[2] in perp)
                     if t == Periodic
-                        push!(field_padding[k], Padding(k, :periodic, l, r))
+                        push!(field_padding[k], Padding(:periodic, l, r, false))
                     else
-                        push!(field_padding[k], Padding(k, 0, l, r))
+                        push!(field_padding[k], Padding(0, l, r, false))
                     end
                 end
             end
         end
     end
-    stop = start .+ sz0 .- 1
-    source_effects = [SourceEffect(s, dx, esz, start, stop) for s = sources]
+
+    # for (k, v) = pairs(geometry_padding)
+    #     for p = v
+    #         for v = values(starts)
+    #             v .+= p.l .+ p.r
+    #         end
+    #     end
+    # end
+    for (k, v) = pairs(field_padding)
+        for p = v
+            sizes[k] += p.l .+ p.r
+            starts[k] += p.l
+        end
+    end
+    # Ie = [a:b for (a, b) = zip(start, start .+ esz .- 1)] # end
+    # Ih = [a:b for (a, b) = zip(start, start .+ hsz .- 1)] # end
+
+
+
+    starts[:Jx] = starts[:Ex]
+    starts[:Jy] = starts[:Ey]
+    starts[:Jz] = starts[:Ez]
+    sizes[:Jx] = sizes[:Ex]
+    sizes[:Jy] = sizes[:Ey]
+    sizes[:Jz] = sizes[:Ez]
+    sizes = NamedTuple([k => Tuple(sizes[k]) for (k) = keys(sizes)])
+    fields = NamedTuple([k => zeros(F, Tuple(sizes[k])) for (k) = fk])
+    source_effects = [SourceEffect(s, dx, sizes, starts, sz0) for s = sources]
 
     c = 0
     save_info = Int[]
@@ -192,19 +192,21 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     monitor_instances = [
         begin
 
-            idxs = map(start, m.span) do s, x
+            idxs = NamedTuple([k => map(starts[k], m.span) do s, x
                 x = round.(Int, x / dx)
                 if isa(x, Real)
                     s .+ x
                 else
                     s+x[1]:s+x[2]
                 end
-            end
+            end for k = fk])
             center = round.(Int, mean.(idxs))
             (; idxs, center, normal=m.normal, dx)
         end for m = monitors
     ]
     dt = dx * Courant
     sz0 = Tuple(sz0)
-    (; μ, σ, σm, ϵ, geometry_padding, field_padding, source_effects, monitor_instances, step, power, save_info, fields, Ie, Ih, dx, esz0, hsz0, esz, hsz, dt, kw...)
+    (; μ, σ, σm, ϵ, geometry_padding, field_padding, source_effects, monitor_instances, step, power, save_info, fields, dx, dt, kw...)
 end
+
+Base.strip(a::AbstractArray, l, r=l) = a[[ax[1+l:end-r] for (ax, l, r) = zip(axes(a), l, r)]...]
