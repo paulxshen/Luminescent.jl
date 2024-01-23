@@ -100,35 +100,41 @@ end
 
 Updates fields for 3d
 """
-function step3(u, p, t, configs)
+function step3(u, p, t, configs; bufferfrom=nothing)
     @unpack dx, dt, field_padding, source_effects = configs
     ∇ = Del([dx, dx, dx])
     ϵ, μ, σ, σm = p
     Ex, Ey, Ez, Hx, Hy, Hz = u
-    Jx, Jy, Jz, = apply(source_effects, t; Jx=0, Jy=0, Jz=0)
+    J = apply(source_effects, t; Jx=0, Jy=0, Jz=0)
+    autodiff = !isnothing(bufferfrom)
 
     # first update E
-    # H = [Hx, Hy, Hz]
-    E = apply(field_padding; Ex=PaddedArray(Ex), Ey=PaddedArray(Ey), Ez=PaddedArray(Ez))
-    H = apply(field_padding; Hx=PaddedArray(Hx), Hy=PaddedArray(Hy), Hz=PaddedArray(Hz))
-    le = left.(E)
-    re = right.(E)
-    lh = left.(H)
-    rh = right.(H)
-    J = [Jx, Jy, Jz]
-    ϵ, σ = [strip.((a,), 1 .- le, 1 .- re) for a = (ϵ, σ)]
+    H = mark(field_padding; Hx, Hy, Hz)
+    E = [Ex, Ey, Ez]
 
-    dEdt = (∇ × H - σ * E .- J) / ϵ
+    dEdt = (∇ × H - σ * E - J) / ϵ
     E += dEdt * dt
-    E = PaddedArray.(E, le, re)
+
+    autodiff && (E = bufferfrom.(E))
+    Ex, Ey, Ez = E
+    E = apply(field_padding; Ex, Ey, Ez)
+    autodiff && (E = copy(E))
+    # println(extrema(E[3]))
 
     # then update H
-    μ, σm = [strip.((a,), 1 .- lh, 1 .- rh) for a = (μ, σm)]
+    Ex, Ey, Ez = E
+    E = mark(field_padding; Ex, Ey, Ez)
+    H = collect.(H)
+
     dHdt = -(∇ × E + σm * H) / μ
     H += dHdt * dt
-    Hx, Hy, Hz = H
 
-    [Ex, Ey, Ez, Hx, Hy, Hz]
+    autodiff && (H = bufferfrom.(H))
+    Hx, Hy, Hz = H
+    H = apply(field_padding; Hx, Hy, Hz)
+    autodiff && (H = copy(H))
+
+    [E..., H...]
 end
 
 # Flux.trainable(m::PaddedArray) = (; a=m.a)

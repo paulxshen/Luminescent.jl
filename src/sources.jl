@@ -114,17 +114,18 @@ struct SourceEffect
     start
 end
 
-function SourceEffect(s::PlaneWave, dx, sz, start, stop)
+function SourceEffect(s::PlaneWave, dx, sizes, starts, sz0)
     @unpack f, fields, dims = s
-    d = length(sz)
-    a = ones([i == abs(dims) ? 1 : sz[i] for i = 1:d]...) / dx
-    start = start .+ (dims < 0 ? 0 : [i == abs(dims) ? sz[i] - 1 : 0 for i = 1:d])
-    g = Dict([k => fields[k] * a for k = keys(fields)])
-    _g = Dict([k => place(zeros(F, sz), g[k], start) for k = keys(fields)])
-    SourceEffect(f, g, _g, fields, start)
+    d = length(first(sizes))
+    g = Dict([k => fields[k] * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(fields)])
+    starts = NamedTuple([k =>
+        starts[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
+                         for k = keys(starts)])
+    _g = Dict([k => place(zeros(F, sizes[k]), g[k], starts[k]) for k = keys(fields)])
+    SourceEffect(f, g, _g, fields, starts)
 end
 
-function SourceEffect(s::GaussianBeam, dx, sz, start, stop)
+function SourceEffect(s::GaussianBeam, dx, sizes, starts, stop)
     @unpack f, σ, fields, center, dims = s
     n = round(Int, 2σ / dx)
     r = n * dx

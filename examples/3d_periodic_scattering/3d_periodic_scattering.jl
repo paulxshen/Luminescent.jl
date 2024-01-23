@@ -29,9 +29,10 @@ sources = [
     PlaneWave(t -> t < 1 ? cos(F(2π) * t) : 0.0f0, -1; Jz=1)
 ]
 configs = setup(boundaries, sources, monitors, dx, sz0; F, Courant, T)
-@unpack μ, σ, σm, dt, geometry_padding, field_padding, source_effects, monitor_instances, fields, step, power = configs
+@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, step, power = configs
 
-p = apply(geometry_padding; ϵ, μ, σ, σm)
+ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
+p = apply(geometry_splits; ϵ, μ, σ, σm)
 u0 = collect(values(fields))
 
 # run simulation
@@ -40,4 +41,4 @@ Ez = map(sol) do u
     u[3]
 end
 dir = @__DIR__
-recordsim(Ez, p[1], configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=true)
+recordsim(Ez, p[1][3], configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=true)

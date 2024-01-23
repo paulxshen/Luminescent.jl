@@ -1,31 +1,23 @@
-"""
-Solves first photonics inverse design problem in Google's Ceviche challenges. 
-Design is a tight right angle waveguide bend.
-"""
-
-
-
-using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Flux, Optim, Jello, GLMakie
-using Flux: withgradient
+using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Zygote, Optim, Jello, CairoMakie
+using Zygote: withgradient, bufferfrom
 using Optim: Options, minimizer
 using BSON: @save, @load
 
+# using FDTDEngine
+include("$(pwd())/src/main.jl")
+include("$(pwd())/scripts/plot_recipes.jl")
+include("$(pwd())/../startup.jl")
 name = "waveguide_bend"
-dir = "examples/utils"
 
 "training params"
 nres = 16
-T = 4.0f0 # simulation duration in [periods]
+T = 1.0f0 # simulation duration in [periods]
 nbasis = 4 # complexity of design region
 trainer = :Optim # :Flux or :Optim
 η = 0.2 # training rate (only applies if Flux is trainer)
 Courant = 0.5f0 # Courant number
 C = 1000 # scale loss
-include("../../src/main.jl")
-# include("../src/FDTDEngine.jl")
-# using .FDTDEngine
 
-include("../../../FDTDToolkit.jl/src/plot_recipes.jl")
 
 F = Float32
 Random.seed!(1)
@@ -64,7 +56,7 @@ append!(monitors, [
     Monitor([ox + ld, [oy, oy + ld], [oz, oz + hwg]], [1, 0, 0]),
 ])
 
-@load "$dir/mode.bson" mode
+@load "$(@__DIR__)/mode.bson" mode
 using Interpolations
 @unpack Ex, Ey, Ez, bounds = mode
 bounds /= λ
@@ -73,9 +65,7 @@ Ex, Ey, Ez = [Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))
 sy, sz = size.((Ex,), (1, 2))
 y = range(bounds[1]..., sy)
 z = range(bounds[2]..., sz)
-heatmap(Ex)
-heatmap(Ey)
-heatmap(Ez)
+
 f = t -> cos(F(2π) * t)
 gEx = LinearInterpolation((y, z), Ez)
 gEy = LinearInterpolation((y, z), Ex)
@@ -99,13 +89,15 @@ function make_geometry(model)
 
     b = place(base, model(), round.(Int, o / dx) .+ 1)
     ϵ = sandwich(b, round.(Int, [hbox, hwg, hclad] / dx), [ϵbox, ϵcore, ϵclad])
-    p = apply(geometry_padding; ϵ, μ, σ, σm)
+    ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
+    p = apply(geometry_splits; ϵ, μ, σ, σm)
 end
+
 function loss(model)
     p = make_geometry(model)
     # run simulation
-    u = reduce((u, t) -> step(u, p, t, fdtd_configs), 0:dt:T, init=u0)
-    reduce(((u, l), t) -> (step(u, p, t, fdtd_configs), begin
+    u = reduce((u, t) -> step(u, p, t, fdtd_configs; bufferfrom), 0:dt:T, init=u0)
+    reduce(((u, l), t) -> (step(u, p, t, fdtd_configs; bufferfrom), begin
             l + sum(power.(monitor_instances[4:9], (u,))) - 2sum(power.(monitor_instances[2:3], (u,)))
         end),
         T-1+dt:dt:T, init=(u, 0.0f0))[2]
@@ -116,14 +108,6 @@ nbasis = 4
 model = Mask(round.(Int, (ld, ld) ./ dx), nbasis, contrast, symmetries=2)
 # @showtime loss(model)
 
-# run simulation
-# p = make_geometry(model)
-# @showtime sol = accumulate((u, t) -> step(u, p, t, fdtd_configs), 0:dt:T, init=u0)
-# E = map(sol) do u
-#     # u[1]
-#     sqrt.(u[1] .^ 2 + u[2] .^ 2 + u[3] .^ 2)
-# end
-# recordsim(E, p[1], fdtd_configs, "$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=false,)#umax=2,)
 # volume(E[end]; colormap=[(:white, 0), (:orange, 1)])
 # extrema(E[end])
 # maximum(map(E) do v
@@ -135,7 +119,7 @@ model = Mask(round.(Int, (ld, ld) ./ dx), nbasis, contrast, symmetries=2)
 #     lines!(ax, power.((m,), sol))
 # end
 # display(fig)
-
+model0 = deepcopy(model)
 x0, re = destructure(model)
 f = loss ∘ re
 function g!(storage, x)
@@ -150,7 +134,16 @@ function fg!(storage, x)
     l
 end
 
+# run simulation
+@showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
+Ez = map(sol) do u
+    u[3]
+end
+dir = @__DIR__
+recordsim(Ez, p[1][3], configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=true)
+
 od = OnceDifferentiable(f, g!, fg!, x0)
-n1 = 2
+n1 = 1
 @showtime res = optimize(od, x0, LBFGS(), Optim.Options(f_tol=0, iterations=n1, show_every=1, show_trace=true))
 model = re(minimizer(res))
+

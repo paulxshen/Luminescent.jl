@@ -51,10 +51,7 @@ struct Padding
     # lazy
 end
 
-function apply(p; kw...)
-    [apply(p[k], kw[k]) for k = keys(kw)]
-    # [apply(p[k], v) for (k, v) = pairs(kw)]
-end
+
 function apply(p::AbstractVector{<:Padding}, a)
     y = a
     for p = p

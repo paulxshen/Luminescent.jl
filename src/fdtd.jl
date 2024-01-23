@@ -28,7 +28,7 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
         fk = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz)
     end
 
-    nodes = fill(:U, d, 2)
+    global nodes = fill(:U, d, 2)
     db = Any[PML(j * i,) for i = 1:d, j = (-1, 1)]
     field_padding = DefaultDict(() -> Padding[])
     geometry_padding = DefaultDict(() -> Padding[])
@@ -87,21 +87,13 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
         elseif nodes[i, :] == [:H, :H]
 
         end
-        if d == 3
-            l = Padding(:replicate, Int.(1:d .== i), fill(0, d), true)
-            r = Padding(:replicate, fill(0, d), Int.(1:d .== i), true)
-            p = [l, r]
-            append!(geometry_padding[:μ], p)
-            append!(geometry_padding[:σm], p)
-            append!(geometry_padding[:σ], p)
-            append!(geometry_padding[:ϵ], p)
-            # push!(geometry_padding[:ϵ], p)
-        end
+
     end
 
 
 
     for i = 1:d
+        select = i .== 1:d
         xyz = para = perp = [:x, :y, :z]
 
         perp = [popat!(para, i)]
@@ -135,7 +127,9 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
                 q = startswith(String(k), String(f))
                 if (q ? k[2] in para : k[2] in perp)
                     if t == Periodic
-                        push!(field_padding[k], Padding(:periodic, l, r, false))
+                        lp = j == 1 ? select : zeros(Int, d)
+                        rp = j == 2 ? select : zeros(Int, d)
+                        push!(field_padding[k], Padding(:periodic, lp, rp, false))
                     else
                         push!(field_padding[k], Padding(0, l, r, false))
                     end
@@ -143,7 +137,18 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
             end
         end
     end
-
+    for i = 1:d
+        if d == 3
+            l = Padding(:replicate, Int.(1:d .== i), fill(0, d), true)
+            r = Padding(:replicate, fill(0, d), Int.(1:d .== i), true)
+            p = [l, r]
+            append!(geometry_padding[:μ], p)
+            append!(geometry_padding[:σm], p)
+            append!(geometry_padding[:σ], p)
+            append!(geometry_padding[:ϵ], p)
+            # push!(geometry_padding[:ϵ], p)
+        end
+    end
     # for (k, v) = pairs(geometry_padding)
     #     for p = v
     #         for v = values(starts)
@@ -170,6 +175,21 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     sizes[:Jz] = sizes[:Ez]
     sizes = NamedTuple([k => Tuple(sizes[k]) for (k) = keys(sizes)])
     fields = NamedTuple([k => zeros(F, Tuple(sizes[k])) for (k) = fk])
+    geometry_splits = Dict()
+    function gs(sz, k)
+        l = 1 .- sum(field_padding[k]) do p
+            p.l
+        end
+        r = 1 .- sum(field_padding[k]) do p
+            p.r
+        end
+        [ax[1+l:end-r] for (ax, l, r) = zip(Base.oneto.(sz), l, r)]
+    end
+    geometry_sizes = NamedTuple([k => sz0 .+ sum(geometry_padding[k]) do p
+        p.l + p.r
+    end for k = keys(geometry_padding)])
+    geometry_splits[:μ] = geometry_splits[:σm] = gs.((geometry_sizes[:μ],), [:Hx, :Hy, :Hz])
+    geometry_splits[:ϵ] = geometry_splits[:σ] = gs.((geometry_sizes[:ϵ],), [:Ex, :Ey, :Ez])
     source_effects = [SourceEffect(s, dx, sizes, starts, sz0) for s = sources]
 
     c = 0
@@ -188,7 +208,7 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
             pf = u -> [u[1] .* u[3], -u[2] .* u[1]]
         end
     end
-    power(m, u) = sum(sum(pf(getindex.(u, Ref.(m.idxs)...)) .* m.normal))
+    power(m, u) = sum(sum(pf([u[i...] for i = values(m.idxs)]) .* m.normal))
     monitor_instances = [
         begin
 
@@ -200,13 +220,32 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
                     s+x[1]:s+x[2]
                 end
             end for k = fk])
-            center = round.(Int, mean.(idxs))
-            (; idxs, center, normal=m.normal, dx)
+            centers = [k => round.(Int, mean.(v)) for (k, v) = pairs(idxs)]
+            (; idxs, centers, normal=m.normal, dx)
         end for m = monitors
     ]
     dt = dx * Courant
     sz0 = Tuple(sz0)
-    (; μ, σ, σm, ϵ, geometry_padding, field_padding, source_effects, monitor_instances, step, power, save_info, fields, dx, dt, kw...)
+    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_splits, source_effects, monitor_instances, step, power, save_info, fields, dx, dt, kw...)
+end
+function apply(p; kw...)
+    [apply(p[k], kw[k]) for k = keys(kw)]
+    # [apply(p[k], v) for (k, v) = pairs(kw)]
+end
+function mark(p; kw...)
+    [mark(p[k], kw[k]) for k = keys(kw)]
+end
+function mark(v, a)
+    l = sum(v) do p
+        p.l
+    end
+    r = sum(v) do p
+        p.r
+    end
+    PaddedArray(a, l, r)
 end
 
 Base.strip(a::AbstractArray, l, r=l) = a[[ax[1+l:end-r] for (ax, l, r) = zip(axes(a), l, r)]...]
+function apply(v, a)
+    collect(getindex.((a,), zip(v...)...))
+end
