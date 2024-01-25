@@ -1,11 +1,11 @@
 using Documenter
-include("../src/fdtd_prerelease.jl")
-using .fdtd_prerelease
+include("../src/FDTDEngine.jl")
+using .FDTDEngine
 
 makedocs(
-    sitename="fdtd_prerelease",
+    sitename="FDTDEngine",
     format=Documenter.HTML(),
-    # modules=[fdtd_prerelease],
+    # modules=[FDTDEngine],
     pages=[
         "index.md",
     ]
