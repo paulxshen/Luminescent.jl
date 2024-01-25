@@ -94,16 +94,16 @@ function make_geometry(model, μ, σ, σm)
 end
 
 # run pre or post optimization simulation and save movie
-function runsavesim(model, T, name="")
 
-    p = make_geometry(model, μ, σ, σm)
-    @showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
-    i = 1
+# p = make_geometry(model, μ, σ, σm)
+@showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
+function savesim(sol, p, name=name)
     E = map(sol) do u
-        u[i]
+        # sqrt(sum(u) do u u.^2 end)
+        u[1] .^ 2
     end
     dir = @__DIR__
-    recordsim(E, p[1][i], configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=true)
+    recordsim(E, p[1][1], configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=false)
 end
 function loss(model)
     p = make_geometry(model, μ, σ, σm)

@@ -7,7 +7,8 @@ Differentiable FDTD package for inverse design & topology optimization in photon
 ![](assets/3d_scattering_nres_16.mp4)
 ### Quarter wavelength antenna
 ![](assets/3d_quarter_wavelength_antenna_nres_16.mp4)
-### Inverse design of compact silicon photonic splitter
+### Inverse design of compact silicon photonic splitter (coming soon)
+In progress, split ratio isn't correct
 ![](assets/pre_training_nres_16.mp4)
 ![](assets/post_training_nres_16.mp4)
 
@@ -75,9 +76,9 @@ Supports 1d (Ez, Hy), 2d TMz (Ez, Hx, Hy), 2d TEz (Hz, Ex, Ey) and 3d. Length an
 If a source has fewer nonzero dimensions than the simulation domain, its signal will get normalized along its singleton dimensions. For example, all planar sources in 3d or line sources in 2d will get scaled up by a factor of `1/dx`. This way, discretisation would not affect radiated power.
 ```@docs
 PlaneWave
-GaussianBeam
 Source
 ```
+<!-- GaussianBeam -->
 
 ## Boundaries
 Unspecified boundaries default to PML 

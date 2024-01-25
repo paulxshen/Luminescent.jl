@@ -67,7 +67,7 @@ end
     function Source(f, center, bounds; fields...)
     function Source(f, center, L::AbstractVector{<:Real}; fields...)
 
-Constructs custom centered source. Can be used to specify modal sources
+Constructs custom  source. Can be used to specify modal sources
 
 Args
 - f: time function
@@ -85,25 +85,6 @@ struct Source
 end
 function Source(f, center, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)
     Source(f, center, [[a, a] for a = L]; fields...)
-end
-"""
-    function UniformSource(f, center, L; fields...)
-
-Constructs uniform source
-
-Args
-- f: time function
-- L::Vector: lengths in [wavelengths]
-- fields: which fields to excite & their scaling constants (typically a current source, eg Jz=1)
-"""
-struct UniformSource
-    f
-    fields
-    L
-    center
-    function UniformSource(f, center, L; fields...)
-        new(f, fields, L, center)
-    end
 end
 
 struct SourceEffect

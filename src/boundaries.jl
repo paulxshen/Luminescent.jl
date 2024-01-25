@@ -4,6 +4,7 @@ using LinearAlgebra, UnPack
     Periodic(dims)
 
 periodic boundary
+
 """
 struct Periodic
     dims
@@ -12,6 +13,7 @@ end
     PEC(dims)
 
 perfect electrical conductor
+dims: eg -1 for -x side
 """
 struct PEC
     dims
@@ -31,6 +33,7 @@ end
     function PML(dims, d=0.25f0, σ=20.0f0)
 
 Constructs perfectly matched layers (PML aka ABC, RBC) boundary of depth `d` wavelengths 
+Doesn't need to be explictly declared as all unspecified boundaries default to PML
 """
 struct PML
     dims
