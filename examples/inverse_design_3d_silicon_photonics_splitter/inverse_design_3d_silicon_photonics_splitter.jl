@@ -1,14 +1,17 @@
-using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Zygote, Optim, Jello, GLMakie, ChainRulesCore
+using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Zygote, Optim, Jello
 using Zygote: withgradient, Buffer
 using Optim: Options, minimizer
 using BSON: @save, @load
 
+using GLMakie
 dir = pwd()
+include("$dir/src/main.jl")
+# dir = "FDTDEngine.jl"
+# using FDTDEngine
+
 include("$dir/scripts/plot_recipes.jl")
 include("$dir/scripts/startup.jl")
 
-# using FDTDEngine
-include("$dir/src/main.jl")
 
 F = Float32
 Random.seed!(1)
@@ -18,11 +21,10 @@ name = "silicon_photonics_splitter"
 nres = 16
 T = 1.0f0 # simulation duration in [periods]
 nbasis = 4 # complexity of design region
-trainer = :Optim # :Flux or :Optim
-η = 0.2 # training rate (only applies if Flux is trainer)
 Courant = 0.5f0 # Courant number
 C = 1000 # scale loss
 λ = 1.55f0
+nepochs = 1
 
 "geometry"
 # loads design layout
@@ -108,12 +110,11 @@ function loss(model)
     # run simulation
     u = reduce((u, t) -> step(u, p, t, configs; Buffer), 0:dt:T, init=u0)
     reduce(((u, l), t) -> (step(u, p, t, configs; Buffer), begin
-            # l + dt * (sum(power.(monitor_instances[4:9], (u,))) - 2sum(power.(monitor_instances[2:3], (u,)))) + 0sum(sum(u))
-            l + sum(sum(u))
+            l + dt * (sum(power.(monitor_instances[4:9], (u,))) - 2sum(power.(monitor_instances[2:3], (u,))))
+            # l + sum(sum(u))
         end),
         T-1+dt:dt:T, init=(u, 0.0f0))[2]
 end
-Base.length(x::ChainRulesCore.NoTangent) = 0
 "geometry generator model"
 contrast = 10.0f0
 nbasis = 4
@@ -140,10 +141,9 @@ function fg!(storage, x)
     l
 end
 
-runsavesim(model0)
+# runsavesim(model0)
 # loss(model)
 od = OnceDifferentiable(f, g!, fg!, x0)
-n1 = 1
-@showtime res = optimize(od, x0, LBFGS(), Optim.Options(f_tol=0, iterations=n1, show_every=1, show_trace=true))
+@showtime res = optimize(od, x0, LBFGS(), Optim.Options(f_tol=0, iterations=nepochs, show_every=1, show_trace=true))
 model = re(minimizer(res))
 

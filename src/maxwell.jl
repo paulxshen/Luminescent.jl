@@ -153,7 +153,7 @@ function step3(u, p, t, configs; Buffer=nothing)
 
     # H = collect.(H)
     if autodiff
-        [E..., copy(Hx), copy(Hy), copy(Hz)]
+        return [E..., copy(Hx), copy(Hy), copy(Hz)]
     end
     [E..., H_...]
     # [E[1], E[2], E[3], H[1], H[2], H[3]]
