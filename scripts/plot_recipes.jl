@@ -1,8 +1,13 @@
 function plotstep!(f, u::AbstractArray, p, configs, monitor_instances=[]; s=1, umax=maximum(abs, u), bipolar=!all(u .>= 0), title="")
+    # colormap = [(:blue, 1), (:red, 1)]
+    # colormap = :seismic
     colormap = bipolar ? :seismic : [(:white, 0), (:orange, 1)]
-    colorrange = bipolar ? (-1, 1) .* umax : (0, umax)
+    colorrange = bipolar ? (-1, 1) : (0, 1)
     algorithm = bipolar ? :absorption : :mip
-
+    u ./= umax
+    # if bipolar
+    #     u = (u .+ 1) ./ 2
+    # end
     d = ndims(u)
     "plot field"
     if d == 1
@@ -12,7 +17,7 @@ function plotstep!(f, u::AbstractArray, p, configs, monitor_instances=[]; s=1, u
         pl = heatmap(f, u; axis=(; title, aspect=1), colormap, colorrange)
     else
         pl! = volume!
-        volume(f, u; axis=(; type=Axis3, title), algorithm, colormap, colorrange)
+        ax, __ = volume(f, u; axis=(; type=Axis3, title), algorithm, colormap, colorrange)
     end
     # Colorbar(f)
 
@@ -30,16 +35,19 @@ function plotstep!(f, u::AbstractArray, p, configs, monitor_instances=[]; s=1, u
         pl!(f, a, colormap=[(:white, 0), (:yellow, 0.2)])#, colorrange=(ϵ1, ϵ2))
         # # save("temp/$t.png", fig)
     end
+    # rotate_cam!(ax.scene, (45, 0, 0))
 end
 
 function recordsim(sol, p, fdtd_configs, fn, monitor_instances=[];
-    s=1,
+    s=0.2,
     umax=s * maximum(abs, sol[round(Int, length(sol) / 2)]),
     bipolar=true,
     title="",
     playback=1, frameat=fdtd_configs.dt,
     framerate=playback / frameat)
-    @unpack dt, T = fdtd_configs
+    @unpack dt, = fdtd_configs
+    n = length(sol)
+    T = dt * (n - 1)
     t = 0:frameat:T
 
     fig = Figure()

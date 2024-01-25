@@ -2,10 +2,17 @@
 Only 3d works in latest patch. 2d/1d will be fixed in future. Prerelease. Expect breaking changes
 ## Overview
 Differentiable FDTD package for inverse design & topology optimization in photonics, acoustics and RF. Uses automatic differentiation by `Zygote.jl` for adjoint optimization. Integrates with `Jello.jl` to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources. Customizable physics to potentially incorporate dynamics like heat transfer, charge transport.
+## Gallery
+### Periodic scattering
+![](assets/3d_scattering_nres_16.mp4)
+### Quarter wavelength antenna
+![](assets/3d_quarter_wavelength_antenna_nres_16.mp4)
+### Inverse design of compact silicon photonic splitter
+![](assets/pre_training_nres_16.mp4)
+![](assets/post_training_nres_16.mp4)
 
 ## Quickstart
-We do a quick 3d simulation of plane wave on periodic array of dielectric spheres
-![](assets/3d_scattering_nres_16.mp4)
+We do a quick 3d simulation of plane wave scattering on periodic array of dielectric spheres (first gallery movie)
 ```julia
 """
 simulation of plane wave scattering on periodic array of dielectric spheres
@@ -94,16 +101,9 @@ step3
 ```
 
 ## Tutorials
-Hosted on Google Colab
-simulation
-- [2d_periodic_array](https://colab.research.google.com/drive/1SiP7MvSE4P05uNgostV9WWx3pFQtFYDW?usp=sharing)
-inverse_design
-- [2d_waveguide_bend](https://colab.research.google.com/drive/1-g6ShK54MbSsAAeE2c5cj5g7OY7CXfpy?usp=sharing)
-## TODO
-- integration with external mode solver (suggestions welcome ) for modal source profiles 
-- far field transforms
-- your wonderful suggestion ;)
-
+see `examples/`
+## Generative inverse design
+Please contact us for latest scripts.
 ## Community
 Discussion & updates at [Julia Discourse](https://discourse.julialang.org/t/pre-ann-differentiable-fdtd-for-inverse-design-in-photonics-acoustics-and-rf/105405/12)
 ## Contributors

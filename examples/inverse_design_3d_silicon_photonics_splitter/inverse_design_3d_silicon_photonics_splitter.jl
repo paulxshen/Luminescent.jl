@@ -94,7 +94,7 @@ function make_geometry(model, μ, σ, σm)
 end
 
 # run pre or post optimization simulation and save movie
-function runsavesim(model)
+function runsavesim(model, T, name="")
 
     p = make_geometry(model, μ, σ, σm)
     @showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
@@ -143,7 +143,7 @@ end
 
 # runsavesim(model0)
 # loss(model)
-od = OnceDifferentiable(f, g!, fg!, x0)
-@showtime res = optimize(od, x0, LBFGS(), Optim.Options(f_tol=0, iterations=nepochs, show_every=1, show_trace=true))
-model = re(minimizer(res))
+# od = OnceDifferentiable(f, g!, fg!, x0)
+# @showtime res = optimize(od, x0, LBFGS(), Optim.Options(f_tol=0, iterations=nepochs, show_every=1, show_trace=true))
+# model = re(minimizer(res))
 
