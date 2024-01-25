@@ -175,7 +175,7 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     sizes[:Jz] = sizes[:Ez]
     sizes = NamedTuple([k => Tuple(sizes[k]) for (k) = keys(sizes)])
     fields = NamedTuple([k => zeros(F, Tuple(sizes[k])) for (k) = fk])
-    geometry_splits = Dict()
+    geometry_splits = Dict{Symbol,Vector{Vector{UnitRange{Int64}}}}()
     function gs(sz, k)
         l = 1 .- sum(field_padding[k]) do p
             p.l
@@ -208,20 +208,32 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
             pf = u -> [u[1] .* u[3], -u[2] .* u[1]]
         end
     end
-    power(m, u) = sum(sum(pf([u[i...] for i = values(m.idxs)]) .* m.normal))
+    # power(m, u) = sum(sum(pf([u[m.idxs[k]...] for (u, k) = zip(u, fk)]) .* m.normal))
+    power(m, u) = sum(sum(pf([u[m.idxs[i]...] for (i, u) = enumerate(u,)]) .* m.normal))
+    # power(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.idxs)))]) .* m.normal))
     monitor_instances = [
         begin
 
-            idxs = NamedTuple([k => map(starts[k], m.span) do s, x
-                x = round.(Int, x / dx)
-                if isa(x, Real)
-                    s .+ x
-                else
-                    s+x[1]:s+x[2]
-                end
-            end for k = fk])
+            idxs = [
+                map(starts[k], m.span) do s, x
+                    x = round.(Int, x / dx)
+                    if isa(x, Real)
+                        s .+ x
+                    else
+                        s+x[1]:s+x[2]
+                    end
+                end for k = fk
+            ]
+            # idxs = NamedTuple([k => map(starts[k], m.span) do s, x
+            #     x = round.(Int, x / dx)
+            #     if isa(x, Real)
+            #         s .+ x
+            #     else
+            #         s+x[1]:s+x[2]
+            #     end
+            # end for k = fk])
             centers = [k => round.(Int, mean.(v)) for (k, v) = pairs(idxs)]
-            (; idxs, centers, normal=m.normal, dx)
+            MonitorInstance(idxs, centers, m.normal, dx)
         end for m = monitors
     ]
     dt = dx * Courant
@@ -247,5 +259,6 @@ end
 
 Base.strip(a::AbstractArray, l, r=l) = a[[ax[1+l:end-r] for (ax, l, r) = zip(axes(a), l, r)]...]
 function apply(v, a)
-    collect(getindex.((a,), zip(v...)...))
+    [a[i...] for i = v]
+    # collect(getindex.((a,), zip(v...)...))
 end

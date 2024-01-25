@@ -15,11 +15,11 @@ layout = (; wwg, hwg, lwg, ld, hclad, hbox, l, w, h, wm)
 v = values(layout)
 k = keys(layout)
 
-λ = 1.55
+λ = 1.55f0
 o = [lwg, wm] / λ
-v = v ./ λ
+v = F.(v) ./ λ
 # L = [l, w, h]
-ports = [[0.2, [(w - wwg) / 2, (w + wwg) / 2]], [l, [w - wm - wwg, w - wm]], [l, [wm, wm + wwg]]] / λ
+ports = [[0.2f0, [(w - wwg) / 2, (w + wwg) / 2]], [l, [w - wm - wwg, w - wm]], [l, [wm, wm + wwg]]] / λ
 sources = [[0, w / 2]] / λ
 designs = [[lwg:lwg+ld, wm:wm+ld]] / λ
 

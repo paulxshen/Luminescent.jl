@@ -100,41 +100,63 @@ end
 
 Updates fields for 3d
 """
-function step3(u, p, t, configs; bufferfrom=nothing)
+function step3(u, p, t, configs; Buffer=nothing)
     @unpack dx, dt, field_padding, source_effects = configs
     ∇ = Del([dx, dx, dx])
     ϵ, μ, σ, σm = p
     Ex, Ey, Ez, Hx, Hy, Hz = u
     J = apply(source_effects, t; Jx=0, Jy=0, Jz=0)
-    autodiff = !isnothing(bufferfrom)
+    autodiff = !isnothing(Buffer)
 
     # first update E
     H = mark(field_padding; Hx, Hy, Hz)
     E = [Ex, Ey, Ez]
 
-    dEdt = (∇ × H - σ * E - J) / ϵ
-    E += dEdt * dt
+    dEdt = (∇ × H .- σ * E .- J) / ϵ
+    # println(typeof.((J, ϵ)))
+    H = collect.(H)
+    if autodiff
+        E_ = Buffer.(E)
+        for i = 1:3
+            E_[i] .= E[i] + dEdt[i] * dt
+        end
+    else
+        E_ = E + dEdt * dt
+    end
 
-    autodiff && (E = bufferfrom.(E))
-    Ex, Ey, Ez = E
-    E = apply(field_padding; Ex, Ey, Ez)
-    autodiff && (E = copy(E))
+    # autodiff && (E = bufferfrom.(E))
+    Ex, Ey, Ez = E_
+    apply(field_padding; Ex, Ey, Ez)
+    E = autodiff ? (copy.(E_)) : E_
     # println(extrema(E[3]))
 
     # then update H
     Ex, Ey, Ez = E
     E = mark(field_padding; Ex, Ey, Ez)
-    H = collect.(H)
 
-    dHdt = -(∇ × E + σm * H) / μ
-    H += dHdt * dt
+    dHdt = -(∇ × E .+ σm * H) / μ
+    E = collect.(E)
+    if autodiff
+        H_ = Buffer.(H)
+        for i = 1:3
+            H_[i] .= H[i] + dHdt[i] * dt
+        end
+    else
+        H_ = H + dHdt * dt
+    end
 
-    autodiff && (H = bufferfrom.(H))
-    Hx, Hy, Hz = H
-    H = apply(field_padding; Hx, Hy, Hz)
-    autodiff && (H = copy(H))
+    # autodiff && (H = bufferfrom.(H))
+    #     H = copy.(H)
+    Hx, Hy, Hz = H_
+    apply(field_padding; Hx, Hy, Hz)
+    # A = autodiff ? (copy.(H_)) : H_
 
-    [E..., H...]
+    # H = collect.(H)
+    if autodiff
+        [E..., copy(Hx), copy(Hy), copy(Hz)]
+    end
+    [E..., H_...]
+    # [E[1], E[2], E[3], H[1], H[2], H[3]]
 end
 
 # Flux.trainable(m::PaddedArray) = (; a=m.a)

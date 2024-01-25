@@ -1,6 +1,6 @@
 module FDTDEngine
 include("main.jl")
-export reindex
+export reindex, sandwich
 export Del, stepTMz, step1, step3, stepTEz
 export Periodic, PML, PEC, PMC, Padding
 export PlaneWave, GaussianBeam, UniformSource, Source, place
