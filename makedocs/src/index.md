@@ -66,7 +66,6 @@ dir = @__DIR__
 recordsim(Ez, ϵz, configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=true)
 
 ```
-<!-- ![m](assets/periodic_array_nres_32.mp4) -->
 ## Installation
 Install via `Pkg.add(url="https://github.com/paulxshen/FDTDEngine.jl")`. You can additionally access plotting and movie making scripts via `include("_your_path/scripts/plot_recipes.jl")` 
 ## Implementation
