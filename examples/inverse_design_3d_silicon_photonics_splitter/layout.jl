@@ -27,9 +27,9 @@ designs = [[lwg:lwg+ld, wm:wm+ld]] / λ
 dx = 1.0f0 / nres
 wwg, hwg, lwg, ld, hclad, hbox, l, w, h, wm = round.(Int, v ./ dx)
 base = zeros(Int, l, w)
-base[1:lwg, (w-wwg)÷2:(w+wwg)÷2] .= 1
-base[end-lwg+1:end, wm:wm+wwg] .= 1
-base[end-lwg+1:end, end-wm-wwg:end-wm] .= 1
+base[1:lwg, (w-wwg)÷2+1:(w+wwg)÷2] .= 1
+base[end-lwg+1:end, wm+1:wm+wwg] .= 1
+base[end-lwg+1:end, end-wm-wwg+1:end-wm] .= 1
 # design = zeros(F, l, w)
 # design[lwg:lwg+ld, wwg:wwg+ld] = 1
 

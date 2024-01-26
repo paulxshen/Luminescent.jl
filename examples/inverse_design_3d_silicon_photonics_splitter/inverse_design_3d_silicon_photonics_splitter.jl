@@ -93,10 +93,10 @@ function make_geometry(model, μ, σ, σm)
     p = apply(geometry_splits; ϵ, μ, σ, σm)
 end
 
+p = make_geometry(model, μ, σ, σm)
+volume(p[1][1])
 # run pre or post optimization simulation and save movie
 
-# p = make_geometry(model, μ, σ, σm)
-@showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
 function savesim(sol, p, name=name)
     E = map(sol) do u
         # sqrt(sum(u) do u u.^2 end)
@@ -143,7 +143,6 @@ end
 
 # runsavesim(model0)
 # loss(model)
-# od = OnceDifferentiable(f, g!, fg!, x0)
-# @showtime res = optimize(od, x0, LBFGS(), Optim.Options(f_tol=0, iterations=nepochs, show_every=1, show_trace=true))
-# model = re(minimizer(res))
+
+@showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
 

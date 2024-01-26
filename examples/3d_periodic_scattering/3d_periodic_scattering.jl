@@ -10,10 +10,10 @@ include("$(pwd())/scripts/plot_recipes.jl")
 
 F = Float32
 name = "3d_scattering"
-T = 4.0f0 # simulation duration in [periods]
+T = 8.0f0 # simulation duration in [periods]
 nres = 16
 dx = 1.0f0 / nres # pixel resolution in [wavelengths]
-Courant = 0.25f0 # Courant number
+Courant = 0.7 / √3 # Courant number
 
 "geometry"
 l = 2 # domain physical size length
@@ -47,4 +47,5 @@ Ez = map(sol) do u
 end
 ϵz = p[1][3]
 dir = @__DIR__
-recordsim(Ez, ϵz, configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=true)
+° = π / 180
+recordsim(Ez, ϵz, configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; elevation=30°, playback=1, bipolar=true)

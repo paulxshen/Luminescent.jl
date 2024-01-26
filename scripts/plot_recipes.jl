@@ -1,4 +1,7 @@
-function plotstep!(f, u::AbstractArray, p, configs, monitor_instances=[]; s=1, umax=maximum(abs, u), bipolar=!all(u .>= 0), title="")
+function plotstep!(f, u::AbstractArray, p, configs, monitor_instances=[];
+    s=1, umax=maximum(abs, u), bipolar=!all(u .>= 0), title="",
+    elevation=nothing,
+    azimuth=nothing)
     # colormap = [(:blue, 1), (:red, 1)]
     # colormap = :seismic
     colormap = bipolar ? :seismic : [(:white, 0), (:orange, 1)]
@@ -18,6 +21,8 @@ function plotstep!(f, u::AbstractArray, p, configs, monitor_instances=[]; s=1, u
     else
         pl! = volume!
         ax, __ = volume(f, u; axis=(; type=Axis3, title), algorithm, colormap, colorrange)
+        !isnothing(elevation) && (ax.elevation[] = elevation)
+        !isnothing(azimuth) && (ax.azimuth[] = azimuth)
     end
     # Colorbar(f)
 
@@ -39,12 +44,15 @@ function plotstep!(f, u::AbstractArray, p, configs, monitor_instances=[]; s=1, u
 end
 
 function recordsim(sol, p, fdtd_configs, fn, monitor_instances=[];
-    s=0.2,
+    s=0.1,
     umax=s * maximum(abs, sol[round(Int, length(sol) / 2)]),
     bipolar=true,
     title="",
     playback=1, frameat=fdtd_configs.dt,
-    framerate=playback / frameat)
+    framerate=playback / frameat,
+    elevation=nothing,
+    azimuth=nothing,
+)
     @unpack dt, = fdtd_configs
     n = length(sol)
     T = dt * (n - 1)
@@ -58,7 +66,7 @@ function recordsim(sol, p, fdtd_configs, fn, monitor_instances=[];
         # ax = Axis(fig[1, 1];)
         u = sol[i]
 
-        plotstep!(fig[1, 1], u, p, fdtd_configs, monitor_instances; bipolar, umax, title="t = $t\n$title")
+        plotstep!(fig[1, 1], u, p, fdtd_configs, monitor_instances; bipolar, umax, title="t = $t\n$title", elevation, azimuth)
     end
     println("saved simulation recording to $fn")
     r

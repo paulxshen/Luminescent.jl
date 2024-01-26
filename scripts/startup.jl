@@ -13,3 +13,4 @@ Base.getindex(s::Symbol, i) = Symbol(String(s)[i])
 
 f32(x::Real) = Float32(x)
 f32(x::AbstractArray) = f32.(x)
+° = π / 180
