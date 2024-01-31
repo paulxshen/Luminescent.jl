@@ -100,13 +100,13 @@ end
 
 Updates fields for 3d
 """
-function step3(u, p, t, configs; Buffer=nothing)
+function step3!(u, p, t, configs; Buffer=nothing, bufferfrom=nothing)
     @unpack dx, dt, field_padding, source_effects = configs
-    ∇ = Del([dx, dx, dx])
+    ∇ = StaggeredDel([dx, dx, dx])
     ϵ, μ, σ, σm = p
     Ex, Ey, Ez, Hx, Hy, Hz = u
     J = apply(source_effects, t; Jx=0, Jy=0, Jz=0)
-    autodiff = !isnothing(Buffer)
+    autodiff = !isnothing(bufferfrom)
 
     # first update E
     H = mark(field_padding; Hx, Hy, Hz)
@@ -115,16 +115,16 @@ function step3(u, p, t, configs; Buffer=nothing)
     dEdt = (∇ × H .- σ * E .- J) / ϵ
     # println(typeof.((J, ϵ)))
     H = collect.(H)
-    if autodiff
-        E_ = Buffer.(E)
-        for i = 1:3
-            E_[i] .= E[i] + dEdt[i] * dt
-        end
-    else
-        E_ = E + dEdt * dt
+    E_ = autodiff ? bufferfrom.(E) : E
+    for i = 1:3
+        # if autodiff
+        #     E_ = Buffer.(E)
+        # end
+        E_[i][:, :, :] = E[i] + dEdt[i] * dt
+        # E_[i] .= E[i] + dEdt[i] * dt
+        # E = E + dEdt * dt
     end
 
-    # autodiff && (E = bufferfrom.(E))
     Ex, Ey, Ez = E_
     apply(field_padding; Ex, Ey, Ez)
     E = autodiff ? (copy.(E_)) : E_
@@ -136,16 +136,16 @@ function step3(u, p, t, configs; Buffer=nothing)
 
     dHdt = -(∇ × E .+ σm * H) / μ
     E = collect.(E)
-    if autodiff
-        H_ = Buffer.(H)
-        for i = 1:3
-            H_[i] .= H[i] + dHdt[i] * dt
-        end
-    else
-        H_ = H + dHdt * dt
+    H_ = autodiff ? bufferfrom.(H) : H
+    for i = 1:3
+        # if autodiff
+        #     H_ = Buffer.(H)
+        # end
+        H_[i][:, :, :] = H[i] + dHdt[i] * dt
+        # H_[i] .= H[i] + dHdt[i] * dt
+        # H_ = H + dHdt * dt
     end
 
-    # autodiff && (H = bufferfrom.(H))
     #     H = copy.(H)
     Hx, Hy, Hz = H_
     apply(field_padding; Hx, Hy, Hz)
@@ -155,8 +155,8 @@ function step3(u, p, t, configs; Buffer=nothing)
     if autodiff
         return [E..., copy(Hx), copy(Hy), copy(Hz)]
     end
-    [E..., H_...]
+    [E..., H...]
     # [E[1], E[2], E[3], H[1], H[2], H[3]]
 end
-
+step! = step3!
 # Flux.trainable(m::PaddedArray) = (; a=m.a)

@@ -1,4 +1,5 @@
-using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Zygote, Optim, Jello
+using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Zygote, Optim, Jello, Flux
+using Flux: mae
 using Zygote: withgradient, Buffer
 using Optim: Options, minimizer
 using BSON: @save, @load
@@ -6,11 +7,12 @@ using BSON: @save, @load
 using GLMakie
 dir = pwd()
 include("$dir/src/main.jl")
-# dir = "FDTDEngine.jl"
-# using FDTDEngine
-
-include("$dir/scripts/plot_recipes.jl")
+include("$dir/../FDTDToolkit.jl/src/main.jl")
 include("$dir/scripts/startup.jl")
+
+# dir = "FDTDEngine.jl"
+# using FDTDEngine,FDTDToolkit
+
 
 
 F = Float32
@@ -19,12 +21,12 @@ Random.seed!(1)
 "training params"
 name = "silicon_photonics_splitter"
 nres = 16
-T = 1.0f0 # simulation duration in [periods]
+T = 0.80f0 # simulation duration in [periods]
 nbasis = 4 # complexity of design region
-Courant = 0.5f0 # Courant number
+Courant = 1.5 * 0.7 / √3# Courant number
 C = 1000 # scale loss
 λ = 1.55f0
-nepochs = 1
+nepochs = 16
 
 "geometry"
 # loads design layout
@@ -46,18 +48,20 @@ monitors = [Monitor([x, y, z], n) for (x, y) = ports]
 ox, oy, = o
 oz = hbox
 append!(monitors, [
-    Monitor([[ox, ox + ld], [oy, oy + ld], oz], [0, 0, -1]),
-    Monitor([[ox, ox + ld], [oy, oy + ld], oz + hwg], [0, 0, 1]),
-    Monitor([[ox, ox + ld], oy, [oz, oz + hwg]], [0, -1, 0]),
-    Monitor([[ox, ox + ld], oy + ld, [oz, oz + hwg]], [0, 1, 0]),
     Monitor([ox, [oy, oy + ld], [oz, oz + hwg]], [-1, 0, 0]),
     Monitor([ox + ld, [oy, oy + ld], [oz, oz + hwg]], [1, 0, 0]),
+    Monitor([[ox, ox + ld], oy, [oz, oz + hwg]], [0, -1, 0]),
+    Monitor([[ox, ox + ld], oy + ld, [oz, oz + hwg]], [0, 1, 0]),
+    Monitor([[ox, ox + ld], [oy, oy + ld], oz], [0, 0, -1]),
+    Monitor([[ox, ox + ld], [oy, oy + ld], oz + hwg], [0, 0, 1]),
 ])
 
 "sources"
 
 @load "$(@__DIR__)/mode.bson" mode
 @unpack Ex, Ey, Ez, bounds = mode
+f32(x::Real) = Float32(x)
+f32(x::AbstractArray) = f32.(x)
 bounds = f32(bounds)
 bounds /= λ
 _dx = mode.dx / λ
@@ -81,7 +85,7 @@ sources = [
 ]
 
 configs = setup(boundaries, sources, monitors, dx, sz0; F, Courant, T)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, step, power = configs
+@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, power = configs
 
 
 
@@ -93,56 +97,110 @@ function make_geometry(model, μ, σ, σm)
     p = apply(geometry_splits; ϵ, μ, σ, σm)
 end
 
-p = make_geometry(model, μ, σ, σm)
-volume(p[1][1])
-# run pre or post optimization simulation and save movie
 
+# run pre or post optimization simulation and save movie
 function savesim(sol, p, name=name)
     E = map(sol) do u
         # sqrt(sum(u) do u u.^2 end)
-        u[1] .^ 2
+        # u[1] .^ 2
+        u[1]
     end
     dir = @__DIR__
     recordsim(E, p[1][1], configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=false)
 end
-function loss(model)
+function monitor_powers(model, T=T; bufferfrom=bufferfrom)
     p = make_geometry(model, μ, σ, σm)
     # run simulation
-    u = reduce((u, t) -> step(u, p, t, configs; Buffer), 0:dt:T, init=u0)
-    reduce(((u, l), t) -> (step(u, p, t, configs; Buffer), begin
-            l + dt * (sum(power.(monitor_instances[4:9], (u,))) - 2sum(power.(monitor_instances[2:3], (u,))))
-            # l + sum(sum(u))
+    u = reduce((u, t) -> step!(u, p, t, configs; bufferfrom), 0:dt:T-1, init=deepcopy(u0))
+    reduce(((u, pow), t) -> (step!(u, p, t, configs; bufferfrom), begin
+            pow + dt * power.(monitor_instances, (u,))
         end),
-        T-1+dt:dt:T, init=(u, 0.0f0))[2]
+        T-1+dt:dt:T, init=(u, zeros(F, length(monitor_instances))))[2]
 end
+
+function loss(p)
+    sum(p[4:9]) - 2(p[2] + p[3]) + abs(p[2] - p[3])
+end
+
 "geometry generator model"
 contrast = 10.0f0
 nbasis = 4
-model = Mask(round.(Int, (ld, ld) ./ dx), nbasis, contrast, symmetries=2)
+model = Mask(round.(Int, (ld, ld) ./ dx), nbasis, contrast)#, symmetries=2)
 # @showtime loss(model)
 model0 = deepcopy(model)
 
 u0 = collect(values(fields))
+tp = monitor_powers(model, 2)[1]
 p0 = make_geometry(model0, μ, σ, σm)
 # volume(p0[3][1])
 
 "Optim functions"
 x0, re = destructure(model)
-f = loss ∘ re
+f_ = loss ∘ monitor_powers
+f = f_ ∘ re
 function g!(storage, x)
     model = re(x)
-    g, = gradient(loss, model)
+    g, = gradient(f_, model)
     storage .= realvec(g.a)
 end
 function fg!(storage, x)
     model = re(x)
-    l, (g,) = withgradient(loss, model)
+    l, (g,) = withgradient(f_, model)
     storage .= realvec(g.a)
     l
 end
 
+# train surrogate
+# Random.seed!(1)
+# runs = []
+# for i = 1:4
+#     @time begin
+#         model = Mask(round.(Int, (ld, ld) ./ dx), nbasis, contrast)#, symmetries=2)
+#         mp = monitor_powers(model)
+#         l = loss(mp)
+#         x0, re = destructure(model)
+
+#         push!(runs, (x0, mp, l))
+#     end
+
+# end
+
+# X = Base.stack(getindex.(runs, 1))
+# Y = Base.stack(getindex.(runs, 2))
+
+# nl = leakyrelu
+# n = size(X, 1)
+# m, N = size(Y)
+# nn = Chain(Dense(n, 2n, nl), Dense(2n, 4n, nl), Dense(4n, m))
+
+# opt = Adam(0.1)
+# opt_state = Flux.setup(opt, nn)
+# n = 80
+# for i = 1:n
+#     l, (dldm,) = withgradient(nn -> Flux.mae(Y, nn(X)), nn)
+#     Flux.update!(opt_state, nn, dldm)
+#     (i % 25 == 0 || i == n) && println("$i $l")
+# end
+
+# opt = Adam(0.1)
+# opt_state = Flux.setup(opt, x0)
+# n = 100
+# for i = 1:n
+#     l, (dldm,) = withgradient(x -> mae(nn(x), [tp, tp / 2, tp / 2, -tp, tp, zeros(F, 4)...]), x0)
+#     Flux.update!(opt_state, x0, dldm)
+#     (i % 25 == 0 || i == n) && println("$i $l")
+# end
+# @show f(x0)
+
+
 # runsavesim(model0)
 # loss(model)
+# # p = make_geometry(model, μ, σ, σm)
+# # volume(p[1][1])
 
-@showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
+# @showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
 
+
+od = OnceDifferentiable(f, g!, fg!, x0)
+@showtime res = optimize(od, x0, LBFGS(), Optim.Options(f_tol=0, iterations=1, show_every=1, show_trace=true))
+# x_adjoint = re(minimizer(res))
