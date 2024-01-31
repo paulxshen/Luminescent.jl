@@ -37,8 +37,9 @@ struct PlaneWave
     f
     fields
     dims
-    function PlaneWave(f, dims; fields...)
-        new(f, fields, dims)
+    label
+    function PlaneWave(f, dims, label=""; fields...)
+        new(f, fields, dims, label)
     end
 end
 
@@ -67,7 +68,7 @@ end
     function Source(f, center, bounds; fields...)
     function Source(f, center, L::AbstractVector{<:Real}; fields...)
 
-Constructs custom  source. Can be used to specify modal sources
+Constructs custom  source. Can be used to specify uniform or modal sources
 
 Args
 - f: time function
@@ -79,12 +80,13 @@ struct Source
     fields
     center
     bounds
-    function Source(f, center, bounds; fields...)
-        new(f, fields, center, bounds)
+    label
+    function Source(f, center, bounds, label=""; fields...)
+        new(f, fields, center, bounds, label)
     end
 end
 function Source(f, center, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)
-    Source(f, center, [[a, a] for a = L]; fields...)
+    Source(f, center, [[-a / 2, a / 2] for a = L]; fields...)
 end
 
 struct SourceEffect
@@ -93,17 +95,20 @@ struct SourceEffect
     _g
     fields
     start
+    center
+    label
 end
 
 function SourceEffect(s::PlaneWave, dx, sizes, starts, sz0)
-    @unpack f, fields, dims = s
+    @unpack f, fields, dims, label = s
     d = length(first(sizes))
     g = Dict([k => fields[k] * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(fields)])
     starts = NamedTuple([k =>
         starts[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
                          for k = keys(starts)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], starts[k]) for k = keys(fields)])
-    SourceEffect(f, g, _g, fields, starts)
+    center = NamedTuple([k => round.(Int, starts[k] .+ size(g[k]) ./ 2) for k = keys(starts)])
+    SourceEffect(f, g, _g, fields, starts, center, label)
 end
 
 function SourceEffect(s::GaussianBeam, dx, sizes, starts, stop)

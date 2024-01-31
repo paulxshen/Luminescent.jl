@@ -195,13 +195,10 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     c = 0
     save_info = Int[]
     if d == 1
-        step = step1
         pf = u -> [u[1] .* u[2]]
     elseif d == 3
-        step = step3
         pf = u -> u[1:3] × u[4:6]
     else
-        step = step2
         if polarization == :TMz
             pf = u -> [-u[1] .* u[3], u[2] .* u[1]]
         else
@@ -233,12 +230,12 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
             #     end
             # end for k = fk])
             centers = [k => round.(Int, mean.(v)) for (k, v) = pairs(idxs)]
-            MonitorInstance(idxs, centers, m.normal, dx)
+            MonitorInstance(idxs, centers, m.normal, dx, m.label)
         end for m = monitors
     ]
     dt = dx * Courant
     sz0 = Tuple(sz0)
-    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_splits, source_effects, monitor_instances, step, power, save_info, fields, dx, dt, kw...)
+    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_splits, source_effects, monitor_instances, power, save_info, fields, dx, dt, kw...)
 end
 function apply(p; kw...)
     [apply(p[k], kw[k]) for k = keys(kw)]

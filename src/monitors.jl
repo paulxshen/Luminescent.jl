@@ -11,8 +11,9 @@ Args
 struct Monitor
     span
     normal
-    function Monitor(span, normal=nothing)
-        new(span, normal)
+    label
+    function Monitor(span, normal=nothing, label="")
+        new(span, normal, label)
     end
 end
 struct MonitorInstance
@@ -20,4 +21,5 @@ struct MonitorInstance
     centers
     normal
     dx
+    label
 end

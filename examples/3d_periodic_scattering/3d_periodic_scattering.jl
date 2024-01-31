@@ -3,9 +3,10 @@ simulation of plane wave scattering on periodic array of dielectric spheres
 """
 
 using UnPack, LinearAlgebra, GLMakie
-# using FDTDEngine
-include("$(pwd())/src/main.jl")
-include("$(pwd())/scripts/plot_recipes.jl")
+# using FDTDEngine,FDTDToolkit
+dir = pwd()
+include("$(dir)/src/main.jl")
+include("$dir/../FDTDToolkit.jl/src/main.jl")
 
 
 F = Float32
@@ -13,7 +14,7 @@ name = "3d_scattering"
 T = 8.0f0 # simulation duration in [periods]
 nres = 16
 dx = 1.0f0 / nres # pixel resolution in [wavelengths]
-Courant = 0.7 / √3 # Courant number
+Courant = 0.8 / √3 # Courant number
 
 "geometry"
 l = 2 # domain physical size length
@@ -32,14 +33,16 @@ sources = [
     # PlaneWave(t -> t < 1 ? cos(F(2π) * t) : 0.0f0, -1; Jz=1)
 ]
 configs = setup(boundaries, sources, monitors, dx, sz; F, Courant, T)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, step, power = configs
+@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, power = configs
 
 ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
 p = apply(geometry_splits; ϵ, μ, σ, σm)
 u0 = collect(values(fields))
 
 # run simulation
-@showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
+t = 0:dt:T
+sol = similar([u0], length(t))
+@showtime sol = accumulate!((u, t) -> step!(u, p, t, configs), sol, t, init=u0)
 
 # make movie
 Ez = map(sol) do u
