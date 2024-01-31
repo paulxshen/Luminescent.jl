@@ -107,7 +107,7 @@ function SourceEffect(s::PlaneWave, dx, sizes, starts, sz0)
         starts[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
                          for k = keys(starts)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], starts[k]) for k = keys(fields)])
-    center = NamedTuple([k => round.(Int, starts[k] .+ size(g[k]) ./ 2) for k = keys(starts)])
+    center = NamedTuple([k => round.(Int, starts[k] .+ size(first(values(g))) ./ 2) for k = keys(starts)])
     SourceEffect(f, g, _g, fields, starts, center, label)
 end
 
@@ -122,7 +122,7 @@ function SourceEffect(s::GaussianBeam, dx, sizes, starts, stop)
     SourceEffect(f, g, _g, fields, start)
 end
 function SourceEffect(s::Source, dx, sizes, starts, stop)
-    @unpack f, fields, center, bounds = s
+    @unpack f, fields, center, bounds, label = s
     # R = round.(Int, L ./ 2 / dx)
     # I = range.(-R, R)
     # I = [round(Int, a / dx):round(Int, b / dx) for (a, b) = bounds]
@@ -132,7 +132,8 @@ function SourceEffect(s::Source, dx, sizes, starts, stop)
     o = -1 .+ index(center, dx) .- round.(Int, (length.(I) .- 1) ./ 2)
     starts = NamedTuple([k => starts[k] .+ o for k = keys(starts)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], starts[k]) for k = keys(fields)])
-    SourceEffect(f, g, _g, fields, starts)
+    center = NamedTuple([k => round.(Int, starts[k] .+ size(first(values(g))) ./ 2) for k = keys(starts)])
+    SourceEffect(f, g, _g, fields, starts, center, label)
     # n = max.(1, round.(Int, L ./ dx))
     # g = ones(n...) / dx^count(L .== 0)
     # start = start .+ round.(Int, center ./ dx .- (n .- 1) ./ 2)

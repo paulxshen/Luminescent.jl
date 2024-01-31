@@ -15,21 +15,15 @@ In progress, split ratio isn't correct
 ## Quickstart
 We do a quick 3d simulation of plane wave scattering on periodic array of dielectric spheres (first gallery movie)
 ```julia
-"""
-simulation of plane wave scattering on periodic array of dielectric spheres
-"""
-
 using UnPack, LinearAlgebra, GLMakie
-using FDTDEngine
-include("$(pwd())/scripts/plot_recipes.jl")
-
+using FDTDEngine,FDTDToolkit
 
 F = Float32
 name = "3d_scattering"
-T = 4.0f0 # simulation duration in [periods]
+T = 8.0f0 # simulation duration in [periods]
 nres = 16
 dx = 1.0f0 / nres # pixel resolution in [wavelengths]
-Courant = 0.25f0 # Courant number
+Courant = 0.8 / √3 # Courant number
 
 "geometry"
 l = 2 # domain physical size length
@@ -48,14 +42,16 @@ sources = [
     # PlaneWave(t -> t < 1 ? cos(F(2π) * t) : 0.0f0, -1; Jz=1)
 ]
 configs = setup(boundaries, sources, monitors, dx, sz; F, Courant, T)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, step, power = configs
+@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, power = configs
 
 ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
 p = apply(geometry_splits; ϵ, μ, σ, σm)
 u0 = collect(values(fields))
 
 # run simulation
-@showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
+t = 0:dt:T
+sol = similar([u0], length(t))
+@showtime sol = accumulate!((u, t) -> step!(u, p, t, configs), sol, t, init=u0)
 
 # make movie
 Ez = map(sol) do u
@@ -63,11 +59,18 @@ Ez = map(sol) do u
 end
 ϵz = p[1][3]
 dir = @__DIR__
-recordsim(Ez, ϵz, configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=true)
+° = π / 180
+recordsim(Ez, ϵz, configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; elevation=30°, playback=1, bipolar=true)
 
 ```
 ## Installation
-Install via `Pkg.add(url="https://github.com/paulxshen/FDTDEngine.jl")`. You can additionally access plotting and movie making scripts via `include("_your_path/scripts/plot_recipes.jl")` 
+Install via 
+```
+Pkg.add(url="https://github.com/paulxshen/FDTDEngine.jl")
+Pkg.add(url="https://github.com/paulxshen/FDTDToolkit.jl")
+```
+`FDTDToolkit.jl` contains visualization utilities
+
 ## Implementation
 Supports 1d (Ez, Hy), 2d TMz (Ez, Hx, Hy), 2d TEz (Hz, Ex, Ey) and 3d. Length and time are in units of wavelength and period. This normalization allows usage of relative  permitivity and permeability  in equations . Fields including electric, magnetic and current density are simply bundled as a vector of arrays . Boundary conditions pad the field arrays . PML paddings are multilayered, stateful and permanent, increasing size of field and geometry arrays. All other boundaries only add transient single layers which are subsequently consumed by finite differencing  every update step. Paddings are coordinated to implictly implement staggered Yee's grid for finite differencing.
 
@@ -94,11 +97,11 @@ Monitor
 
  ## Physics 
 ```@docs
-step1
-stepTMz
-stepTEz
-step3
+step3!
 ```
+<!-- step1 -->
+<!-- stepTMz -->
+<!-- stepTEz -->
 
 ## Tutorials
 see `examples/`
