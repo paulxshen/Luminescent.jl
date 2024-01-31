@@ -3,7 +3,7 @@ include("../src/FDTDEngine.jl")
 using .FDTDEngine
 
 makedocs(
-    sitename="FDTDEngine",
+    sitename="FDTDEngine.jl",
     format=Documenter.HTML(),
     # modules=[FDTDEngine],
     pages=[
