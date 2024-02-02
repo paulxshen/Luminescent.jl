@@ -17,4 +17,5 @@ makedocs(
 #=deploydocs(
     repo = "<repository url>"
 )=#
-run(`mv makedocs/build docs`)
+run(`cmd /C mv makedocs/build/* docs`)
+run(`cmd /C cp examples/*/*.mp4 docs/assets`)

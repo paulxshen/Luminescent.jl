@@ -102,7 +102,8 @@ step3!
 <!-- step1 -->
 <!-- stepTMz -->
 <!-- stepTEz -->
-
+## Automatic differentiation adjoints
+Pass `bufferfrom=Zygote.bufferfrom` to `step!`
 ## Tutorials
 see `examples/`
 ## Generative inverse design

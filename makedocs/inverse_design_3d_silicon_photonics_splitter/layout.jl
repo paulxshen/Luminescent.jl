@@ -5,7 +5,7 @@ dir = "examples/utils"
 wwg = 0.5
 hwg = 0.22
 lwg = 1
-ld = 2
+ld = 3
 hclad = hbox = 0.2
 wm = 0.5wwg
 l = 2lwg + ld

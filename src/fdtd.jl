@@ -27,6 +27,7 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     else
         fk = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz)
     end
+    Courant = F(Courant)
 
     global nodes = fill(:U, d, 2)
     db = Any[PML(j * i,) for i = 1:d, j = (-1, 1)]

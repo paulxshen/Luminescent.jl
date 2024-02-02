@@ -14,6 +14,8 @@ include("$dir/scripts/startup.jl")
 # dir = "FDTDEngine.jl"
 # using FDTDEngine,FDTDToolkit
 
+
+
 F = Float32
 Random.seed!(1)
 
@@ -25,7 +27,9 @@ nbasis = 4 # complexity of design region
 Courant = 1.5 * 0.7 / √3# Courant number
 C = 1000 # scale loss
 λ = 1.55f0
+λ2 = 1.3f0
 nepochs = 16
+ω2 = λ / λ2
 
 "geometry"
 # loads design layout
@@ -69,13 +73,15 @@ sy, sz = size.((Ex,), (1, 2))
 y = range(F.(bounds[1])..., sy)
 z = range(F.(bounds[2])..., sz)
 
+f1 = t -> cos(F(2π) * t)
+f2 = t -> cos(F(2π) * t * λ / λ2)
 gEx = LinearInterpolation((y, z), F.(Ez))
 gEy = LinearInterpolation((y, z), F.(Ex))
 gEz = LinearInterpolation((y, z), F.(Ey))
 center = [sources[1]..., hbox]
 bounds = [0, bounds...]
 sources = [
-    Source(t -> cos(F(2π) * t), center, bounds;
+    Source(t -> f1(t) + f2(t), center, bounds;
         Jx=(x, y, z) -> gEx(y, z),
         Jy=(x, y, z) -> gEy(y, z),
         Jz=(x, y, z) -> gEz(y, z),
@@ -97,22 +103,30 @@ end
 
 
 # run pre or post optimization simulation and save movie
-
-function metrics(model, T=T; bufferfrom=nothing)
+function savesim(sol, p, name=name)
+    E = map(sol) do u
+        # sqrt(sum(u) do u u.^2 end)
+        # u[1] .^ 2
+        u[1]
+    end
+    dir = @__DIR__
+    recordsim(E, p[1][1], configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=false)
+end
+function monitor_powers(model, T=T; bufferfrom=bufferfrom)
     p = make_geometry(model, μ, σ, σm)
     # run simulation
     u = reduce((u, t) -> step!(u, p, t, configs; bufferfrom), 0:dt:T-1, init=deepcopy(u0))
-    reduce(((u, y), t) -> (
-            step!(u, p, t, configs; bufferfrom),
-            y + dt * power.(monitor_instances, (u,))
-        ),
-        T-1+dt:dt:T,
-        init=(u, zeros(F, length(monitor_instances))))[2]
+    reduce(((u, pow), t) -> (step!(u, p, t, configs; bufferfrom), begin
+            y = power.(monitor_instances, (u,))
+            pow + dt * vcat(
+                cispi(2t) * y, cispi(2t * ω2) * y)
+        end),
+        T-1+dt:dt:T, init=(u, zeros(ComplexF32, 2length(monitor_instances))))[2]
 end
 
-function loss(y)
-    dot([0, -1, -1, 1, -1, 1, 1, 1, 1], y) +
-    abs(y[2] - y[3])
+function loss(p)
+    p = abs.(p)
+    dot([-1, 1, 1, -1, 1, 1, 1, 1], p[2:9]) + dot([1, -1, 1, -1, 1, 1, 1, 1], p[11:18])
 end
 
 "geometry generator model"
@@ -122,46 +136,44 @@ model = Mask(round.(Int, (ld, ld) ./ dx), nbasis, contrast)#, symmetries=2)
 model0 = deepcopy(model)
 
 u0 = collect(values(fields))
-tp = abs(metrics(model, 2)[1])
+tp = abs(monitor_powers(model, 2)[1])
 p0 = make_geometry(model0, μ, σ, σm)
 # volume(p0[3][1])
 
 "Optim functions"
 x0, re = destructure(model)
-f_ = loss ∘ metrics
+f_ = loss ∘ monitor_powers
 f = f_ ∘ re
+function g!(storage, x)
+    model = re(x)
+    g, = gradient(f_, model)
+    storage .= realvec(g.a)
+end
+function fg!(storage, x)
+    model = re(x)
+    l, (g,) = withgradient(f_, model)
+    storage .= realvec(g.a)
+    l
+end
 x = copy(x0)
 @show f(x)
-# @show x|>re|>metrics
-
+# @show x|>re|>monitor_powers
 # train surrogate
 Random.seed!(1)
 runs = []
-i = 1
 function f!(x)
     @time begin
         model = re(x)
-        mp = metrics(model)
+        mp = monitor_powers(model)
         l = loss(mp)
-        global i
-        # if i == 1
-        push!(runs, [x, mp, l])
-        # else
-        #     runs[i] .= [x0, mp, l]
-        # end
-        # i +=1
+        push!(runs, (x0, mp, l))
         l
     end
 end
 
-iterations = 24
-f!(x)
-# runs = similar(runs, iterations)
-
 @showtime res = optimize(f!, x0, ParticleSwarm(;
-        n_particles=16), Optim.Options(; f_tol=0, iterations, show_every=1, show_trace=true))
+        n_particles=16), Optim.Options(f_tol=0, iterations=44, show_every=1, show_trace=true))
 xgf = minimizer(res)
-x = copy(xgf)
 
 # error()
 X = Base.stack(getindex.(runs, 1))
@@ -182,14 +194,14 @@ for i = 1:n
 end
 
 opt = Adam(0.1)
+x = copy(xgf)
 opt_state = Flux.setup(opt, x)
 n = 100
 @show f(x)
 for i = 1:n
-    l, (dldm,) = withgradient(x -> mae(
-            nn(x)[2:end],
-            [tp / 2, tp / 2, -tp, tp, zeros(F, 4)...]
-        ), x)
+    l, (dldm,) = withgradient(x -> mae(nn(x),
+            [tp / 2, tp / 2, 0, -tp / 2, tp / 2, zeros(F, 4)...,
+                tp / 2, 0, tp / 2, -tp / 2, tp / 2, zeros(F, 4)...,]), x)
     Flux.update!(opt_state, x, dldm)
     (i % 25 == 0 || i == n) && println("$i $l")
 end
@@ -209,23 +221,17 @@ x = copy(xsg)
 # @showtime res = optimize(od, x0, LBFGS(), Optim.Options(f_tol=0, iterations=1, show_every=1, show_trace=true))
 # x_adjoint = re(minimizer(res))
 
-function runsave(x)
+model = re(x)
+p = make_geometry(model, μ, σ, σm)
+t = 0:dt:T
+sol = similar([u0], length(t))
+@showtime sol = accumulate!((u, t) -> step!(u, p, t, configs), sol, t, init=u0)
 
-    model = re(x)
-    p = make_geometry(model, μ, σ, σm)
-    t = 0:dt:T
-    sol = similar([u0], length(t))
-    @showtime sol = accumulate!((u, t) -> step!(u, p, t, configs), sol, t, init=u0)
-
-    # make movie
-    Ez = map(sol) do u
-        u[3]
-    end
-    ϵz = p[1][3]
-    dir = @__DIR__
-    ° = π / 180
-    recordsim(Ez, ϵz, configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; elevation=60°, playback=1, bipolar=true)
-
+# make movie
+Ez = map(sol) do u
+    u[3]
 end
-
-runsave(xgf)
+ϵz = p[1][3]
+dir = @__DIR__
+° = π / 180
+recordsim(Ez, ϵz, configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; elevation=60°, playback=1, bipolar=true)
