@@ -51,7 +51,7 @@ u0 = collect(values(fields))
 # run simulation
 t = 0:dt:T
 sol = similar([u0], length(t))
-@showtime sol = accumulate!((u, t) -> step!(u, p, t, configs), sol, t, init=u0)
+@showtime sol = accumulate!((u, t) -> step!(u, p, t, dx, dt,field_padding, source_effects), sol, t, init=u0)
 
 # make movie
 Ez = map(sol) do u

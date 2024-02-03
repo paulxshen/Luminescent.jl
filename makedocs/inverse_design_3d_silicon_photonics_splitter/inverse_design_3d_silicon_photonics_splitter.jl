@@ -101,9 +101,9 @@ end
 function metrics(model, T=T; bufferfrom=nothing)
     p = make_geometry(model, μ, σ, σm)
     # run simulation
-    u = reduce((u, t) -> step!(u, p, t, configs; bufferfrom), 0:dt:T-1, init=deepcopy(u0))
+    u = reduce((u, t) -> step!(u, p, t, dx, dt, field_padding, source_effects; bufferfrom), 0:dt:T-1, init=deepcopy(u0))
     reduce(((u, y), t) -> (
-            step!(u, p, t, configs; bufferfrom),
+            step!(u, p, t, dx, dt, field_padding, source_effects; bufferfrom),
             y + dt * power.(monitor_instances, (u,))
         ),
         T-1+dt:dt:T,
@@ -132,6 +132,7 @@ f_ = loss ∘ metrics
 f = f_ ∘ re
 x = copy(x0)
 @show f(x)
+error()
 # @show x|>re|>metrics
 
 # train surrogate
@@ -163,7 +164,7 @@ f!(x)
 xgf = minimizer(res)
 x = copy(xgf)
 
-# error()
+error()
 X = Base.stack(getindex.(runs, 1))
 Y = Base.stack(getindex.(runs, 2))
 
@@ -202,11 +203,17 @@ x = copy(xsg)
 # loss(model)
 # # volume(p[1][1])
 
-# @showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
+# @showtime sol = accumulate((u, t) -> step(u, p, t, field_padding, source_effects), 0:dt:T, init=u0)
 
-
-# od = OnceDifferentiable(f, g!, fg!, x0)
-# @showtime res = optimize(od, x0, LBFGS(), Optim.Options(f_tol=0, iterations=1, show_every=1, show_trace=true))
+opt = Adam(0.2)
+m = re(x)
+opt_state = Flux.setup(opt, m)
+n = 2
+for i = 1:n
+    @time l, (dldm,) = withgradient(m -> loss(metrics(m; bufferfrom)), m)
+    Flux.update!(opt_state, m, dldm)
+    println("$i $l")
+end
 # x_adjoint = re(minimizer(res))
 
 function runsave(x)
@@ -215,7 +222,7 @@ function runsave(x)
     p = make_geometry(model, μ, σ, σm)
     t = 0:dt:T
     sol = similar([u0], length(t))
-    @showtime sol = accumulate!((u, t) -> step!(u, p, t, configs), sol, t, init=u0)
+    @showtime sol = accumulate!((u, t) -> step!(u, p, t, dx, dt, field_padding, source_effects), sol, t, init=u0)
 
     # make movie
     Ez = map(sol) do u

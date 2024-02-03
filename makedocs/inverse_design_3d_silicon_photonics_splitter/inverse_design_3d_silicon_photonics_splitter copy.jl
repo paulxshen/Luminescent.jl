@@ -115,8 +115,8 @@ end
 function monitor_powers(model, T=T; bufferfrom=bufferfrom)
     p = make_geometry(model, μ, σ, σm)
     # run simulation
-    u = reduce((u, t) -> step!(u, p, t, configs; bufferfrom), 0:dt:T-1, init=deepcopy(u0))
-    reduce(((u, pow), t) -> (step!(u, p, t, configs; bufferfrom), begin
+    u = reduce((u, t) -> step!(u, p, t, dx, dt, field_padding, source_effects; bufferfrom), 0:dt:T-1, init=deepcopy(u0))
+    reduce(((u, pow), t) -> (step!(u, p, t, dx, dt, field_padding, source_effects; bufferfrom), begin
             y = power.(monitor_instances, (u,))
             pow + dt * vcat(
                 cispi(2t) * y, cispi(2t * ω2) * y)
@@ -214,7 +214,7 @@ x = copy(xsg)
 # loss(model)
 # # volume(p[1][1])
 
-# @showtime sol = accumulate((u, t) -> step(u, p, t, configs), 0:dt:T, init=u0)
+# @showtime sol = accumulate((u, t) -> step(u, p, t, field_padding, source_effects), 0:dt:T, init=u0)
 
 
 # od = OnceDifferentiable(f, g!, fg!, x0)
@@ -225,7 +225,7 @@ model = re(x)
 p = make_geometry(model, μ, σ, σm)
 t = 0:dt:T
 sol = similar([u0], length(t))
-@showtime sol = accumulate!((u, t) -> step!(u, p, t, configs), sol, t, init=u0)
+@showtime sol = accumulate!((u, t) -> step!(u, p, t, dx, dt, field_padding, source_effects), sol, t, init=u0)
 
 # make movie
 Ez = map(sol) do u

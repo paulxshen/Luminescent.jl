@@ -1,10 +1,10 @@
 # Base.-()
 """
-    function step1(u, p, t, configs)
+    function step1(u, p, t, field_padding, source_effects)
 
 Updates fields for 1D (Ez, Hy)
 """
-function step1(u, p, t, configs)
+function step1(u, p, t, field_padding, source_effects)
     @unpack dx, dt, field_padding, source_effects = configs
     ∇ = Del([dx])
     ϵ, μ, σ, σm = [[a] for a = p]
@@ -32,11 +32,11 @@ function step1(u, p, t, configs)
     [Ez, Hy,]
 end
 """
-    function stepTMz(u, p, t, configs)
+    function stepTMz(u, p, t, field_padding, source_effects)
 
 Updates fields for 2d TMz
 """
-function stepTMz(u, p, t, configs)
+function stepTMz(u, p, t, field_padding, source_effects)
     @unpack dx, dt, field_padding, source_effects = configs
     ∇ = Del([dx, dx])
     ϵ, μ, σ, σm = [[a] for a = p]
@@ -64,11 +64,11 @@ function stepTMz(u, p, t, configs)
     [Ez, Hx, Hy,]
 end
 """
-    function stepTEz(u, p, t, configs)
+    function stepTEz(u, p, t, field_padding, source_effects)
 
 Updates fields for 2d TEz (Hz, Ex, Ey)
 """
-function stepTEz(u, p, t, configs)
+function stepTEz(u, p, t, field_padding, source_effects)
     @unpack dx, dt, field_padding, source_effects = configs
     ∇ = Del([dx, dx])
     ϵ, μ, σ, σm = [[a] for a = p]
@@ -96,12 +96,11 @@ function stepTEz(u, p, t, configs)
     [Hz, Ex, Ey]
 end
 """
-    function step3(u, p, t, configs)
+    function step3(u, p, t, field_padding, source_effects)
 
 Updates fields for 3d
 """
-function step3!(u, p, t, configs; Buffer=nothing, bufferfrom=nothing)
-    @unpack dx, dt, field_padding, source_effects = configs
+function step3!(u, p, t, dx, dt, field_padding, source_effects; Buffer=nothing, bufferfrom=nothing)
     ∇ = StaggeredDel([dx, dx, dx])
     ϵ, μ, σ, σm = p
     Ex, Ey, Ez, Hx, Hy, Hz = u
