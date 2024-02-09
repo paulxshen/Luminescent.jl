@@ -89,7 +89,7 @@ sources = [
 ]
 
 configs = setup(boundaries, sources, monitors, dx, sz0; F, Courant, T)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, power = configs
+@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, u0, power = configs
 
 
 
@@ -135,7 +135,7 @@ nbasis = 4
 model = Mask(round.(Int, (ld, ld) ./ dx), nbasis, contrast)#, symmetries=2)
 model0 = deepcopy(model)
 
-u0 = collect(values(fields))
+
 tp = abs(monitor_powers(model, 2)[1])
 p0 = make_geometry(model0, μ, σ, σm)
 # volume(p0[3][1])

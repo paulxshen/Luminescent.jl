@@ -111,7 +111,7 @@ for (nres, α, nepochs) in schedule
     σm = 0a
     μ, σ, σm = apply(geometry_padding; μ, σ, σm)
 
-    u0 = collect(values(fields))
+
     dims = size(first(fields)) # full field size including PML padding
 
     # setup design region to be optimized

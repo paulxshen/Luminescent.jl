@@ -1,5 +1,6 @@
 using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Functors, DataStructures
 using Jello, ArrayPadding, Porcupine
+using Zygote: bufferfrom, Buffer
 F = Float32
 Random.seed!(1)
 include("utils.jl")

@@ -10,3 +10,5 @@ Base.size(x::NamedTuple) = (length(x),)
 T = Union{Tuple,AbstractArray,Number}
 Base.:-(x::T, y::T) = x .- y
 Base.:+(x::T, y::T) = x .+ y
+
+Base.view(b::Buffer, i...) = b[i...]

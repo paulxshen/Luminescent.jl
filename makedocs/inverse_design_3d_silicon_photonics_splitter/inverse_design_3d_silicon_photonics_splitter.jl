@@ -1,6 +1,6 @@
 using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Zygote, Jello, Flux
 using Flux: mae, Adam
-using Zygote: withgradient, Buffer, bufferfrom
+using Zygote: withgradient
 using BSON: @save, @load
 using Optim: Options, minimizer
 using Optim
@@ -43,17 +43,8 @@ boundaries = [] # unspecified boundaries default to PML
 "monitors"
 z = [hbox, hbox + hwg]
 n = [1, 0, 0]
-monitors = [Monitor([x, y, z], n) for (x, y) = ports]
-ox, oy, = o
-oz = hbox
-append!(monitors, [
-    Monitor([ox, [oy, oy + ld], [oz, oz + hwg]], [-1, 0, 0]),
-    Monitor([ox + ld, [oy, oy + ld], [oz, oz + hwg]], [1, 0, 0]),
-    Monitor([[ox, ox + ld], oy, [oz, oz + hwg]], [0, -1, 0]),
-    Monitor([[ox, ox + ld], oy + ld, [oz, oz + hwg]], [0, 1, 0]),
-    Monitor([[ox, ox + ld], [oy, oy + ld], oz], [0, 0, -1]),
-    Monitor([[ox, ox + ld], [oy, oy + ld], oz + hwg], [0, 0, 1]),
-])
+monitors = vcat([Monitor([x, y, z], n) for (x, y) = ports], monitors_on_box([o..., hbox], [ld, ld, hwg]))
+
 
 "sources"
 
@@ -83,13 +74,13 @@ sources = [
 ]
 
 configs = setup(boundaries, sources, monitors, dx, sz0; F, Courant, T)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, power = configs
+@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, u0, = configs
 
 
 
 function make_geometry(model, μ, σ, σm)
 
-    b = place(base, model(), round.(Int, o / dx) .+ 1)
+    b = place!(F.(base), model(), round.(Int, o / dx) .+ 1)
     ϵ = sandwich(b, round.(Int, [hbox, hwg, hclad] / dx), [ϵbox, ϵcore, ϵclad])
     ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
     p = apply(geometry_splits; ϵ, μ, σ, σm)
@@ -98,12 +89,12 @@ end
 
 # run pre or post optimization simulation and save movie
 
-function metrics(model, T=T; bufferfrom=nothing)
+function metrics(model, T=T;)
     p = make_geometry(model, μ, σ, σm)
     # run simulation
-    u = reduce((u, t) -> step!(u, p, t, dx, dt, field_padding, source_effects; bufferfrom), 0:dt:T-1, init=deepcopy(u0))
+    u = reduce((u, t) -> step!(u, p, t, dx, dt, field_padding, source_effects;), 0:dt:T-1, init=deepcopy(u0))
     reduce(((u, y), t) -> (
-            step!(u, p, t, dx, dt, field_padding, source_effects; bufferfrom),
+            step!(u, p, t, dx, dt, field_padding, source_effects),
             y + dt * power.(monitor_instances, (u,))
         ),
         T-1+dt:dt:T,
@@ -121,10 +112,11 @@ nbasis = 4
 model = Mask(round.(Int, (ld, ld) ./ dx), nbasis, contrast)#, symmetries=2)
 model0 = deepcopy(model)
 
-u0 = collect(values(fields))
-tp = abs(metrics(model, 2)[1])
+
 p0 = make_geometry(model0, μ, σ, σm)
-# volume(p0[3][1])
+tp = abs(metrics(model, 2)[1])
+
+# volume(p0[1][3])
 
 "Optim functions"
 x0, re = destructure(model)
@@ -132,6 +124,7 @@ f_ = loss ∘ metrics
 f = f_ ∘ re
 x = copy(x0)
 @show f(x)
+
 error()
 # @show x|>re|>metrics
 
@@ -210,7 +203,7 @@ m = re(x)
 opt_state = Flux.setup(opt, m)
 n = 2
 for i = 1:n
-    @time l, (dldm,) = withgradient(m -> loss(metrics(m; bufferfrom)), m)
+    @time l, (dldm,) = withgradient(m -> loss(metrics(m;)), m)
     Flux.update!(opt_state, m, dldm)
     println("$i $l")
 end
@@ -226,7 +219,7 @@ function runsave(x)
 
     # make movie
     Ez = map(sol) do u
-        u[3]
+        u[1][3]
     end
     ϵz = p[1][3]
     dir = @__DIR__

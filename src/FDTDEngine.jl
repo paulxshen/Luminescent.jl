@@ -3,7 +3,7 @@ include("main.jl")
 export reindex, sandwich
 export Del, step3!, step!
 # stepTMz, step1, , stepTEz
-export Periodic, PML, PEC, PMC, Padding
+export Periodic, PML, PEC, PMC, InPad, OutPad
 export PlaneWave, GaussianBeam, UniformSource, Source, place
 export Monitor
 export setup, apply

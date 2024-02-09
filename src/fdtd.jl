@@ -31,8 +31,8 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
 
     global nodes = fill(:U, d, 2)
     db = Any[PML(j * i,) for i = 1:d, j = (-1, 1)]
-    field_padding = DefaultDict(() -> Padding[])
-    geometry_padding = DefaultDict(() -> Padding[])
+    field_padding = DefaultDict(() -> InPad[])
+    geometry_padding = DefaultDict(() -> OutPad[])
     starts = Dict([k => ones(Int, d) for k = fk])
     sizes = Dict([k => collect(sz0) for k = fk])
 
@@ -105,10 +105,10 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
                 l = j == 1 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 r = j == 2 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 info = lazy = false
-                push!(geometry_padding[:ϵ], Padding(:replicate, l, r, true))
-                push!(geometry_padding[:μ], Padding(:replicate, l, r, true))
-                push!(geometry_padding[:σ], Padding(ReplicateRamp(F(b.σ)), l, r, true))
-                push!(geometry_padding[:σm], Padding(ReplicateRamp(F(b.σ)), l, r, true))
+                push!(geometry_padding[:ϵ], OutPad(:replicate, l, r,))
+                push!(geometry_padding[:μ], OutPad(:replicate, l, r,))
+                push!(geometry_padding[:σ], OutPad(ReplicateRamp(F(b.σ)), l, r,))
+                push!(geometry_padding[:σm], OutPad(ReplicateRamp(F(b.σ)), l, r,))
                 if j == 1
                     for k = keys(starts)
                         starts[k][i] += n
@@ -130,9 +130,9 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
                     if t == Periodic
                         lp = j == 1 ? select : zeros(Int, d)
                         rp = j == 2 ? select : zeros(Int, d)
-                        push!(field_padding[k], Padding(:periodic, lp, rp, false))
+                        push!(field_padding[k], InPad(:periodic, lp, rp,))
                     else
-                        push!(field_padding[k], Padding(0, l, r, false))
+                        push!(field_padding[k], InPad(0, l, r,))
                     end
                 end
             end
@@ -140,8 +140,8 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     end
     for i = 1:d
         if d == 3
-            l = Padding(:replicate, Int.(1:d .== i), fill(0, d), true)
-            r = Padding(:replicate, fill(0, d), Int.(1:d .== i), true)
+            l = OutPad(:replicate, Int.(1:d .== i), fill(0, d),)
+            r = OutPad(:replicate, fill(0, d), Int.(1:d .== i),)
             p = [l, r]
             append!(geometry_padding[:μ], p)
             append!(geometry_padding[:σm], p)
@@ -176,6 +176,18 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     sizes[:Jz] = sizes[:Ez]
     sizes = NamedTuple([k => Tuple(sizes[k]) for (k) = keys(sizes)])
     fields = NamedTuple([k => zeros(F, Tuple(sizes[k])) for (k) = fk])
+    u = collect(values(fields))
+    if d == 1
+        pf = u -> [u[1] .* u[2]]
+    elseif d == 3
+        u0 = [u[1:3], u[4:6]]
+    else
+        if polarization == :TMz
+            u -> [-u[1] .* u[3], u[2] .* u[1]]
+        else
+            pf = u -> [u[1] .* u[3], -u[2] .* u[1]]
+        end
+    end
     geometry_splits = Dict{Symbol,Vector{Vector{UnitRange{Int64}}}}()
     function gs(sz, k)
         l = 1 .- sum(field_padding[k]) do p
@@ -191,29 +203,20 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     end for k = keys(geometry_padding)])
     geometry_splits[:μ] = geometry_splits[:σm] = gs.((geometry_sizes[:μ],), [:Hx, :Hy, :Hz])
     geometry_splits[:ϵ] = geometry_splits[:σ] = gs.((geometry_sizes[:ϵ],), [:Ex, :Ey, :Ez])
-    source_effects = [SourceEffect(s, dx, sizes, starts, sz0) for s = sources]
-
-    c = 0
-    save_info = Int[]
-    if d == 1
-        pf = u -> [u[1] .* u[2]]
-    elseif d == 3
-        pf = u -> u[1:3] × u[4:6]
-    else
-        if polarization == :TMz
-            pf = u -> [-u[1] .* u[3], u[2] .* u[1]]
-        else
-            pf = u -> [u[1] .* u[3], -u[2] .* u[1]]
+    source_effects = DefaultDict(() -> SourceEffect[])
+    for s = sources
+        for (k, v) = pairs(SourceEffect(s, dx, sizes, starts, sz0))
+            append!(source_effects[k], v)
         end
     end
-    # power(m, u) = sum(sum(pf([u[m.idxs[k]...] for (u, k) = zip(u, fk)]) .* m.normal))
-    power(m, u) = sum(sum(pf([u[m.idxs[i]...] for (i, u) = enumerate(u,)]) .* m.normal))
-    # power(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.idxs)))]) .* m.normal))
+    c = 0
+    save_info = Int[]
+
     monitor_instances = [
         begin
 
-            idxs = [
-                map(starts[k], m.span) do s, x
+            idxs = Dict([
+                k => map(starts[k], m.span) do s, x
                     x = round.(Int, x / dx)
                     if isa(x, Real)
                         s .+ x
@@ -221,7 +224,7 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
                         s+x[1]:s+x[2]
                     end
                 end for k = fk
-            ]
+            ])
             # idxs = NamedTuple([k => map(starts[k], m.span) do s, x
             #     x = round.(Int, x / dx)
             #     if isa(x, Real)
@@ -236,7 +239,33 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     ]
     dt = dx * Courant
     sz0 = Tuple(sz0)
-    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_splits, source_effects, monitor_instances, power, save_info, fields, dx, dt, kw...)
+    for (k, v) = pairs(field_padding)
+        a = ones(F, size(fields[k]))
+        i = filter(eachindex(v)) do i
+            v[i].b == 0
+        end
+        i_ = sort(setdiff(eachindex(v), i))
+        if !isempty(i)
+
+            for i = i
+                @unpack b, l, r = v[i]
+                pad!(a, b, l, r)
+            end
+            field_padding[k] = [
+                InPad(
+                    0,
+                    sum(getproperty.(v[i], :l)),
+                    sum(getproperty.(v[i], :r)),
+                    a),
+                v[i_]...
+            ]
+        end
+    end
+    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_splits, source_effects, monitor_instances, u0, save_info, fields, dx, dt, kw...)
+end
+function apply!(p; kw...)
+    [apply!(p[k], kw[k]) for k = keys(kw)]
+    # [apply(p[k], v) for (k, v) = pairs(kw)]
 end
 function apply(p; kw...)
     [apply(p[k], kw[k]) for k = keys(kw)]

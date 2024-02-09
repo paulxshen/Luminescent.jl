@@ -42,11 +42,11 @@ sources = [
     # PlaneWave(t -> t < 1 ? cos(F(2π) * t) : 0.0f0, -1; Jz=1)
 ]
 configs = setup(boundaries, sources, monitors, dx, sz; F, Courant, T)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, power = configs
+@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, u0, power = configs
 
 ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
 p = apply(geometry_splits; ϵ, μ, σ, σm)
-u0 = collect(values(fields))
+
 
 # run simulation
 t = 0:dt:T
@@ -93,6 +93,7 @@ PMC
 ## Monitors  
  ```@docs
 Monitor
+power
 ```
 
  ## Physics 

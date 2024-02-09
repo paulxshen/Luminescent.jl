@@ -82,7 +82,7 @@ function dudt(u, p, t)
     comp_vec((:Ez, :Hx, :Hy, :Jz, :t), dEzdt, dHxdt, dHydt, dJzdt, 1.0f0,)
 end
 
-fields = ComponentArray(merge(fields, (; t=F(0))))
+fields = ComponentArray(merge(u0, (; t=F(0))))
 u0 = fields
 tstops = range(tspan..., length=8 + 1)
 callback = train ? nothing : PresetTimeCallback(tstops, plotstep)

@@ -29,12 +29,12 @@ sources = [
     Source(t -> cos(F(2π) * t), [l / 2, l / 2, 0.125f0], [0, 0, 0.25f0]; Jz=1),
 ]
 configs = setup(boundaries, sources, monitors, dx, sz0; F, Courant, T)
-@unpack μ, σ, σm, ϵ, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, power = configs
+@unpack μ, σ, σm, ϵ, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, u0, power = configs
 # volume(source_effects[1]._g[:Jz])
 
 ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
 p = apply(geometry_splits; ϵ, μ, σ, σm)
-u0 = collect(values(fields))
+
 
 # run simulation
 t = 0:dt:T

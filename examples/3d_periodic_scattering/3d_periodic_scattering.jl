@@ -33,11 +33,11 @@ sources = [
     # PlaneWave(t -> t < 1 ? cos(F(2π) * t) : 0.0f0, -1; Jz=1)
 ]
 configs = setup(boundaries, sources, monitors, dx, sz; F, Courant, T)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, fields, power = configs
+@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, u0, = configs
 
 ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
 p = apply(geometry_splits; ϵ, μ, σ, σm)
-u0 = collect(values(fields))
+
 
 # run simulation
 t = 0:dt:T
@@ -46,7 +46,7 @@ sol = similar([u0], length(t))
 
 # make movie
 Ez = map(sol) do u
-    u[3]
+    u[1][3]
 end
 ϵz = p[1][3]
 dir = @__DIR__

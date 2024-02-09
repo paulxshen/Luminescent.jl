@@ -3,22 +3,21 @@
 gaussian(x; μ=0, σ=1) = exp(-((x - μ) / σ)^2)
 
 function place(a, b, start; lazy=false)
-    a + pad(b, 0, Tuple(start) .- 1, size(a) .- size(b) .- Tuple(start) .+ 1; lazy)
-    # buf = Buffer(a)
-    # for i = eachindex(a)
-    #     buf[i] = a[i]
-    # end
-    # buf[[i:j for (i, j) = zip(start, start .+ size(b) .- 1)]...] += b
-    # copy(buf)
-    # stop = start .+ size(b) .- 1
-    # map(Iterators.product(axes(a)...)) do I
-    #     all(start .<= I .<= stop) ? b[(I .- start .+ 1)...] + a[I...] : a[I...]
-    # end
+    a + pad(b, 0, Tuple(start) .- 1, size(a) .- size(b) .- Tuple(start) .+ 1)
+    # place!(buf, b, start)
+end
+function place!(a::AbstractArray, b, start)
+    buf = bufferfrom(a)
+    place!(buf, b, start)
+    copy(buf)
+end
+function place!(a, b, start)
+    a[[i:j for (i, j) = zip(start, start .+ size(b) .- 1)]...] = b
 end
 
-function place(a, b; center)
+function place!(a, b; center)
     # @show size(a), size(b), center
-    place(a, b, center .- floor.((size(b) .- 1) .÷ 2))
+    place!(a, b, center .- floor.((size(b) .- 1) .÷ 2))
 end
 
 
@@ -30,7 +29,7 @@ Constructs plane wave source
 
 Args
 - f: time function
-- dims: eg -1 for wave coming from -x edge
+- dims: eg -1 for wave coming from -x face
 - fields: which fields to excite & their scaling constants (typically a current source, eg Jz=1)
 """
 struct PlaneWave
@@ -93,7 +92,6 @@ struct SourceEffect
     f
     g
     _g
-    fields
     start
     center
     label
@@ -108,7 +106,7 @@ function SourceEffect(s::PlaneWave, dx, sizes, starts, sz0)
                          for k = keys(starts)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], starts[k]) for k = keys(fields)])
     center = NamedTuple([k => round.(Int, starts[k] .+ size(first(values(g))) ./ 2) for k = keys(starts)])
-    SourceEffect(f, g, _g, fields, starts, center, label)
+    Dict([k => [SourceEffect(f, g[k], _g[k], starts[k], center[k], label)] for k = keys(fields)])
 end
 
 function SourceEffect(s::GaussianBeam, dx, sizes, starts, stop)
@@ -119,7 +117,7 @@ function SourceEffect(s::GaussianBeam, dx, sizes, starts, stop)
     g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(I...)] / dx
     start = start .- 1 .+ index(center, dx) .- round.(Int, (size(g) .- 1) ./ 2)
     _g = place(zeros(F, sz), g, start)
-    SourceEffect(f, g, _g, fields, start)
+    Dict([k => [SourceEffect(f, g[k], _g[k], starts[k], center[k], label)] for k = keys(fields)])
 end
 function SourceEffect(s::Source, dx, sizes, starts, stop)
     @unpack f, fields, center, bounds, label = s
@@ -133,35 +131,30 @@ function SourceEffect(s::Source, dx, sizes, starts, stop)
     starts = NamedTuple([k => starts[k] .+ o for k = keys(starts)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], starts[k]) for k = keys(fields)])
     center = NamedTuple([k => round.(Int, starts[k] .+ size(first(values(g))) ./ 2) for k = keys(starts)])
-    SourceEffect(f, g, _g, fields, starts, center, label)
+    Dict([k => [SourceEffect(f, g[k], _g[k], starts[k], center[k], label)] for k = keys(fields)])
     # n = max.(1, round.(Int, L ./ dx))
     # g = ones(n...) / dx^count(L .== 0)
     # start = start .+ round.(Int, center ./ dx .- (n .- 1) ./ 2)
 end
 
-function apply(s::AbstractVector{<:SourceEffect}, t; kw...)
+function apply(s::SourceEffect, a, t::Real)
+    @unpack g, _g, f, start = s
+    # r = place(r, real(fields[k] * f(t) .* g), start)
+    a .+ real(f(t) .* _g)
+end
+function apply(s, t::Real; kw...)
     [
         begin
-            r = kw[k]
-            for s = s
-                @unpack g, _g, fields, f, start = s
-                if k in keys(fields)
-                    # r = place(r, real(fields[k] * f(t) .* g), start)
-                    r = r .+ real(f(t) .* _g[k])
-                end
+            a = kw[k]
+            for s = s[k]
+                a = apply(s, a, t)
             end
-            r
+            a
         end for k = keys(kw)
         # end for (k, a) = pairs(kw)
     ]
 end
-# function apply(s::AbstractVector{<:SourceEffect}, u, t)
-#     u = NamedTuple(deepcopy(u))
-#     for s = s
-#         @unpack g, fields, f, start = s
-#         for f = keys(fields)
-#             u = merge(u, (; f => place(u[f], real(fields[f] * s.f(t) .* g), start .+ left(u[f]))))
-#         end
-#     end
-#     u
+
+# function apply(d,t; kw...)
+#     [apply(d[k], kw[k]) for k = keys(kw)]
 # end
