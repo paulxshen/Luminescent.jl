@@ -1,27 +1,3 @@
-# __precompile__(false)
-(m::Number)(a...) = m
-gaussian(x; μ=0, σ=1) = exp(-((x - μ) / σ)^2)
-
-function place(a, b, start; lazy=false)
-    a + pad(b, 0, Tuple(start) .- 1, size(a) .- size(b) .- Tuple(start) .+ 1)
-    # place!(buf, b, start)
-end
-function place!(a::AbstractArray, b, start)
-    buf = bufferfrom(a)
-    place!(buf, b, start)
-    copy(buf)
-end
-function place!(a, b, start)
-    a[[i:j for (i, j) = zip(start, start .+ size(b) .- 1)]...] = b
-end
-
-function place!(a, b; center)
-    # @show size(a), size(b), center
-    place!(a, b, center .- floor.((size(b) .- 1) .÷ 2))
-end
-
-
-
 """
     function PlaneWave(f, dims; fields...)
 
@@ -43,7 +19,7 @@ struct PlaneWave
 end
 
 """
-    function GaussianBeam(f, σ, center, dims; fields...)
+    function GaussianBeam(f, σ, c, dims; fields...)
 
 Constructs gaussian beam source
 
@@ -57,89 +33,91 @@ struct GaussianBeam
     f
     σ
     fields
-    center
+    c
     dims
-    function GaussianBeam(f, σ, center, dims; fields...)
-        new(f, σ, fields, center, dims)
+    function GaussianBeam(f, σ, c, dims; fields...)
+        new(f, σ, fields, c, dims)
     end
 end
-"""
-    function Source(f, center, bounds; fields...)
-    function Source(f, center, L::AbstractVector{<:Real}; fields...)
 
+"""
+    function CustomSource(f, c, lb, ub, label=""; fields...)
+    function CustomSource(f, c, L, label=""; fields...)
+        
 Constructs custom  source. Can be used to specify uniform or modal sources
 
 Args
 - f: time function
+- c: origin or center of source
+- lb: lower bounds wrt to c
+- ub: upper bounds wrt to c
 - L: source dimensions in [wavelengths]
 - fields: which fields to excite & their scaling constants (typically a current source, eg Jz=1)
 """
-struct Source
+struct CustomSource
     f
     fields
-    center
-    bounds
+    c
+    lb
+    ub
     label
-    function Source(f, center, bounds, label=""; fields...)
-        new(f, fields, center, bounds, label)
+    function CustomSource(f, c, lb, ub, label::String=""; fields...)
+        new(f, fields, c, lb, ub, label)
     end
 end
-function Source(f, center, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)
-    Source(f, center, [[-a / 2, a / 2] for a = L]; fields...)
+function CustomSource(f, c, L, label::AbstractString=""; fields...)
+    # CustomSource
+    # function CustomSource(f, c, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)
+    CustomSource(f, c, -L / 2, L / 2, label; fields...)
 end
+Source = CustomSource
 
 struct SourceEffect
     f
     g
     _g
-    start
-    center
+    o
+    c
     label
 end
 
-function SourceEffect(s::PlaneWave, dx, sizes, starts, sz0)
+function SourceEffect(s::PlaneWave, dx, sizes, o, sz0)
     @unpack f, fields, dims, label = s
     d = length(first(sizes))
     g = Dict([k => fields[k] * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(fields)])
-    starts = NamedTuple([k =>
-        starts[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
-                         for k = keys(starts)])
-    _g = Dict([k => place(zeros(F, sizes[k]), g[k], starts[k]) for k = keys(fields)])
-    center = NamedTuple([k => round.(Int, starts[k] .+ size(first(values(g))) ./ 2) for k = keys(starts)])
-    Dict([k => [SourceEffect(f, g[k], _g[k], starts[k], center[k], label)] for k = keys(fields)])
+    o = NamedTuple([k =>
+        o[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
+                    for k = keys(o)])
+    _g = Dict([k => place(zeros(F, sizes[k]), g[k], o[k]) for k = keys(fields)])
+    c = NamedTuple([k => round.(Int, o[k] .+ size(first(values(g))) ./ 2) for k = keys(o)])
+    Dict([k => [SourceEffect(f, g[k], _g[k], o[k], c[k], label)] for k = keys(fields)])
 end
 
-function SourceEffect(s::GaussianBeam, dx, sizes, starts, stop)
-    @unpack f, σ, fields, center, dims = s
+function SourceEffect(s::GaussianBeam, dx, sizes, o, stop)
+    @unpack f, σ, fields, c, dims = s
     n = round(Int, 2σ / dx)
     r = n * dx
-    I = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(center)]
+    I = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(c)]
     g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(I...)] / dx
-    start = start .- 1 .+ index(center, dx) .- round.(Int, (size(g) .- 1) ./ 2)
-    _g = place(zeros(F, sz), g, start)
-    Dict([k => [SourceEffect(f, g[k], _g[k], starts[k], center[k], label)] for k = keys(fields)])
+    o = o .- 1 .+ index(c, dx) .- round.(Int, (size(g) .- 1) ./ 2)
+    _g = place(zeros(F, sz), g, o)
+    Dict([k => [SourceEffect(f, g[k], _g[k], o[k], c[k], label)] for k = keys(fields)])
 end
-function SourceEffect(s::Source, dx, sizes, starts, stop)
-    @unpack f, fields, center, bounds, label = s
-    # R = round.(Int, L ./ 2 / dx)
-    # I = range.(-R, R)
-    # I = [round(Int, a / dx):round(Int, b / dx) for (a, b) = bounds]
-    bounds = [isa(b, Number) ? [b, b] : b for b = bounds]
-    I = [b[1]:dx:b[2] for b = bounds]
-    g = Dict([k => [fields[k](v...) for v = Iterators.product(I...)] / dx^count(getindex.(bounds, 1) .== getindex.(bounds, 2)) for k = keys(fields)])
-    o = -1 .+ index(center, dx) .- round.(Int, (length.(I) .- 1) ./ 2)
-    starts = NamedTuple([k => starts[k] .+ o for k = keys(starts)])
-    _g = Dict([k => place(zeros(F, sizes[k]), g[k], starts[k]) for k = keys(fields)])
-    center = NamedTuple([k => round.(Int, starts[k] .+ size(first(values(g))) ./ 2) for k = keys(starts)])
-    Dict([k => [SourceEffect(f, g[k], _g[k], starts[k], center[k], label)] for k = keys(fields)])
-    # n = max.(1, round.(Int, L ./ dx))
-    # g = ones(n...) / dx^count(L .== 0)
-    # start = start .+ round.(Int, center ./ dx .- (n .- 1) ./ 2)
+
+function SourceEffect(s::CustomSource, dx, sizes, o, stop)
+    @unpack f, fields, c, lb, ub label = s
+    I = [a:dx:b for (a, b) = zip(lb, ub)]
+    g = Dict([k => [fields[k](v...) for v = Iterators.product(I...)] / dx^count(lb .== ub) for k = keys(fields)])
+    c = -1 .+ index(c, dx) .- round.(Int, (length.(I) .- 1) ./ 2)
+    o = NamedTuple([k => o[k] .+ c for k = keys(o)])
+    _g = Dict([k => place(zeros(F, sizes[k]), g[k], o[k]) for k = keys(fields)])
+    c = NamedTuple([k => round.(Int, o[k] .+ size(first(values(g))) ./ 2) for k = keys(o)])
+    Dict([k => [SourceEffect(f, g[k], _g[k], o[k], c[k], label)] for k = keys(fields)])
 end
 
 function apply(s::SourceEffect, a, t::Real)
-    @unpack g, _g, f, start = s
-    # r = place(r, real(fields[k] * f(t) .* g), start)
+    @unpack g, _g, f, o = s
+    # r = place(r, real(fields[k] * f(t) .* g), o)
     a .+ real(f(t) .* _g)
 end
 function apply(s, t::Real; kw...)

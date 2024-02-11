@@ -4,7 +4,7 @@ export reindex, sandwich
 export Del, step3!, step!
 # stepTMz, step1, , stepTEz
 export Periodic, PML, PEC, PMC, InPad, OutPad
-export PlaneWave, GaussianBeam, UniformSource, Source, place
+export PlaneWave, GaussianBeam, UniformSource, CustomSource, place
 export Monitor
 export setup, apply
 end

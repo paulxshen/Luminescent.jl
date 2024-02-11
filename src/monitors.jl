@@ -1,31 +1,37 @@
 using LinearAlgebra, UnPack
 """
-    function Monitor(span, normal=nothing)
+    function Monitor(c, L, n=nothing)
 
-Constructs monitor which can span a point, line, surface, or volume
+Constructs monitor which can span a point, line, surface, or volume monitoring fields or power
 
 Args
-- span
-- normal: flux monitor direction
+- c: origin or center of monitor
+- L: physical dimensions of monitor
+- n: flux monitor direction (eg normal to flux surface)
 """
 struct Monitor
-    span
-    normal
+    c
+    lb
+    ub
+    n
     label
-    function Monitor(span, normal=nothing, label="")
-        new(span, normal, label)
+    # function Monitor(c,, n=nothing, label="")
+    #     new(c,-L/2,L/2, n, label)
+    # end
+    function Monitor(c, L, n=nothing, label="")
+        new(c, -L / 2, L / 2, n, label)
     end
 end
 struct MonitorInstance
     idxs
     centers
-    normal
+    n
     dx
     label
 end
 
 
-# power(m, u) = sum(sum(pf([u[m.idxs[k]...] for (u, k) = zip(u, fk)]) .* m.normal))
+# power(m, u) = sum(sum(pf([u[m.idxs[k]...] for (u, k) = zip(u, fk)]) .* m.n))
 """
     function power(m::MonitorInstance, u)
 
@@ -39,19 +45,20 @@ function power(m::MonitorInstance, u)
     # H = [H[i][m.idxs[k]...] for (i, k) = enumerate([:Hx, :Hy, :Hz])]
     # E = [a[m.idxs[k]...] for (a, k) = zip(E, [:Ex, :Ey, :Ez])]
     # H = [a[m.idxs[k]...] for (a, k) = zip(H, [:Hx, :Hy, :Hz])]
-    sum(sum(E × H .* m.normal))
+    sum(sum(E × H .* m.n))
 end
-# power(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.idxs)))]) .* m.normal))
+# power(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.idxs)))]) .* m.n))
 
-function monitors_on_box(o, L)
-    ox, oy, oz = o
+function monitors_on_box(c, L)
+    ox, oy, oz = c
     lx, ly, lz = L
+    rx, ry, rz = L / 2
     [
-        Monitor([ox, [oy, oy + ly], [oz, oz + lz]], [-1, 0, 0]),
-        Monitor([ox + lx, [oy, oy + ly], [oz, oz + lz]], [1, 0, 0]),
-        Monitor([[ox, ox + lx], oy, [oz, oz + lz]], [0, -1, 0]),
-        Monitor([[ox, ox + lx], oy + ly, [oz, oz + lz]], [0, 1, 0]),
-        Monitor([[ox, ox + lx], [oy, oy + ly], oz], [0, 0, -1]),
-        Monitor([[ox, ox + lx], [oy, oy + ly], oz + lz], [0, 0, 1]),
+        Monitor([ox - rx, oy, oz], [0, ly, lz], [-1, 0, 0]),
+        Monitor([ox + rx, oy, oz], [0, ly, lz], [1, 0, 0]),
+        Monitor([ox, oy - ry, oz], [lx, 0, lz], [0, -1, 0]),
+        Monitor([ox, oy + ry, oz], [lx, 0, lz], [0, 1, 0]),
+        Monitor([ox, oy, oz - rz], [lx, ly, 0,], [0, 0, -1,]),
+        Monitor([ox, oy, oz + rz], [lx, ly, 0,], [0, 0, 1,]),
     ]
 end

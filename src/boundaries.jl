@@ -62,16 +62,17 @@ end
 
 
 function apply!(p::AbstractVector{<:InPad}, a::AbstractArray)
-    a_ = bufferfrom(a)
     for p = p
         @unpack l, r, b, m = p
         if isnothing(m)
-            pad!(a_, b, l, r;)
+            pad!(a, b, l, r;)
         else
+            a_ = bufferfrom(a)
             a_[axes(a)...] = a .* m
+            a = copy(a_)
         end
     end
-    copy(a_)
+    a
 end
 function apply(p::AbstractVector{<:OutPad}, a)
     l = sum(getproperty.(p, :l))

@@ -78,7 +78,7 @@ Supports 1d (Ez, Hy), 2d TMz (Ez, Hx, Hy), 2d TEz (Hz, Ex, Ey) and 3d. Length an
 If a source has fewer nonzero dimensions than the simulation domain, its signal will get normalized along its singleton dimensions. For example, all planar sources in 3d or line sources in 2d will get scaled up by a factor of `1/dx`. This way, discretisation would not affect radiated power.
 ```@docs
 PlaneWave
-Source
+CustomSource
 ```
 <!-- GaussianBeam -->
 

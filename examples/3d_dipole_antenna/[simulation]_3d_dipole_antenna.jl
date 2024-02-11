@@ -26,7 +26,7 @@ boundaries = [] # unspecified boundaries default to PML
 # n = [1, 0, 0]
 monitors = []
 sources = [
-    Source(t -> cos(F(2π) * t), [l / 2, l / 2, 0.125f0], [0, 0, 0.25f0]; Jz=1),
+    CustomSource(t -> cos(F(2π) * t), [l / 2, l / 2, 0.125f0], [0, 0, 0.25f0]; Jz=1),
 ]
 configs = setup(boundaries, sources, monitors, dx, sz0; F, Courant, T)
 @unpack μ, σ, σm, ϵ, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, u0, power = configs

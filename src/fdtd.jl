@@ -6,9 +6,12 @@ Args
 - L: vector of lengths in wavelengths of simulation domain
 - polarization: only applies to 2d which can be :TMz (Ez, Hx, Hy) or :TEz (Hz, Ex, Ey)
 """
-function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=1, μ=1, σ=0, σm=0, F=Float32, Courant=0.5f0, kw...)# Courant number)
-    # sz0 = round.(Int, L ./ dx)
-    # sz0=size(ϵ)
+function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
+    ϵ=1, μ=1, σ=0, σm=0, F=Float32,
+    ϵmin=1,
+    Courant=F(0.75ϵmin / √(length(sz0))),# Courant number)
+    kw...)
+
     a = ones(F, sz0)
     # if isa(μ,Number+)
     μ *= a
@@ -33,7 +36,7 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     db = Any[PML(j * i,) for i = 1:d, j = (-1, 1)]
     field_padding = DefaultDict(() -> InPad[])
     geometry_padding = DefaultDict(() -> OutPad[])
-    starts = Dict([k => ones(Int, d) for k = fk])
+    o = Dict([k => ones(Int, d) for k = fk])
     sizes = Dict([k => collect(sz0) for k = fk])
 
     for b = boundaries
@@ -110,8 +113,8 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
                 push!(geometry_padding[:σ], OutPad(ReplicateRamp(F(b.σ)), l, r,))
                 push!(geometry_padding[:σm], OutPad(ReplicateRamp(F(b.σ)), l, r,))
                 if j == 1
-                    for k = keys(starts)
-                        starts[k][i] += n
+                    for k = keys(o)
+                        o[k][i] += n
                     end
                 end
                 for k = keys(sizes)
@@ -152,7 +155,7 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     end
     # for (k, v) = pairs(geometry_padding)
     #     for p = v
-    #         for v = values(starts)
+    #         for v = values(o)
     #             v .+= p.l .+ p.r
     #         end
     #     end
@@ -160,7 +163,7 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     for (k, v) = pairs(field_padding)
         for p = v
             sizes[k] += p.l .+ p.r
-            starts[k] += p.l
+            o[k] += p.l
         end
     end
     # Ie = [a:b for (a, b) = zip(start, start .+ esz .- 1)] # end
@@ -168,9 +171,9 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
 
 
 
-    starts[:Jx] = starts[:Ex]
-    starts[:Jy] = starts[:Ey]
-    starts[:Jz] = starts[:Ez]
+    o[:Jx] = o[:Ex]
+    o[:Jy] = o[:Ey]
+    o[:Jz] = o[:Ez]
     sizes[:Jx] = sizes[:Ex]
     sizes[:Jy] = sizes[:Ey]
     sizes[:Jz] = sizes[:Ez]
@@ -205,7 +208,7 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
     geometry_splits[:ϵ] = geometry_splits[:σ] = gs.((geometry_sizes[:ϵ],), [:Ex, :Ey, :Ez])
     source_effects = DefaultDict(() -> SourceEffect[])
     for s = sources
-        for (k, v) = pairs(SourceEffect(s, dx, sizes, starts, sz0))
+        for (k, v) = pairs(SourceEffect(s, dx, sizes, o, sz0))
             append!(source_effects[k], v)
         end
     end
@@ -214,26 +217,16 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing; ϵ=
 
     monitor_instances = [
         begin
+            c = round.(Int, m.c / dx)
+            lb = round.(Int, m.lb / dx)
+            ub = round.(Int, m.ub / dx)
 
             idxs = Dict([
-                k => map(starts[k], m.span) do s, x
-                    x = round.(Int, x / dx)
-                    if isa(x, Real)
-                        s .+ x
-                    else
-                        s+x[1]:s+x[2]
-                    end
+                k => map(o[k], c, lb, ub) do s, c, lb, ub
+                    s+c+lb:s+c+ub
                 end for k = fk
             ])
-            # idxs = NamedTuple([k => map(starts[k], m.span) do s, x
-            #     x = round.(Int, x / dx)
-            #     if isa(x, Real)
-            #         s .+ x
-            #     else
-            #         s+x[1]:s+x[2]
-            #     end
-            # end for k = fk])
-            centers = [k => round.(Int, mean.(v)) for (k, v) = pairs(idxs)]
+            centers = [k => o[k] .+ c for (k, v) = pairs(idxs)]
             MonitorInstance(idxs, centers, m.normal, dx, m.label)
         end for m = monitors
     ]

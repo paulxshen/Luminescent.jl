@@ -34,7 +34,7 @@ nepochs = 16
 "geometry"
 # loads design layout
 include("layout.jl")
-@unpack wwg, hwg, lwg, ld, hclad, hbox, l, w, h, wm, o, base, sources, ports, designs, dx = layout
+@unpack wwg, hwg, lwg, ld, hclad, hbox, l, w, h, wm, c, base, sources, ports, designs, dx = layout
 ϵbox = ϵclad = ϵslab = 2.25f0
 ϵcore = 12.25f0
 
@@ -48,7 +48,7 @@ boundaries = [] # unspecified boundaries default to PML
 z = [hbox, hbox + hwg]
 n = [1, 0, 0]
 monitors = [Monitor([x, y, z], n) for (x, y) = ports]
-ox, oy, = o
+ox, oy, = c
 oz = hbox
 append!(monitors, [
     Monitor([ox, [oy, oy + ld], [oz, oz + hwg]], [-1, 0, 0]),
@@ -78,10 +78,10 @@ f2 = t -> cos(F(2π) * t * λ / λ2)
 gEx = LinearInterpolation((y, z), F.(Ez))
 gEy = LinearInterpolation((y, z), F.(Ex))
 gEz = LinearInterpolation((y, z), F.(Ey))
-center = [sources[1]..., hbox]
+c = [sources[1]..., hbox]
 bounds = [0, bounds...]
 sources = [
-    Source(t -> f1(t) + f2(t), center, bounds;
+    CustomSource(t -> f1(t) + f2(t), c, bounds;
         Jx=(x, y, z) -> gEx(y, z),
         Jy=(x, y, z) -> gEy(y, z),
         Jz=(x, y, z) -> gEz(y, z),
@@ -95,7 +95,7 @@ configs = setup(boundaries, sources, monitors, dx, sz0; F, Courant, T)
 
 function make_geometry(model, μ, σ, σm)
 
-    b = place(base, model(), round.(Int, o / dx) .+ 1)
+    b = place(base, model(), round.(Int, c / dx) .+ 1)
     ϵ = sandwich(b, round.(Int, [hbox, hwg, hclad] / dx), [ϵbox, ϵcore, ϵclad])
     ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
     p = apply(geometry_splits; ϵ, μ, σ, σm)
