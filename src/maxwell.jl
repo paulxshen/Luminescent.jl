@@ -1,13 +1,13 @@
 """
-    function step3(u, p, t, field_padding, source_effects)
+    function step3(u, p, t, field_padding, source_instances)
 
 Updates fields for 3d
 """
-function step3!(u, p, t, dx, dt, field_padding, source_effects)
+function step3!(u, p, t, dx, dt, field_padding, source_instances)
     ∇ = StaggeredDel([dx, dx, dx])
     ϵ, μ, σ, σm = p
     E, H = u
-    J = apply(source_effects, t; Jx=0, Jy=0, Jz=0)
+    J = apply(source_instances, t; Jx=0, Jy=0, Jz=0)
 
     # first update E
     Hx, Hy, Hz = H
@@ -38,8 +38,8 @@ function step3!(u, p, t, dx, dt, field_padding, source_effects)
 
     Hx, Hy, Hz = H
     apply!(field_padding; Hx, Hy, Hz)
-    E = collect.(E)
-    H = Hx, Hy, Hz
+    E = collect(collect.(E))
+    H = [Hx, Hy, Hz]
 
     [E, H]
 end
@@ -47,16 +47,16 @@ step! = step3!
 # Flux.trainable(m::PaddedArray) = (; a=m.a)
 
 """
-    function step1(u, p, t, field_padding, source_effects)
+    function step1(u, p, t, field_padding, source_instances)
 
 Updates fields for 1D (Ez, Hy)
 """
-function step1(u, p, t, field_padding, source_effects)
-    @unpack dx, dt, field_padding, source_effects = configs
+function step1(u, p, t, field_padding, source_instances)
+    @unpack dx, dt, field_padding, source_instances = configs
     ∇ = Del([dx])
     ϵ, μ, σ, σm = [[a] for a = p]
     Ez, Hy, = u
-    Jz, = apply(source_effects, t; Jz=0)
+    Jz, = apply(source_instances, t; Jz=0)
 
     # first update E
     H_ = apply(field_padding; Hy=PaddedArray(Hy))
@@ -79,16 +79,16 @@ function step1(u, p, t, field_padding, source_effects)
     [Ez, Hy,]
 end
 """
-    function stepTMz(u, p, t, field_padding, source_effects)
+    function stepTMz(u, p, t, field_padding, source_instances)
 
 Updates fields for 2d TMz
 """
-function stepTMz(u, p, t, field_padding, source_effects)
-    @unpack dx, dt, field_padding, source_effects = configs
+function stepTMz(u, p, t, field_padding, source_instances)
+    @unpack dx, dt, field_padding, source_instances = configs
     ∇ = Del([dx, dx])
     ϵ, μ, σ, σm = [[a] for a = p]
     Ez, Hx, Hy, = u
-    Jz, = apply(source_effects, t; Jz=0)
+    Jz, = apply(source_instances, t; Jz=0)
 
     # first update E
     Hx_, Hy_ = apply(field_padding; Hx=PaddedArray(Hx), Hy=PaddedArray(Hy))
@@ -111,16 +111,16 @@ function stepTMz(u, p, t, field_padding, source_effects)
     [Ez, Hx, Hy,]
 end
 """
-    function stepTEz(u, p, t, field_padding, source_effects)
+    function stepTEz(u, p, t, field_padding, source_instances)
 
 Updates fields for 2d TEz (Hz, Ex, Ey)
 """
-function stepTEz(u, p, t, field_padding, source_effects)
-    @unpack dx, dt, field_padding, source_effects = configs
+function stepTEz(u, p, t, field_padding, source_instances)
+    @unpack dx, dt, field_padding, source_instances = configs
     ∇ = Del([dx, dx])
     ϵ, μ, σ, σm = [[a] for a = p]
     Hz, Ex, Ey = u
-    Jx, Jy = apply(source_effects, t; Jx=0, Jy=0)
+    Jx, Jy = apply(source_instances, t; Jx=0, Jy=0)
 
     # first update E
     H_ = apply(field_padding; Hz=PaddedArray(Hz))

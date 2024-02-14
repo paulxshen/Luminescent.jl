@@ -41,8 +41,8 @@ struct GaussianBeam
 end
 
 """
-    function CustomSource(f, c, lb, ub, label=""; fields...)
-    function CustomSource(f, c, L, label=""; fields...)
+    function Source(f, c, lb, ub, label=""; fields...)
+    function Source(f, c, L, label=""; fields...)
         
 Constructs custom  source. Can be used to specify uniform or modal sources
 
@@ -54,26 +54,27 @@ Args
 - L: source dimensions in [wavelengths]
 - fields: which fields to excite & their scaling constants (typically a current source, eg Jz=1)
 """
-struct CustomSource
+struct Source
     f
     fields
     c
     lb
     ub
     label
-    function CustomSource(f, c, lb, ub, label::String=""; fields...)
+    function Source(f, c, lb, ub, label::String=""; fields...)
         new(f, fields, c, lb, ub, label)
     end
 end
-function CustomSource(f, c, L, label::AbstractString=""; fields...)
-    # CustomSource
-    # function CustomSource(f, c, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)
-    CustomSource(f, c, -L / 2, L / 2, label; fields...)
+function Source(f, c, L, label::AbstractString=""; fields...)
+    # Source
+    # function Source(f, c, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)
+    Source(f, c, -L / 2, L / 2, label; fields...)
 end
-Source = CustomSource
+Source = Source
 
-struct SourceEffect
+struct SourceInstance
     f
+    k
     g
     _g
     o
@@ -81,7 +82,7 @@ struct SourceEffect
     label
 end
 
-function SourceEffect(s::PlaneWave, dx, sizes, o, sz0)
+function SourceInstance(s::PlaneWave, dx, sizes, o, sz0)
     @unpack f, fields, dims, label = s
     d = length(first(sizes))
     g = Dict([k => fields[k] * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(fields)])
@@ -90,10 +91,10 @@ function SourceEffect(s::PlaneWave, dx, sizes, o, sz0)
                     for k = keys(o)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], o[k]) for k = keys(fields)])
     c = NamedTuple([k => round.(Int, o[k] .+ size(first(values(g))) ./ 2) for k = keys(o)])
-    Dict([k => [SourceEffect(f, g[k], _g[k], o[k], c[k], label)] for k = keys(fields)])
+    SourceInstance(f, keys(fields), g, _g, o, c, label)
 end
 
-function SourceEffect(s::GaussianBeam, dx, sizes, o, stop)
+function SourceInstance(s::GaussianBeam, dx, sizes, o, stop)
     @unpack f, σ, fields, c, dims = s
     n = round(Int, 2σ / dx)
     r = n * dx
@@ -101,34 +102,35 @@ function SourceEffect(s::GaussianBeam, dx, sizes, o, stop)
     g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(I...)] / dx
     o = o .- 1 .+ index(c, dx) .- round.(Int, (size(g) .- 1) ./ 2)
     _g = place(zeros(F, sz), g, o)
-    Dict([k => [SourceEffect(f, g[k], _g[k], o[k], c[k], label)] for k = keys(fields)])
+    SourceInstance(f, keys(fields), g, _g, o, c, label)
 end
 
-function SourceEffect(s::CustomSource, dx, sizes, o, stop)
-    @unpack f, fields, c, lb, ub label = s
+function SourceInstance(s::Source, dx, sizes, o, stop)
+    @unpack f, fields, c, lb, ub, label = s
     I = [a:dx:b for (a, b) = zip(lb, ub)]
     g = Dict([k => [fields[k](v...) for v = Iterators.product(I...)] / dx^count(lb .== ub) for k = keys(fields)])
     c = -1 .+ index(c, dx) .- round.(Int, (length.(I) .- 1) ./ 2)
     o = NamedTuple([k => o[k] .+ c for k = keys(o)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], o[k]) for k = keys(fields)])
     c = NamedTuple([k => round.(Int, o[k] .+ size(first(values(g))) ./ 2) for k = keys(o)])
-    Dict([k => [SourceEffect(f, g[k], _g[k], o[k], c[k], label)] for k = keys(fields)])
+    SourceInstance(f, keys(fields), g, _g, o, c, label)
 end
 
-function apply(s::SourceEffect, a, t::Real)
-    @unpack g, _g, f, o = s
-    # r = place(r, real(fields[k] * f(t) .* g), o)
-    a .+ real(f(t) .* _g)
-end
-function apply(s, t::Real; kw...)
+# function apply(s::SourceInstance, a, t::Real)
+#     @unpack g, _g, f, o = s
+#     # r = place(r, real(fields[k] * f(t) .* g), o)
+#     a .+ real(f(t) .* _g)
+# end
+function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
     [
-        begin
-            a = kw[k]
-            for s = s[k]
-                a = apply(s, a, t)
-            end
-            a
-        end for k = keys(kw)
+        # begin
+        #     a = kw[k]
+        #     for s = s[k]
+        #         a = apply(s, a, t)
+        #     end
+        #     a
+        # end
+        kw[k] .+ sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=0) for k = keys(kw)
         # end for (k, a) = pairs(kw)
     ]
 end

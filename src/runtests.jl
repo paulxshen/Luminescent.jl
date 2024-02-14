@@ -50,7 +50,7 @@ b = place(base, model(), design_start)
 boundaries = []
 monitors = [Monitor([0.0f0l, lc], [:Ez, :Hx, :Hy]), Monitor([lc, 0.0f0], [:Ez, :Hx, :Hy])]
 sources = [GaussianBeam(t -> cos(F(2π) * t), 0.05f0, (0.0f0, lc), -1; Ez=1)]
-@unpack geometry_padding, field_padding, source_effects, monitor_configs, save_idxs, fields =
+@unpack geometry_padding, field_padding, source_instances, monitor_configs, save_idxs, fields =
     setup(boundaries, sources, monitors, L, dx, polarization; F)
 
 static_geometry = (; μ=ones(Int, dims), σ=zeros(Int, dims), σm=zeros(Int, dims))
@@ -67,7 +67,7 @@ function dudt(u, p, t)
     # @unpack ϵ, μ, σ, σm=m.p
     ϵ, μ, σ, σm = [ϵ], [μ], [σ], [σm]
 
-    u = apply(source_effects, u, u.t)
+    u = apply(source_instances, u, u.t)
     E, H, J = group.((u,), [:E, :H, :J])
 
     H_ = apply(field_padding, (; Hx=u.Hx, Hy=u.Hy);)

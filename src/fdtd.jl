@@ -206,15 +206,16 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
     end for k = keys(geometry_padding)])
     geometry_splits[:μ] = geometry_splits[:σm] = gs.((geometry_sizes[:μ],), [:Hx, :Hy, :Hz])
     geometry_splits[:ϵ] = geometry_splits[:σ] = gs.((geometry_sizes[:ϵ],), [:Ex, :Ey, :Ez])
-    source_effects = DefaultDict(() -> SourceEffect[])
-    for s = sources
-        for (k, v) = pairs(SourceEffect(s, dx, sizes, o, sz0))
-            append!(source_effects[k], v)
-        end
-    end
+    source_instances = SourceInstance.(sources, dx, (sizes,), (o,), (sz0,))
+    # source_instances = DefaultDict(() -> SourceInstance[])
+    # for s = sources
+    #     for (k, v) = pairs(SourceInstance(s, dx, sizes, o, sz0))
+    #         append!(source_instances[k], v)
+    #     end
+    # end
     c = 0
     save_info = Int[]
-
+    println(o)
     monitor_instances = [
         begin
             c = round.(Int, m.c / dx)
@@ -222,12 +223,14 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
             ub = round.(Int, m.ub / dx)
 
             idxs = Dict([
-                k => map(o[k], c, lb, ub) do s, c, lb, ub
-                    s+c+lb:s+c+ub
+                k => map(sizes[k], o[k], c, lb, ub) do s, o, c, lb, ub
+                    max(1, o + c + lb):min(s, o + c + ub)
                 end for k = fk
             ])
-            centers = [k => o[k] .+ c for (k, v) = pairs(idxs)]
-            MonitorInstance(idxs, centers, m.normal, dx, m.label)
+            centers = NamedTuple([k => o[k] .+ c for (k, v) = pairs(idxs)])
+            L = ub - lb
+            A = prod(deleteat!(L, findfirst(L .== 0,))) * dx^(d - 1)
+            MonitorInstance(idxs, centers, m.n, dx, A, m.label)
         end for m = monitors
     ]
     dt = dx * Courant
@@ -254,7 +257,7 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
             ]
         end
     end
-    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_splits, source_effects, monitor_instances, u0, save_info, fields, dx, dt, kw...)
+    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_splits, source_instances, monitor_instances, u0, save_info, fields, dx, dt, kw...)
 end
 function apply!(p; kw...)
     [apply!(p[k], kw[k]) for k = keys(kw)]

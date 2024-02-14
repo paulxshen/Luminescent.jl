@@ -1,5 +1,7 @@
+° = π / 180
+
 Base.round(x::AbstractFloat) = Base.round(Int, x)
-# Base.eachslice(a) = eachslice(a, dims=ndims(a))
+Base.ndims(b::Zygote.Buffer) = Base.ndims(b.data)
 
 Base.getindex(s::Symbol, i) = Symbol(String(s)[i])
 

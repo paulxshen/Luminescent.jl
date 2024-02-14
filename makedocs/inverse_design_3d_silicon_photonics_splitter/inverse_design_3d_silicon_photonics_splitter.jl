@@ -71,7 +71,7 @@ c = [sources[1].c..., hsub]
 lb = [0, lb...]
 ub = [0, ub...]
 sources = [
-    CustomSource(t -> cos(F(2π) * t), c, lb, ub;
+    Source(t -> cos(F(2π) * t), c, lb, ub;
         Jx=(x, y, z) -> gEx(y, z),
         Jy=(x, y, z) -> gEy(y, z),
         Jz=(x, y, z) -> gEz(y, z),
@@ -79,7 +79,7 @@ sources = [
 ]
 
 configs = setup(boundaries, sources, monitors, dx, sz0; ϵmin, T)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, u0, = configs
+@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_instances, monitor_instances, u0, = configs
 
 function make_geometry(model, base, μ, σ, σm)
     base = place!(F.(base), model(), round.(Int, c / dx) .+ 1)
@@ -93,9 +93,9 @@ p0 = make_geometry(model0, base, μ, σ, σm)
 function metrics(model, T=T;)
     p = make_geometry(model, base, μ, σ, σm)
     # run simulation
-    u = reduce((u, t) -> step!(u, p, t, dx, dt, field_padding, source_effects;), 0:dt:T-1, init=deepcopy(u0))
+    u = reduce((u, t) -> step!(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T-1, init=deepcopy(u0))
     y = reduce(((u, y), t) -> (
-            step!(u, p, t, dx, dt, field_padding, source_effects),
+            step!(u, p, t, dx, dt, field_padding, source_instances),
             y + dt * power.(monitor_instances, (u,))
         ),
         T-1+dt:dt:T,
@@ -132,7 +132,7 @@ function runsave(x)
     p = make_geometry(model, base, μ, σ, σm)
     t = 0:dt:T
     sol = similar([u0], length(t))
-    @showtime sol = accumulate!((u, t) -> step!(u, p, t, dx, dt, field_padding, source_effects), sol, t, init=u0)
+    @showtime sol = accumulate!((u, t) -> step!(u, p, t, dx, dt, field_padding, source_instances), sol, t, init=u0)
 
     # make movie
     Ez = map(sol) do u

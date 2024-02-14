@@ -101,9 +101,9 @@ for (nres, α, nepochs) in schedule
     boundaries = [] # unspecified boundaries default to PML
     monitors = [Monitor(ports[1] / λ, [:Ez, :Hy]), Monitor(ports[2] / λ, [:Ez, :Hx,])]
     g = linear_interpolation(x, v)
-    sources = [CustomSource(t -> cos(F(2π) * t), (x, y) -> g(y), ports[1] / λ, [0, 0.6 / λ]; Jz=1)]
+    sources = [Source(t -> cos(F(2π) * t), (x, y) -> g(y), ports[1] / λ, [0, 0.6 / λ]; Jz=1)]
     fdtd_configs = setup(boundaries, sources, monitors, L, dx, polarization; F, Courant, T)
-    @unpack dt, geometry_padding, field_padding, source_effects, monitor_configs, fields = fdtd_configs
+    @unpack dt, geometry_padding, field_padding, source_instances, monitor_configs, fields = fdtd_configs
 
     a = ones(F, sz0)
     μ = 1a

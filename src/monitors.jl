@@ -27,17 +27,18 @@ struct MonitorInstance
     centers
     n
     dx
+    A
     label
 end
 
 
 # power(m, u) = sum(sum(pf([u[m.idxs[k]...] for (u, k) = zip(u, fk)]) .* m.n))
 """
-    function power(m::MonitorInstance, u)
+    function power_density(m::MonitorInstance, u)
 
-total power (Poynting flux) passing thru monitor surface
+ power density (avg Poynting flux) passing thru monitor surface
 """
-function power(m::MonitorInstance, u)
+function power_density(m::MonitorInstance, u)
     E = [u[1][i][m.idxs[k]...] for (i, k) = enumerate([:Ex, :Ey, :Ez])]
     H = [u[2][i][m.idxs[k]...] for (i, k) = enumerate([:Hx, :Hy, :Hz])]
     # E, H = u
@@ -45,7 +46,15 @@ function power(m::MonitorInstance, u)
     # H = [H[i][m.idxs[k]...] for (i, k) = enumerate([:Hx, :Hy, :Hz])]
     # E = [a[m.idxs[k]...] for (a, k) = zip(E, [:Ex, :Ey, :Ez])]
     # H = [a[m.idxs[k]...] for (a, k) = zip(H, [:Hx, :Hy, :Hz])]
-    sum(sum(E × H .* m.n))
+    mean(sum(E × H .* m.n))
+end
+"""
+    function power(m::MonitorInstance, u)
+
+total power (Poynting flux) passing thru monitor surface
+"""
+function power(m::MonitorInstance, u)
+    m.A * power_density(m, u)
 end
 # power(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.idxs)))]) .* m.n))
 

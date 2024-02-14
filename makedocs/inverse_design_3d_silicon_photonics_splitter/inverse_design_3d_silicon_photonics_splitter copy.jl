@@ -81,7 +81,7 @@ gEz = LinearInterpolation((y, z), F.(Ey))
 c = [sources[1]..., hbox]
 bounds = [0, bounds...]
 sources = [
-    CustomSource(t -> f1(t) + f2(t), c, bounds;
+    Source(t -> f1(t) + f2(t), c, bounds;
         Jx=(x, y, z) -> gEx(y, z),
         Jy=(x, y, z) -> gEy(y, z),
         Jz=(x, y, z) -> gEz(y, z),
@@ -89,7 +89,7 @@ sources = [
 ]
 
 configs = setup(boundaries, sources, monitors, dx, sz0; F, Courant, T)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_effects, monitor_instances, u0, power = configs
+@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_instances, monitor_instances, u0, power = configs
 
 
 
@@ -115,8 +115,8 @@ end
 function monitor_powers(model, T=T; bufferfrom=bufferfrom)
     p = make_geometry(model, μ, σ, σm)
     # run simulation
-    u = reduce((u, t) -> step!(u, p, t, dx, dt, field_padding, source_effects; bufferfrom), 0:dt:T-1, init=deepcopy(u0))
-    reduce(((u, pow), t) -> (step!(u, p, t, dx, dt, field_padding, source_effects; bufferfrom), begin
+    u = reduce((u, t) -> step!(u, p, t, dx, dt, field_padding, source_instances; bufferfrom), 0:dt:T-1, init=deepcopy(u0))
+    reduce(((u, pow), t) -> (step!(u, p, t, dx, dt, field_padding, source_instances; bufferfrom), begin
             y = power.(monitor_instances, (u,))
             pow + dt * vcat(
                 cispi(2t) * y, cispi(2t * ω2) * y)
@@ -214,7 +214,7 @@ x = copy(xsg)
 # loss(model)
 # # volume(p[1][1])
 
-# @showtime sol = accumulate((u, t) -> step(u, p, t, field_padding, source_effects), 0:dt:T, init=u0)
+# @showtime sol = accumulate((u, t) -> step(u, p, t, field_padding, source_instances), 0:dt:T, init=u0)
 
 
 # od = OnceDifferentiable(f, g!, fg!, x0)
@@ -225,7 +225,7 @@ model = re(x)
 p = make_geometry(model, μ, σ, σm)
 t = 0:dt:T
 sol = similar([u0], length(t))
-@showtime sol = accumulate!((u, t) -> step!(u, p, t, dx, dt, field_padding, source_effects), sol, t, init=u0)
+@showtime sol = accumulate!((u, t) -> step!(u, p, t, dx, dt, field_padding, source_instances), sol, t, init=u0)
 
 # make movie
 Ez = map(sol) do u
