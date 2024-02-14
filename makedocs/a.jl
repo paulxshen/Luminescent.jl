@@ -103,7 +103,7 @@ for (nres, α, nepochs) in schedule
     g = linear_interpolation(x, v)
     sources = [Source(t -> cos(F(2π) * t), (x, y) -> g(y), ports[1] / λ, [0, 0.6 / λ]; Jz=1)]
     fdtd_configs = setup(boundaries, sources, monitors, L, dx, polarization; F, Courant, T)
-    @unpack dt, geometry_padding, field_padding, source_effects, monitor_configs, fields = fdtd_configs
+    @unpack dt, geometry_padding, field_padding, source_instances, monitor_configs, fields = fdtd_configs
 
     a = ones(F, sz0)
     μ = 1a
@@ -111,7 +111,7 @@ for (nres, α, nepochs) in schedule
     σm = 0a
     μ, σ, σm = apply(geometry_padding; μ, σ, σm)
 
-    u0 = collect(values(fields))
+
     dims = size(first(fields)) # full field size including PML padding
 
     # setup design region to be optimized

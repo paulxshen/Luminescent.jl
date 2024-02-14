@@ -44,26 +44,50 @@ struct PML
     end
 end
 
-struct Padding
+struct InPad
 
     b
     l
     r
-    out
-    # info
-    # lazy
-end
-
-
-function apply(p::AbstractVector{<:Padding}, a)
-    y = a
-    for p = p
-        @unpack l, r, b, out = p
-        y = out ? pad(y, b, l, r;) : pad!(y, b, l, r;)
+    m
+    function InPad(b, l, r, m=nothing)
+        new(b, l, r, m)
     end
-    y
 end
-# function apply(p::Padding, a)
+struct OutPad
+    b
+    l
+    r
+end
+
+
+function apply!(p::AbstractVector{<:InPad}, a::AbstractArray)
+    for p = p
+        @unpack l, r, b, m = p
+        if isnothing(m)
+            pad!(a, b, l, r;)
+        else
+            a_ = bufferfrom(a)
+            a_[axes(a)...] = a .* m
+            a = copy(a_)
+        end
+    end
+    a
+end
+function apply(p::AbstractVector{<:OutPad}, a)
+    l = sum(getproperty.(p, :l))
+    r = sum(getproperty.(p, :r))
+    # y = bufferfrom(ones(F, Tuple(l .+ r .+ size(a))))
+    y = Buffer(a, Tuple(l .+ r .+ size(a)))
+    place!(y, a, l .+ 1)
+    for p = p
+        l -= p.l
+        r -= p.r
+        pad!(y, p.b, p.l, p.r, l, r)
+    end
+    copy(y)
+end
+# function apply(p::InPad, a)
 #     @unpack l, r, b = p
 #     y = pad(a, b, l, r;)
 # end
