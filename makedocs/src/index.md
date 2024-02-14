@@ -9,9 +9,6 @@ Differentiable FDTD package for inverse design & topology optimization in photon
 ### Quarter wavelength antenna
 ![](assets/3d_quarter_wavelength_antenna_nres_16.mp4)
 ### Inverse design of compact silicon photonic splitter (coming soon)
-<!-- In progress, split ratio isn't correct -->
-<!-- ![](assets/pre_training_nres_16.mp4) -->
-<!-- ![](assets/post_training_nres_16.mp4) -->
 
 ## Quickstart
 We do a quick 3d simulation of plane wave scattering on periodic array of dielectric spheres (first gallery movie)
