@@ -44,8 +44,12 @@ p = apply(geometry_splits; ϵ, μ, σ, σm)
 
 # run simulation
 t = 0:dt:T
-u = similar([u0], length(t))
-@showtime u = accumulate!((u, t) -> step!(u, p, t, dx, dt, field_padding, source_instances), u, t, init=deepcopy(u0))
+u = [[similar.(a) for a = u0] for t = t]
+u[1] = u0
+@showtime reduce(
+    (u, (u1, t)) -> step!(u1, u, p, t, dx, dt, field_padding, source_instances),
+    zip(u[2:end], t[1:end-1]),
+    init=u0)
 y = hcat([power.((m,), u) for m = monitor_instances]...)
 
 # make movie

@@ -1,12 +1,13 @@
 """
-    function step3(u, p, t, field_padding, source_instances)
+    function step!(u1, u, p, t, field_padding, source_instances)
 
-Updates fields for 3d
+Updates fields for 3d. Writes new field into buffer array u1
 """
-function step3!(u, p, t, dx, dt, field_padding, source_instances)
+function step!(u1, u, p, t, dx, dt, field_padding, source_instances)
     ∇ = StaggeredDel([dx, dx, dx])
     ϵ, μ, σ, σm = p
     E, H = u
+    E1, H1 = u1
     J = apply(source_instances, t; Jx=0, Jy=0, Jz=0)
 
     # first update E
@@ -14,14 +15,13 @@ function step3!(u, p, t, dx, dt, field_padding, source_instances)
     H = mark(field_padding; Hx, Hy, Hz)
     dEdt = (∇ × H - σ * E - J) / ϵ
 
-    E_ = bufferfrom.(E)
+    E_ = bufferfrom.(E1)
     for i = 1:3
         E_[i][:, :, :] = E[i] + dEdt[i] * dt
     end
     Ex, Ey, Ez = [copy(E_[1]), copy(E_[2]), copy(E_[3])]
     # E .= E + dEdt * dt
 
-    Ex, Ey, Ez = E
     apply!(field_padding; Ex, Ey, Ez)
     H = collect.(H)
 
@@ -29,21 +29,21 @@ function step3!(u, p, t, dx, dt, field_padding, source_instances)
     E = mark(field_padding; Ex, Ey, Ez)
     dHdt = -(∇ × E .+ σm * H) / μ
 
-    H_ = bufferfrom.(H)
+    H_ = bufferfrom.(H1)
     for i = 1:3
         H_[i][:, :, :] = H[i] + dHdt[i] * dt
     end
     Hx, Hy, Hz = [copy(H_[1]), copy(H_[2]), copy(H_[3])]
     # H .= H + dHdt * dt
 
-    Hx, Hy, Hz = H
     apply!(field_padding; Hx, Hy, Hz)
-    E = collect(collect.(E))
-    H = [Hx, Hy, Hz]
+    # E = collect(collect.(E))
+    # H = [Hx, Hy, Hz]
 
-    [E, H]
+    # [E, H]
+    u1
 end
-step! = step3!
+step3! = step!
 # Flux.trainable(m::PaddedArray) = (; a=m.a)
 
 """
