@@ -9,15 +9,20 @@ Differentiable FDTD package for inverse design & topology optimization in photon
 ### Quarter wavelength antenna
 ![](assets/3d_quarter_wavelength_antenna_nres_16.mp4)
 ### Inverse design of compact silicon photonic splitter (coming soon)
-<!-- In progress, split ratio isn't correct -->
-<!-- ![](assets/pre_training_nres_16.mp4) -->
-<!-- ![](assets/post_training_nres_16.mp4) -->
 
 ## Quickstart
 We do a quick 3d simulation of plane wave scattering on periodic array of dielectric spheres (first gallery movie)
 ```julia
+"""
+simulation of plane wave scattering on periodic array of dielectric spheres
+"""
+
 using UnPack, LinearAlgebra, GLMakie
-using FDTDEngine,FDTDToolkit
+# using FDTDEngine,FDTDToolkit
+dir = pwd()
+include("$(dir)/src/main.jl")
+include("$dir/../FDTDToolkit.jl/src/main.jl")
+
 
 name = "3d_scattering"
 T = 8.0f0 # simulation duration in [periods]
@@ -54,8 +59,12 @@ p = apply(geometry_splits; ϵ, μ, σ, σm)
 
 # run simulation
 t = 0:dt:T
-u = similar([u0], length(t))
-@showtime u = accumulate!((u, t) -> step!(u, p, t, dx, dt, field_padding, source_instances), u, t, init=deepcopy(u0))
+u = [[similar.(a) for a = u0] for t = t]
+u[1] = u0
+@showtime reduce(
+    (u, (u1, t)) -> step!(u1, u, p, t, dx, dt, field_padding, source_instances),
+    zip(u[2:end], t[1:end-1]),
+    init=u0)
 y = hcat([power.((m,), u) for m = monitor_instances]...)
 
 # make movie
@@ -75,6 +84,7 @@ recordsim("$dir/$(name)_nres_$nres.mp4", Ez, y;
     axis1=(; title="$name\nEz"),
     axis2=(; title="monitor powers"),
 )
+
 ```
 ## Installation
 Install via 
@@ -112,7 +122,7 @@ power_density
 
  ## Physics 
 ```@docs
-step3!
+step!
 ```
 <!-- step1 -->
 <!-- stepTMz -->

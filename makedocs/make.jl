@@ -17,5 +17,3 @@ makedocs(
 #=deploydocs(
     repo = "<repository url>"
 )=#
-run(`cmd /C MOVE /Y makedocs/build/\* docs/`)
-run(`cmd /C MOVE /Y examples/\*/\*.mp4 docs/assets/`)

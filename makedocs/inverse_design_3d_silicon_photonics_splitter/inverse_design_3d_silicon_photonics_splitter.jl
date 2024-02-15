@@ -93,6 +93,13 @@ p0 = make_geometry(model0, base, μ, σ, σm)
 function metrics(model, T=T;)
     p = make_geometry(model, base, μ, σ, σm)
     # run simulation
+    # u = reduce((u, t) -> step!(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T-1, init=deepcopy(u0))
+    # y = reduce(((u, y), t) -> (
+    #         step!(u, p, t, dx, dt, field_padding, source_instances),
+    #         y + dt * power.(monitor_instances, (u,))
+    #     ),
+    #     T-1+dt:dt:T,
+    #     init=(u, zeros(F, length(monitor_instances))))[2]
     u = reduce((u, t) -> step!(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T-1, init=deepcopy(u0))
     y = reduce(((u, y), t) -> (
             step!(u, p, t, dx, dt, field_padding, source_instances),
