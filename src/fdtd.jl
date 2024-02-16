@@ -215,7 +215,6 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
     # end
     c = 0
     save_info = Int[]
-    println(o)
     monitor_instances = [
         begin
             c = round.(Int, m.c / dx)

@@ -66,11 +66,11 @@ schedule = [(8, 0.1, 1)]#, (16, 0.1, 1),]
 schedule = [(8, 0.1, 1), (16, 0.1, 1),]
 model = nothing
 # α = 0.2 # grayscale gradient in design mask
-for (nres, α, nepochs) in schedule
+for (nx, α, nepochs) in schedule
     # tunable configs
     T = 10.0f0 # simulation duration in [periods]
     opt = Adam(1) # higher learning rate helps
-    dx = 1.0f0 / nres # pixel resolution in [wavelengths]
+    dx = 1.0f0 / nx # pixel resolution in [wavelengths]
     lmin = 0.2f0  # minimum feature length in design region [microns]
     Courant = 0.5f0 # Courant number
     C = 1000 # scale loss

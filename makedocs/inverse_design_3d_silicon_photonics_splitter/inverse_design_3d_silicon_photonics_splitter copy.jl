@@ -21,7 +21,7 @@ Random.seed!(1)
 
 "training params"
 name = "silicon_photonics_splitter"
-nres = 16
+nx = 16
 T = 18.0f0 # simulation duration in [periods]
 nbasis = 4 # complexity of design region
 Courant = 1.5 * 0.7 / √3# Courant number
@@ -110,7 +110,7 @@ function savesim(sol, p, name=name)
         u[1]
     end
     dir = @__DIR__
-    recordsim(E, p[1][1], configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; playback=1, bipolar=false)
+    recordsim(E, p[1][1], configs, "$dir/$(name)_nres_$nx.mp4", title="$name"; playback=1, bipolar=false)
 end
 function monitor_powers(model, T=T; bufferfrom=bufferfrom)
     p = make_geometry(model, μ, σ, σm)
@@ -234,4 +234,4 @@ end
 ϵz = p[1][3]
 dir = @__DIR__
 ° = π / 180
-recordsim(Ez, ϵz, configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; elevation=60°, playback=1, bipolar=true)
+recordsim(Ez, ϵz, configs, "$dir/$(name)_nres_$nx.mp4", title="$name"; elevation=60°, playback=1, bipolar=true)

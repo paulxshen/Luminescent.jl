@@ -19,7 +19,7 @@ Random.seed!(1)
 
 "training params"
 name = "silicon_photonics_splitter"
-nres = 16
+nx = 16
 T = 18.0f0 # simulation duration in [periods]
 nbasis = 4 # complexity of design region
 ϵmin = 1.5
@@ -27,7 +27,7 @@ nbasis = 4 # complexity of design region
 
 # loads design layout
 @load "$(@__DIR__)/layout.bson" layout
-@unpack wwg, base, sources, ports, designs, dx = layout
+@unpack wwg, base, sources, ports, designs, dx, = layout
 hcore = 0.22f0 / λ
 hclad = hsub = 0.2f0 / λ
 ϵsub = ϵclad = 2.25f0
@@ -45,10 +45,10 @@ model0 = deepcopy(model)
 boundaries = [] # unspecified boundaries default to PML
 
 "monitors"
-z = [hsub, hsub + hcore]
+z = hsub + hcore / 2
 monitors = vcat(
-    [Monitor([xy..., z], n) for (xy, n) = ports],
-    monitors_on_box([designs[1].c..., hsub], designs[1].L)
+    [Monitor([p.c..., z], [0, wwg, hcore], [p.n..., 0]) for p = ports],
+    monitors_on_box([designs[1].c..., z], [designs[1].L..., hcore])
 )
 
 
@@ -80,9 +80,9 @@ sources = [
 
 configs = setup(boundaries, sources, monitors, dx, sz0; ϵmin, T)
 @unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_instances, monitor_instances, u0, = configs
-
+nt = round(Int, 1 / dt)
 function make_geometry(model, base, μ, σ, σm)
-    base = place!(F.(base), model(), round.(Int, c / dx) .+ 1)
+    base = place!(F.(base), model(), round.(Int, designs[1].o / dx) .+ 1)
     ϵ = sandwich(base, round.(Int, [hsub, hcore, hclad] / dx), [ϵsub, ϵcore, ϵclad])
     ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
     p = apply(geometry_splits; ϵ, μ, σ, σm)
@@ -100,13 +100,16 @@ function metrics(model, T=T;)
     #     ),
     #     T-1+dt:dt:T,
     #     init=(u, zeros(F, length(monitor_instances))))[2]
-    u = reduce((u, t) -> step!(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T-1, init=deepcopy(u0))
-    y = reduce(((u, y), t) -> (
-            step!(u, p, t, dx, dt, field_padding, source_instances),
-            y + dt * power.(monitor_instances, (u,))
-        ),
-        T-1+dt:dt:T,
-        init=(u, zeros(F, length(monitor_instances))))[2]
+    t = 0:dt:T
+    u = [[similar.(a) for a = u0] for t = t]
+    u[1] = u0
+    reduce(
+        (u, (u1, t)) -> step!(u1, u, p, t, dx, dt, field_padding, source_instances),
+        zip(u[2:end], t[1:end-1]),
+        init=u0)
+    sum(u[end-nt+1:end]) do u
+        dt * power.(monitor_instances, (u,))
+    end
 end
 tp = abs(metrics(model, 2)[1]) # total power
 
@@ -148,7 +151,7 @@ function runsave(x)
     ϵz = p[1][3]
     dir = @__DIR__
     ° = π / 180
-    recordsim(Ez, ϵz, configs, "$dir/$(name)_nres_$nres.mp4", title="$name"; elevation=60°, playback=1, bipolar=true)
+    recordsim(Ez, ϵz, configs, "$dir/$(name)_nres_$nx.mp4", title="$name"; elevation=60°, playback=1, bipolar=true)
 
 end
 

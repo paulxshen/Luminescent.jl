@@ -26,12 +26,12 @@ include("$dir/../FDTDToolkit.jl/src/main.jl")
 
 name = "3d_scattering"
 T = 8.0f0 # simulation duration in [periods]
-nres = 16
-dx = 1.0f0 / nres # pixel resolution in [wavelengths]
+nx = 16
+dx = 1.0f0 / nx # pixel resolution in [wavelengths]
 
 "geometry"
 l = 2 # domain physical size length
-sz = nres .* (l, l, l) # domain voxel dimensions
+sz = nx .* (l, l, l) # domain voxel dimensions
 ϵ1 = ϵmin = 1 #
 ϵ2 = 2.25f0 # 
 b = F.([norm(v .- sz ./ 2) < 0.5 / dx for v = Base.product(Base.oneto.(sz)...)]) # sphere
@@ -74,7 +74,7 @@ end
 ϵz = p[1][3]
 dir = @__DIR__
 
-recordsim("$dir/$(name)_nres_$nres.mp4", Ez, y;
+recordsim("$dir/$(name)_nres_$nx.mp4", Ez, y;
     dt,
     monitor_instances,
     source_instances,

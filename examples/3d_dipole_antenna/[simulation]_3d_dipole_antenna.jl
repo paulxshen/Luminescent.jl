@@ -10,11 +10,11 @@ include("$dir/../FDTDToolkit.jl/src/main.jl")
 
 name = "3d_quarter_wavelength_antenna"
 T = 8.0f0 # simulation duration in [periods]
-nres = 16
-dx = 1.0f0 / nres # pixel resolution in [wavelengths]
+nx = 16
+dx = 1.0f0 / nx # pixel resolution in [wavelengths]
 
 l = 2
-sz0 = nres .* (l, l, l)
+sz0 = nx .* (l, l, l)
 
 boundaries = [PEC(-3)] # ground plane on -z, unspecified boundaries default to PML
 n =
@@ -47,7 +47,7 @@ Ez = map(u) do u
     u[1][3]
 end
 dir = @__DIR__
-@showtime recordsim("$dir/$(name)_nres_$nres.mp4", Ez, y;
+@showtime recordsim("$dir/$(name)_nres_$nx.mp4", Ez, y;
     dt,
     monitor_instances,
     source_instances,

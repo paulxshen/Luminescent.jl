@@ -8,7 +8,8 @@ function step!(u1, u, p, t, dx, dt, field_padding, source_instances)
     ϵ, μ, σ, σm = p
     E, H = u
     E1, H1 = u1
-    J = apply(source_instances, t; Jx=0, Jy=0, Jz=0)
+    J = apply(source_instances, t; Jx=zeros(F, size(E[1])), Jy=zeros(F, size(E[2])), Jz=zeros(F, size(E[3])))
+    # J = apply(source_instances, t; Jx=0, Jy=0, Jz=0)
 
     # first update E
     Hx, Hy, Hz = H
