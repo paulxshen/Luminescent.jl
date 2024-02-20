@@ -13,7 +13,7 @@ T = Union{Tuple,AbstractArray,Number}
 Base.:-(x::T, y::T) = x .- y
 Base.:+(x::T, y::T) = x .+ y
 
-Base.view(b::Buffer, i...) = b[i...]
+
 
 f32(x::Real) = Float32(x)
 f32(x::AbstractArray) = f32.(x)

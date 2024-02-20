@@ -101,8 +101,7 @@ function metrics(model, T=T;)
     #     T-1+dt:dt:T,
     #     init=(u, zeros(F, length(monitor_instances))))[2]
     t = 0:dt:T
-    u = [[similar.(a) for a = u0] for t = t]
-    u[1] = u0
+    u = [i == 1 ? u0 : [similar.(a) for a = u0] for (i, t) = enumerate(t)]
     reduce(
         (u, (u1, t)) -> step!(u1, u, p, t, dx, dt, field_padding, source_instances),
         zip(u[2:end], t[1:end-1]),

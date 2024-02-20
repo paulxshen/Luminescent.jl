@@ -39,7 +39,7 @@ struct PML
     dims
     d::Real
     σ::Real
-    function PML(dims, d=0.25f0, σ=20.0f0)
+    function PML(dims, d=0.125f0, σ=40.0f0)
         new(dims, d, σ)
     end
 end

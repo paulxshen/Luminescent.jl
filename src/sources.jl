@@ -123,7 +123,13 @@ end
 # end
 function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
     [
-        sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k]) for k = keys(kw)
+        # sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k])
+        begin
+
+            a = [real(s.f(t) .* s._g[k]) for s = v if k in s.k]
+            kw[k] .+ (isempty(a) ? 0 : sum(a))
+        end
+        for k = keys(kw)
         # end for (k, a) = pairs(kw)
     ]
 end

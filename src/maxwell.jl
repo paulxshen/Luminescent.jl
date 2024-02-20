@@ -38,11 +38,11 @@ function step!(u1, u, p, t, dx, dt, field_padding, source_instances)
     # H .= H + dHdt * dt
 
     apply!(field_padding; Hx, Hy, Hz)
-    # E = collect(collect.(E))
-    # H = [Hx, Hy, Hz]
+    E = collect.(E)
+    H = [Hx, Hy, Hz]
 
-    # [E, H]
-    u1
+    [E, H]
+    # u1
 end
 step3! = step!
 # Flux.trainable(m::PaddedArray) = (; a=m.a)
