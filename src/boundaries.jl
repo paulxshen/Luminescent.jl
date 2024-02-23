@@ -39,7 +39,7 @@ struct PML
     dims
     d::Real
     σ::Real
-    function PML(dims, d=0.125f0, σ=40.0f0)
+    function PML(dims, d=0.25f0, σ=10.0f0)
         new(dims, d, σ)
     end
 end
@@ -54,11 +54,13 @@ struct InPad
         new(b, l, r, m)
     end
 end
+@functor InPad (m,)
 struct OutPad
     b
     l
     r
 end
+# @functor OutPad
 
 
 function apply!(p::AbstractVector{<:InPad}, a::AbstractArray)
@@ -67,23 +69,34 @@ function apply!(p::AbstractVector{<:InPad}, a::AbstractArray)
         if isnothing(m)
             pad!(a, b, l, r;)
         else
-            a_ = bufferfrom(a)
-            a_[axes(a)...] = a .* m
-            a = copy(a_)
+            a .= a .* m
         end
     end
     a
 end
+function apply(p::AbstractVector{<:InPad}, a::AbstractArray)
+    a_ = Buffer(a)
+    for p = p
+        @unpack l, r, b, m = p
+        if isnothing(m)
+            pad!(a_, b, l, r;)
+        else
+            a_[axes(a)...] = a .* m
+        end
+    end
+
+    copy(a_)
+end
+
 function apply(p::AbstractVector{<:OutPad}, a)
     l = sum(getproperty.(p, :l))
     r = sum(getproperty.(p, :r))
-    # y = bufferfrom(ones(F, Tuple(l .+ r .+ size(a))))
     y = Buffer(a, Tuple(l .+ r .+ size(a)))
-    place!(y, a, l .+ 1)
+    y = place!(y, a, l .+ 1)
     for p = p
         l -= p.l
         r -= p.r
-        pad!(y, p.b, p.l, p.r, l, r)
+        y = pad!(y, p.b, p.l, p.r, l, r)
     end
     copy(y)
 end

@@ -30,7 +30,7 @@ struct MonitorInstance
     A
     label
 end
-
+@functor MonitorInstance (n,)
 
 # power(m, u) = sum(sum(pf([u[m.idxs[k]...] for (u, k) = zip(u, fk)]) .* m.n))
 """

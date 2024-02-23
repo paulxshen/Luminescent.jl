@@ -8,6 +8,9 @@ dir = pwd()
 include("$(dir)/src/main.jl")
 include("$dir/../FDTDToolkit.jl/src/main.jl")
 
+dogpu = true
+# dogpu = false
+
 name = "3d_quarter_wavelength_antenna"
 T = 8.0f0 # simulation duration in [periods]
 nx = 16
@@ -37,17 +40,26 @@ p = apply(geometry_splits; ϵ, μ, σ, σm)
 t = 0:dt:T
 u = [[similar.(a) for a = u0] for t = t]
 u[1] = u0
+if dogpu# &&
+    using CUDA, Flux
+    @assert CUDA.functional()
+    u, p, t, field_padding, source_instances = gpu.((u, p, t, field_padding, source_instances))
+end
+
 @showtime reduce(
     (u, (u1, t)) -> step!(u1, u, p, t, dx, dt, field_padding, source_instances),
-    zip(u[2:end], t[1:end-1]),
-    init=u0)
-y = hcat([power.((m,), u) for m = monitor_instances]...)
+    zip(u[2:end], t[2:end]),
+    init=u[1])
+y = [power.((m,), u) for m = monitor_instances]
 
+if dogpu# &&
+    u, p, t, field_padding, source_instances = cpu.((u, p, t, field_padding, source_instances))
+end
 Ez = map(u) do u
     u[1][3]
 end
 dir = @__DIR__
-@showtime recordsim("$dir/$(name)_nres_$nx.mp4", Ez, y;
+recordsim("$dir/$(name)_nres_$nx.mp4", collect.(Ez), collect.(y);
     dt,
     monitor_instances,
     source_instances,

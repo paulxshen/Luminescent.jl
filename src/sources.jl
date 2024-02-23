@@ -17,7 +17,7 @@ struct PlaneWave
         new(f, fields, dims, label)
     end
 end
-
+@functor PlaneWave
 """
     function GaussianBeam(f, σ, c, dims; fields...)
 
@@ -39,6 +39,7 @@ struct GaussianBeam
         new(f, σ, fields, c, dims)
     end
 end
+@functor GaussianBeam
 
 """
     function Source(f, c, lb, ub, label=""; fields...)
@@ -81,7 +82,7 @@ struct SourceInstance
     c
     label
 end
-
+@functor SourceInstance
 function SourceInstance(s::PlaneWave, dx, sizes, o, sz0)
     @unpack f, fields, dims, label = s
     d = length(first(sizes))
@@ -108,7 +109,7 @@ end
 function SourceInstance(s::Source, dx, sizes, o, stop)
     @unpack f, fields, c, lb, ub, label = s
     I = [a:dx:b for (a, b) = zip(lb, ub)]
-    g = Dict([k => [fields[k](v...) for v = Iterators.product(I...)] / dx^count(lb .== ub) for k = keys(fields)])
+    g = Dict([k => [F.(fields[k](v...)) for v = Iterators.product(I...)] / dx^count(lb .== ub) for k = keys(fields)])
     c = -1 .+ index(c, dx) .- round.(Int, (length.(I) .- 1) ./ 2)
     o = NamedTuple([k => o[k] .+ c for k = keys(o)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], o[k]) for k = keys(fields)])
@@ -121,13 +122,19 @@ end
 #     # r = place(r, real(fields[k] * f(t) .* g), o)
 #     a .+ real(f(t) .* _g)
 # end
+_F(x::Real) = F(x)
+_F(x::Complex) = ComplexF32(x)
 function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
     [
         # sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k])
         begin
 
-            a = [real(s.f(t) .* s._g[k]) for s = v if k in s.k]
-            kw[k] .+ (isempty(a) ? 0 : sum(a))
+            a = [real(_F(s.f(t)) .* s._g[k]) for s = v if k in s.k]
+            if isempty(a)
+                kw[k]
+            else
+                kw[k] .+ sum(a)
+            end
         end
         for k = keys(kw)
         # end for (k, a) = pairs(kw)
