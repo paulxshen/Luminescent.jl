@@ -8,6 +8,9 @@ makedocs(
     # modules=[FDTDEngine],
     pages=[
         "index.md",
+        "guide.md",
+        "tutorials.md",
+        "people.md",
     ]
 )
 

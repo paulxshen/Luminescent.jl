@@ -3,15 +3,14 @@ simulation of plane wave scattering on periodic array of dielectric spheres
 """
 
 using UnPack, LinearAlgebra, GLMakie
-# using FDTDEngine,FDTDToolkit
-dir = pwd()
-include("$(dir)/src/main.jl")
-include("$(dir)/scripts/startup.jl")
-include("$dir/../FDTDToolkit.jl/src/main.jl")
+using FDTDEngine, FDTDToolkit
+
+# dir = pwd()
+# include("$(dir)/src/main.jl")
+# include("$(dir)/scripts/startup.jl")
+# include("$dir/../FDTDToolkit.jl/src/main.jl")
 
 dogpu = true
-# dogpu = false
-
 name = "periodic_scattering"
 T = 10 # simulation duration in [periods]
 nx = 20

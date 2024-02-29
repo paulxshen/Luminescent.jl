@@ -5,12 +5,12 @@ using BSON: @save, @load
 using Optim: Options, minimizer
 using Optim
 using GLMakie
-# using FDTDEngine,FDTDToolkit
+using FDTDEngine, FDTDToolkit
 
-dir = pwd()
-include("$dir/src/main.jl")
-include("$dir/../FDTDToolkit.jl/src/main.jl")
-include("$dir/scripts/startup.jl")
+# dir = pwd()
+# include("$dir/src/main.jl")
+# include("$dir/../FDTDToolkit.jl/src/main.jl")
+# include("$dir/scripts/startup.jl")
 
 
 F = Float32
@@ -18,7 +18,6 @@ Random.seed!(1)
 
 "training params"
 name = "inverse_design_signal_splitter"
-dogpu = true
 dogpu = false
 T = 14 # simulation duration in [periods]
 nbasis = 4 # complexity of design region
@@ -37,11 +36,9 @@ base = F.(base)
 sz0 = size(ϵdummy)
 
 # "geometry generator model
-@load "model.bson" model
-x, re = destructure(model)
-
-# contrast = 10.0
-# model = Mask(round.(Int, designs[1].L / λ / dx) .+ 1, nbasis, contrast; symmetries=2)
+# @load "model.bson" model
+contrast = 10.0
+model = Mask(round.(Int, designs[1].L / λ / dx) .+ 1, nbasis, contrast; symmetries=2)
 
 model0 = deepcopy(model)
 
@@ -119,28 +116,28 @@ p0 = make_geometry(model0, base, μ, σ, σm)
 volume(cpu(p0[1][2]))
 # error()
 
-"Optim functions"
-# x0, re = destructure(model)
-# f_ = m -> loss(metrics(m; autodiff=false))
-# # f_ = m -> loss(metrics(m;))
-# f = f_ ∘ re
-# x = deepcopy(x0)
+# gradient free optimization "Optim functions
+x0, re = destructure(model)
+f_ = m -> loss(metrics(m; autodiff=false))
+# f_ = m -> loss(metrics(m;))
+f = f_ ∘ re
+x = deepcopy(x0)
 
-
-# @allowscalar res = optimize(f, x,
-#     ParticleSwarm(; n_particles=10),
-#     Optim.Options(f_tol=0, iterations=20, show_every=1, show_trace=true))
-# xgf = minimizer(res)
-# x = deepcopy(xgf)
-# heatmap(cpu(re(x)()))
-# @show metrics(re(x))
-# @save "model.bson" model = re(x)
+@allowscalar res = optimize(f, x,
+    ParticleSwarm(; n_particles=10),
+    Optim.Options(f_tol=0, iterations=1, show_every=1, show_trace=true))
+xgf = minimizer(res)
+x = deepcopy(xgf)
+heatmap(cpu(re(x)()))
+@show metrics(re(x))
+@save "model.bson" model = re(x)
+model = re(x)
 # error()
 
+# adjoint optimization
 opt = Adam(0.2)
-model = re(x)
 opt_state = Flux.setup(opt, model)
-n = 60
+n = 1
 for i = 1:n
     @time l, (dldm,) = withgradient(m -> loss(metrics(m)), model)
     Flux.update!(opt_state, model, dldm)

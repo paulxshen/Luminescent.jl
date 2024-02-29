@@ -4,18 +4,16 @@ simulation of  coupling into dielectric slab waveguide using modal source
 
 using UnPack, LinearAlgebra, GLMakie
 using BSON: @load
-# using FDTDEngine,FDTDToolkit
+using FDTDEngine, FDTDToolkit
 
-dir = pwd()
-include("$(dir)/src/main.jl")
-include("$(dir)/scripts/startup.jl")
-include("$dir/../FDTDToolkit.jl/src/main.jl")
+# dir = pwd()
+# include("$(dir)/src/main.jl")
+# include("$(dir)/scripts/startup.jl")
+# include("$dir/../FDTDToolkit.jl/src/main.jl")
 
 dogpu = true
-# dogpu = false
-
 name = "slab_waveguide"
-T = 10 # simulation duration in [periods]
+T = 14 # simulation duration in [periods]
 
 # load mode profile and waveguide dimensions from results of external mode solver 
 @load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad w h ϵsub ϵclad ϵwg
@@ -71,7 +69,7 @@ end
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
     step3!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-y = [power.((m,), u) for m = monitor_instances]
+v = [power.((m,), u) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
@@ -85,7 +83,7 @@ Ey = map(u) do u
 end
 ϵEy = p[1][i]
 dir = @__DIR__
-recordsim("$dir/$(name).mp4", Ey, y;
+recordsim("$dir/$(name).mp4", Ey, v;
     dt,
     field=:Ey,
     monitor_instances,
