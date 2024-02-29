@@ -12,31 +12,30 @@ include("$dir/../FDTDToolkit.jl/src/main.jl")
 dogpu = true
 # dogpu = false
 
-name = "3d_scattering"
-T = 8.0f0 # simulation duration in [periods]
-nx = 16
-dx = 1.0f0 / nx # pixel resolution in [wavelengths]
+name = "periodic_scattering"
+T = 10 # simulation duration in [periods]
+nx = 20
+dx = 1.0 / nx # pixel resolution in [wavelengths]
 
-"geometry"
-l = 2 # domain physical size length
+# geometry
+l = 2 # domain physical size length in [wavelengths]
 sz = nx .* (l, l, l) # domain voxel dimensions
 ϵ1 = ϵmin = 1 #
-ϵ2 = 2.25f0 # 
+ϵ2 = 2.25 # 
 b = F.([norm(v .- sz ./ 2) < 0.5 / dx for v = Base.product(Base.oneto.(sz)...)]) # sphere
 ϵ = ϵ2 * b + ϵ1 * (1 .- b)
 
-"setup"
+# setup
 boundaries = [Periodic(2), Periodic(3)]# unspecified boundaries default to PML
 sources = [
-    PlaneWave(t -> cos(F(2π) * t), -1; Jz=1) # Jz excited plane wave from -x plane (eg -1)
+    PlaneWave(t -> cos(2π * t), -1; Jz=1) # Jz excited plane wave from -x plane (eg -1)
 ]
-n = [1, 0, 0] # normal 
-δ = 0.2f0 # margin
-# A = (l - δ)^2
+normal = [1, 0, 0] #  
+δ = 0.2 # margin
 lm = 1 # monitor side length
 monitors = [
-    Monitor([δ, l / 2, l / 2], [0, lm, lm], n,), # (center, dimensions, normal)
-    Monitor([l - δ, l / 2, l / 2], [0, lm, lm], n,),
+    Monitor([δ, l / 2, l / 2], [0, lm, lm]; normal), # (center, dimensions; normal)
+    Monitor([l - δ, l / 2, l / 2], [0, lm, lm]; normal),
 ]
 configs = setup(boundaries, sources, monitors, dx, sz; ϵmin, T)
 @unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_instances, monitor_instances, u0, = configs
@@ -44,43 +43,36 @@ configs = setup(boundaries, sources, monitors, dx, sz; ϵmin, T)
 ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
 p = apply(geometry_splits; ϵ, μ, σ, σm)
 
-
-# run simulation
-t = 0:dt:T
-u = [[similar.(a) for a = u0] for t = t]
-u[1] = u0
-
-if dogpu# &&
+# move to gpu
+if dogpu
     using CUDA, Flux
     @assert CUDA.functional()
-    u, u0, p, t, field_padding, source_instances = gpu.((u, u0, p, t, field_padding, source_instances))
+    u0, p, field_padding, source_instances = gpu.((u0, p, field_padding, source_instances))
 end
 
-# @showtime reduce(
-#     (u, (u1, t)) -> step!(u1, u, p, t, dx, dt, field_padding, source_instances),
-#     zip(u[2:end], t[1:end-1]),
-#     init=u[1])
-@showtime u = accumulate(
-    (u, t) -> step!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
-    t,
-    init=u0)
+# run simulation
+@showtime u = accumulate(0:dt:T, init=u0) do u, t
+    step3!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+end
 y = [power.((m,), u) for m = monitor_instances]
 
-# make movie
-if dogpu# &&
-    u, p, t, field_padding, source_instances = cpu.((u, p, t, field_padding, source_instances))
+# move back to cpu for plotting
+if dogpu
+    u, p, field_padding, source_instances = cpu.((u, p, field_padding, source_instances))
 end
+
+# make movie, 
 Ez = map(u) do u
     u[1][3]
 end
-ϵz = p[1][3]
+ϵEz = p[1][3]
 dir = @__DIR__
-# error()
-recordsim("$dir/$(name)_nres_$nx.mp4", collect.(Ez), collect.(y);
+recordsim("$dir/$(name).mp4", Ez, y;
     dt,
+    field=:Ez,
     monitor_instances,
     source_instances,
-    geometry=ϵz,
+    geometry=ϵEz,
     elevation=30°,
     playback=1,
     axis1=(; title="$name\nEz"),

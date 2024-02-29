@@ -83,47 +83,57 @@ struct SourceInstance
     label
 end
 @functor SourceInstance
-function SourceInstance(s::PlaneWave, dx, sizes, o, sz0)
+function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0)
     @unpack f, fields, dims, label = s
-    d = length(first(sizes))
+    d = length(lc)
     g = Dict([k => fields[k] * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(fields)])
     o = NamedTuple([k =>
-        o[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
-                    for k = keys(o)])
+        1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
+                    for k = keys(fl)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], o[k]) for k = keys(fields)])
-    c = NamedTuple([k => round.(Int, o[k] .+ size(first(values(g))) ./ 2) for k = keys(o)])
+    c = first(values(sizes)) .÷ 2
     SourceInstance(f, keys(fields), g, _g, o, c, label)
 end
 
-function SourceInstance(s::GaussianBeam, dx, sizes, o, stop)
+function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop)
     @unpack f, σ, fields, c, dims = s
     n = round(Int, 2σ / dx)
     r = n * dx
-    I = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(c)]
-    g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(I...)] / dx
-    o = o .- 1 .+ index(c, dx) .- round.(Int, (size(g) .- 1) ./ 2)
-    _g = place(zeros(F, sz), g, o)
-    SourceInstance(f, keys(fields), g, _g, o, c, label)
+    r = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(c)]
+    g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(r...)] / dx
+    fl = fl .- 1 .+ index(c, dx) .- round.(Int, (size(g) .- 1) ./ 2)
+    _g = place(zeros(F, sz), g, fl)
+    SourceInstance(f, keys(fields), g, _g, fl, c, label)
 end
 
-function SourceInstance(s::Source, dx, sizes, o, stop)
+function SourceInstance(s::Source, dx, sizes, lc, fl, stop)
     @unpack f, fields, c, lb, ub, label = s
-    I = [a:dx:b for (a, b) = zip(lb, ub)]
-    g = Dict([k => [F.(fields[k](v...)) for v = Iterators.product(I...)] / dx^count(lb .== ub) for k = keys(fields)])
-    c = -1 .+ index(c, dx) .- round.(Int, (length.(I) .- 1) ./ 2)
-    o = NamedTuple([k => o[k] .+ c for k = keys(o)])
+    # println(fl)
+    r = [vcat(a:dx:0, dx:dx:b) for (a, b) = zip(lb, ub)]
+    C = 1 /
+        dx^count(lb .== ub)
+    g = Dict([k =>
+        C * begin
+            if isa(fields[k], AbstractArray)
+                # imresize(fields[k], ratio=1)
+                imresize(fields[k], Tuple(length.(r)), method=ImageTransformations.Lanczos4OpenCV())
+            else
+                [F.(fields[k](v...)) for v = Iterators.product(r...)]
+            end
+        end
+
+              for k = keys(fields)])
+    c = round.(c ./ dx) .+ 1
+    o = c + round.(lb ./ dx)
+    c = c + lc
+    o = NamedTuple([k => fl[k] .+ o for k = keys(fl)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], o[k]) for k = keys(fields)])
-    c = NamedTuple([k => round.(Int, o[k] .+ size(first(values(g))) ./ 2) for k = keys(o)])
     SourceInstance(f, keys(fields), g, _g, o, c, label)
 end
 
-# function apply(s::SourceInstance, a, t::Real)
-#     @unpack g, _g, f, o = s
-#     # r = place(r, real(fields[k] * f(t) .* g), o)
-#     a .+ real(f(t) .* _g)
-# end
 _F(x::Real) = F(x)
 _F(x::Complex) = ComplexF32(x)
+
 function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
     [
         # sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k])

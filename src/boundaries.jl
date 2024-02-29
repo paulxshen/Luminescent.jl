@@ -75,7 +75,12 @@ function apply!(p::AbstractVector{<:InPad}, a::AbstractArray)
     a
 end
 function apply(p::AbstractVector{<:InPad}, a::AbstractArray)
+    if length(p) == 1 && !isnothing(p[1].m)
+        return a .* p[1].m
+    end
+
     a_ = Buffer(a)
+    a_ .= a
     for p = p
         @unpack l, r, b, m = p
         if isnothing(m)

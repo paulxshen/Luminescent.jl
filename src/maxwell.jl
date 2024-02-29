@@ -1,9 +1,10 @@
 """
-    function step!(u1, u, p, t, field_padding, source_instances)
+    function step3!(u, p, t, field_padding, source_instances)
+    function step3!(u1, u, p, t, field_padding, source_instances)
 
-Updates fields for 3d. Writes new field into buffer array u1
+Updates fields for 3d. Please use `step3` instead of `step3!` when doing AD. Mutating `step3!` Writes new fields either onto old fields or into buffer arrays u1
 """
-function step!(u1, u, p, t, dx, dt, field_padding, source_instances)
+function step3!(u1, u, p, t, dx, dt, field_padding, source_instances)
     ∇ = StaggeredDel([dx, dx, dx])
     ϵ, μ, σ, σm = p
     E, H = u
@@ -37,9 +38,9 @@ function step!(u1, u, p, t, dx, dt, field_padding, source_instances)
     [E, H]
     # u1
 end
-step!(u, p, t, dx, dt, field_padding, source_instances) = step!(u, u, p, t, dx, dt, field_padding, source_instances)
+step3!(u, p, t, dx, dt, field_padding, source_instances) = step3!(u, u, p, t, dx, dt, field_padding, source_instances)
 
-# function step!(u, p, t, dx, dt, field_padding, source_instances)
+# function step3!(u, p, t, dx, dt, field_padding, source_instances)
 #     ∇ = StaggeredDel([dx, dx, dx])
 #     ϵ, μ, σ, σm = p
 #     E, H = u
@@ -77,7 +78,12 @@ step!(u, p, t, dx, dt, field_padding, source_instances) = step!(u, u, p, t, dx, 
 
 #     [E, H]
 # end
-function step(u, p, t, dx, dt, field_padding, source_instances)
+"""
+    function step3(u, p, t, field_padding, source_instances)
+
+Updates fields for 3d in a manner amenable to AD. See also Mutating `step3!`
+"""
+function step3(u, p, t, dx, dt, field_padding, source_instances; ignore_boundary_autodiff=false)
     ∇ = StaggeredDel([dx, dx, dx])
     ϵ, μ, σ, σm = p
     E, H = u
@@ -89,7 +95,13 @@ function step(u, p, t, dx, dt, field_padding, source_instances)
     dEdt = (∇ × H - σ * E - J) / ϵ
     Ex, Ey, Ez = E + dEdt * dt
 
-    Ex, Ey, Ez = apply(field_padding; Ex, Ey, Ez)
+    if ignore_boundary_autodiff
+        ignore_derivatives() do
+            apply!(field_padding; Ex, Ey, Ez)
+        end
+    else
+        Ex, Ey, Ez = apply(field_padding; Ex, Ey, Ez)
+    end
     H = collect.(H)
 
     # then update H
@@ -97,13 +109,25 @@ function step(u, p, t, dx, dt, field_padding, source_instances)
     dHdt = -(∇ × E .+ σm * H) / μ
     Hx, Hy, Hz = H + dHdt * dt
 
-    H = apply(field_padding; Hx, Hy, Hz)
-    # H = [Hx, Hy, Hz]
+    if ignore_boundary_autodiff
+        ignore_derivatives() do
+            apply!(field_padding; Hx, Hy, Hz)
+        end
+    else
+        Hx, Hy, Hz = apply(field_padding; Hx, Hy, Hz)
+    end
+    H = [Hx, Hy, Hz]
     E = collect.(E)
+    # for a = E
+    #     @assert all(isfinite, a)
+    # end
+    # for a = H
+    #     @assert all(isfinite, a)
+    # end
 
     [E, H]
 end
-step3! = step!
+step3! = step3!
 # Flux.trainable(m::PaddedArray) = (; a=m.a)
 
 """

@@ -1,7 +1,7 @@
 module FDTDEngine
 include("main.jl")
 export reindex, sandwich
-export Del, step3!, step!
+export Del, step3!, step3!, step3
 # stepTMz, step1, , stepTEz
 export Periodic, PML, PEC, PMC, InPad, OutPad
 export PlaneWave, GaussianBeam, Source, place, place!
