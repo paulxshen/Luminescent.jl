@@ -1,7 +1,7 @@
 # Home
- Currently Prerelease. Expect breaking changes. Report bugs on [Github](https://github.com/paulxshen/FDTDEngine.jl] - we usually respond within a day
+ Currently Prerelease. Expect breaking changes. Report bugs on [Github](https://github.com/paulxshen/FDTDEngine.jl) - we usually respond within a day
 ## Overview
-Generative design meets Maxwell's Equations. Differentiable FDTD package for inverse design & topology optimization in semiconductor photonics, acoustics and RF. GPU and automatic differentiation (AD) compatible. Uses AD by `Zygote.jl` for adjoint optimization. Integrates with `Jello.jl` to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources. Customizable physics to potentially incorporate dynamics like heat transfer, charge transport.
+Generative design meets Maxwell's Equations. Differentiable FDTD package for inverse design & topology optimization in semiconductor photonics, acoustics and RF. GPU and automatic differentiation (AD) compatible. Uses AD by `Zygote.jl` for adjoint optimization. Integrates with [`Jello.jl`](https://github.com/paulxshen/Jello.jl) to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources. Customizable physics to potentially incorporate dynamics like heat transfer, charge transport.
 ## Gallery
 ### Quarter wavelength antenna radiating above conductive ground plane
 ![](assets/quarter_wavelength_antenna.mp4)
