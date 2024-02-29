@@ -17,3 +17,4 @@ include("monitors.jl")
 include("fdtd.jl")
 include("geometry.jl")
 
+# ]add UnPack, LinearAlgebra, Random, StatsBase, ImageTransformations, Functors, DataStructures,Porcupine,Jello, ArrayPadding,Zygote, GPUArraysCore
