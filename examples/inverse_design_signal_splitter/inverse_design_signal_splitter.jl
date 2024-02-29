@@ -126,11 +126,11 @@ x = deepcopy(x0)
 if dogpu
     CUDA.@allowscalar res = optimize(f, x,
         ParticleSwarm(; n_particles=10),
-        Optim.Options(f_tol=0, iterations=1, show_every=1, show_trace=true))
+        Optim.Options(f_tol=0, iterations=21, show_every=1, show_trace=true))
 else
     res = optimize(f, x,
         ParticleSwarm(; n_particles=10),
-        Optim.Options(f_tol=0, iterations=1, show_every=1, show_trace=true))
+        Optim.Options(f_tol=0, iterations=21, show_every=1, show_trace=true))
 end
 xgf = minimizer(res)
 x = deepcopy(xgf)
@@ -143,7 +143,7 @@ model = re(x)
 # adjoint optimization
 opt = Adam(0.2)
 opt_state = Flux.setup(opt, model)
-n = 1
+n = 50
 for i = 1:n
     @time l, (dldm,) = withgradient(m -> loss(metrics(m)), model)
     Flux.update!(opt_state, model, dldm)
