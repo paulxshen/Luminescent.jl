@@ -9,7 +9,7 @@ Args
 function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
     ϵ=1, μ=1, σ=0, σm=0, F=Float32,
     ϵmin=1,
-    Courant=F(0.75ϵmin / √(length(sz0))),# Courant number)
+    Courant=F(0.8√(ϵmin / length(sz0))),# Courant number)
     kw...)
 
     a = ones(F, sz0)
@@ -36,7 +36,10 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
     db = Any[PML(j * i,) for i = 1:d, j = (-1, 1)]
     field_padding = DefaultDict(() -> InPad[])
     geometry_padding = DefaultDict(() -> OutPad[])
-    o = Dict([k => ones(Int, d) for k = fk])
+    fl = Dict([k => zeros(Int, d) for k = fk])
+    flb = Dict([k => zeros(Int, d) for k = fk])
+    frb = Dict([k => zeros(Int, d) for k = fk])
+    lc = zeros(Int, d)
     sizes = Dict([k => collect(sz0) for k = fk])
 
     for b = boundaries
@@ -110,12 +113,20 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
                 info = lazy = false
                 push!(geometry_padding[:ϵ], OutPad(:replicate, l, r,))
                 push!(geometry_padding[:μ], OutPad(:replicate, l, r,))
-                push!(geometry_padding[:σ], OutPad(ReplicateRamp(F(b.σ)), l, r,))
-                push!(geometry_padding[:σm], OutPad(ReplicateRamp(F(b.σ)), l, r,))
+
+                l1 = l .÷ 2
+                r1 = r .÷ 2
+                push!(geometry_padding[:σ], OutPad(ReplicateRamp(F(b.σ)), l1, r1,))
+                push!(geometry_padding[:σm], OutPad(ReplicateRamp(F(b.σ)), l1, r1,))
+                l2 = l - l1
+                r2 = r - r1
+                push!(geometry_padding[:σ], OutPad(F(b.σ), l2, r2,))
+                push!(geometry_padding[:σm], OutPad(F(b.σ), l2, r2,))
                 if j == 1
-                    for k = keys(o)
-                        o[k][i] += n
+                    for k = keys(fl)
+                        fl[k][i] += n
                     end
+                    lc[i] += n
                 end
                 for k = keys(sizes)
                     sizes[k][i] += n
@@ -141,39 +152,26 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
             end
         end
     end
-    for i = 1:d
-        if d == 3
-            l = OutPad(:replicate, Int.(1:d .== i), fill(0, d),)
-            r = OutPad(:replicate, fill(0, d), Int.(1:d .== i),)
-            p = [l, r]
-            append!(geometry_padding[:μ], p)
-            append!(geometry_padding[:σm], p)
-            append!(geometry_padding[:σ], p)
-            append!(geometry_padding[:ϵ], p)
-            # push!(geometry_padding[:ϵ], p)
-        end
+    if d == 3
+        p = OutPad(:replicate, ones(Int, d), ones(Int, d))
+        push!(geometry_padding[:μ], p)
+        push!(geometry_padding[:σm], p)
+        push!(geometry_padding[:σ], p)
+        push!(geometry_padding[:ϵ], p)
     end
-    # for (k, v) = pairs(geometry_padding)
-    #     for p = v
-    #         for v = values(o)
-    #             v .+= p.l .+ p.r
-    #         end
-    #     end
-    # end
+
     for (k, v) = pairs(field_padding)
         for p = v
             sizes[k] += p.l .+ p.r
-            o[k] += p.l
+            fl[k] += p.l
+            flb[k] += p.l
+            frb[k] += p.r
         end
     end
-    # Ie = [a:b for (a, b) = zip(start, start .+ esz .- 1)] # end
-    # Ih = [a:b for (a, b) = zip(start, start .+ hsz .- 1)] # end
 
-
-
-    o[:Jx] = o[:Ex]
-    o[:Jy] = o[:Ey]
-    o[:Jz] = o[:Ez]
+    fl[:Jx] = fl[:Ex]
+    fl[:Jy] = fl[:Ey]
+    fl[:Jz] = fl[:Ez]
     sizes[:Jx] = sizes[:Ex]
     sizes[:Jy] = sizes[:Ey]
     sizes[:Jz] = sizes[:Ez]
@@ -192,45 +190,36 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
         end
     end
     geometry_splits = Dict{Symbol,Vector{Vector{UnitRange{Int64}}}}()
-    function gs(sz, k)
-        l = 1 .- sum(field_padding[k]) do p
-            p.l
-        end
-        r = 1 .- sum(field_padding[k]) do p
-            p.r
-        end
-        [ax[1+l:end-r] for (ax, l, r) = zip(Base.oneto.(sz), l, r)]
-    end
     geometry_sizes = NamedTuple([k => sz0 .+ sum(geometry_padding[k]) do p
         p.l + p.r
     end for k = keys(geometry_padding)])
-    geometry_splits[:μ] = geometry_splits[:σm] = gs.((geometry_sizes[:μ],), [:Hx, :Hy, :Hz])
-    geometry_splits[:ϵ] = geometry_splits[:σ] = gs.((geometry_sizes[:ϵ],), [:Ex, :Ey, :Ez])
-    source_instances = SourceInstance.(sources, dx, (sizes,), (o,), (sz0,))
-    # source_instances = DefaultDict(() -> SourceInstance[])
-    # for s = sources
-    #     for (k, v) = pairs(SourceInstance(s, dx, sizes, o, sz0))
-    #         append!(source_instances[k], v)
-    #     end
-    # end
+    geometry_splits[:μ] = geometry_splits[:σm] =
+        [[ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:μ]), flb[k], frb[k])]
+         for k = [:Hx, :Hy, :Hz]]
+    geometry_splits[:ϵ] = geometry_splits[:σ] =
+        [[ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:ϵ]), flb[k], frb[k])]
+         for k = [:Ex, :Ey, :Ez]]
+    source_instances = SourceInstance.(sources, dx, (sizes,), (lc,), (fl,), (sz0,))
+
     c = 0
     save_info = Int[]
-    println(o)
     monitor_instances = [
         begin
+            L = m.ub - m.lb
+            A = prod(deleteat!(L, findfirst(L .≈ 0,)))
             c = round.(Int, m.c / dx)
             lb = round.(Int, m.lb / dx)
             ub = round.(Int, m.ub / dx)
 
-            idxs = Dict([
-                k => map(sizes[k], o[k], c, lb, ub) do s, o, c, lb, ub
-                    max(1, o + c + lb):min(s, o + c + ub)
-                end for k = fk
-            ])
-            centers = NamedTuple([k => o[k] .+ c for (k, v) = pairs(idxs)])
-            L = ub - lb
-            A = prod(deleteat!(L, findfirst(L .== 0,))) * dx^(d - 1)
-            MonitorInstance(idxs, centers, m.n, dx, A, m.label)
+            # idxs = Dict([
+            #     k => map(sizes[k],  c, lb, ub) do s, c, lb, ub
+            #         max(1, lc + c + lb):min(s, lc + c + ub)
+            #     end for k = fk
+            # ])
+            i = range.((1 .+ lc + c + lb), (1 .+ lc + c + ub))
+            fi = Dict([k => i .+ v for (k, v) = pairs(flb)])
+            # fi = (; [k => i .+ v for (k, v) = pairs(flb)]...)
+            MonitorInstance(i, lc + c, fi, m.n, dx, A, m.label)
         end for m = monitors
     ]
     dt = dx * Courant
@@ -257,6 +246,8 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
             ]
         end
     end
+    geometry_padding = NamedTuple(geometry_padding)
+    field_padding = NamedTuple(field_padding)
     (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_splits, source_instances, monitor_instances, u0, save_info, fields, dx, dt, kw...)
 end
 function apply!(p; kw...)

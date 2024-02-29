@@ -1,6 +1,7 @@
 
 function sandwich(base, h, ϵ)
-    a = ones(F, size(base))
+    # a = ones(F, size(base))
+    a = 0 * base .+ 1
     ϵbox, ϵcore, ϵclad, = ϵ
     # hbox, hwg, hclad = h
     cat(repeat.(
