@@ -1,9 +1,9 @@
 using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Zygote, Jello, Flux
 using Flux: mae, Adam
-using Zygote: withgradient
+using Zygote: withgradient, Buffer
 using BSON: @save, @load
 using Optim: Options, minimizer
-using Optim
+using Optim, CUDA
 using GLMakie
 using FDTDEngine, FDTDToolkit
 
@@ -17,8 +17,8 @@ F = Float32
 Random.seed!(1)
 
 "training params"
-name = "inverse_design_signal_splitter"
 dogpu = false
+name = "inverse_design_signal_splitter"
 T = 14 # simulation duration in [periods]
 nbasis = 4 # complexity of design region
 # λ = 1.55 # wavelength [um]
@@ -123,9 +123,15 @@ f_ = m -> loss(metrics(m; autodiff=false))
 f = f_ ∘ re
 x = deepcopy(x0)
 
-@allowscalar res = optimize(f, x,
-    ParticleSwarm(; n_particles=10),
-    Optim.Options(f_tol=0, iterations=1, show_every=1, show_trace=true))
+if dogpu
+    CUDA.@allowscalar res = optimize(f, x,
+        ParticleSwarm(; n_particles=10),
+        Optim.Options(f_tol=0, iterations=1, show_every=1, show_trace=true))
+else
+    res = optimize(f, x,
+        ParticleSwarm(; n_particles=10),
+        Optim.Options(f_tol=0, iterations=1, show_every=1, show_trace=true))
+end
 xgf = minimizer(res)
 x = deepcopy(xgf)
 heatmap(cpu(re(x)()))
@@ -180,4 +186,4 @@ function runsave(x)
 
 end
 
-runsave(x)
+# runsave(x)
