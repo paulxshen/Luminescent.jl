@@ -4,12 +4,12 @@ simulation of  coupling into dielectric slab waveguide using modal source
 
 using UnPack, LinearAlgebra, GLMakie
 using BSON: @load
-using FDTDEngine, FDTDToolkit
+using Luminesce, LuminesceVisualization
 
 # dir = pwd()
 # include("$(dir)/src/main.jl")
 # include("$(dir)/scripts/startup.jl")
-# include("$dir/../FDTDToolkit.jl/src/main.jl")
+# include("$dir/../LuminesceVisualization.jl/src/main.jl")
 
 dogpu = true
 name = "slab_waveguide"
@@ -32,21 +32,21 @@ sz = size(ϵ)
 
 # modal source
 @unpack Ex, Ey, Ez, = modes[1]
-Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
+Jy, Jz, Jx = map([Ex, Ey, Ez]) do a
     reshape(a, 1, size(a)...)
 end
 # GLMakie.volume(real(Jy))
 c = [0, w / 2, hsub]
 lb = [0, lb...]
 ub = [0, ub...]
-sources = [Source(t -> cos(2π * t), c, lb, ub; Jx, Jy, Jz)]
+sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 
 # monitors
 normal = [1, 0, 0] # normal 
 δ = 0.1 / λ # margin
 monitors = [
     # (center, lower bound, upper bound; normal)
-    Monitor([δ, w / 2, hsub], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal,),
+    Monitor([l / 2, w / 2, hsub], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal,),
     Monitor([l - δ, w / 2, hsub], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal,),
 ]
 
@@ -78,9 +78,7 @@ end
 
 # make movie, 
 i = 2
-Ey = map(u) do u
-    u[1][i]
-end
+Ey = field.(u, :Ey)
 ϵEy = p[1][i]
 dir = @__DIR__
 recordsim("$dir/$(name).mp4", Ey, v;
@@ -91,6 +89,6 @@ recordsim("$dir/$(name).mp4", Ey, v;
     geometry=ϵEy,
     elevation=30°,
     playback=1,
-    axis1=(; title="$name\nEy"),
+    axis1=(; title="$name Ey"),
     axis2=(; title="monitor powers"),
 )

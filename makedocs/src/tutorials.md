@@ -1,2 +1,2 @@
 # Tutorials
-see [`examples/`](https://github.com/paulxshen/FDTDEngine.jl/blob/main/examples/)
+see [`examples/`](https://github.com/paulxshen/Luminesce.jl/blob/main/examples/)

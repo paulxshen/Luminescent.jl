@@ -1,11 +1,11 @@
 using Documenter
-include("../src/FDTDEngine.jl")
-using .FDTDEngine
+include("../src/Luminesce.jl")
+using .Luminesce
 
 makedocs(
-    sitename="FDTDEngine.jl",
+    sitename="Luminesce.jl",
     format=Documenter.HTML(),
-    # modules=[FDTDEngine],
+    # modules=[Luminesce],
     pages=[
         "index.md",
         "guide.md",
