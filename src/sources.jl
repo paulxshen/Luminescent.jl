@@ -66,6 +66,7 @@ struct Source
         new(f, fields, c, lb, ub, label)
     end
 end
+
 function Source(f, c, L, label::AbstractString=""; fields...)
     # Source
     # function Source(f, c, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)
@@ -83,8 +84,10 @@ struct SourceInstance
     label
 end
 @functor SourceInstance
-function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0)
+
+function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0; F=Float32)
     @unpack f, fields, dims, label = s
+    f = F ∘ f
     d = length(lc)
     g = Dict([k => fields[k] * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(fields)])
     o = NamedTuple([k =>
@@ -95,7 +98,8 @@ function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0)
     SourceInstance(f, keys(fields), g, _g, o, c, label)
 end
 
-function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop)
+function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
+    f = F ∘ f
     @unpack f, σ, fields, c, dims = s
     n = round(Int, 2σ / dx)
     r = n * dx
@@ -106,9 +110,11 @@ function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop)
     SourceInstance(f, keys(fields), g, _g, fl, c, label)
 end
 
-function SourceInstance(s::Source, dx, sizes, lc, fl, stop)
+function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
     @unpack f, fields, c, lb, ub, label = s
     # println(fl)
+
+    f = F ∘ f
     r = [vcat(a:dx:0, dx:dx:b) for (a, b) = zip(lb, ub)]
     C = 1 /
         dx^count(lb .== ub)
@@ -139,7 +145,7 @@ function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
         # sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k])
         begin
 
-            a = [real(_F(s.f(t)) .* s._g[k]) for s = v if k in s.k]
+            a = [real(s.f(t)) .* s._g[k] for s = v if k in s.k]
             if isempty(a)
                 kw[k]
             else
