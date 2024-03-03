@@ -82,7 +82,7 @@ function MonitorInstance(m::OrthogonalMonitor, dx, lc, flb, fl; F=Float32)
     i = range.((1 .+ lc + c + lb), (1 .+ lc + c + ub))
     fi = Dict([k => i .+ v for (k, v) = pairs(flb)])
     # fi = (; [k => i .+ v for (k, v) = pairs(flb)]...)
-    OrthogonalMonitorInstance(i, lc + c, fi, F.(m.n), dx, A, m.label)
+    OrthogonalMonitorInstance(i, lc + c, fi, F.(m.n), F(dx), F(A), m.label)
 end
 
 function MonitorInstance(m::PointCloudMonitor, dx, lc, flb, fl; F=Float32)
@@ -94,8 +94,12 @@ function MonitorInstance(m::PointCloudMonitor, dx, lc, flb, fl; F=Float32)
     PointCloudMonitorInstance(i, fi, F.(n), c, label)
 end
 
+function field(u, k)
+    i, j = fij[k]
+    u[i][j]
+end
 function field(u, m::OrthogonalMonitorInstance, k)
-    @unpack i, j = fij[k]
+    i, j = fij[k]
     u[i][j][m.fi[k]...]
 end
 # Base.getindex(a::Union{AbstractArray,GPUArraysCore.AbstractGPUArray}, m::MonitorInstance) = a[m.i...]

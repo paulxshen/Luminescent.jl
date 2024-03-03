@@ -1,17 +1,16 @@
-using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Zygote, Jello, Flux
+using UnPack, LinearAlgebra, Random, StatsBase, Zygote, Jello, Flux
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer
 using BSON: @save, @load
 using Optim: Options, minimizer
 using Optim, CUDA
 using GLMakie
-using FDTDEngine, FDTDToolkit
+using Luminesce, LuminesceVisualization
 
 # dir = pwd()
 # include("$dir/src/main.jl")
-# include("$dir/../FDTDToolkit.jl/src/main.jl")
+# include("$dir/../LuminesceVisualization.jl/src/main.jl")
 # include("$dir/scripts/startup.jl")
-
 
 F = Float32
 Random.seed!(1)
@@ -35,11 +34,11 @@ base = F.(base)
 ϵdummy = sandwich(base, round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵwg, ϵclad])
 sz0 = size(ϵdummy)
 
+
 # "geometry generator model
 # @load "model.bson" model
 contrast = 10.0
 model = Mask(round.(Int, designs[1].L / λ / dx) .+ 1, nbasis, contrast; symmetries=2)
-
 model0 = deepcopy(model)
 
 "boundaries"
@@ -63,19 +62,22 @@ end
 c = [sources[1].c / λ..., hsub]
 lb = [0, lb...]
 ub = [0, ub...]
-sources = [Source(t -> cos(2π * t), c, lb, ub; Jx, Jy, Jz)]
+sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 
-configs = setup(boundaries, sources, monitors, dx, sz0; ϵmin)
+configs = setup(boundaries, sources, monitors, dx, sz0; F, ϵmin)
 @unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_instances, monitor_instances, u0, = configs
 nt = round(Int, 1 / dt)
-
 t = 0:dt:T
-y0 = zeros(F, length(monitor_instances))
+v0 = zeros(F, length(monitor_instances))
+
+t = F.(t)
+dt, T = F.((dt, T))
+
 if dogpu
     using CUDA, Flux
     @assert CUDA.functional()
-    u0, model, base, μ, σ, σm, t, field_padding, source_instances =#, monitor_instances =
-        gpu.((u0, model, base, μ, σ, σm, t, field_padding, source_instances))#, monitor_instances))
+    u0, model, base, μ, σ, σm, t, field_padding, source_instances =
+        gpu.((u0, model, base, μ, σ, σm, t, field_padding, source_instances))
 end
 
 function make_geometry(model, base, μ, σ, σm)
@@ -97,19 +99,18 @@ function metrics(model, T=T; autodiff=true)
         step3!
     end
     u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T-1, init=deepcopy(u0))
-    y = reduce(T-1+dt:dt:T, init=(u, y0)) do (u, y), t
+    v = reduce(T-1+dt:dt:T, init=(u, v0)) do (u, v), t
         _step(u, p, t, dx, dt, field_padding, source_instances),
-        y + dt * power.(monitor_instances, (u,))
+        v + dt * power.(monitor_instances, (u,))
     end[2]
-
+    abs.(v)
 end
 @show const tp = metrics(model, 2; autodiff=false)[1] # total power
 # error()
 
-function loss(y)
-    # -y[2] / tp
-    sum(abs, F[1, 0.5, 0.5,] - y / tp)
-    # (dot([-1, -1, -1,], y) / 2 + abs(tp / 2 - y[2]) + abs(tp / 2 - y[3])) / tp
+function loss(v)
+    # -v[2] / tp
+    sum(abs, -v / tp)
 end
 
 p0 = make_geometry(model0, base, μ, σ, σm)
@@ -123,15 +124,9 @@ f_ = m -> loss(metrics(m; autodiff=false))
 f = f_ ∘ re
 x = deepcopy(x0)
 
-if dogpu
-    CUDA.@allowscalar res = optimize(f, x,
-        ParticleSwarm(; n_particles=10),
-        Optim.Options(f_tol=0, iterations=21, show_every=1, show_trace=true))
-else
-    res = optimize(f, x,
-        ParticleSwarm(; n_particles=10),
-        Optim.Options(f_tol=0, iterations=21, show_every=1, show_trace=true))
-end
+CUDA.@allowscalar res = optimize(f, x,
+    ParticleSwarm(; n_particles=10),
+    Optim.Options(f_tol=0, iterations=0, show_every=1, show_trace=true))
 xgf = minimizer(res)
 x = deepcopy(xgf)
 heatmap(cpu(re(x)()))
@@ -143,14 +138,14 @@ model = re(x)
 # adjoint optimization
 opt = Adam(0.2)
 opt_state = Flux.setup(opt, model)
-n = 50
+n = 1
 for i = 1:n
     @time l, (dldm,) = withgradient(m -> loss(metrics(m)), model)
     Flux.update!(opt_state, model, dldm)
     println("$i $l")
 end
 heatmap(cpu(model()))
-@save "model.bson" model
+# @save "model.bson" model
 # error()
 
 @show metrics(model)

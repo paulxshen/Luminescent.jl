@@ -87,9 +87,9 @@ end
 
 function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0; F=Float32)
     @unpack f, fields, dims, label = s
-    f = F ∘ f
+    f = _F ∘ f
     d = length(lc)
-    g = Dict([k => fields[k] * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(fields)])
+    g = Dict([k => _F(fields[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(fields)])
     o = NamedTuple([k =>
         1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
                     for k = keys(fl)])
@@ -99,7 +99,7 @@ function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0; F=Float32)
 end
 
 function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
-    f = F ∘ f
+    f = _F ∘ f
     @unpack f, σ, fields, c, dims = s
     n = round(Int, 2σ / dx)
     r = n * dx
@@ -114,7 +114,7 @@ function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
     @unpack f, fields, c, lb, ub, label = s
     # println(fl)
 
-    f = F ∘ f
+    f = _F ∘ f
     r = [vcat(a:dx:0, dx:dx:b) for (a, b) = zip(lb, ub)]
     C = 1 /
         dx^count(lb .== ub)
@@ -122,9 +122,9 @@ function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
         C * begin
             if isa(fields[k], AbstractArray)
                 # imresize(fields[k], ratio=1)
-                imresize(fields[k], Tuple(length.(r)), method=ImageTransformations.Lanczos4OpenCV())
+                imresize(_F.(fields[k]), Tuple(length.(r)), method=ImageTransformations.Lanczos4OpenCV())
             else
-                [F.(fields[k](v...)) for v = Iterators.product(r...)]
+                [_F.(fields[k](v...)) for v = Iterators.product(r...)]
             end
         end
 
@@ -138,14 +138,14 @@ function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
 end
 
 _F(x::Real) = F(x)
-_F(x::Complex) = ComplexF32(x)
-
+_F(x::Complex) = complex(F)(x)
+# Complex
 function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
     [
         # sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k])
         begin
 
-            a = [real(s.f(t)) .* s._g[k] for s = v if k in s.k]
+            a = [real(s.f(t) .* s._g[k]) for s = v if k in s.k]
             if isempty(a)
                 kw[k]
             else

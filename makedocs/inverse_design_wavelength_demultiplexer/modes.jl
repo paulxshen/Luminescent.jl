@@ -23,7 +23,7 @@ function (ε::εtype)(x, y)
 end
 
 λ1 = 1.55
-λ2 = 1.2
+λ2 = 1
 function main(λ)
     ε = εtype()
     x = [i for i in 0:dx:w]
@@ -35,8 +35,9 @@ function main(λ)
     modes = solve(solver, neigs, tol)
 
 end
-modes1 = main(λ1)
-modes2 = main(λ2)
-modes1550, modes1200 = [[NamedTuple([k => getfield(m, k)' for k = [:Ex, :Ey, :Ez, :Hx, :Hy, :Hz]]) for m = m] for m = (modes1, modes2)]
-@save "$(@__DIR__)/modes.bson" modes1550 modes1200 λ1 λ2 dx ub lb hsub hwg wwg hclad ϵsub ϵclad ϵwg h w
-plot_mode_fields(modes1[1])
+modes1_ = main(λ1)
+modes2_ = main(λ2)
+modes1, modes2 = [[NamedTuple([k => getfield(m, k)' for k = [:Ex, :Ey, :Ez, :Hx, :Hy, :Hz]]) for m = m] for m = (modes1_, modes2_)]
+@save "$(@__DIR__)/modes.bson" modes1 modes2 λ1 λ2 dx ub lb hsub hwg wwg hclad ϵsub ϵclad ϵwg h w
+plot_mode_fields(modes1_[1])
+plot_mode_fields(modes2_[1])

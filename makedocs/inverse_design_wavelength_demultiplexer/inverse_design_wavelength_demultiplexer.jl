@@ -5,11 +5,11 @@ using BSON: @save, @load
 using Optim: Options, minimizer
 using Optim, CUDA
 using GLMakie
-# using FDTDEngine, FDTDToolkit
+# using Luminesce, LuminesceVisualization
 
 dir = pwd()
 include("$dir/src/main.jl")
-include("$dir/../FDTDToolkit.jl/src/main.jl")
+include("$dir/../LuminesceVisualization.jl/src/main.jl")
 include("$dir/scripts/startup.jl")
 
 F = Float32
@@ -18,16 +18,15 @@ Random.seed!(1)
 "training params"
 dogpu = false
 name = "inverse_design_wavelength_demultiplexer"
-λ = λ1 = 1.55  # wavelength [um]
-f2 = λ1 / λ2
-λ2 = 1.2
-T1 = 16 # simulation duration in [periods]
-T2 = 1 / (f2 - 1)
 nbasis = 6 # complexity of design region
 
 # loads design layout
-@load "$(@__DIR__)/layout.bson" base sources ports designs
-@load "$(@__DIR__)/modes.bson" modes1550 modes1200 lb ub dx hsub wwg hwg hclad ϵsub ϵclad ϵwg
+@load "$(@__DIR__)/layout.bson" base signals ports designs
+@load "$(@__DIR__)/modes.bson" λ1 λ2 modes1 modes2 lb ub dx hsub wwg hwg hclad ϵsub ϵclad ϵwg
+λ = λ1 # wavelength [um]
+f2 = λ1 / λ2
+T1 = 1 + norm(ports[1].c - ports[2].c) / λ * sqrt(ϵwg) # simulation duration in [periods]
+T2 = 1 / (f2 - 1)
 ϵmin = ϵclad
 hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
 
@@ -51,15 +50,16 @@ monitors = [Monitor([p.c / λ..., hsub], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + 
 
 # modal source
 sources = []
-for (modes, f) = zip((modes1550, modes1200), (1, f2))
+c = signals[1].c / λ
+c = [c..., hsub]
+lb = [0, lb...]
+ub = [0, ub...]
+for (modes, f) = zip((modes1, modes2), (1, f2))
     @unpack Ex, Ey, Ez, = modes[1]
     Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
         reshape(a, 1, size(a)...)
     end
-    c = [sources[1].c / λ..., hsub]
-    lb = [0, lb...]
-    ub = [0, ub...]
-    push!(sources, Source(t -> cos(2π * f * t), c, lb, ub; Jx, Jy, Jz))
+    push!(sources, Source(t -> cispi(2f * t), c, lb, ub; Jx, Jy, Jz))
 end
 
 boundaries = [] # unspecified boundaries default to PML
@@ -69,7 +69,10 @@ nt = round(Int, 1 / dt)
 
 T = T1 + T2
 t = 0:dt:T
-y0 = zeros(F, length(monitor_instances))
+v0 = zeros(F, length(monitor_instances))
+
+t = F.(t)
+dt, f2, T1, T2, T = F.((dt, f2, T1, T2, T))
 if dogpu
     using CUDA, Flux
     @assert CUDA.functional()
@@ -87,7 +90,7 @@ function make_geometry(model, base, μ, σ, σm)
     p = apply(geometry_splits; ϵ, μ, σ, σm)
 end
 
-function metrics(model, T=T; autodiff=true)
+function metrics(model; T1=T1, T2=T2, autodiff=true)
     p = make_geometry(model, base, μ, σ, σm)
     # run simulation
     _step = if autodiff
@@ -96,14 +99,14 @@ function metrics(model, T=T; autodiff=true)
         step3!
     end
     u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T1, init=deepcopy(u0))
-    v = reduce(T1+dt:dt:T, init=(u, y0)) do (u, y), t
+    v = reduce(T1+dt:dt:T, init=(u, v0)) do (u, v), t
         _step(u, p, t, dx, dt, field_padding, source_instances),
-        v + [1, cispi.(2 * [1, f2])...] .* dt * power.(monitor_instances, (u,))
+        v + [1, cispi.(2 * F.([1, f2]))...] .* power.(monitor_instances, (u,))
     end[2]
-    abs.(v)
+    dt / F(T2) * abs.(v)
 
 end
-@show const tp = metrics(model, 2; autodiff=false)[1] # total power
+@show const tp = metrics(model, T1=1, T2=1, autodiff=false)[1] # total power
 # error()
 
 function loss(y)
@@ -123,7 +126,7 @@ x = deepcopy(x0)
 
 CUDA.@allowscalar res = optimize(f, x,
     ParticleSwarm(; n_particles=10),
-    Optim.Options(f_tol=0, iterations=21, show_every=1, show_trace=true))
+    Optim.Options(f_tol=0, iterations=0, show_every=1, show_trace=true))
 xgf = minimizer(res)
 x = deepcopy(xgf)
 heatmap(cpu(re(x)()))
@@ -135,7 +138,7 @@ model = re(x)
 # adjoint optimization
 opt = Adam(0.2)
 opt_state = Flux.setup(opt, model)
-n = 50
+n = 1
 for i = 1:n
     @time l, (dldm,) = withgradient(m -> loss(metrics(m)), model)
     Flux.update!(opt_state, model, dldm)

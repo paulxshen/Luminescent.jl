@@ -3,11 +3,11 @@ simulation of quarter wavelength antenna above conductor ground plane
 """
 
 using UnPack, LinearAlgebra, GLMakie
-# using FDTDEngine,FDTDToolkit
+# using Luminesce,LuminesceVisualization
 
 dir = pwd()
 include("$(dir)/src/main.jl")
-include("$dir/../FDTDToolkit.jl/src/main.jl")
+include("$dir/../LuminesceVisualization.jl/src/main.jl")
 
 name = "quarter_wavelength_antenna"
 dogpu = true

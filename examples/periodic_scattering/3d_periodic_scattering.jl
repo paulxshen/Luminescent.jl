@@ -3,12 +3,12 @@ simulation of plane wave scattering on periodic array of dielectric spheres
 """
 
 using UnPack, LinearAlgebra, GLMakie
-using FDTDEngine, FDTDToolkit
+using Luminesce, LuminesceVisualization
 
 # dir = pwd()
 # include("$(dir)/src/main.jl")
 # include("$(dir)/scripts/startup.jl")
-# include("$dir/../FDTDToolkit.jl/src/main.jl")
+# include("$dir/../LuminesceVisualization.jl/src/main.jl")
 
 dogpu = true
 name = "periodic_scattering"
@@ -53,7 +53,7 @@ end
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
     step3!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-y = [power.((m,), u) for m = monitor_instances]
+v = [power.((m,), u) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
@@ -66,7 +66,7 @@ Ez = map(u) do u
 end
 ϵEz = p[1][3]
 dir = @__DIR__
-recordsim("$dir/$(name).mp4", Ez, y;
+recordsim("$dir/$(name).mp4", Ez, v;
     dt,
     field=:Ez,
     monitor_instances,
@@ -74,6 +74,6 @@ recordsim("$dir/$(name).mp4", Ez, y;
     geometry=ϵEz,
     elevation=30°,
     playback=1,
-    axis1=(; title="$name\nEz"),
+    axis1=(; title="$name Ez"),
     axis2=(; title="monitor powers"),
 )

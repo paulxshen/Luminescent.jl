@@ -228,7 +228,7 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
     end
     geometry_padding = NamedTuple(geometry_padding)
     field_padding = NamedTuple(field_padding)
-    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_splits, source_instances, monitor_instances, u0, save_info, fields, dx, dt, kw...)
+    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_splits, source_instances, monitor_instances, u0, fields, dx, dt, kw...)
 end
 function apply!(p; kw...)
     [apply!(p[k], kw[k]) for k = keys(kw)]
