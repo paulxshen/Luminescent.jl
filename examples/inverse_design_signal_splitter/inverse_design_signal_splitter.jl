@@ -110,7 +110,7 @@ end
 
 function loss(v)
     # -v[2] / tp
-    sum(abs, -v / tp)
+    sum(-v / tp)
 end
 
 p0 = make_geometry(model0, base, μ, σ, σm)
@@ -120,25 +120,25 @@ volume(cpu(p0[1][2]))
 # gradient free optimization "Optim functions
 x0, re = destructure(model)
 f_ = m -> loss(metrics(m; autodiff=false))
-# f_ = m -> loss(metrics(m;))
 f = f_ ∘ re
 x = deepcopy(x0)
 
-CUDA.@allowscalar res = optimize(f, x,
-    ParticleSwarm(; n_particles=10),
-    Optim.Options(f_tol=0, iterations=0, show_every=1, show_trace=true))
-xgf = minimizer(res)
-x = deepcopy(xgf)
-heatmap(cpu(re(x)()))
-@show metrics(re(x))
-@save "model.bson" model = re(x)
-model = re(x)
+# CUDA.@allowscalar res = optimize(f, x,
+#     ParticleSwarm(; n_particles=10),
+#     Optim.Options(f_tol=0, iterations=10, show_every=1, show_trace=true))
+# xgf = minimizer(res)
+# x = deepcopy(xgf)
+# heatmap(cpu(re(x)()))
+# @show metrics(re(x))
+# @save "model.bson" model = re(x)
+# model = re(x)
 # error()
 
 # adjoint optimization
 opt = Adam(0.2)
 opt_state = Flux.setup(opt, model)
-n = 1
+n = 50
+# n = 1
 for i = 1:n
     @time l, (dldm,) = withgradient(m -> loss(metrics(m)), model)
     Flux.update!(opt_state, model, dldm)
@@ -175,7 +175,7 @@ function runsave(x)
         geometry=ϵEy,
         elevation=60°,
         playback=1,
-        axis1=(; title="$name\nEy"),
+        axis1=(; title="$name Ey"),
         axis2=(; title="monitor powers"),
     )
 

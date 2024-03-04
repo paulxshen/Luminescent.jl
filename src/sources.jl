@@ -87,6 +87,8 @@ end
 
 function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0; F=Float32)
     @unpack f, fields, dims, label = s
+    _F(x::Real) = F(x)
+    _F(x::Complex) = complex(F)(x)
     f = _F ∘ f
     d = length(lc)
     g = Dict([k => _F(fields[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(fields)])
@@ -99,6 +101,8 @@ function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0; F=Float32)
 end
 
 function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
+    _F(x::Real) = F(x)
+    _F(x::Complex) = complex(F)(x)
     f = _F ∘ f
     @unpack f, σ, fields, c, dims = s
     n = round(Int, 2σ / dx)
@@ -112,12 +116,12 @@ end
 
 function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
     @unpack f, fields, c, lb, ub, label = s
-    # println(fl)
+    _F(x::Real) = F(x)
+    _F(x::Complex) = complex(F)(x)
 
     f = _F ∘ f
     r = [vcat(a:dx:0, dx:dx:b) for (a, b) = zip(lb, ub)]
-    C = 1 /
-        dx^count(lb .== ub)
+    C = F(1 / dx^count(lb .== ub))
     g = Dict([k =>
         C * begin
             if isa(fields[k], AbstractArray)
@@ -137,8 +141,6 @@ function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
     SourceInstance(f, keys(fields), g, _g, o, c, label)
 end
 
-_F(x::Real) = F(x)
-_F(x::Complex) = complex(F)(x)
 # Complex
 function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
     [

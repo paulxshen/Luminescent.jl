@@ -118,12 +118,6 @@ function step3(u, p, t, dx, dt, field_padding, source_instances; ignore_boundary
     end
     H = [Hx, Hy, Hz]
     E = collect.(E)
-    # for a = E
-    #     @assert all(isfinite, a)
-    # end
-    # for a = H
-    #     @assert all(isfinite, a)
-    # end
 
     [E, H]
 end

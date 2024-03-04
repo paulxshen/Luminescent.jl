@@ -46,7 +46,11 @@ model0 = deepcopy(model)
 normal = [1, 0, 0] # normal 
 δ = 0.1 / λ # margin
 # (center, lower bound, upper bound; normal)
-monitors = [Monitor([p.c / λ..., hsub], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal=[p.n..., 0]) for p = ports]
+monitors = [Monitor(
+    [p.c / λ..., hsub],
+    [0, -wwg / 2 - δ, -δ],
+    [0, wwg / 2 + δ, hwg + δ];
+    normal=[p.n..., 0]) for p = ports]
 
 # modal source
 sources = []
@@ -76,8 +80,8 @@ dt, f2, T1, T2, T = F.((dt, f2, T1, T2, T))
 if dogpu
     using CUDA, Flux
     @assert CUDA.functional()
-    u0, model, base, μ, σ, σm, field_padding, source_instances =#, monitor_instances =
-        gpu.((u0, model, base, μ, σ, σm, field_padding, source_instances))#, monitor_instances))
+    u0, model, base, μ, σ, σm, field_padding, source_instances =
+        gpu.((u0, model, base, μ, σ, σm, field_padding, source_instances))
 end
 
 function make_geometry(model, base, μ, σ, σm)
@@ -101,39 +105,38 @@ function metrics(model; T1=T1, T2=T2, autodiff=true)
     u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T1, init=deepcopy(u0))
     v = reduce(T1+dt:dt:T, init=(u, v0)) do (u, v), t
         _step(u, p, t, dx, dt, field_padding, source_instances),
-        v + [1, cispi.(2 * F.([1, f2]))...] .* power.(monitor_instances, (u,))
+        v + [1, cispi.(2 * [1, f2])...] .* power.(monitor_instances, (u,))
     end[2]
     dt / F(T2) * abs.(v)
 
 end
 @show const tp = metrics(model, T1=1, T2=1, autodiff=false)[1] # total power
-# error()
+@show metrics(model;)
+error()
 
 function loss(y)
-    sum(abs, -y / tp)
+    sum(-y / tp)
 end
 
 p0 = make_geometry(model0, base, μ, σ, σm)
-volume(cpu(p0[1][2]))
+# volume(cpu(p0[1][2]))
 # error()
 
 # gradient free optimization "Optim functions
 x0, re = destructure(model)
 f_ = m -> loss(metrics(m; autodiff=false))
-# f_ = m -> loss(metrics(m;))
 f = f_ ∘ re
 x = deepcopy(x0)
 
 CUDA.@allowscalar res = optimize(f, x,
-    ParticleSwarm(; n_particles=10),
+    ParticleSwarm(; n_particles=1),
     Optim.Options(f_tol=0, iterations=0, show_every=1, show_trace=true))
-xgf = minimizer(res)
+xgf = F.(minimizer(res))
 x = deepcopy(xgf)
-heatmap(cpu(re(x)()))
-@show metrics(re(x))
-@save "$(@__DIR__)/model.bson" model = re(x)
+# heatmap(cpu(re(x)()))
 model = re(x)
-# error()
+@save "$(@__DIR__)/model.bson" model
+error()
 
 # adjoint optimization
 opt = Adam(0.2)
