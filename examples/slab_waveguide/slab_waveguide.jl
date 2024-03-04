@@ -4,12 +4,12 @@ simulation of  coupling into dielectric slab waveguide using modal source
 
 using UnPack, LinearAlgebra, GLMakie
 using BSON: @load
-using Luminesce, LuminesceVisualization
+using Luminescent, LuminescentVisualization
 
 # dir = pwd()
 # include("$(dir)/src/main.jl")
 # include("$(dir)/scripts/startup.jl")
-# include("$dir/../LuminesceVisualization.jl/src/main.jl")
+# include("$dir/../LuminescentVisualization.jl/src/main.jl")
 
 dogpu = true
 name = "slab_waveguide"

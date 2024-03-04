@@ -1,4 +1,4 @@
-module Luminesce
+module Luminescent
 include("main.jl")
 export reindex, sandwich
 export Del, step3!, step3!, step3

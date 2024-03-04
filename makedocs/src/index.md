@@ -1,5 +1,5 @@
 # Home
- Currently Prerelease. First stable release planned for mid March. Until then, accuracy not validated. Report bugs on [Github](https://github.com/paulxshen/Luminesce.jl) - we usually respond within a day
+ Currently Prerelease. First stable release planned for mid March. Until then, accuracy not validated. Report bugs on [Github](https://github.com/paulxshen/Luminescent.jl) - we usually respond within a day
 ## Overview
 Generative design meets Maxwell's Equations. Differentiable FDTD package for inverse design & topology optimization in semiconductor photonics, acoustics and RF. GPU and automatic differentiation (AD) compatible. Uses AD by `Zygote.jl` for adjoint optimization. Integrates with [`Jello.jl`](https://github.com/paulxshen/Jello.jl) to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources. Customizable physics to potentially incorporate dynamics like heat transfer, charge transport.
 ## Gallery
@@ -15,10 +15,10 @@ Generative design meets Maxwell's Equations. Differentiable FDTD package for inv
 ## Installation
 Install via 
 ```
-Pkg.add(url="https://github.com/paulxshen/Luminesce.jl")
-Pkg.add(url="https://github.com/paulxshen/LuminesceVisualization.jl")
+Pkg.add(url="https://github.com/paulxshen/Luminescent.jl")
+Pkg.add(url="https://github.com/paulxshen/LuminescentVisualization.jl")
 ```
-`LuminesceVisualization.jl` contains visualization utilities
+`LuminescentVisualization.jl` contains visualization utilities
 ## Quickstart
 We do a quick 3d simulation of plane wave scattering on periodic array of dielectric spheres (see gallery movie)
 ```julia
@@ -27,7 +27,7 @@ simulation of plane wave scattering on periodic array of dielectric spheres
 """
 
 using UnPack, LinearAlgebra, GLMakie
-using Luminesce,LuminesceVisualization
+using Luminescent,LuminescentVisualization
 dogpu = true
 # dogpu = false
 

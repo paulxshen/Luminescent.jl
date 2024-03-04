@@ -5,11 +5,11 @@ using BSON: @save, @load
 using Optim: Options, minimizer
 using Optim, CUDA
 using GLMakie
-using Luminesce, LuminesceVisualization
+using Luminescent, LuminescentVisualization
 
 # dir = pwd()
 # include("$dir/src/main.jl")
-# include("$dir/../LuminesceVisualization.jl/src/main.jl")
+# include("$dir/../LuminescentVisualization.jl/src/main.jl")
 # include("$dir/scripts/startup.jl")
 
 F = Float32
