@@ -11,7 +11,6 @@ using Luminescent, LuminescentVisualization
 
 name = "quarter_wavelength_antenna"
 dogpu = true
-# dogpu = false
 T = 8.0 # simulation duration in [periods]
 nx = 20
 dx = 1.0 / nx # pixel resolution in [wavelengths]
