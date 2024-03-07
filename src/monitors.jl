@@ -26,7 +26,7 @@ end
     function Monitor(c, L; normal=nothing, label="")
     function Monitor(c, lb, ub; normal=nothing, label="")
 
-Constructs monitor which can span a point, line, surface, volume or point cloud monitoring fields or power. 
+Constructs monitor which can span a point, line, surface, volume or point cloud monitoring fields or power_flux. 
 
 Args
 - c: origin or center of monitor
@@ -47,17 +47,21 @@ end
 Monitor(p::AbstractMatrix; normal=nothing, label="") = PointCloudMonitor(p, normal, mean(p, dims=2), label)
 
 Monitor(v::AbstractVector; kw...) = Monitor(Matrix(v); kw...)
-
+Base.string(m::OrthogonalMonitor) =
+    """
+    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.c), spanning from $(m.lb) to $(m.ub) relative to center, flux normal towards $(m.n)"""
 struct OrthogonalMonitorInstance
+    d
     i
     c
     fi
     n
     dx
-    A
+    v
     label
 end
 # @functor OrthogonalMonitorInstance (n,)
+Base.ndims(m::OrthogonalMonitorInstance) = m.d
 
 struct PointCloudMonitorInstance
     i
@@ -69,7 +73,10 @@ end
 
 function MonitorInstance(m::OrthogonalMonitor, dx, lc, flb, fl; F=Float32)
     L = m.ub - m.lb
-    A = prod(deleteat!(L, findfirst(L .≈ 0,)))
+    singletons = findall(L .≈ 0,)
+    d = length(L) - length(singletons)
+    deleteat!(L, singletons)
+    v = isempty(L) ? 0 : prod(L,)
     c = round.(Int, m.c / dx)
     lb = round.(Int, m.lb / dx)
     ub = round.(Int, m.ub / dx)
@@ -80,9 +87,11 @@ function MonitorInstance(m::OrthogonalMonitor, dx, lc, flb, fl; F=Float32)
     #     end for k = fk
     # ])
     i = range.((1 .+ lc + c + lb), (1 .+ lc + c + ub))
+    i = convert(Vector{Any}, i)
+    i[singletons] .= first.(getindex.((i,), singletons))
     fi = Dict([k => i .+ v for (k, v) = pairs(flb)])
     # fi = (; [k => i .+ v for (k, v) = pairs(flb)]...)
-    OrthogonalMonitorInstance(i, lc + c, fi, F.(m.n), F(dx), F(A), m.label)
+    OrthogonalMonitorInstance(d, i, lc + c, fi, F.(m.n), F(dx), F(v), m.label)
 end
 
 function MonitorInstance(m::PointCloudMonitor, dx, lc, flb, fl; F=Float32)
@@ -106,13 +115,13 @@ end
 # Base.getindex(a::GPUArraysCore.AbstractGPUArray, m::MonitorInstance) = a[m.i...]
 # Base.getindex(a, m::MonitorInstance, k) = a[m.fi[k]...]
 
-# power(m, u) = sum(sum(pf([u[m.i[k]...] for (u, k) = zip(u, fk)]) .* m.n))
+# power_flux(m, u) = sum(sum(pf([u[m.i[k]...] for (u, k) = zip(u, fk)]) .* m.n))
 """
-    function power_density(m::MonitorInstance, u)
+    function power_flux_density(m::MonitorInstance, u)
 
- power density (avg Poynting flux) passing thru monitor surface
+ power_flux density (avg Poynting flux) passing thru monitor 
 """
-function power_density(m::OrthogonalMonitorInstance, u)
+function power_flux_density(m::OrthogonalMonitorInstance, u)
     E = [u[1][i][m.fi[k]...] for (i, k) = enumerate([:Ex, :Ey, :Ez])]
     H = [u[2][i][m.fi[k]...] for (i, k) = enumerate([:Hx, :Hy, :Hz])]
 
@@ -125,14 +134,15 @@ function power_density(m::OrthogonalMonitorInstance, u)
 end
 
 """
-    function power(m::MonitorInstance, u)
+    function power_flux(m::MonitorInstance, u)
 
-total power (Poynting flux) passing thru monitor surface
+total power_flux (Poynting flux) passing thru monitor surface
 """
-function power(m::OrthogonalMonitorInstance, u)
-    m.A * power_density(m, u)
+function power_flux(m::OrthogonalMonitorInstance, u)
+    @assert ndims(m) == 2
+    m.v * power_flux_density(m, u)
 end
-# power(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.i)))]) .* m.n))
+# power_flux(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.i)))]) .* m.n))
 
 function monitors_on_box(c, L)
     ox, oy, oz = c

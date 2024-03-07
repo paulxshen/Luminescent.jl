@@ -1,10 +1,23 @@
-"""
-    function step3!(u, p, t, field_padding, source_instances)
-    function step3!(u1, u, p, t, field_padding, source_instances)
+function mark(p; kw...)
+    [mark(p[k], kw[k]) for k = keys(kw)]
+end
+function mark(v, a)
+    l = sum(v) do p
+        p.l
+    end
+    r = sum(v) do p
+        p.r
+    end
+    PaddedArray(a, l, r)
+end
 
-Updates fields for 3d. Please use `step3` instead of `step3!` when doing AD. Mutating `step3!` Writes new fields either onto old fields or into buffer arrays u1
 """
-function step3!(u1, u, p, t, dx, dt, field_padding, source_instances)
+    function maxwell_update!(u, p, t, field_padding, source_instances)
+    function maxwell_update!(u1, u, p, t, field_padding, source_instances)
+
+Updates fields for 3d. Please use `maxwell_update` instead of `maxwell_update!` when doing AD. Mutating `maxwell_update!` Writes new fields either onto old fields or into buffer arrays u1
+"""
+function maxwell_update!(u1, u, p, t, dx, dt, field_padding, source_instances)
     ∇ = StaggeredDel([dx, dx, dx])
     ϵ, μ, σ, σm = p
     E, H = u
@@ -38,9 +51,9 @@ function step3!(u1, u, p, t, dx, dt, field_padding, source_instances)
     [E, H]
     # u1
 end
-step3!(u, p, t, dx, dt, field_padding, source_instances) = step3!(u, u, p, t, dx, dt, field_padding, source_instances)
+maxwell_update!(u, p, t, dx, dt, field_padding, source_instances) = maxwell_update!(u, u, p, t, dx, dt, field_padding, source_instances)
 
-# function step3!(u, p, t, dx, dt, field_padding, source_instances)
+# function maxwell_update!(u, p, t, dx, dt, field_padding, source_instances)
 #     ∇ = StaggeredDel([dx, dx, dx])
 #     ϵ, μ, σ, σm = p
 #     E, H = u
@@ -79,11 +92,11 @@ step3!(u, p, t, dx, dt, field_padding, source_instances) = step3!(u, u, p, t, dx
 #     [E, H]
 # end
 """
-    function step3(u, p, t, field_padding, source_instances)
+    function maxwell_update(u, p, t, field_padding, source_instances)
 
-Updates fields for 3d in a manner amenable to AD. See also Mutating `step3!`
+Updates fields for 3d in a manner amenable to AD. See also Mutating `maxwell_update!`
 """
-function step3(u, p, t, dx, dt, field_padding, source_instances; ignore_boundary_autodiff=false)
+function maxwell_update(u, p, t, dx, dt, field_padding, source_instances; ignore_boundary_autodiff=false)
     ∇ = StaggeredDel([dx, dx, dx])
     ϵ, μ, σ, σm = p
     E, H = u
@@ -121,7 +134,7 @@ function step3(u, p, t, dx, dt, field_padding, source_instances; ignore_boundary
 
     [E, H]
 end
-step3! = step3!
+maxwell_update! = maxwell_update!
 # Flux.trainable(m::PaddedArray) = (; a=m.a)
 
 """

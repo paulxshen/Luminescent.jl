@@ -92,7 +92,8 @@
                     generate geometry, run the simulation, calculate the objective metric, and do a backward pass to
                     derive the gradient wrt the geometry parameters. We then do a gradient based parameter update in
                     preparation for the next iteration.</p>
-                <p>The geometry is thus the first step3. It typically has a static component which we can&#39;t change
+                <p>The geometry is thus the first maxwell_update. It typically has a static component which we can&#39;t
+                    change
                     such as interfacing waveguides. Then there&#39;s a design component which we can change or optimize.
                     The user is responsible for generating the design geometry wrt design parameters. If any pattern is
                     allowed in the design region, our sister package <code>Jello.jl</code> can be used as a length scale

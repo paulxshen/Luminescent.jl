@@ -13,13 +13,6 @@ w = 2wm + ld
 h = hwg + hsub + hclad
 
 λ = 1.55f0
-# vars = :(wwg, hwg, lwg, ld, hclad, hsub, l, w, h, wm)
-
-# nt = (; wwg, hwg, lwg, ld, hclad, hsub, l, w, h, wm)
-# v = collect(values(nt)) / λ
-# k = keys(nt)
-
-# wwg, hwg, lwg, ld, hclad, hsub, l, w, h, wm = v
 
 c = [lwg, wm]
 n = [1, 0]
@@ -29,7 +22,7 @@ ports = [
     (; c=[l - δ, w - wm - wwg / 2], n),
     (; c=[l - δ, wm + wwg / 2], n),
 ]
-sources = [
+signals = [
     (; c=[0, w / 2])
 ]
 designs = [
@@ -47,5 +40,4 @@ base[1:lwg.+1, (w-wwg)÷2+1:(w+wwg)÷2+1] .= 1
 base[end-lwg:end, wm+1:wm+wwg.+1] .= 1
 base[end-lwg:end, end-wm-wwg:end-wm] .= 1
 
-layout = (; base, sources, ports, designs, dx, nx)
-@save "$(@__DIR__)/layout.bson" layout
+@save "$(@__DIR__)/layout.bson" base signals ports designs dx nx

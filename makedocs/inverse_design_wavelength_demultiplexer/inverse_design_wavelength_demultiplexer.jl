@@ -1,11 +1,11 @@
-using UnPack, LinearAlgebra, Random, StatsBase, Interpolations, Zygote, Jello, Flux
+using UnPack, LinearAlgebra, Random, StatsBase
+using Zygote, Flux, Optim, CUDA, GLMakie, Jello
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer
 using BSON: @save, @load
 using Optim: Options, minimizer
-using Optim, CUDA
-using GLMakie
-# using Luminescent, LuminescentVisualization
+# using Jello, Luminescent, LuminescentVisualization
+using AbbreviatedStackTraces
 
 dir = pwd()
 include("$dir/src/main.jl")
@@ -26,7 +26,7 @@ nbasis = 6 # complexity of design region
 λ = λ1 # wavelength [um]
 f2 = λ1 / λ2
 T1 = 1 + norm(ports[1].c - ports[2].c) / λ * sqrt(ϵwg) # simulation duration in [periods]
-T2 = 1 / (f2 - 1)
+T2 = 1 / (2(f2 - 1))
 ϵmin = ϵclad
 hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
 
@@ -67,8 +67,8 @@ for (modes, f) = zip((modes1, modes2), (1, f2))
 end
 
 boundaries = [] # unspecified boundaries default to PML
-configs = setup(boundaries, sources, monitors, dx, sz0; ϵmin)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_instances, monitor_instances, u0, = configs
+configs = maxwell_setup(boundaries, sources, monitors, dx, sz0; ϵmin, F)
+@unpack μ, σ, σm, dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 nt = round(Int, 1 / dt)
 
 T = T1 + T2
@@ -76,7 +76,7 @@ t = 0:dt:T
 v0 = zeros(F, length(monitor_instances))
 
 t = F.(t)
-dt, f2, T1, T2, T = F.((dt, f2, T1, T2, T))
+dx, dt, f2, T1, T2, T = F.((dx, dt, f2, T1, T2, T))
 if dogpu
     using CUDA, Flux
     @assert CUDA.functional()
@@ -91,28 +91,28 @@ function make_geometry(model, base, μ, σ, σm)
 
     ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵwg, ϵclad])
     ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
-    p = apply(geometry_splits; ϵ, μ, σ, σm)
+    p = apply(geometry_staggering; ϵ, μ, σ, σm)
 end
 
 function metrics(model; T1=T1, T2=T2, autodiff=true)
     p = make_geometry(model, base, μ, σ, σm)
     # run simulation
     _step = if autodiff
-        step3
+        maxwell_update
     else
-        step3!
+        maxwell_update!
     end
     u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T1, init=deepcopy(u0))
-    v = reduce(T1+dt:dt:T, init=(u, v0)) do (u, v), t
+    v = reduce(T1+dt:dt:T1+T2, init=(u, v0)) do (u, v), t
         _step(u, p, t, dx, dt, field_padding, source_instances),
-        v + [1, cispi.(2 * [1, f2])...] .* power.(monitor_instances, (u,))
+        v + [1, cispi.(4 * [1, f2])...] .* power_flux.(monitor_instances, (u,))
     end[2]
     dt / F(T2) * abs.(v)
 
 end
-@show const tp = metrics(model, T1=1, T2=1, autodiff=false)[1] # total power
+@show const tp = metrics(model, T1=1, T2=1, autodiff=false)[1] # total power_flux
 @show metrics(model;)
-error()
+# error()
 
 function loss(y)
     sum(-y / tp)
@@ -128,20 +128,20 @@ f_ = m -> loss(metrics(m; autodiff=false))
 f = f_ ∘ re
 x = deepcopy(x0)
 
-CUDA.@allowscalar res = optimize(f, x,
-    ParticleSwarm(; n_particles=1),
-    Optim.Options(f_tol=0, iterations=0, show_every=1, show_trace=true))
-xgf = F.(minimizer(res))
-x = deepcopy(xgf)
-# heatmap(cpu(re(x)()))
-model = re(x)
-@save "$(@__DIR__)/model.bson" model
-error()
+# CUDA.@allowscalar res = optimize(f, x,
+#     ParticleSwarm(; n_particles=1),
+#     Optim.Options(f_tol=0, iterations=0, show_every=1, show_trace=true))
+# xgf = F.(minimizer(res))
+# x = deepcopy(xgf)
+# # heatmap(cpu(re(x)()))
+# model = re(x)
+# @save "$(@__DIR__)/model.bson" model
+# error()
 
 # adjoint optimization
 opt = Adam(0.2)
-opt_state = Flux.setup(opt, model)
-n = 1
+opt_state = Flux.maxwell_setup(opt, model)
+n = 8
 for i = 1:n
     @time l, (dldm,) = withgradient(m -> loss(metrics(m)), model)
     Flux.update!(opt_state, model, dldm)
@@ -156,7 +156,7 @@ function runsave(x)
     model = re(x)
     p = make_geometry(model, base, μ, σ, σm)
     @showtime u = accumulate((u, t) ->
-            step3!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
+            maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
         t, init=u0)
 
     # move to cpu for plotting
@@ -183,4 +183,4 @@ function runsave(x)
 
 end
 
-# runsave(x)
+runsave(x)

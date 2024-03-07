@@ -50,13 +50,13 @@ monitors = [
     Monitor([l - δ, w / 2, hsub], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal,),
 ]
 
-# setup
+# maxwell_setup
 boundaries = []# unspecified boundaries default to PML
-configs = setup(boundaries, sources, monitors, dx, sz; ϵmin,)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_instances, monitor_instances, u0, = configs
+configs = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin,)
+@unpack μ, σ, σm, dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 
 ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_splits; ϵ, μ, σ, σm)
+p = apply(geometry_staggering; ϵ, μ, σ, σm)
 
 # move to gpu
 if dogpu
@@ -67,9 +67,9 @@ end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    step3!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-v = [power.((m,), u) for m = monitor_instances]
+v = [power_flux.((m,), u) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu

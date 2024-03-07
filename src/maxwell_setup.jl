@@ -1,12 +1,12 @@
 """
-    function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
+    function maxwell_setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
 
 Args
 ...
 - L: vector of lengths in wavelengths of simulation domain
 - polarization: only applies to 2d which can be :TMz (Ez, Hx, Hy) or :TEz (Hz, Ex, Ey)
 """
-function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
+function maxwell_setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
     ϵ=1, μ=1, σ=0, σm=0, F=Float32,
     ϵmin=1,
     Courant=F(0.8√(ϵmin / length(sz0))),# Courant number)
@@ -189,14 +189,14 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
             pf = u -> [u[1] .* u[3], -u[2] .* u[1]]
         end
     end
-    geometry_splits = Dict{Symbol,Vector{Vector{UnitRange{Int64}}}}()
+    geometry_staggering = Dict{Symbol,Vector{Vector{UnitRange{Int64}}}}()
     geometry_sizes = NamedTuple([k => sz0 .+ sum(geometry_padding[k]) do p
         p.l + p.r
     end for k = keys(geometry_padding)])
-    geometry_splits[:μ] = geometry_splits[:σm] =
+    geometry_staggering[:μ] = geometry_staggering[:σm] =
         [[ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:μ]), flb[k], frb[k])]
          for k = [:Hx, :Hy, :Hz]]
-    geometry_splits[:ϵ] = geometry_splits[:σ] =
+    geometry_staggering[:ϵ] = geometry_staggering[:σ] =
         [[ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:ϵ]), flb[k], frb[k])]
          for k = [:Ex, :Ey, :Ez]]
     source_instances = SourceInstance.(sources, dx, (sizes,), (lc,), (fl,), (sz0,); F)
@@ -228,31 +228,27 @@ function setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
     end
     geometry_padding = NamedTuple(geometry_padding)
     field_padding = NamedTuple(field_padding)
-    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_splits, source_instances, monitor_instances, u0, fields, dx, dt, kw...)
-end
-function apply!(p; kw...)
-    [apply!(p[k], kw[k]) for k = keys(kw)]
-    # [apply(p[k], v) for (k, v) = pairs(kw)]
-end
-function apply(p; kw...)
-    [apply(p[k], kw[k]) for k = keys(kw)]
-    # [apply(p[k], v) for (k, v) = pairs(kw)]
-end
-function mark(p; kw...)
-    [mark(p[k], kw[k]) for k = keys(kw)]
-end
-function mark(v, a)
-    l = sum(v) do p
-        p.l
-    end
-    r = sum(v) do p
-        p.r
-    end
-    PaddedArray(a, l, r)
+    println(
+        """
+        ====
+        FDTD configs
+        
+        dx: $dx wavelengths
+        dt: $dt periods
+        Courant number: $Courant
+        Fields: [[Ex, Ey, Ez], [Hx, Hy, Hz]]
+        Original array size of all fields: $sz
+        Padded field array sizes:
+        $sizes
+        Boundaries:
+        $(join("\t- ".*string.(db'),"\n"))
+        Sources:
+        $(join("\t- ".*string.(sources),"\n"))
+        Monitors:
+        $(join("\t- ".*string.(monitors),"\n"))
+        ====
+        """
+    )
+    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_staggering, source_instances, monitor_instances, u0, fields, dx, dt, kw...)
 end
 
-Base.strip(a::AbstractArray, l, r=l) = a[[ax[1+l:end-r] for (ax, l, r) = zip(axes(a), l, r)]...]
-function apply(v, a)
-    [a[i...] for i = v]
-    # collect(getindex.((a,), zip(v...)...))
-end
