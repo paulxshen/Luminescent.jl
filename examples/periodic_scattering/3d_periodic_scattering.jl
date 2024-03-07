@@ -3,12 +3,12 @@ simulation of plane wave scattering on periodic array of dielectric spheres
 """
 
 using UnPack, LinearAlgebra, GLMakie
-# using Luminescent, LuminescentVisualization
+using Luminescent, LuminescentVisualization
 
-dir = pwd()
-include("$(dir)/src/main.jl")
-include("$(dir)/scripts/startup.jl")
-include("$dir/../LuminescentVisualization.jl/src/main.jl")
+# dir = pwd()
+# include("$(dir)/src/main.jl")
+# include("$(dir)/scripts/startup.jl")
+# include("$dir/../LuminescentVisualization.jl/src/main.jl")
 
 dogpu = true
 name = "periodic_scattering"

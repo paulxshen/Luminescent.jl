@@ -3,11 +3,11 @@ simulation of quarter wavelength antenna above conductor ground plane
 """
 
 using UnPack, LinearAlgebra, GLMakie
-# using Luminescent,LuminescentVisualization
+using Luminescent, LuminescentVisualization
 
-dir = pwd()
-include("$(dir)/src/main.jl")
-include("$dir/../LuminescentVisualization.jl/src/main.jl")
+# dir = pwd()
+# include("$(dir)/src/main.jl")
+# include("$dir/../LuminescentVisualization.jl/src/main.jl")
 
 name = "quarter_wavelength_antenna"
 dogpu = true
