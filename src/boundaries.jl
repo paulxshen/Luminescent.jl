@@ -105,7 +105,10 @@ function apply(p::AbstractVector{<:InPad}, a::AbstractArray)
     copy(a_)
 end
 
-function apply(p::AbstractVector{<:OutPad}, a::Real)
+function apply(v::AbstractVector{<:OutPad}, a::Real)
+    for p = v
+        p.b != a && p.b != :replicate && error("cannot pad a constant with different values. it needs to be an array")
+    end
     a
 end
 function apply(p::AbstractVector{<:OutPad}, a)

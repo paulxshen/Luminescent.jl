@@ -45,7 +45,7 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz0, polarization=noth
     for b = boundaries
         for i = b.dims
             if typeof(b) == Periodic
-                db[i, :] = [b, b]
+                db[i, :] = [Periodic(-abs(i)), Periodic(abs(i))]
             else
                 if i > 0
                     db[i, 2] = b
@@ -241,11 +241,11 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz0, polarization=noth
         Padded field array sizes:
         $sizes
         Boundaries:
-        $(join("\t- ".*string.(db'),"\n"))
+        $(join("    - ".*string.(db),"\n"))
         Sources:
-        $(join("\t- ".*string.(sources),"\n"))
+        $(join("    - ".*string.(sources),"\n"))
         Monitors:
-        $(join("\t- ".*string.(monitors),"\n"))
+        $(join("    - ".*string.(monitors),"\n"))
         ====
         """
     )
