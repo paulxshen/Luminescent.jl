@@ -13,6 +13,10 @@ Base.size(x::Union{NamedTuple,Tuple}) = (length(x),)
 T = Union{Tuple,AbstractArray,Number}
 Base.:-(x::T, y::T) = x .- y
 Base.:+(x::T, y::T) = x .+ y
+Base.:*(x::Number, y::T) = x .* y
+Base.:*(x::T, y::Number) = x .* y
+Base.:/(x::Number, y::T) = x ./ y
+Base.:/(x::T, y::Number) = x ./ y
 
 
 # __precompile__(false)
@@ -36,4 +40,13 @@ end
 function place!(a, b; o)
     # @show size(a), size(b), o
     place!(a, b, o .- floor.((size(b) .- 1) .÷ 2))
+end
+
+function apply!(p; kw...)
+    [apply!(p[k], kw[k]) for k = keys(kw)]
+    # [apply(p[k], v) for (k, v) = pairs(kw)]
+end
+function apply(p; kw...)
+    [apply(p[k], kw[k]) for k = keys(kw)]
+    # [apply(p[k], v) for (k, v) = pairs(kw)]
 end

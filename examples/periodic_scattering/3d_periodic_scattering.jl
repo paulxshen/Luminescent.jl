@@ -3,12 +3,12 @@ simulation of plane wave scattering on periodic array of dielectric spheres
 """
 
 using UnPack, LinearAlgebra, GLMakie
-using Luminesce, LuminesceVisualization
+# using Luminescent, LuminescentVisualization
 
-# dir = pwd()
-# include("$(dir)/src/main.jl")
-# include("$(dir)/scripts/startup.jl")
-# include("$dir/../LuminesceVisualization.jl/src/main.jl")
+dir = pwd()
+include("$(dir)/src/main.jl")
+include("$(dir)/scripts/startup.jl")
+include("$dir/../LuminescentVisualization.jl/src/main.jl")
 
 dogpu = true
 name = "periodic_scattering"
@@ -23,8 +23,11 @@ sz = nx .* (l, l, l) # domain voxel dimensions
 ϵ2 = 2.25 # 
 b = F.([norm(v .- sz ./ 2) < 0.5 / dx for v = Base.product(Base.oneto.(sz)...)]) # sphere
 ϵ = ϵ2 * b + ϵ1 * (1 .- b)
+μ = 1
+σ = zeros(F, sz)
+σm = zeros(F, sz)
 
-# setup
+# maxwell_setup
 boundaries = [Periodic(2), Periodic(3)]# unspecified boundaries default to PML
 sources = [
     PlaneWave(t -> cos(2π * t), -1; Jz=1) # Jz excited plane wave from -x plane (eg -1)
@@ -36,11 +39,11 @@ monitors = [
     Monitor([δ, l / 2, l / 2], [0, lm, lm]; normal), # (center, dimensions; normal)
     Monitor([l - δ, l / 2, l / 2], [0, lm, lm]; normal),
 ]
-configs = setup(boundaries, sources, monitors, dx, sz; ϵmin, T)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_instances, monitor_instances, u0, = configs
+configs = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
+@unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 
 ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_splits; ϵ, μ, σ, σm)
+p = apply(geometry_staggering; ϵ, μ, σ, σm)
 
 # move to gpu
 if dogpu
@@ -51,9 +54,9 @@ end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    step3!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-v = [power.((m,), u) for m = monitor_instances]
+v = [power_flux.((m,), u) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
@@ -74,6 +77,6 @@ recordsim("$dir/$(name).mp4", Ez, v;
     geometry=ϵEz,
     elevation=30°,
     playback=1,
-    axis1=(; title="$name Ez"),
+    axis1=(; title="$name"),
     axis2=(; title="monitor powers"),
 )

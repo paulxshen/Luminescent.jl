@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Home · Luminesce.jl</title>
-    <meta name="title" content="Home · Luminesce.jl" />
-    <meta property="og:title" content="Home · Luminesce.jl" />
-    <meta property="twitter:title" content="Home · Luminesce.jl" />
-    <meta name="description" content="Documentation for Luminesce.jl." />
-    <meta property="og:description" content="Documentation for Luminesce.jl." />
-    <meta property="twitter:description" content="Documentation for Luminesce.jl." />
+    <title>Home · Luminescent.jl</title>
+    <meta name="title" content="Home · Luminescent.jl" />
+    <meta property="og:title" content="Home · Luminescent.jl" />
+    <meta property="twitter:title" content="Home · Luminescent.jl" />
+    <meta name="description" content="Documentation for Luminescent.jl." />
+    <meta property="og:description" content="Documentation for Luminescent.jl." />
+    <meta property="twitter:description" content="Documentation for Luminescent.jl." />
     <script data-outdated-warner src="assets/warner.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet"
         type="text/css" />
@@ -39,7 +39,7 @@
 <body>
     <div id="documenter">
         <nav class="docs-sidebar">
-            <div class="docs-package-name"><span class="docs-autofit"><a href>Luminesce.jl</a></span></div><button
+            <div class="docs-package-name"><span class="docs-autofit"><a href>Luminescent.jl</a></span></div><button
                 class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2"
                 id="documenter-search-query">Search docs (Ctrl + /)</button>
             <ul class="docs-menu">
@@ -88,7 +88,7 @@
                 <h1 id="Home"><a class="docs-heading-anchor" href="#Home">Home</a><a id="Home-1"></a><a
                         class="docs-heading-anchor-permalink" href="#Home" title="Permalink"></a></h1>
                 <p>Currently Prerelease. First stable release planned for mid March. Until then, accuracy not validated.
-                    Report bugs on <a href="https://github.com/paulxshen/Luminesce.jl">Github</a> - we usually respond
+                    Report bugs on <a href="https://github.com/paulxshen/Luminescent.jl">Github</a> - we usually respond
                     within a day</p>
                 <h2 id="Overview"><a class="docs-heading-anchor" href="#Overview">Overview</a><a id="Overview-1"></a><a
                         class="docs-heading-anchor-permalink" href="#Overview" title="Permalink"></a></h2>
@@ -142,9 +142,9 @@
                         id="Installation-1"></a><a class="docs-heading-anchor-permalink" href="#Installation"
                         title="Permalink"></a></h2>
                 <p>Install via </p>
-                <pre><code class="nohighlight hljs">Pkg.add(url=&quot;https://github.com/paulxshen/Luminesce.jl&quot;)
-Pkg.add(url=&quot;https://github.com/paulxshen/LuminesceVisualization.jl&quot;)</code></pre>
-                <p><code>LuminesceVisualization.jl</code> contains visualization utilities</p>
+                <pre><code class="nohighlight hljs">Pkg.add(url=&quot;https://github.com/paulxshen/Luminescent.jl&quot;)
+Pkg.add(url=&quot;https://github.com/paulxshen/LuminescentVisualization.jl&quot;)</code></pre>
+                <p><code>LuminescentVisualization.jl</code> contains visualization utilities</p>
                 <h2 id="Quickstart"><a class="docs-heading-anchor" href="#Quickstart">Quickstart</a><a
                         id="Quickstart-1"></a><a class="docs-heading-anchor-permalink" href="#Quickstart"
                         title="Permalink"></a></h2>
@@ -155,7 +155,7 @@ simulation of plane wave scattering on periodic array of dielectric spheres
 &quot;&quot;&quot;
 
 using UnPack, LinearAlgebra, GLMakie
-using Luminesce,LuminesceVisualization
+using Luminescent,LuminescentVisualization
 dogpu = true
 # dogpu = false
 
@@ -172,7 +172,7 @@ sz = nx .* (l, l, l) # domain voxel dimensions
 b = F.([norm(v .- sz ./ 2) &lt; 0.5 / dx for v = Base.product(Base.oneto.(sz)...)]) # sphere
 ϵ = ϵ2 * b + ϵ1 * (1 .- b)
 
-# setup
+# maxwell_setup
 boundaries = [Periodic(2), Periodic(3)]# unspecified boundaries default to PML
 sources = [
     PlaneWave(t -&gt; cos(2π * t), -1; Jz=1) # Jz excited plane wave from -x plane (eg -1)
@@ -184,11 +184,11 @@ monitors = [
     Monitor([δ, l / 2, l / 2], [0, lm, lm]; normal), # (center, dimensions; normal)
     Monitor([l - δ, l / 2, l / 2], [0, lm, lm]; normal),
 ]
-configs = setup(boundaries, sources, monitors, dx, sz; ϵmin, T)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_splits, field_padding, source_instances, monitor_instances, u0, = configs
+configs = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, T)
+@unpack μ, σ, σm, dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 
 ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_splits; ϵ, μ, σ, σm)
+p = apply(geometry_staggering; ϵ, μ, σ, σm)
 
 # move to gpu
 if dogpu
@@ -199,9 +199,9 @@ end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    step3!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-y = [power.((m,), u) for m = monitor_instances]
+y = [power_flux.((m,), u) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu

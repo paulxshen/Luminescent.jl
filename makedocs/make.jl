@@ -1,11 +1,11 @@
 using Documenter
-include("../src/Luminesce.jl")
-using .Luminesce
+include("../src/Luminescent.jl")
+using .Luminescent
 
 makedocs(
-    sitename="Luminesce.jl",
+    sitename="Luminescent.jl",
     format=Documenter.HTML(),
-    # modules=[Luminesce],
+    # modules=[Luminescent],
     pages=[
         "index.md",
         "guide.md",

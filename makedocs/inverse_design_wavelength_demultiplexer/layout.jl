@@ -13,21 +13,14 @@ w = 2wm + ld
 h = hwg + hsub + hclad
 
 λ = 1.55f0
-# vars = :(wwg, hwg, lwg, ld, hclad, hsub, l, w, h, wm)
-
-# nt = (; wwg, hwg, lwg, ld, hclad, hsub, l, w, h, wm)
-# v = collect(values(nt)) / λ
-# k = keys(nt)
-
-# wwg, hwg, lwg, ld, hclad, hsub, l, w, h, wm = v
 
 c = [lwg, wm]
 n = [1, 0]
 δ = 0.1
 ports = [
     (; c=[δ, w / 2], n),
-    (; c=[l - δ, w - wm - wwg / 2], n),
-    (; c=[l - δ, wm + wwg / 2], n),
+    (; c=[l - δ, w - wm - wwg], n),
+    (; c=[l - δ, wm + wwg], n),
 ]
 signals = [
     (; c=[0, w / 2])

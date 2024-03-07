@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Guide · Luminesce.jl</title>
-    <meta name="title" content="Guide · Luminesce.jl" />
-    <meta property="og:title" content="Guide · Luminesce.jl" />
-    <meta property="twitter:title" content="Guide · Luminesce.jl" />
-    <meta name="description" content="Documentation for Luminesce.jl." />
-    <meta property="og:description" content="Documentation for Luminesce.jl." />
-    <meta property="twitter:description" content="Documentation for Luminesce.jl." />
+    <title>Guide · Luminescent.jl</title>
+    <meta name="title" content="Guide · Luminescent.jl" />
+    <meta property="og:title" content="Guide · Luminescent.jl" />
+    <meta property="twitter:title" content="Guide · Luminescent.jl" />
+    <meta name="description" content="Documentation for Luminescent.jl." />
+    <meta property="og:description" content="Documentation for Luminescent.jl." />
+    <meta property="twitter:description" content="Documentation for Luminescent.jl." />
     <script data-outdated-warner src="../assets/warner.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet"
         type="text/css" />
@@ -39,8 +39,8 @@
 <body>
     <div id="documenter">
         <nav class="docs-sidebar">
-            <div class="docs-package-name"><span class="docs-autofit"><a href="../">Luminesce.jl</a></span></div><button
-                class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2"
+            <div class="docs-package-name"><span class="docs-autofit"><a href="../">Luminescent.jl</a></span></div>
+            <button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2"
                 id="documenter-search-query">Search docs (Ctrl + /)</button>
             <ul class="docs-menu">
                 <li><a class="tocitem" href="../">Home</a></li>
@@ -103,17 +103,17 @@
                     are simply bundled as a vector of vectors of arrays . Boundary conditions pad the field arrays . PML
                     paddings are multilayered, while All other boundaries add single layers. Paddings are stateful and
                     permanent, increasing the size of field and geometry arrays. Finite differencing happens every
-                    update step3 and are coordinated to implictly implement a staggered Yee&#39;s grid .</p>
+                    update maxwell_update and are coordinated to implictly implement a staggered Yee&#39;s grid .</p>
                 <h2 id="Sources"><a class="docs-heading-anchor" href="#Sources">Sources</a><a id="Sources-1"></a><a
                         class="docs-heading-anchor-permalink" href="#Sources" title="Permalink"></a></h2>
                 <p>If a source has fewer nonzero dimensions than the simulation domain, its signal will get normalized
                     along its singleton dimensions. For example, all planar sources in 3d or line sources in 2d will get
                     scaled up by a factor of <code>1/dx</code>. This way, discretisation would not affect radiated
-                    power.</p>
+                    power_flux.</p>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminesce.PlaneWave"
-                            href="#Main.Luminesce.PlaneWave"><code>Main.Luminesce.PlaneWave</code></a> — <span
+                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminescent.PlaneWave"
+                            href="#Main.Luminescent.PlaneWave"><code>Main.Luminescent.PlaneWave</code></a> — <span
                             class="docstring-category">Type</span></header>
                     <section>
                         <div>
@@ -132,8 +132,8 @@
                 </article>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminesce.Source"
-                            href="#Main.Luminesce.Source"><code>Main.Luminesce.Source</code></a> — <span
+                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminescent.Source"
+                            href="#Main.Luminescent.Source"><code>Main.Luminescent.Source</code></a> — <span
                             class="docstring-category">Type</span></header>
                     <section>
                         <div>
@@ -160,8 +160,8 @@ function Source(f, c, L, label=&quot;&quot;; fields...)</code></pre>
                 <p>Unspecified boundaries default to PML </p>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminesce.Periodic"
-                            href="#Main.Luminesce.Periodic"><code>Main.Luminesce.Periodic</code></a> — <span
+                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminescent.Periodic"
+                            href="#Main.Luminescent.Periodic"><code>Main.Luminescent.Periodic</code></a> — <span
                             class="docstring-category">Type</span></header>
                     <section>
                         <div>
@@ -173,8 +173,8 @@ function Source(f, c, L, label=&quot;&quot;; fields...)</code></pre>
                 </article>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminesce.PML"
-                            href="#Main.Luminesce.PML"><code>Main.Luminesce.PML</code></a> — <span
+                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminescent.PML"
+                            href="#Main.Luminescent.PML"><code>Main.Luminescent.PML</code></a> — <span
                             class="docstring-category">Type</span></header>
                     <section>
                         <div>
@@ -188,8 +188,8 @@ function Source(f, c, L, label=&quot;&quot;; fields...)</code></pre>
                 </article>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminesce.PEC"
-                            href="#Main.Luminesce.PEC"><code>Main.Luminesce.PEC</code></a> — <span
+                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminescent.PEC"
+                            href="#Main.Luminescent.PEC"><code>Main.Luminescent.PEC</code></a> — <span
                             class="docstring-category">Type</span></header>
                     <section>
                         <div>
@@ -201,8 +201,8 @@ function Source(f, c, L, label=&quot;&quot;; fields...)</code></pre>
                 </article>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminesce.PMC"
-                            href="#Main.Luminesce.PMC"><code>Main.Luminesce.PMC</code></a> — <span
+                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminescent.PMC"
+                            href="#Main.Luminescent.PMC"><code>Main.Luminescent.PMC</code></a> — <span
                             class="docstring-category">Type</span></header>
                     <section>
                         <div>
@@ -216,15 +216,15 @@ function Source(f, c, L, label=&quot;&quot;; fields...)</code></pre>
                         class="docs-heading-anchor-permalink" href="#Monitors" title="Permalink"></a></h2>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminesce.Monitor"
-                            href="#Main.Luminesce.Monitor"><code>Main.Luminesce.Monitor</code></a> — <span
+                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminescent.Monitor"
+                            href="#Main.Luminescent.Monitor"><code>Main.Luminescent.Monitor</code></a> — <span
                             class="docstring-category">Type</span></header>
                     <section>
                         <div>
                             <pre><code class="language-julia hljs">function Monitor(c, L; normal=nothing, label=&quot;&quot;)
 function Monitor(c, lb, ub; normal=nothing, label=&quot;&quot;)</code></pre>
                             <p>Constructs monitor which can span a point, line, surface, or volume monitoring fields or
-                                power. </p>
+                                power_flux. </p>
                             <p>Args</p>
                             <ul>
                                 <li>
@@ -249,13 +249,13 @@ function Monitor(c, lb, ub; normal=nothing, label=&quot;&quot;)</code></pre>
                 </article>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminesce.power"
-                            href="#Main.Luminesce.power"><code>Main.Luminesce.power</code></a> — <span
+                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminescent.power_flux"
+                            href="#Main.Luminescent.power_flux"><code>Main.Luminescent.power_flux</code></a> — <span
                             class="docstring-category">Function</span></header>
                     <section>
                         <div>
-                            <pre><code class="language-julia hljs">function power(m::MonitorInstance, u)</code></pre>
-                            <p>total power (Poynting flux) passing thru monitor surface</p>
+                            <pre><code class="language-julia hljs">function power_flux(m::MonitorInstance, u)</code></pre>
+                            <p>total power_flux (Poynting flux) passing thru monitor surface</p>
                         </div><a class="docs-sourcelink" target="_blank"
                             href="https://github.com/paulxshen/fdtd/blob/d7deb039e067fb63b5efaad62157a7a52686faae/src/monitors.jl#L64-L68">source</a>
                     </section>
@@ -263,13 +263,15 @@ function Monitor(c, lb, ub; normal=nothing, label=&quot;&quot;)</code></pre>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
                             title="Collapse docstring"></a><a class="docstring-binding"
-                            id="Main.Luminesce.power_density"
-                            href="#Main.Luminesce.power_density"><code>Main.Luminesce.power_density</code></a> — <span
-                            class="docstring-category">Function</span></header>
+                            id="Main.Luminescent.power_flux_density"
+                            href="#Main.Luminescent.power_flux_density"><code>Main.Luminescent.power_flux_density</code></a>
+                        —
+                        <span class="docstring-category">Function</span>
+                    </header>
                     <section>
                         <div>
-                            <pre><code class="language-julia hljs">function power_density(m::MonitorInstance, u)</code></pre>
-                            <p>power density (avg Poynting flux) passing thru monitor surface</p>
+                            <pre><code class="language-julia hljs">function power_flux_density(m::MonitorInstance, u)</code></pre>
+                            <p>power_flux density (avg Poynting flux) passing thru monitor surface</p>
                         </div><a class="docs-sourcelink" target="_blank"
                             href="https://github.com/paulxshen/fdtd/blob/d7deb039e067fb63b5efaad62157a7a52686faae/src/monitors.jl#L48-L52">source</a>
                     </section>
@@ -278,29 +280,37 @@ function Monitor(c, lb, ub; normal=nothing, label=&quot;&quot;)</code></pre>
                         class="docs-heading-anchor-permalink" href="#Physics" title="Permalink"></a></h2>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminesce.step3!"
-                            href="#Main.Luminesce.step3!"><code>Main.Luminesce.step3!</code></a> — <span
-                            class="docstring-category">Function</span></header>
+                            title="Collapse docstring"></a><a class="docstring-binding"
+                            id="Main.Luminescent.maxwell_update!"
+                            href="#Main.Luminescent.maxwell_update!"><code>Main.Luminescent.maxwell_update!</code></a> —
+                        <span class="docstring-category">Function</span>
+                    </header>
                     <section>
                         <div>
-                            <pre><code class="language-julia hljs">function step3!(u, p, t, field_padding, source_instances)
-function step3!(u1, u, p, t, field_padding, source_instances)</code></pre>
-                            <p>Updates fields for 3d. Please use <code>step3</code> instead of <code>step3!</code> when
-                                doing AD. Mutating <code>step3!</code> Writes new fields either onto old fields or into
-                                buffer arrays u1</p>
+                            <pre><code class="language-julia hljs">function maxwell_update!(u, p, t, field_padding, source_instances)
+function maxwell_update!(u1, u, p, t, field_padding, source_instances)</code></pre>
+                            <p>Updates fields for 3d. Please use <code>maxwell_update</code> instead of
+                                <code>maxwell_update!</code> when
+                                doing AD. Mutating <code>maxwell_update!</code> Writes new fields either onto old fields
+                                or into
+                                buffer arrays u1
+                            </p>
                         </div><a class="docs-sourcelink" target="_blank"
                             href="https://github.com/paulxshen/fdtd/blob/d7deb039e067fb63b5efaad62157a7a52686faae/src/maxwell.jl#L1-L6">source</a>
                     </section>
                 </article>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminesce.step3"
-                            href="#Main.Luminesce.step3"><code>Main.Luminesce.step3</code></a> — <span
-                            class="docstring-category">Function</span></header>
+                            title="Collapse docstring"></a><a class="docstring-binding"
+                            id="Main.Luminescent.maxwell_update"
+                            href="#Main.Luminescent.maxwell_update"><code>Main.Luminescent.maxwell_update</code></a> —
+                        <span class="docstring-category">Function</span>
+                    </header>
                     <section>
                         <div>
-                            <pre><code class="language-julia hljs">function step3(u, p, t, field_padding, source_instances)</code></pre>
-                            <p>Updates fields for 3d in a manner amenable to AD. See also Mutating <code>step3!</code>
+                            <pre><code class="language-julia hljs">function maxwell_update(u, p, t, field_padding, source_instances)</code></pre>
+                            <p>Updates fields for 3d in a manner amenable to AD. See also Mutating
+                                <code>maxwell_update!</code>
                             </p>
                         </div><a class="docs-sourcelink" target="_blank"
                             href="https://github.com/paulxshen/fdtd/blob/d7deb039e067fb63b5efaad62157a7a52686faae/src/maxwell.jl#L81-L85">source</a>
@@ -315,8 +325,10 @@ function step3!(u1, u, p, t, field_padding, source_instances)</code></pre>
                         href="#Automatic-differentiation-adjoints">Automatic differentiation adjoints</a><a
                         id="Automatic-differentiation-adjoints-1"></a><a class="docs-heading-anchor-permalink"
                         href="#Automatic-differentiation-adjoints" title="Permalink"></a></h2>
-                <p>Compatible with <code>Zygote.jl</code> and <code>Flux.jl</code>. Please use <code>step3</code>
-                    instead of <code>step3!</code> when doing AD. See inverse design examples </p>
+                <p>Compatible with <code>Zygote.jl</code> and <code>Flux.jl</code>. Please use
+                    <code>maxwell_update</code>
+                    instead of <code>maxwell_update!</code> when doing AD. See inverse design examples
+                </p>
                 <h2 id="Generative-inverse-design"><a class="docs-heading-anchor"
                         href="#Generative-inverse-design">Generative inverse design</a><a
                         id="Generative-inverse-design-1"></a><a class="docs-heading-anchor-permalink"

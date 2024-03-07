@@ -1,5 +1,12 @@
 using LinearAlgebra, UnPack
-
+dl = Dict([
+    -1 => "-x"
+    1 => "+x"
+    -2 => "-y"
+    2 => "+y"
+    3 => "+z"
+    -3 => "-z"
+])
 """
     Periodic(dims)
 
@@ -9,8 +16,9 @@ periodic boundary
 struct Periodic
     dims
 end
+Base.string(m::Periodic) = "Periodic on $(dl[m.dims]) side"
 """
-    PEC(dims)
+PEC(dims)
 
 perfect electrical conductor
 dims: eg -1 for -x side
@@ -18,23 +26,26 @@ dims: eg -1 for -x side
 struct PEC
     dims
 end
+Base.string(m::PEC) = "PEC ON $(dl[m.dims]) side"
 """
-    PMC(dims)
+PMC(dims)
 
 perfect magnetic conductor
 """
 struct PMC
     dims
 end
+Base.string(m::PMC) = "PMC on $(dl[m.dims]) side"
 struct PEMC
     dims
 end
+Base.string(m::PEMC) = "PEMC on $(dl[m.dims]) side"
 """
-    function PML(dims, d=0.25f0, σ=20.0f0)
-
-Constructs perfectly matched layers (PML aka ABC, RBC) boundary of depth `d` wavelengths 
-Doesn't need to be explictly declared as all unspecified boundaries default to PML
-"""
+function PML(dims, d=0.25f0, σ=20.0f0)
+    
+    Constructs perfectly matched layers (PML aka ABC, RBC) boundary of depth `d` wavelengths 
+    Doesn't need to be explictly declared as all unspecified boundaries default to PML
+    """
 struct PML
     dims
     d::Real
@@ -43,6 +54,7 @@ struct PML
         new(dims, d, σ)
     end
 end
+Base.string(m::PML) = "PML of depth $(m.d) on $(dl[m.dims]) side"
 
 struct InPad
 
@@ -93,6 +105,12 @@ function apply(p::AbstractVector{<:InPad}, a::AbstractArray)
     copy(a_)
 end
 
+function apply(v::AbstractVector{<:OutPad}, a::Real)
+    for p = v
+        p.b != a && p.b != :replicate && error("cannot pad a constant with different values. it needs to be an array")
+    end
+    a
+end
 function apply(p::AbstractVector{<:OutPad}, a)
     l = sum(getproperty.(p, :l))
     r = sum(getproperty.(p, :r))
@@ -105,7 +123,3 @@ function apply(p::AbstractVector{<:OutPad}, a)
     end
     copy(y)
 end
-# function apply(p::InPad, a)
-#     @unpack l, r, b = p
-#     y = pad(a, b, l, r;)
-# end

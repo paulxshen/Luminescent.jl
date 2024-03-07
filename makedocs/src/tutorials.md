@@ -1,2 +1,2 @@
 # Tutorials
-see [`examples/`](https://github.com/paulxshen/Luminesce.jl/blob/main/examples/)
+see [`examples/`](https://github.com/paulxshen/Luminescent.jl/blob/main/examples/)

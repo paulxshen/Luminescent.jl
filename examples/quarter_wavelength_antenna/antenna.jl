@@ -3,11 +3,11 @@ simulation of quarter wavelength antenna above conductor ground plane
 """
 
 using UnPack, LinearAlgebra, GLMakie
-# using Luminesce,LuminesceVisualization
+# using Luminescent,LuminescentVisualization
 
 dir = pwd()
 include("$(dir)/src/main.jl")
-include("$dir/../LuminesceVisualization.jl/src/main.jl")
+include("$dir/../LuminescentVisualization.jl/src/main.jl")
 
 name = "quarter_wavelength_antenna"
 dogpu = true
@@ -29,11 +29,11 @@ sources = [
     Source(t -> cos(2π * t), [l / 2, l / 2, 0.125], [0, 0, 0.25]; Jz=1),
 ]
 
-configs = setup(boundaries, sources, monitors, dx, sz0; T)
-@unpack μ, σ, σm, ϵ, dt, geometry_padding, geometry_splits, field_padding, source_instances, monitor_instances, u0, = configs
+configs = maxwell_setup(boundaries, sources, monitors, dx, sz0; T)
+@unpack μ, σ, σm, ϵ, dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 
 ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_splits; ϵ, μ, σ, σm)
+p = apply(geometry_staggering; ϵ, μ, σ, σm)
 
 # move to gpu
 if dogpu
@@ -44,9 +44,9 @@ end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    step3!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-y = [power.((m,), u) for m = monitor_instances]
+y = [power_flux.((m,), u) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu

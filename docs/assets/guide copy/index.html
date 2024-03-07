@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>- · Luminesce.jl</title>
-    <meta name="title" content="- · Luminesce.jl" />
-    <meta property="og:title" content="- · Luminesce.jl" />
-    <meta property="twitter:title" content="- · Luminesce.jl" />
-    <meta name="description" content="Documentation for Luminesce.jl." />
-    <meta property="og:description" content="Documentation for Luminesce.jl." />
-    <meta property="twitter:description" content="Documentation for Luminesce.jl." />
+    <title>- · Luminescent.jl</title>
+    <meta name="title" content="- · Luminescent.jl" />
+    <meta property="og:title" content="- · Luminescent.jl" />
+    <meta property="twitter:title" content="- · Luminescent.jl" />
+    <meta name="description" content="Documentation for Luminescent.jl." />
+    <meta property="og:description" content="Documentation for Luminescent.jl." />
+    <meta property="twitter:description" content="Documentation for Luminescent.jl." />
     <script data-outdated-warner src="../warner.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet"
         type="text/css" />
@@ -39,7 +39,7 @@
 <body>
     <div id="documenter">
         <nav class="docs-sidebar">
-            <div class="docs-package-name"><span class="docs-autofit"><a href="../../">Luminesce.jl</a></span></div>
+            <div class="docs-package-name"><span class="docs-autofit"><a href="../../">Luminescent.jl</a></span></div>
             <button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2"
                 id="documenter-search-query">Search docs (Ctrl + /)</button>
             <ul class="docs-menu">
@@ -92,7 +92,8 @@
                     generate geometry, run the simulation, calculate the objective metric, and do a backward pass to
                     derive the gradient wrt the geometry parameters. We then do a gradient based parameter update in
                     preparation for the next iteration.</p>
-                <p>The geometry is thus the first step3. It typically has a static component which we can&#39;t change
+                <p>The geometry is thus the first maxwell_update. It typically has a static component which we can&#39;t
+                    change
                     such as interfacing waveguides. Then there&#39;s a design component which we can change or optimize.
                     The user is responsible for generating the design geometry wrt design parameters. If any pattern is
                     allowed in the design region, our sister package <code>Jello.jl</code> can be used as a length scale
