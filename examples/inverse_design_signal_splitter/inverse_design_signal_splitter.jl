@@ -5,12 +5,12 @@ using Zygote: withgradient, Buffer
 using BSON: @save, @load
 using Optim: Options, minimizer
 using AbbreviatedStackTraces
-# using Jello, Luminescent, LuminescentVisualization
+using Jello, Luminescent, LuminescentVisualization
 
-dir = pwd()
-include("$dir/src/main.jl")
-include("$dir/../LuminescentVisualization.jl/src/main.jl")
-include("$dir/scripts/startup.jl")
+# dir = pwd()
+# include("$dir/src/main.jl")
+# include("$dir/../LuminescentVisualization.jl/src/main.jl")
+# include("$dir/scripts/startup.jl")
 
 Random.seed!(1)
 
