@@ -6,19 +6,19 @@ Args
 - L: vector of lengths in wavelengths of simulation domain
 - polarization: only applies to 2d which can be :TMz (Ez, Hx, Hy) or :TEz (Hz, Ex, Ey)
 """
-function maxwell_setup(boundaries, sources, monitors, dx, sz0, polarization=nothing;
+function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothing;
     ϵ=1, μ=1, σ=0, σm=0, F=Float32,
     ϵmin=1,
-    Courant=F(0.8√(ϵmin / length(sz0))),# Courant number)
+    Courant=F(0.8√(ϵmin / length(sz))),# Courant number)
     kw...)
 
-    a = ones(F, sz0)
+    a = ones(F, sz)
     # if isa(μ,Number+)
     μ *= a
     σ *= a
     σm *= a
     ϵ *= a
-    d = length(sz0)
+    d = length(sz)
     if d == 1
         fk = (:Ez, :Hy)
     elseif d == 2
@@ -40,7 +40,7 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz0, polarization=noth
     flb = Dict([k => zeros(Int, d) for k = fk])
     frb = Dict([k => zeros(Int, d) for k = fk])
     lc = zeros(Int, d)
-    sizes = Dict([k => collect(sz0) for k = fk])
+    sizes = Dict([k => collect(sz) for k = fk])
 
     for b = boundaries
         for i = b.dims
@@ -190,7 +190,7 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz0, polarization=noth
         end
     end
     geometry_staggering = Dict{Symbol,Vector{Vector{UnitRange{Int64}}}}()
-    geometry_sizes = NamedTuple([k => sz0 .+ sum(geometry_padding[k]) do p
+    geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padding[k]) do p
         p.l + p.r
     end for k = keys(geometry_padding)])
     geometry_staggering[:μ] = geometry_staggering[:σm] =
@@ -199,11 +199,11 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz0, polarization=noth
     geometry_staggering[:ϵ] = geometry_staggering[:σ] =
         [[ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:ϵ]), flb[k], frb[k])]
          for k = [:Ex, :Ey, :Ez]]
-    source_instances = SourceInstance.(sources, dx, (sizes,), (lc,), (fl,), (sz0,); F)
+    source_instances = SourceInstance.(sources, dx, (sizes,), (lc,), (fl,), (sz,); F)
     monitor_instances = MonitorInstance.(monitors, dx, (lc,), (flb,), (fl,); F)
 
     dt = dx * Courant
-    sz0 = Tuple(sz0)
+    sz = Tuple(sz)
     for (k, v) = pairs(field_padding)
         a = ones(F, size(fields[k]))
         i = filter(eachindex(v)) do i
