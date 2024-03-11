@@ -35,6 +35,6 @@ function main()
 
 end
 modes_ = main()
-modes = [NamedTuple([k => getfield(m, k)' for k = [:Ex, :Ey, :Ez, :Hx, :Hy, :Hz]]) for m = modes_]
+modes = [NamedTuple([k => getfield(m, k)' for k = [:neff, :Ex, :Ey, :Ez, :Hx, :Hy, :Hz]]) for m = modes_]
 @save "$(@__DIR__)/modes.bson" modes λ dx ub lb hsub hwg wwg hclad ϵsub ϵclad ϵwg h w
 plot_mode_fields(modes_[1])

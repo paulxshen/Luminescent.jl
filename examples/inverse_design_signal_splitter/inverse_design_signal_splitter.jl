@@ -6,19 +6,18 @@ using BSON: @save, @load
 using Optim: Options, minimizer
 using AbbreviatedStackTraces
 using Jello, Luminescent, LuminescentVisualization
+Random.seed!(1)
 
 # dir = pwd()
 # include("$dir/src/main.jl")
 # include("$dir/../LuminescentVisualization.jl/src/main.jl")
 # include("$dir/scripts/startup.jl")
 
-Random.seed!(1)
-
 # training params"
 F = Float32
 dogpu = false
 name = "inverse_design_signal_splitter"
-nbasis = 6 # complexity of design region
+nbasis = 5 # complexity of design region
 
 # loads design layout
 @load "$(@__DIR__)/layout.bson" base signals ports designs
@@ -37,7 +36,7 @@ sz = size(ϵdummy)
 # "geometry generator model
 # @load "$(@__DIR__)/model.bson" model
 contrast = 10.0
-model = Mask(round.(Int, designs[1].L / λ / dx) .+ 1, nbasis, contrast; symmetries=2)
+model = Blob((round.(Int, designs[1].L / λ / dx) .+ 1)...; nbasis, contrast, symmetries=2)
 model0 = deepcopy(model)
 
 # "boundaries"
@@ -172,6 +171,7 @@ function runsave(model)
         source_instances,
         geometry=ϵEy,
         elevation=60°,
+        azimuth=30°,
         playback=1,
         axis1=(; title="$(replace( name,"_"=>" ")|>titlecase)"),
         axis2=(; title="monitor powers"),

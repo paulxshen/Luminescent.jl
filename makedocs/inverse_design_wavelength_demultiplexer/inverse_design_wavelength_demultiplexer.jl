@@ -38,7 +38,7 @@ sz0 = size(ϵdummy)
 # "geometry generator model
 # @load "model.bson" model
 contrast = 10.0
-model = Mask(round.(Int, designs[1].L / λ / dx) .+ 1, nbasis, contrast;)
+model = Blob(round.(Int, designs[1].L / λ / dx) .+ 1, nbasis, contrast;)
 model0 = deepcopy(model)
 
 

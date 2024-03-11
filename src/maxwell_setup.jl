@@ -201,6 +201,7 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothi
          for k = [:Ex, :Ey, :Ez]]
     source_instances = SourceInstance.(sources, dx, (sizes,), (lc,), (fl,), (sz,); F)
     monitor_instances = MonitorInstance.(monitors, dx, (lc,), (flb,), (fl,); F)
+    roi = MonitorInstance(Monitor(zeros(d), zeros(d), dx * sz), dx, (lc,), (flb,), (fl,); F)
 
     dt = dx * Courant
     sz = Tuple(sz)
@@ -246,9 +247,13 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothi
         $(join("    - ".*string.(sources),"\n"))
         Monitors:
         $(join("    - ".*string.(monitors),"\n"))
+        $footer
         ====
         """
     )
-    (; μ, σ, σm, ϵ, geometry_padding, field_padding, geometry_staggering, source_instances, monitor_instances, u0, fields, dx, dt, kw...)
+    (; μ, σ, σm, ϵ,
+        geometry_padding, field_padding, geometry_staggering,
+        source_instances, monitor_instances,
+        roi, u0, fields, dx, dt, kw...)
 end
 

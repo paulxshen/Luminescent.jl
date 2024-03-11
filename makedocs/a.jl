@@ -92,7 +92,7 @@ for (nx, α, nepochs) in schedule
     v /= maximum(v)
     global model
     if isnothing(model)
-        model = Jello.Mask(design_dims, lmin / λ / dx; diagonal_symmetry=true) # parameterized binary mask for design region
+        model = Jello.Blob(design_dims, lmin / λ / dx; diagonal_symmetry=true) # parameterized binary mask for design region
     else
         global model.dims = design_dims
     end

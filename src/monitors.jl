@@ -49,7 +49,8 @@ Monitor(p::AbstractMatrix; normal=nothing, label="") = PointCloudMonitor(p, norm
 Monitor(v::AbstractVector; kw...) = Monitor(Matrix(v); kw...)
 Base.string(m::OrthogonalMonitor) =
     """
-    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.c), spanning from $(m.lb) to $(m.ub) relative to center, flux normal towards $(m.n)"""
+    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.c|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center, flux normal towards $(m.n|>d2)"""
+
 struct OrthogonalMonitorInstance
     d
     i
@@ -103,13 +104,68 @@ function MonitorInstance(m::PointCloudMonitor, dx, lc, flb, fl; F=Float32)
     PointCloudMonitorInstance(i, fi, F.(n), c, label)
 end
 
+# function Base.getindex(a, m::OrthogonalMonitorInstance, )
+#     a[m.fi[k]...]
+# end
+
 function field(u, k)
-    i, j = fij[k]
-    u[i][j]
+    if k in keys(fij)
+        i, j = fij[k]
+        u[i][j]
+    elseif k == "|E|2"
+        sum(u[1]) do a
+            a .^ 2
+        end
+    elseif k == "|E|"
+        sqrt.(field(u, "|E|2"))
+    elseif k == "|H|2"
+        sum(u[2]) do a
+            a .^ 2
+        end
+    elseif k == "|H|"
+        sqrt.(field(u, "|H|2"))
+    end
 end
-function field(u, m::OrthogonalMonitorInstance, k)
-    i, j = fij[k]
-    u[i][j][m.fi[k]...]
+
+"""
+    function field(u, k)
+    function field(u, k, m)
+
+queries field, optionally at monitor instance `m`
+
+Args
+- `u`: state
+- `k`: symbol or str of Ex, Ey, Ez, Hx, Hy, Hz, |E|, |E|2, |H|, |H|2
+- `m`
+"""
+function field(u, k, m::OrthogonalMonitorInstance,)
+    if k in keys(fij)
+        i, j = fij[k]
+        return u[i][j][m.fi[k]...]
+    end
+    field(u, k, m)
+end
+function field(u, k, m::PointCloudMonitorInstance,)
+    if k in keys(fij)
+        i, j = fij[k]
+        return [u[i][j][v...] for v = eachcol(m.fi[k])]
+    end
+    field(u, k, m)
+end
+function field(u, k, m,)
+    if k == "|E|2"
+        sum(field.(u, (:Ex, :Ey, :Ez), (m,))) do a
+            a .^ 2
+        end
+    elseif k == "|E|"
+        sqrt.(field(u, "|E|2", m))
+    elseif k == "|H|2"
+        sum(field.(u, (:Hx, :Hy, :Hz), (m,))) do a
+            a .^ 2
+        end
+    elseif k == "|H|"
+        sqrt.(field(u, "|H|2", m))
+    end
 end
 # Base.getindex(a::Union{AbstractArray,GPUArraysCore.AbstractGPUArray}, m::MonitorInstance) = a[m.i...]
 # Base.getindex(a::GPUArraysCore.AbstractGPUArray, m::MonitorInstance) = a[m.i...]

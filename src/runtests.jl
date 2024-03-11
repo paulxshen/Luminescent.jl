@@ -36,7 +36,7 @@ dims = round.(Int, L ./ dx)
 design_dims = round.(Int, design_dims .* microns_dx ./ λ ./ dx)
 design_start = 1 .+ round.(Int, (design_start .- 1) .* microns_dx ./ λ ./ dx)
 base = imresize(base, dims)
-model = Mask(design_dims, 0.2f0 / dx)
+model = Blob(design_dims, 0.2f0 / dx)
 if train
 end
 # heatmap(base)

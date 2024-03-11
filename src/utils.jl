@@ -18,6 +18,7 @@ Base.:*(x::T, y::Number) = x .* y
 Base.:/(x::Number, y::T) = x ./ y
 Base.:/(x::T, y::Number) = x ./ y
 
+d2(x) = round(x, digits=2)
 
 # __precompile__(false)
 (m::Number)(a...) = m
@@ -50,3 +51,5 @@ function apply(p; kw...)
     [apply(p[k], kw[k]) for k = keys(kw)]
     # [apply(p[k], v) for (k, v) = pairs(kw)]
 end
+
+footer = "Created by Paul Shen pxshen@alumni.stanford.edu"
