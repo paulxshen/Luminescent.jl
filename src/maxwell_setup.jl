@@ -201,7 +201,7 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothi
          for k = [:Ex, :Ey, :Ez]]
     source_instances = SourceInstance.(sources, dx, (sizes,), (lc,), (fl,), (sz,); F)
     monitor_instances = MonitorInstance.(monitors, dx, (lc,), (flb,), (fl,); F)
-    roi = MonitorInstance(Monitor(zeros(d), zeros(d), dx * sz), dx, (lc,), (flb,), (fl,); F)
+    roi = MonitorInstance(Monitor(zeros(d), zeros(d), dx * sz), dx, lc, flb, fl; F)
 
     dt = dx * Courant
     sz = Tuple(sz)

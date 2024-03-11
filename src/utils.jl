@@ -18,7 +18,7 @@ Base.:*(x::T, y::Number) = x .* y
 Base.:/(x::Number, y::T) = x ./ y
 Base.:/(x::T, y::Number) = x ./ y
 
-d2(x) = round(x, digits=2)
+d2(x) = round.(x, digits=2)
 
 # __precompile__(false)
 (m::Number)(a...) = m

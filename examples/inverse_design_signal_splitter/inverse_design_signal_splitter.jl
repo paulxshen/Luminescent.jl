@@ -5,13 +5,13 @@ using Zygote: withgradient, Buffer
 using BSON: @save, @load
 using Optim: Options, minimizer
 using AbbreviatedStackTraces
-using Jello, Luminescent, LuminescentVisualization
+# using Jello, Luminescent, LuminescentVisualization
 Random.seed!(1)
 
-# dir = pwd()
-# include("$dir/src/main.jl")
-# include("$dir/../LuminescentVisualization.jl/src/main.jl")
-# include("$dir/scripts/startup.jl")
+dir = pwd()
+include("$dir/src/main.jl")
+include("$dir/../LuminescentVisualization.jl/src/main.jl")
+include("$dir/scripts/startup.jl")
 
 # training params"
 F = Float32
@@ -104,11 +104,12 @@ function metrics(model, ; T1=T1, T2=T2, autodiff=true)
     end[2]
     abs.(v)
 end
-@show const tp = metrics(model, T1=1, T2=2, autodiff=false)[1] # total power_flux
+# @show const tp = metrics(model, T1=1, T2=2, autodiff=false)[1] # total power_flux
 # error()
 
 function loss(v)
-    sum(-v / tp)
+    # sum(-v / tp)
+    sum(-v)
 end
 
 p0 = make_geometry(model0, base, μ, σ, σm)
@@ -135,13 +136,12 @@ volume(cpu(p0[1][2]))
 # adjoint optimization
 opt = Adam(0.2)
 opt_state = Flux.setup(opt, model)
-n = 60
+n = 25
 for i = 1:n
     @time l, (dldm,) = withgradient(m -> loss(metrics(m)), model)
     Flux.update!(opt_state, model, dldm)
     println("$i $l")
 end
-heatmap(cpu(model()))
 @save "$(@__DIR__)/model.bson" model
 # error()
 
@@ -179,4 +179,5 @@ function runsave(model)
 
 end
 
+# heatmap(cpu(model()))
 runsave(model)

@@ -73,6 +73,7 @@ struct PointCloudMonitorInstance
 end
 
 function MonitorInstance(m::OrthogonalMonitor, dx, lc, flb, fl; F=Float32)
+    @unpack n, = m
     L = m.ub - m.lb
     singletons = findall(L .≈ 0,)
     d = length(L) - length(singletons)
@@ -92,7 +93,9 @@ function MonitorInstance(m::OrthogonalMonitor, dx, lc, flb, fl; F=Float32)
     i[singletons] .= first.(getindex.((i,), singletons))
     fi = Dict([k => i .+ v for (k, v) = pairs(flb)])
     # fi = (; [k => i .+ v for (k, v) = pairs(flb)]...)
-    OrthogonalMonitorInstance(d, i, lc + c, fi, F.(m.n), F(dx), F(v), m.label)
+
+    n = isnothing(n) ? n : F.(n)
+    OrthogonalMonitorInstance(d, i, lc + c, fi, n, F(dx), F(v), m.label)
 end
 
 function MonitorInstance(m::PointCloudMonitor, dx, lc, flb, fl; F=Float32)
