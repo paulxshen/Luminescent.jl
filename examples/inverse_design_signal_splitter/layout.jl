@@ -39,7 +39,7 @@ wwg, hwg, lwg, ldx, ldy, hclad, hsub, l, w, h, wm =
 
 base = zeros(Int, l .+ 1, w .+ 1)
 base[1:lwg.+1, (w-wwg)÷2+1:(w+wwg)÷2+1] .= 1
-base[end-lwg:end, wm+1:wm+wwg.+1] .= 1
-base[end-lwg:end, end-wm-wwg:end-wm] .= 1
+base[end-lwg:end, wm+wwg÷2+1:wm+wwg÷2+wwg.+1] .= 1
+base[end-lwg:end, end-wm-wwg-wwg÷2:end-wm-wwg÷2] .= 1
 
 @save "$(@__DIR__)/layout.bson" base signals ports designs dx nx

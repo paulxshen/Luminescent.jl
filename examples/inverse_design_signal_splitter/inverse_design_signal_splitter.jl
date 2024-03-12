@@ -13,15 +13,19 @@ include("$dir/src/main.jl")
 include("$dir/../LuminescentVisualization.jl/src/main.jl")
 include("$dir/scripts/startup.jl")
 
+# loads design layout
+@load "$(@__DIR__)/layout.bson" base signals ports designs
+@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad ϵsub ϵclad ϵwg
+
 # training params"
 F = Float32
 dogpu = false
 name = "inverse_design_signal_splitter"
 nbasis = 5 # complexity of design region
+contrast = 10.0
+# rmin = round(Int, 0.1 / dx)
+rmin = nothing
 
-# loads design layout
-@load "$(@__DIR__)/layout.bson" base signals ports designs
-@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad ϵsub ϵclad ϵwg
 T1 = Δ1 = 1 + norm(ports[1].c - ports[2].c) / λ * sqrt(ϵwg) # simulation duration in [periods] for signal to reach output ports
 Δ2 = 1 # duration to record power at output ports
 T2 = T = T1 + Δ2
@@ -35,8 +39,7 @@ sz = size(ϵdummy)
 
 # "geometry generator model
 # @load "$(@__DIR__)/model.bson" model
-contrast = 10.0
-model = Blob((round.(Int, designs[1].L / λ / dx) .+ 1)...; nbasis, contrast, symmetries=2)
+model = Blob((round.(Int, designs[1].L / λ / dx) .+ 1)...; nbasis, contrast, rmin, symmetries=2)
 model0 = deepcopy(model)
 
 # "boundaries"
@@ -136,7 +139,7 @@ volume(cpu(p0[1][2]))
 # adjoint optimization
 opt = Adam(0.2)
 opt_state = Flux.setup(opt, model)
-n = 25
+n = 50
 for i = 1:n
     @time l, (dldm,) = withgradient(m -> loss(metrics(m)), model)
     Flux.update!(opt_state, model, dldm)

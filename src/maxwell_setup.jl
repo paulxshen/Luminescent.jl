@@ -234,19 +234,20 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothi
         ====
         FDTD configs
         
-        dx: $dx wavelengths
-        dt: $dt periods
+        dx: $(dx|>d2) wavelengths
+        dt: $(dt|>d2) periods
         Courant number: $Courant
         Fields: [[Ex, Ey, Ez], [Hx, Hy, Hz]]
         Original array size of all fields: $sz
         Padded field array sizes:
         $sizes
         Boundaries:
-        $(join("    - ".*string.(db),"\n"))
+        $(join("- ".*string.(db),"\n"))
         Sources:
-        $(join("    - ".*string.(sources),"\n"))
+        $(join("- ".*string.(sources),"\n"))
         Monitors:
-        $(join("    - ".*string.(monitors),"\n"))
+        $(join("- ".*string.(monitors),"\n"))
+
         $footer
         ====
         """
