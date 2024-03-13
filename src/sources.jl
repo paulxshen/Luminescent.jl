@@ -68,7 +68,7 @@ struct Source
 end
 Base.string(m::Source) =
     """
-    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.c), spanning from $(m.lb) to $(m.ub) relative to center, exciting $(join(keys(m.fields),", "))"""
+    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.c|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center, exciting $(join(keys(m.fields),", "))"""
 function Source(f, c, L, label::AbstractString=""; fields...)
     # Source
     # function Source(f, c, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)

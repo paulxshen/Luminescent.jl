@@ -5,13 +5,13 @@ using Zygote: withgradient, Buffer
 using BSON: @save, @load
 using Optim: Options, minimizer
 using AbbreviatedStackTraces
-# using Jello, Luminescent, LuminescentVisualization
+using Jello, Luminescent, LuminescentVisualization
 Random.seed!(1)
 
-dir = pwd()
-include("$dir/src/main.jl")
-include("$dir/../LuminescentVisualization.jl/src/main.jl")
-include("$dir/scripts/startup.jl")
+# dir = pwd()
+# include("$dir/src/main.jl")
+# include("$dir/../LuminescentVisualization.jl/src/main.jl")
+# include("$dir/scripts/startup.jl")
 
 # loads design layout
 @load "$(@__DIR__)/layout.bson" base signals ports designs
@@ -19,7 +19,7 @@ include("$dir/scripts/startup.jl")
 
 # training params"
 F = Float32
-dogpu = false
+dogpu = true
 name = "inverse_design_signal_splitter"
 nbasis = 5 # complexity of design region
 contrast = 10.0
@@ -78,8 +78,8 @@ dx, dt, T1, T2, T = F.((dx, dt, T1, T2, T))
 if dogpu
     using CUDA, Flux
     @assert CUDA.functional()
-    u0, model, base, μ, σ, σm, t, field_padding, source_instances =
-        gpu.((u0, model, base, μ, σ, σm, t, field_padding, source_instances))
+    u0, model, base, μ, σ, σm, field_padding, source_instances =
+        gpu.((u0, model, base, μ, σ, σm, field_padding, source_instances))
 end
 
 function make_geometry(model, base, μ, σ, σm)

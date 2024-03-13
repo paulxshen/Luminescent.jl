@@ -229,29 +229,35 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothi
     end
     geometry_padding = NamedTuple(geometry_padding)
     field_padding = NamedTuple(field_padding)
-    println(
-        """
-        ====
-        FDTD configs
-        
-        dx: $(dx|>d2) wavelengths
-        dt: $(dt|>d2) periods
-        Courant number: $Courant
-        Fields: [[Ex, Ey, Ez], [Hx, Hy, Hz]]
-        Original array size of all fields: $sz
-        Padded field array sizes:
-        $sizes
-        Boundaries:
-        $(join("- ".*string.(db),"\n"))
-        Sources:
-        $(join("- ".*string.(sources),"\n"))
-        Monitors:
-        $(join("- ".*string.(monitors),"\n"))
+    #    verbose &&
+    @info """
+ ====
+ FDTD configs
+ 
+ Lengths in characterstic wavelengths, times in characterstic periods, unless otherwise specified
 
-        $footer
-        ====
-        """
-    )
+ dx: $(dx|>d2) 
+ dt: $(dt|>d2) 
+ Courant number: $Courant
+
+ Fields: [[Ex, Ey, Ez], [Hx, Hy, Hz]]
+ Original array size of all fields in pixels: $sz
+ Padded field array sizes in pixels:
+ $sizes
+ 
+ Boundaries:
+ $(join("- ".*string.(db),"\n"))
+ 
+ Sources:
+ $(join("- ".*string.(sources),"\n"))
+ 
+ Monitors:
+ $(join("- ".*string.(monitors),"\n"))
+ 
+ $footer
+ ====
+ """
+
     (; μ, σ, σm, ϵ,
         geometry_padding, field_padding, geometry_staggering,
         source_instances, monitor_instances,
