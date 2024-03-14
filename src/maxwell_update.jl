@@ -1,15 +1,3 @@
-function mark(p; kw...)
-    [mark(p[k], kw[k]) for k = keys(kw)]
-end
-function mark(v, a)
-    l = sum(v) do p
-        p.l
-    end
-    r = sum(v) do p
-        p.r
-    end
-    PaddedArray(a, l, r)
-end
 
 """
     function maxwell_update!(u, p, t, field_padding, source_instances)
@@ -19,9 +7,11 @@ Updates fields for 3d. Please use `maxwell_update` instead of `maxwell_update!` 
 """
 function maxwell_update!(u1, u, p, t, dx, dt, field_padding, source_instances)
     ∇ = StaggeredDel([dx, dx, dx])
-    ϵ, μ, σ, σm = p
-    E, H = u
-    E1, H1 = u1
+    @unpack ϵ, μ, σ, σm = p
+    # ϵ, μ, σ, σm = p |> values
+    @unpack E, H = u
+    E1 = u1[:E]
+    H1 = u1[:H]
     # J = apply(source_instances, t; Jx=zeros(F, size(E[1])), Jy=zeros(F, size(E[2])), Jz=zeros(F, size(E[3])))
     J = apply(source_instances, t; Jx=0, Jy=0, Jz=0)
 
@@ -35,7 +25,7 @@ function maxwell_update!(u1, u, p, t, dx, dt, field_padding, source_instances)
     end
     Ex, Ey, Ez = E1
     apply!(field_padding; Ex, Ey, Ez)
-    H = collect.(H)
+    H = unmark(; H...)
 
     # then update H
     E = mark(field_padding; Ex, Ey, Ez)
@@ -46,51 +36,13 @@ function maxwell_update!(u1, u, p, t, dx, dt, field_padding, source_instances)
     end
     Hx, Hy, Hz = H1
     apply!(field_padding; Hx, Hy, Hz)
-    E = collect.(E)
+    E = unmark(; E...)
 
     [E, H]
     # u1
 end
 maxwell_update!(u, p, t, dx, dt, field_padding, source_instances) = maxwell_update!(u, u, p, t, dx, dt, field_padding, source_instances)
 
-# function maxwell_update!(u, p, t, dx, dt, field_padding, source_instances)
-#     ∇ = StaggeredDel([dx, dx, dx])
-#     ϵ, μ, σ, σm = p
-#     E, H = u
-#     J = apply(source_instances, t; Jx=0, Jy=0, Jz=0)
-
-#     # first update E
-#     Hx, Hy, Hz = H
-#     H = mark(field_padding; Hx, Hy, Hz)
-#     dEdt = (∇ × H - σ * E - J) / ϵ
-
-#     E_ = bufferfrom.(E)
-#     for i = 1:3
-#         E_[i][:, :, :] = E[i] + dEdt[i] * dt
-#     end
-#     Ex, Ey, Ez = [copy(E_[1]), copy(E_[2]), copy(E_[3])]
-#     # E .= E + dEdt * dt
-
-#     apply!(field_padding; Ex, Ey, Ez)
-#     H = collect.(H)
-
-#     # then update H
-#     E = mark(field_padding; Ex, Ey, Ez)
-#     dHdt = -(∇ × E .+ σm * H) / μ
-
-#     H_ = bufferfrom.(H)
-#     for i = 1:3
-#         H_[i][:, :, :] = H[i] + dHdt[i] * dt
-#     end
-#     Hx, Hy, Hz = [copy(H_[1]), copy(H_[2]), copy(H_[3])]
-#     # H .= H + dHdt * dt
-
-#     apply!(field_padding; Hx, Hy, Hz)
-#     H = [Hx, Hy, Hz]
-#     E = collect.(E)
-
-#     [E, H]
-# end
 """
     function maxwell_update(u, p, t, field_padding, source_instances)
 
@@ -98,41 +50,48 @@ Updates fields for 3d in a manner amenable to AD. See also Mutating `maxwell_upd
 """
 function maxwell_update(u, p, t, dx, dt, field_padding, source_instances; ignore_boundary_autodiff=false)
     ∇ = StaggeredDel([dx, dx, dx])
-    ϵ, μ, σ, σm = p
-    E, H = u
+    @unpack ϵ, μ, σ, σm = p
+    @unpack E, H = u
     J = apply(source_instances, t; Jx=0, Jy=0, Jz=0)
 
     # first update E
-    Hx, Hy, Hz = H
-    H = mark(field_padding; Hx, Hy, Hz)
+    # H = mark(field_padding; H...)
+    H = mark(field_padding, H)
+    # @info typeof(E)
     dEdt = (∇ × H - σ * E - J) / ϵ
-    Ex, Ey, Ez = E + dEdt * dt
+    # @info typeof(dEdt)
+    E = E + dEdt * dt
 
-    if ignore_boundary_autodiff
-        ignore_derivatives() do
-            apply!(field_padding; Ex, Ey, Ez)
-        end
-    else
-        Ex, Ey, Ez = apply(field_padding; Ex, Ey, Ez)
-    end
-    H = collect.(H)
+    # Ex, Ey, Ez = E
+    # E = apply(field_padding; Ex, Ey, Ez)
+    # Hx, Hy, Hz = H
+    # H = unmark(; Hx, Hy, Hz)
+
+    # E = apply(field_padding; E...)
+    # H = unmark(; H...)
+    E = apply(field_padding, E)
+    H = unmark(H)
 
     # then update H
-    E = mark(field_padding; Ex, Ey, Ez)
+    # E = mark(field_padding; Ex, Ey, Ez)
+    E = mark(field_padding, E)
     dHdt = -(∇ × E .+ σm * H) / μ
-    Hx, Hy, Hz = H + dHdt * dt
+    H = H + dHdt * dt
 
-    if ignore_boundary_autodiff
-        ignore_derivatives() do
-            apply!(field_padding; Hx, Hy, Hz)
-        end
-    else
-        Hx, Hy, Hz = apply(field_padding; Hx, Hy, Hz)
-    end
-    H = [Hx, Hy, Hz]
-    E = collect.(E)
+    # Ex, Ey, Ez = E
+    # Ex, Ey, Ez = unmark(; Ex, Ey, Ez)
+    # E = (; Ex, Ey, Ez)
+    # Hx, Hy, Hz = H
+    # H = apply(field_padding; Hx, Hy, Hz)
 
-    [E, H]
+    # H = apply(field_padding; H...)
+    # E = unmark(; E...)
+    H = apply(field_padding, H)
+    E = unmark(E)
+
+    # [E, H]
+    MyDict([:E => E, :H => H])
+    # (; E, H)
 end
 maxwell_update! = maxwell_update!
 # Flux.trainable(m::PaddedArray) = (; a=m.a)

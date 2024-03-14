@@ -181,8 +181,14 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothi
     if d == 1
         pf = u -> [u[1] .* u[2]]
     elseif d == 3
-        u0 = [u[1:3], u[4:6]]
+        u0 = MyDict([
+            :E => MyDict([k => zeros(F, Tuple(sizes[k])) for k = (:Ex, :Ey, :Ez)]),
+            :H => MyDict([k => zeros(F, Tuple(sizes[k])) for k = (:Hx, :Hy, :Hz)]),])
+        # u0 = [u[1:3], u[4:6]]
     else
+        u0 = MyDict([
+            :E => MyDict([k => zeros(F, Tuple(sizes[k])) for k = (:Ex, :Ey)]),
+            :H => MyDict([k => zeros(F, Tuple(sizes[k])) for k = (:Hz,)]),])
         if polarization == :TMz
             u -> [-u[1] .* u[3], u[2] .* u[1]]
         else

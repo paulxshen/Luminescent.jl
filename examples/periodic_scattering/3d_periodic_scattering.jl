@@ -3,14 +3,15 @@ simulation of plane wave scattering on periodic array of dielectric spheres
 """
 
 using UnPack, LinearAlgebra, GLMakie
-using Luminescent, LuminescentVisualization
+# using Luminescent, LuminescentVisualization
 
-# dir = pwd()
-# include("$(dir)/src/main.jl")
-# include("$(dir)/scripts/startup.jl")
-# include("$dir/../LuminescentVisualization.jl/src/main.jl")
+dir = pwd()
+include("$(dir)/src/main.jl")
+include("$(dir)/scripts/startup.jl")
+include("$dir/../LuminescentVisualization.jl/src/main.jl")
 
-dogpu = true
+dogpu = false
+F = Float32
 name = "periodic_scattering"
 T = 10 # simulation duration in [periods]
 nx = 20
@@ -42,8 +43,8 @@ monitors = [
 configs = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
 @unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 
-ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_staggering; ϵ, μ, σ, σm)
+p = apply(geometry_padding; ϵ, μ, σ, σm)
+p = apply(geometry_staggering; p...)
 
 # move to gpu
 if dogpu
@@ -54,7 +55,8 @@ end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    maxwell_update(u, p, t, dx, dt, field_padding, source_instances)
+    # maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
 v = [power_flux.((m,), u) for m = monitor_instances]
 
@@ -64,10 +66,8 @@ if dogpu
 end
 
 # make movie, 
-Ez = map(u) do u
-    u[1][3]
-end
-ϵEz = p[1][3]
+Ez = field.(u, :Ez)
+ϵEz = p[:ϵ][3]
 dir = @__DIR__
 recordsim("$dir/$(name).mp4", Ez, v;
     dt,

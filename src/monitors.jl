@@ -113,8 +113,9 @@ end
 
 function field(u, k)
     if k in keys(fij)
-        i, j = fij[k]
-        u[i][j]
+        u[k[1]][k]
+        # i, j = fij[k]
+        # u[i][j]
     elseif k == "|E|2"
         sum(u[1]) do a
             a .^ 2
@@ -181,12 +182,9 @@ end
  power_flux density (avg Poynting flux) passing thru monitor 
 """
 function power_flux_density(m::OrthogonalMonitorInstance, u)
-    E = [u[1][i][m.fi[k]...] for (i, k) = enumerate([:Ex, :Ey, :Ez])]
-    H = [u[2][i][m.fi[k]...] for (i, k) = enumerate([:Hx, :Hy, :Hz])]
-
-    # E = getindex.(u[1], Ref.(m.i)...)
-    # H = getindex.(u[2], Ref.(m.i)...)
-    # E, H = u
+    d = ndims(m)
+    E = [u[:E][k][m.fi[k]...] for k = keys(u[:E])]
+    H = [u[:H][k][m.fi[k]...] for k = keys(u[:H])]
 
     r = mean(sum((E × H) .* m.n))
     r

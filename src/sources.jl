@@ -156,11 +156,11 @@ function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
                 kw[k] .+ sum(a)
             end
         end
-        for k = keys(kw)
+        for k = _keys(kw)
         # end for (k, a) = pairs(kw)
     ]
 end
 
 # function apply(d,t; kw...)
-#     [apply(d[k], kw[k]) for k = keys(kw)]
+#     [apply(d[k], kw[k]) for k = _keys(kw)]
 # end

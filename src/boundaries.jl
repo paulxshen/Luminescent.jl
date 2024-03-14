@@ -92,7 +92,8 @@ function apply(p::AbstractVector{<:InPad}, a::AbstractArray)
     end
 
     a_ = Buffer(a)
-    a_ .= a
+    # a_ .= a
+    a_[axes(a)...] = a
     for p = p
         @unpack l, r, b, m = p
         if isnothing(m)

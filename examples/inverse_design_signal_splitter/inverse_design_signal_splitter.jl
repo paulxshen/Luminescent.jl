@@ -5,13 +5,13 @@ using Zygote: withgradient, Buffer
 using BSON: @save, @load
 using Optim: Options, minimizer
 using AbbreviatedStackTraces
-using Jello, Luminescent, LuminescentVisualization
+# using Jello, Luminescent, LuminescentVisualization
 Random.seed!(1)
 
-# dir = pwd()
-# include("$dir/src/main.jl")
-# include("$dir/../LuminescentVisualization.jl/src/main.jl")
-# include("$dir/scripts/startup.jl")
+dir = pwd()
+include("$dir/src/main.jl")
+include("$dir/../LuminescentVisualization.jl/src/main.jl")
+include("$dir/scripts/startup.jl")
 
 # loads design layout
 @load "$(@__DIR__)/layout.bson" base signals ports designs
@@ -19,7 +19,7 @@ Random.seed!(1)
 
 # training params"
 F = Float32
-dogpu = true
+dogpu = false
 name = "inverse_design_signal_splitter"
 nbasis = 5 # complexity of design region
 contrast = 10.0
@@ -29,6 +29,8 @@ rmin = nothing
 T1 = Δ1 = 1 + norm(ports[1].c - ports[2].c) / λ * sqrt(ϵwg) # simulation duration in [periods] for signal to reach output ports
 Δ2 = 1 # duration to record power at output ports
 T2 = T = T1 + Δ2
+T1 = 0.1
+T2 = 0.2
 ϵmin = ϵclad
 hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
 
@@ -88,8 +90,8 @@ function make_geometry(model, base, μ, σ, σm)
     place!(base_, model(), round.(Int, designs[1].o / λ / dx) .+ 1)
 
     ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵwg, ϵclad])
-    ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
-    p = apply(geometry_staggering; ϵ, μ, σ, σm)
+    p = apply(geometry_padding; ϵ, μ, σ, σm)
+    p = apply(geometry_staggering, p)
 end
 
 function metrics(model, ; T1=T1, T2=T2, autodiff=true)
@@ -116,7 +118,7 @@ function loss(v)
 end
 
 p0 = make_geometry(model0, base, μ, σ, σm)
-volume(cpu(p0[1][2]))
+# volume(cpu(p0[1][2]))
 # error()
 
 # gradient free optimization "Optim functions
