@@ -15,10 +15,3 @@ end
 
 _getindex(x::Real, a...) = x
 _getindex(x, a...) = x[a...]
-function apply(v::AbstractVector{<:AbstractVector}, a)
-    [getindex(a, i...) for i = v]
-end
-# function apply(v::AbstractVector{Vector{<:AbstractRange}}, a::Real)
-function apply(v::AbstractVector{<:AbstractVector}, a::Real)
-    a
-end

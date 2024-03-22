@@ -4,15 +4,16 @@ using BSON: @save, @load
 ϵ1 = 2.25
 ϵ2 = 12.25
 ϵsub = ϵclad = 2.25
-ϵwg = 12.25
+ϵcore = 12.25
 wwg = 0.5
 hwg = 0.25
-hsub = hclad = lm = 0.25
-w = wwg + 2lm
+hsub = hclad = lm = hm = 0.25
+wm = 0.5
+w = wwg + 2wm
 h = hwg + 2lm
 dx = 0.05
-lb = [-w / 2, -lm]
-ub = [w / 2, hwg + lm]
+lb = [-w / 2, -hm]
+ub = [w / 2, hwg + hm]
 function (ε::εtype)(x, y)
 
     if (lm <= x <= w - lm) && (lm <= y <= h - lm)
@@ -35,6 +36,6 @@ function main()
 
 end
 modes_ = main()
-modes = [NamedTuple([k => getfield(m, k)' for k = [:neff, :Ex, :Ey, :Ez, :Hx, :Hy, :Hz]]) for m = modes_]
-@save "$(@__DIR__)/modes.bson" modes λ dx ub lb hsub hwg wwg hclad ϵsub ϵclad ϵwg h w
+modes = [NamedTuple([k => transpose(getfield(m, k),) for k = [:neff, :Ex, :Ey, :Ez, :Hx, :Hy, :Hz]]) for m = modes_]
+@save "$(@__DIR__)/modes.bson" modes λ dx ub lb hsub hwg wwg hclad ϵsub ϵclad ϵcore h w
 plot_mode_fields(modes_[1])

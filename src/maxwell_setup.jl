@@ -4,13 +4,15 @@
 Args
 ...
 - L: vector of lengths in wavelengths of simulation domain
-- polarization: only applies to 2d which can be :TMz (Ez, Hx, Hy) or :TEz (Hz, Ex, Ey)
+- polarization: only applies to 2d which can be :TM (Ez, Hx, Hy) or :TE (Hz, Ex, Ey)
 """
-function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothing;
+function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
     ϵ=1, μ=1, σ=0, σm=0, F=Float32,
     ϵmin=1,
+    # Courant=0.5,
     Courant=F(0.8√(ϵmin / length(sz))),# Courant number)
     kw...)
+    dx = F(dx)
 
     a = ones(F, sz)
     # if isa(μ,Number+)
@@ -22,9 +24,9 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothi
     if d == 1
         fk = (:Ez, :Hy)
     elseif d == 2
-        if polarization == :TMz
+        if polarization == :TM
             fk = (:Ez, :Hx, :Hy)
-        elseif polarization == :TEz
+        elseif polarization == :TE
             fk = (:Ex, :Ey, :Hz)
         end
     else
@@ -152,13 +154,12 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothi
             end
         end
     end
-    if d == 3
-        p = OutPad(:replicate, ones(Int, d), ones(Int, d))
-        push!(geometry_padding[:μ], p)
-        push!(geometry_padding[:σm], p)
-        push!(geometry_padding[:σ], p)
-        push!(geometry_padding[:ϵ], p)
-    end
+
+    p = OutPad(:replicate, ones(Int, d), ones(Int, d))
+    push!(geometry_padding[:μ], p)
+    push!(geometry_padding[:σm], p)
+    push!(geometry_padding[:σ], p)
+    push!(geometry_padding[:ϵ], p)
 
     for (k, v) = pairs(field_padding)
         for p = v
@@ -169,42 +170,57 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothi
         end
     end
 
-    fl[:Jx] = fl[:Ex]
-    fl[:Jy] = fl[:Ey]
-    fl[:Jz] = fl[:Ez]
-    sizes[:Jx] = sizes[:Ex]
-    sizes[:Jy] = sizes[:Ey]
-    sizes[:Jz] = sizes[:Ez]
+    if d == 3
+        fl[:Jx] = fl[:Ex]
+        fl[:Jy] = fl[:Ey]
+        fl[:Jz] = fl[:Ez]
+        sizes[:Jx] = sizes[:Ex]
+        sizes[:Jy] = sizes[:Ey]
+        sizes[:Jz] = sizes[:Ez]
+    elseif d == 2
+        fl[:Jx] = fl[:Ex]
+        fl[:Jy] = fl[:Ey]
+        sizes[:Jx] = sizes[:Ex]
+        sizes[:Jy] = sizes[:Ey]
+    end
+
     sizes = NamedTuple([k => Tuple(sizes[k]) for (k) = keys(sizes)])
     fields = NamedTuple([k => zeros(F, Tuple(sizes[k])) for (k) = fk])
-    u = collect(values(fields))
     if d == 1
         pf = u -> [u[1] .* u[2]]
     elseif d == 3
-        u0 = MyDict([
-            :E => MyDict([k => zeros(F, Tuple(sizes[k])) for k = (:Ex, :Ey, :Ez)]),
-            :H => MyDict([k => zeros(F, Tuple(sizes[k])) for k = (:Hx, :Hy, :Hz)]),])
+        u0 = dict([
+            :E => dict([k => zeros(F, Tuple(sizes[k])) for k = (:Ex, :Ey, :Ez)]),
+            :H => dict([k => zeros(F, Tuple(sizes[k])) for k = (:Hx, :Hy, :Hz)]),
+            :J => dict([k => zeros(F, Tuple(sizes[k])) for k = (:Jx, :Jy, :Jz)]),
+        ])
         # u0 = [u[1:3], u[4:6]]
     else
-        u0 = MyDict([
-            :E => MyDict([k => zeros(F, Tuple(sizes[k])) for k = (:Ex, :Ey)]),
-            :H => MyDict([k => zeros(F, Tuple(sizes[k])) for k = (:Hz,)]),])
-        if polarization == :TMz
+        if polarization == :TM
             u -> [-u[1] .* u[3], u[2] .* u[1]]
         else
-            pf = u -> [u[1] .* u[3], -u[2] .* u[1]]
+            u0 = dict([
+                :E => dict([k => zeros(F, Tuple(sizes[k])) for k = (:Ex, :Ey)]),
+                :H => dict([k => zeros(F, Tuple(sizes[k])) for k = (:Hz,)]),
+                :J => dict([k => zeros(F, Tuple(sizes[k])) for k = (:Jx, :Jy)]),
+            ])
         end
     end
-    geometry_staggering = Dict{Symbol,Vector{Vector{UnitRange{Int64}}}}()
+
+    geometry_staggering = Dict{Symbol,Any}()
     geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padding[k]) do p
         p.l + p.r
     end for k = keys(geometry_padding)])
-    geometry_staggering[:μ] = geometry_staggering[:σm] =
-        [[ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:μ]), flb[k], frb[k])]
-         for k = [:Hx, :Hy, :Hz]]
-    geometry_staggering[:ϵ] = geometry_staggering[:σ] =
-        [[ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:ϵ]), flb[k], frb[k])]
-         for k = [:Ex, :Ey, :Ez]]
+
+    geometry_staggering[:μ] =
+        dict([Symbol("μ$k") => [ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:μ]), flb[k], frb[k])] for k = keys(u0[:H])])
+    geometry_staggering[:σm] =
+        dict([Symbol("σm$k") => [ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:μ]), flb[k], frb[k])] for k = keys(u0[:H])])
+    geometry_staggering[:ϵ] =
+        dict([Symbol("ϵ$k") => [ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:ϵ]), flb[k], frb[k])] for k = keys(u0[:E])])
+    geometry_staggering[:σ] =
+        dict([Symbol("σ$k") => [ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:ϵ]), flb[k], frb[k])] for k = keys(u0[:E])])
+
     source_instances = SourceInstance.(sources, dx, (sizes,), (lc,), (fl,), (sz,); F)
     monitor_instances = MonitorInstance.(monitors, dx, (lc,), (flb,), (fl,); F)
     roi = MonitorInstance(Monitor(zeros(d), zeros(d), dx * sz), dx, lc, flb, fl; F)
@@ -244,9 +260,8 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=nothi
 
  dx: $(dx|>d2) 
  dt: $(dt|>d2) 
- Courant number: $Courant
+ Courant number: $(Courant|>d2)
 
- Fields: [[Ex, Ey, Ez], [Hx, Hy, Hz]]
  Original array size of all fields in pixels: $sz
  Padded field array sizes in pixels:
  $sizes

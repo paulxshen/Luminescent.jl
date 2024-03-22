@@ -55,10 +55,9 @@ end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    maxwell_update(u, p, t, dx, dt, field_padding, source_instances)
-    # maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-v = [power_flux.((m,), u) for m = monitor_instances]
+v = [power_flux.(u, (m,),) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
@@ -66,8 +65,8 @@ if dogpu
 end
 
 # make movie, 
-Ez = field.(u, :Ez)
-ϵEz = p[:ϵ][3]
+Ez = get.(u, :Ez)
+ϵEz = get(p, :ϵEz)
 dir = @__DIR__
 recordsim("$dir/$(name).mp4", Ez, v;
     dt,

@@ -1,5 +1,7 @@
 # Home
- Currently Prerelease. First stable release planned for mid March. Until then, accuracy not validated. Report bugs on [Github](https://github.com/paulxshen/Luminescent.jl) - we usually respond within a day
+3/19 update: inverse design examples getting reworked - check back in a week
+
+ Currently Prerelease. First stable release planned for late March. Until then, accuracy not validated. Report bugs on [Github](https://github.com/paulxshen/Luminescent.jl) - we usually respond within a day
 ## Overview
 Generative design meets Maxwell's Equations. Differentiable FDTD package for inverse design & topology optimization in semiconductor photonics, acoustics and RF. GPU and automatic differentiation (AD) compatible. Uses AD by `Zygote.jl` for adjoint optimization. Integrates with [`Jello.jl`](https://github.com/paulxshen/Jello.jl) to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources. Customizable physics to potentially incorporate dynamics like heat transfer, charge transport.
 ## Gallery
@@ -71,7 +73,7 @@ end
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
     maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-v = [power_flux.((m,), u) for m = monitor_instances]
+v = [power_flux.(u,(m,), ) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu

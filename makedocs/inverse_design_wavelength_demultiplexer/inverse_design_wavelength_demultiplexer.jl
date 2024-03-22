@@ -22,17 +22,17 @@ nbasis = 6 # complexity of design region
 
 # loads design layout
 @load "$(@__DIR__)/layout.bson" base signals ports designs
-@load "$(@__DIR__)/modes.bson" λ1 λ2 modes1 modes2 lb ub dx hsub wwg hwg hclad ϵsub ϵclad ϵwg
+@load "$(@__DIR__)/modes.bson" λ1 λ2 modes1 modes2 lb ub dx hsub wwg hwg hclad ϵsub ϵclad ϵcore
 λ = λ1 # wavelength [um]
 f2 = λ1 / λ2
-T1 = 1 + norm(ports[1].c - ports[2].c) / λ * sqrt(ϵwg) # simulation duration in [periods]
+T1 = 1 + norm(ports[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods]
 T2 = 1 / (2(f2 - 1))
 ϵmin = ϵclad
 hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
 
 base = F.(base)
-ϵsub, ϵwg, ϵclad = F.((ϵsub, ϵwg, ϵclad))
-ϵdummy = sandwich(base, round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵwg, ϵclad])
+ϵsub, ϵcore, ϵclad = F.((ϵsub, ϵcore, ϵclad))
+ϵdummy = sandwich(base, round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
 sz0 = size(ϵdummy)
 
 # "geometry generator model
@@ -89,7 +89,7 @@ function make_geometry(model, base, μ, σ, σm)
     base_[:, :] = base
     place!(base_, model(), round.(Int, designs[1].o / λ / dx) .+ 1)
 
-    ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵwg, ϵclad])
+    ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
     ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
     p = apply(geometry_staggering; ϵ, μ, σ, σm)
 end
@@ -166,7 +166,7 @@ function runsave(x)
     end
 
     f = :Ey
-    Ey = field.(u, f)
+    Ey = get.(u, f)
     ϵEy = p[1][2]
     # error()
     recordsim("$(@__DIR__)/$(name).mp4", Ey, ;

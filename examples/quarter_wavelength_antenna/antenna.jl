@@ -10,7 +10,8 @@ using Luminescent, LuminescentVisualization
 # include("$dir/../LuminescentVisualization.jl/src/main.jl")
 
 name = "quarter_wavelength_antenna"
-dogpu = true
+F = Float32
+dogpu = false
 T = 8.0 # simulation duration in [periods]
 nx = 20
 dx = 1.0 / nx # pixel resolution in [wavelengths]
@@ -28,11 +29,11 @@ sources = [
     Source(t -> cos(2π * t), [l / 2, l / 2, 0.125], [0, 0, 0.25]; Jz=1),
 ]
 
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz0; T)
+configs = maxwell_setup(boundaries, sources, monitors, dx, sz0; F,)
 @unpack μ, σ, σm, ϵ, dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 
-ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_staggering; ϵ, μ, σ, σm)
+p = apply(geometry_padding; ϵ, μ, σ, σm)
+p = apply(geometry_staggering, p)
 
 # move to gpu
 if dogpu
@@ -45,7 +46,7 @@ end
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
     maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-y = [power_flux.((m,), u) for m = monitor_instances]
+y = [power_flux.(u, (m,),) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
@@ -53,10 +54,8 @@ if dogpu
 end
 
 # make movie, 
-Ez = map(u) do u
-    u[1][3]
-end
-ϵEz = p[1][3]
+Ez = get.(u, :Ez)
+ϵEz = get(p, :ϵEz)
 dir = @__DIR__
 recordsim("$dir/$(name).mp4", Ez, y;
     dt,

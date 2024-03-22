@@ -40,7 +40,7 @@ model = Blob(design_dims, 0.2f0 / dx)
 if train
 end
 # heatmap(base)
-polarization = :TMz
+polarization = :TM
 ϵ1 = 2.25f0
 ϵ2 = 12.25f0
 b = place(base, model(), design_start)

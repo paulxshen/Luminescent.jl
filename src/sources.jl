@@ -85,7 +85,7 @@ struct SourceInstance
     c
     label
 end
-@functor SourceInstance
+@functor SourceInstance (g, _g,)
 
 function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0; F=Float32)
     @unpack f, fields, dims, label = s
@@ -144,10 +144,11 @@ function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
 end
 
 # Complex
-function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
-    [
+apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...) = apply(v, t, kw)
+function apply(v::AbstractVector{<:SourceInstance}, t::Real, kw)
+    dict([
         # sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k])
-        begin
+        k => begin
 
             a = [real(s.f(t) .* s._g[k]) for s = v if k in s.k]
             if isempty(a)
@@ -156,11 +157,11 @@ function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
                 kw[k] .+ sum(a)
             end
         end
-        for k = _keys(kw)
+        for k = keys(kw)
         # end for (k, a) = pairs(kw)
-    ]
+    ])
 end
 
 # function apply(d,t; kw...)
-#     [apply(d[k], kw[k]) for k = _keys(kw)]
+#     [apply(d[k], kw[k]) for k = keys(kw)]
 # end

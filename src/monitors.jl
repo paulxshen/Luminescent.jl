@@ -7,6 +7,7 @@ fij = (
     Hy=(2, 2),
     Hz=(2, 3),
 )
+
 struct OrthogonalMonitor
     c
     lb
@@ -71,6 +72,8 @@ struct PointCloudMonitorInstance
     c
     label
 end
+Base.length(m::OrthogonalMonitorInstance) = 1
+Base.length(m::PointCloudMonitorInstance) = 1
 
 function MonitorInstance(m::OrthogonalMonitor, dx, lc, flb, fl; F=Float32)
     @unpack n, = m
@@ -111,29 +114,34 @@ end
 #     a[m.fi[k]...]
 # end
 
-function field(u, k)
-    if k in keys(fij)
-        u[k[1]][k]
-        # i, j = fij[k]
-        # u[i][j]
+function get(u, k)
+    # i, j = fij[k]
+    # u[i][j]
+    if k in keys(u)
+        u[k]
     elseif k == "|E|2"
         sum(u[1]) do a
             a .^ 2
         end
     elseif k == "|E|"
-        sqrt.(field(u, "|E|2"))
+        sqrt.(get(u, "|E|2"))
     elseif k == "|H|2"
         sum(u[2]) do a
             a .^ 2
         end
     elseif k == "|H|"
-        sqrt.(field(u, "|H|2"))
+        sqrt.(get(u, "|H|2"))
+    else
+        u[k[1]][k]
     end
+    # error("invalid field")
 end
+# if k in keys(u)
+#     u[k]
 
 """
-    function field(u, k)
-    function field(u, k, m)
+    function get(u, k)
+    function get(u, k, m)
 
 queries field, optionally at monitor instance `m`
 
@@ -142,35 +150,38 @@ Args
 - `k`: symbol or str of Ex, Ey, Ez, Hx, Hy, Hz, |E|, |E|2, |H|, |H|2
 - `m`
 """
-function field(u, k, m::OrthogonalMonitorInstance,)
-    if k in keys(fij)
-        i, j = fij[k]
-        return u[i][j][m.fi[k]...]
+function get(u, k, m::OrthogonalMonitorInstance,)
+    r = _get(u, k, m)
+    if isnothing(r)
+        return get(u, k)[m.fi[k]...]
     end
-    field(u, k, m)
+    r
+    # get(u, k, m)
 end
-function field(u, k, m::PointCloudMonitorInstance,)
-    if k in keys(fij)
-        i, j = fij[k]
-        return [u[i][j][v...] for v = eachcol(m.fi[k])]
+function get(u, k, m::PointCloudMonitorInstance,)
+    r = _get(u, k, m)
+    if isnothing(r)
+        return [get(u, k)[v...] for v = eachcol(m.fi[k])]
     end
-    field(u, k, m)
+    r
 end
-function field(u, k, m,)
+function _get(u, k, m,)
     if k == "|E|2"
-        sum(field.(u, (:Ex, :Ey, :Ez), (m,))) do a
+        sum(get.(u, (:Ex, :Ey, :Ez), (m,))) do a
             a .^ 2
         end
     elseif k == "|E|"
-        sqrt.(field(u, "|E|2", m))
+        sqrt.(get(u, "|E|2", m))
     elseif k == "|H|2"
-        sum(field.(u, (:Hx, :Hy, :Hz), (m,))) do a
+        sum(get.(u, (:Hx, :Hy, :Hz), (m,))) do a
             a .^ 2
         end
     elseif k == "|H|"
-        sqrt.(field(u, "|H|2", m))
+        sqrt.(get(u, "|H|2", m))
     end
 end
+
+# get
 # Base.getindex(a::Union{AbstractArray,GPUArraysCore.AbstractGPUArray}, m::MonitorInstance) = a[m.i...]
 # Base.getindex(a::GPUArraysCore.AbstractGPUArray, m::MonitorInstance) = a[m.i...]
 # Base.getindex(a, m::MonitorInstance, k) = a[m.fi[k]...]
@@ -181,7 +192,7 @@ end
 
  power_flux density (avg Poynting flux) passing thru monitor 
 """
-function power_flux_density(m::OrthogonalMonitorInstance, u)
+function power_flux_density(u, m::OrthogonalMonitorInstance)
     d = ndims(m)
     E = [u[:E][k][m.fi[k]...] for k = keys(u[:E])]
     H = [u[:H][k][m.fi[k]...] for k = keys(u[:H])]
@@ -195,9 +206,9 @@ end
 
 total power_flux (Poynting flux) passing thru monitor surface
 """
-function power_flux(m::OrthogonalMonitorInstance, u)
-    @assert ndims(m) == 2
-    m.v * power_flux_density(m, u)
+function power_flux(u, m::OrthogonalMonitorInstance)
+    # @assert ndims(m) == 2
+    m.v * power_flux_density(u, m)
 end
 # power_flux(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.i)))]) .* m.n))
 
