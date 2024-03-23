@@ -1,3 +1,9 @@
+° = π / 180
+gaussian(x; μ=0, σ=1) = exp(-((x - μ) / σ)^2)
+
+(m::Number)(a...) = m
+d2(x) = round.(x, sigdigits=2)
+
 function place(a, b, o; lazy=false)
     a + pad(b, 0, Tuple(o) .- 1, size(a) .- size(b) .- Tuple(o) .+ 1)
     # place!(buf, b, o)

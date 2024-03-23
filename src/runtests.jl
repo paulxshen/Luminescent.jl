@@ -6,7 +6,7 @@ using DifferentialEquations, OrdinaryDiffEq, ComponentArrays, UnPack, LinearAlge
 using Images
 include("startup.jl")
 include("../Porcupine.jl/src/del.jl")
-include("../Jello.jl/src/mask.jl")
+include("../Jello.jl/src/Base.jl")
 F = Float32
 include("utils.jl")
 include("maxwell_maxwell_setup.jl")
@@ -16,8 +16,8 @@ Random.seed!(1)
 
 train = true
 train = false
-@load "waveguide_bend.bson" base design_start design_dims dx
-# heatmap(base)
+@load "waveguide_bend.bson" mask design_start design_dims dx
+# heatmap(mask)
 T = 5.0f0
 tspan = (0.0f0, T)
 microns_dx = dx
@@ -26,7 +26,7 @@ dt = dx / 2
 saveat = 1 / 16.0f0
 solver = Euler()
 
-L = size(base) .* microns_dx
+L = size(mask) .* microns_dx
 
 λ = 1.28f0
 L = L ./ λ
@@ -35,15 +35,15 @@ lc = (57.5f0 / 108) * l
 dims = round.(Int, L ./ dx)
 design_dims = round.(Int, design_dims .* microns_dx ./ λ ./ dx)
 design_start = 1 .+ round.(Int, (design_start .- 1) .* microns_dx ./ λ ./ dx)
-base = imresize(base, dims)
+mask = imresize(mask, dims)
 model = Blob(design_dims, 0.2f0 / dx)
 if train
 end
-# heatmap(base)
+# heatmap(mask)
 polarization = :TM
 ϵ1 = 2.25f0
 ϵ2 = 12.25f0
-b = place(base, model(), design_start)
+b = place(mask, model(), design_start)
 ϵ = ϵ2 * b + ϵ1 * (1 .- b)
 # extrema(ϵ)
 
@@ -88,7 +88,7 @@ tstops = range(tspan..., length=8 + 1)
 callback = train ? nothing : PresetTimeCallback(tstops, plotstep)
 prob_neuralode = ODEProblem(dudt, u0, tspan, p,)
 function loss(model; withsol=false)
-    b = place(base, model(), design_start)
+    b = place(mask, model(), design_start)
     ϵ = ϵ2 * b + ϵ1 * (1 .- b)
     geometry = (; ϵ, static_geometry...)
     geometry = apply(geometry_padding, geometry)
@@ -109,9 +109,9 @@ function loss(model; withsol=false)
     )
 
     t = (round(Int, (T - 1) / saveat):round(Int, T / saveat)) .+ 1
-    res = get(Array(sol), monitor_configs[2], t)
+    res = field(Array(sol), monitor_configs[2], t)
     # t = T-1:dt:T
-    # res = get(sol, monitor_configs, t)
+    # res = field(sol, monitor_configs, t)
 
     l = 1mean(res.Ez .* res.Hx)
 
@@ -150,7 +150,7 @@ t = range(0, T, length=size(sol, 2))
 fig = Figure()
 for i = 1:2
     ax = Axis(fig[i, 1], title="")
-    m = get(sol, monitor_configs[i], :)
+    m = field(sol, monitor_configs[i], :)
     E, H = if i == 1
         m.Ez, m.Hy
     elseif i == 2

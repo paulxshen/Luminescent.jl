@@ -33,11 +33,11 @@ designs = [
     (; o=[lwg, lwg], L=[ld, wd,],)
 ]
 
-wwg, hwg, lwg, ld, wd, hclad, hsub, l, w, h, lm, wm =
-    round.(Int, [wwg, hwg, lwg, ld, wd, hclad, hsub, l, w, h, lm, wm] ./ dx)
+wwg_, hwg_, lwg_, ld_, wd_, l_, w_, h_, lm_, wm_ =
+    round.(Int, [wwg, hwg, lwg, ld, wd, l, w, h, lm, wm] ./ dx)
 
-base = zeros(Int, l .+ 1, w .+ 1)
-base[1:lwg.+1, (w-wm-wd÷2)-wwg÷2+1:(w-wm-wd÷2)+wwg÷2+1] .= 1
-base[(l-lm-ld÷2)-wwg÷2+1:(l-lm-ld÷2)+wwg÷2+1, 1:lwg.+1,] .= 1
+static_mask = zeros(Int, l_ .+ 1, w_ .+ 1)
+static_mask[1:lwg_.+1, (w_-wm_-wd_÷2)-wwg_÷2+1:(w_-wm_-wd_÷2)+wwg_÷2+1] .= 1
+static_mask[(l-lm_-ld_÷2)-wwg_÷2+1:(l_-lm_-ld_÷2)+wwg_÷2+1, 1:lwg_.+1,] .= 1
 
-@save "$(@__DIR__)/layout.bson" base signals ports designs dx λ ϵsub ϵclad ϵcore hsub hwg hclad
+@save "$(@__DIR__)/layout.bson" static_mask signals ports designs dx λ ϵsub ϵclad ϵcore hsub hwg hclad

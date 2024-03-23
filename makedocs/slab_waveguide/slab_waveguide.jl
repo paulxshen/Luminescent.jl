@@ -83,8 +83,8 @@ if dogpu
 end
 
 # make movie, 
-Ey = get.(u, :Ey)
-ϵEy = get(p, :ϵEy)
+Ey = field.(u, :Ey)
+ϵEy = field(p, :ϵEy)
 # heatmap(ϵEy)
 dir = @__DIR__
 recordsim("$dir/2d_$(name).mp4", Ey, v;
@@ -156,8 +156,8 @@ if dogpu
 end
 
 # make movie, 
-Ey = get.(u, :Ey)
-ϵEy = get.(p, :ϵEy)
+Ey = field.(u, :Ey)
+ϵEy = field.(p, :ϵEy)
 dir = @__DIR__
 recordsim("$dir/3d_$(name).mp4", Ey, v;
     dt,

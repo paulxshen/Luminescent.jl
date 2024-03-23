@@ -5,6 +5,7 @@ simulation of quarter wavelength antenna above conductor ground plane
 using UnPack, LinearAlgebra, GLMakie
 using Luminescent, LuminescentVisualization
 
+# # if running directly without module
 # dir = pwd()
 # include("$(dir)/src/main.jl")
 # include("$dir/../LuminescentVisualization.jl/src/main.jl")
@@ -54,8 +55,8 @@ if dogpu
 end
 
 # make movie, 
-Ez = get.(u, :Ez)
-ϵEz = get(p, :ϵEz)
+Ez = field.(u, :Ez)
+ϵEz = field(p, :ϵEz)
 dir = @__DIR__
 recordsim("$dir/$(name).mp4", Ez, y;
     dt,

@@ -3,7 +3,7 @@
 
  Currently Prerelease. First stable release planned for late March. Until then, accuracy not validated. Report bugs on [Github](https://github.com/paulxshen/Luminescent.jl) - we usually respond within a day
 ## Overview
-Generative design meets Maxwell's Equations. Differentiable FDTD package for inverse design & topology optimization in semiconductor photonics, acoustics and RF. GPU and automatic differentiation (AD) compatible. Uses AD by `Zygote.jl` for adjoint optimization. Integrates with [`Jello.jl`](https://github.com/paulxshen/Jello.jl) to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources. Customizable physics to potentially incorporate dynamics like heat transfer, charge transport.
+Generative design meets Maxwell's Equations. Differentiable FDTD package for inverse design & topology optimization in semiconductor photonics, acoustics and RF. GPU and automatic differentiation (AD) compatible. Uses AD by `Zygote.jl` for adjoint optimization. Integrates with [`Jello.jl`](https://github.com/paulxshen/Jello.jl) to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources in 1d/2d/3d. Customizable physics to potentially incorporate dynamics like heat transfer, charge transport.
 ## Gallery
 ### Generative Inverse design of compact silicon photonics splitter 
 ![](assets/inverse_design_signal_splitter.mp4)
@@ -27,7 +27,8 @@ We do a quick 3d simulation of plane wave scattering on periodic array of dielec
 using UnPack, LinearAlgebra, GLMakie
 using Luminescent, LuminescentVisualization
 
-dogpu = true
+dogpu = false
+F = Float32
 name = "periodic_scattering"
 T = 10 # simulation duration in [periods]
 nx = 20
@@ -59,8 +60,8 @@ monitors = [
 configs = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
 @unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 
-ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_staggering; ϵ, μ, σ, σm)
+p = apply(geometry_padding; ϵ, μ, σ, σm)
+p = apply(geometry_staggering; p...)
 
 # move to gpu
 if dogpu
@@ -73,7 +74,7 @@ end
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
     maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-v = [power_flux.(u,(m,), ) for m = monitor_instances]
+v = [power_flux.(u, (m,),) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
@@ -81,10 +82,8 @@ if dogpu
 end
 
 # make movie, 
-Ez = map(u) do u
-    u[1][3]
-end
-ϵEz = p[1][3]
+Ez = field.(u, :Ez)
+ϵEz = field(p, :ϵEz)
 dir = @__DIR__
 recordsim("$dir/$(name).mp4", Ez, v;
     dt,
@@ -97,4 +96,5 @@ recordsim("$dir/$(name).mp4", Ez, v;
     axis1=(; title="$name"),
     axis2=(; title="monitor powers"),
 )
+
 ```

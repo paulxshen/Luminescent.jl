@@ -114,7 +114,7 @@ end
 #     a[m.fi[k]...]
 # end
 
-function get(u, k)
+function field(u, k)
     # i, j = fij[k]
     # u[i][j]
     if k in keys(u)
@@ -124,13 +124,13 @@ function get(u, k)
             a .^ 2
         end
     elseif k == "|E|"
-        sqrt.(get(u, "|E|2"))
+        sqrt.(field(u, "|E|2"))
     elseif k == "|H|2"
         sum(u[2]) do a
             a .^ 2
         end
     elseif k == "|H|"
-        sqrt.(get(u, "|H|2"))
+        sqrt.(field(u, "|H|2"))
     else
         u[k[1]][k]
     end
@@ -140,8 +140,8 @@ end
 #     u[k]
 
 """
-    function get(u, k)
-    function get(u, k, m)
+    function field(u, k)
+    function field(u, k, m)
 
 queries field, optionally at monitor instance `m`
 
@@ -150,34 +150,34 @@ Args
 - `k`: symbol or str of Ex, Ey, Ez, Hx, Hy, Hz, |E|, |E|2, |H|, |H|2
 - `m`
 """
-function get(u, k, m::OrthogonalMonitorInstance,)
+function field(u, k, m::OrthogonalMonitorInstance,)
     r = _get(u, k, m)
     if isnothing(r)
-        return get(u, k)[m.fi[k]...]
+        return field(u, k)[m.fi[k]...]
     end
     r
-    # get(u, k, m)
+    # field(u, k, m)
 end
-function get(u, k, m::PointCloudMonitorInstance,)
+function field(u, k, m::PointCloudMonitorInstance,)
     r = _get(u, k, m)
     if isnothing(r)
-        return [get(u, k)[v...] for v = eachcol(m.fi[k])]
+        return [field(u, k)[v...] for v = eachcol(m.fi[k])]
     end
     r
 end
 function _get(u, k, m,)
     if k == "|E|2"
-        sum(get.(u, (:Ex, :Ey, :Ez), (m,))) do a
+        sum(field.(u, (:Ex, :Ey, :Ez), (m,))) do a
             a .^ 2
         end
     elseif k == "|E|"
-        sqrt.(get(u, "|E|2", m))
+        sqrt.(field(u, "|E|2", m))
     elseif k == "|H|2"
-        sum(get.(u, (:Hx, :Hy, :Hz), (m,))) do a
+        sum(field.(u, (:Hx, :Hy, :Hz), (m,))) do a
             a .^ 2
         end
     elseif k == "|H|"
-        sqrt.(get(u, "|H|2", m))
+        sqrt.(field(u, "|H|2", m))
     end
 end
 

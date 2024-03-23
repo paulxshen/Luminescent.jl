@@ -3,12 +3,12 @@ simulation of plane wave scattering on periodic array of dielectric spheres
 """
 
 using UnPack, LinearAlgebra, GLMakie
-# using Luminescent, LuminescentVisualization
+using Luminescent, LuminescentVisualization
 
-dir = pwd()
-include("$(dir)/src/main.jl")
-include("$(dir)/scripts/startup.jl")
-include("$dir/../LuminescentVisualization.jl/src/main.jl")
+# # if running directly without module
+# dir = pwd()
+# include("$(dir)/src/main.jl")
+# include("$dir/../LuminescentVisualization.jl/src/main.jl")
 
 dogpu = false
 F = Float32
@@ -22,7 +22,7 @@ l = 2 # domain physical size length in [wavelengths]
 sz = nx .* (l, l, l) # domain voxel dimensions
 ϵ1 = ϵmin = 1 #
 ϵ2 = 2.25 # 
-b = F.([norm(v .- sz ./ 2) < 0.5 / dx for v = Base.product(Base.oneto.(sz)...)]) # sphere
+b = F.([norm(port_powers .- sz ./ 2) < 0.5 / dx for port_powers = Base.product(Base.oneto.(sz)...)]) # sphere
 ϵ = ϵ2 * b + ϵ1 * (1 .- b)
 μ = 1
 σ = zeros(F, sz)
@@ -57,7 +57,7 @@ end
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
     maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-v = [power_flux.(u, (m,),) for m = monitor_instances]
+port_powers = [power_flux.(u, (m,),) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
@@ -65,10 +65,10 @@ if dogpu
 end
 
 # make movie, 
-Ez = get.(u, :Ez)
-ϵEz = get(p, :ϵEz)
+Ez = field.(u, :Ez)
+ϵEz = field(p, :ϵEz)
 dir = @__DIR__
-recordsim("$dir/$(name).mp4", Ez, v;
+recordsim("$dir/$(name).mp4", Ez, port_powers;
     dt,
     field=:Ez,
     monitor_instances,

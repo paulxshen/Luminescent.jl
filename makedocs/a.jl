@@ -29,8 +29,8 @@ include("$p/plot_recipes.jl")
 F = Float32
 Random.seed!(1)
 function make_geometry(design, static_geometry, geometry_padding)
-    @unpack start, μ, σ, σm, ϵ1, ϵ2, base = static_geometry
-    b = place(base, design, start)
+    @unpack start, μ, σ, σm, ϵ1, ϵ2, mask = static_geometry
+    b = place(mask, design, start)
     ϵ = ϵ2 * b + ϵ1 * (1 .- b)
     ϵ, = apply(geometry_padding; ϵ)
     p = [ϵ, μ, σ, σm]
@@ -82,9 +82,9 @@ for (nx, α, nepochs) in schedule
     # loads Google's Ceviche challenge
     λ = 1.28f0 # wavelength in microns
     _dx = λ * dx
-    @unpack base, design_start, design_dims, ports, TE0 = load("waveguide_bend.bson", _dx)
-    L = size(base) .* dx # domain dimensions [wavelength]
-    sz0 = size(base)
+    @unpack mask, design_start, design_dims, ports, TE0 = load("waveguide_bend.bson", _dx)
+    L = size(mask) .* dx # domain dimensions [wavelength]
+    sz0 = size(mask)
     tspan = (0.0f0, T)
 
     x, v = TE0
@@ -118,7 +118,7 @@ for (nx, α, nepochs) in schedule
     model0 = deepcopy(model)
     ϵ1 = 2.25f0 # oxide
     ϵ2 = 12.25f0 # silicon
-    static_geometry = (; base, start=design_start, ϵ1, ϵ2, μ, σ, σm)
+    static_geometry = (; mask, start=design_start, ϵ1, ϵ2, μ, σ, σm)
 
     # pre-optimization simulation
     p0 = make_geometry(model0(0), static_geometry, fdtd_configs.geometry_padding)

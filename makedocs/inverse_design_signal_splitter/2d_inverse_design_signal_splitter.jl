@@ -14,7 +14,7 @@ include("$dir/../LuminescentVisualization.jl/src/main.jl")
 include("$dir/scripts/startup.jl")
 
 # loads design layout
-@load "$(@__DIR__)/layout.bson" base signals ports designs
+@load "$(@__DIR__)/layout.bson" mask signals ports designs
 @load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad ϵsub ϵclad ϵcore
 
 # training params"
@@ -28,15 +28,15 @@ contrast = 10
 rmin = nothing
 init = nothing
 
-T1 = Δ1 = 1 + 1.3norm(ports[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
-Δ2 = 1 # duration to record power at output ports
-T2 = T = T1 + Δ2
+T[1] = Δ[1] = 1 + 1.3norm(ports[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
+Δ[2] = 1 # duration to record power at output ports
+T[2] = T = T[1] + Δ[2]
 ϵmin = ϵclad
 hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
 
-base = F.(base)
+mask = F.(mask)
 ϵsub, ϵcore, ϵclad = F.((ϵsub, ϵcore, ϵclad))
-sz = size(base)
+sz = size(mask)
 
 # "geometry generator model
 # @load "$(@__DIR__)/model.bson" model
@@ -73,20 +73,20 @@ configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
 @unpack dx, dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 
 nt = round(Int, 1 / dt)
-v0 = zeros(F, length(monitor_instances))
+port_powers0 = zeros(F, length(monitor_instances))
 
-dx, dt, T1, T2, T = F.((dx, dt, T1, T2, T))
+dx, dt, T[1], T[2], T = F.((dx, dt, T[1], T[2], T))
 
 if dogpu
     using CUDA, Flux
     @assert CUDA.functional()
-    u0, model, base, μ, σ, σm, field_padding, source_instances =
-        gpu.((u0, model, base, μ, σ, σm, field_padding, source_instances))
+    u0, model, mask, μ, σ, σm, field_padding, source_instances =
+        gpu.((u0, model, mask, μ, σ, σm, field_padding, source_instances))
 end
 
-function make_geometry(model, base, μ, σ, σm)
-    base_ = Buffer(base)
-    base_[:, :] = base
+function make_geometry(model, mask, μ, σ, σm)
+    base_ = Buffer(mask)
+    base_[:, :] = mask
     place!(base_, model(), round.(Int, designs[1].o / λ / dx) .+ 1)
     mask = copy(base_)
 
@@ -95,22 +95,22 @@ function make_geometry(model, base, μ, σ, σm)
     p = apply(geometry_staggering, p)
 end
 
-function metrics(model, ; T1=T1, T2=T2, autodiff=true)
-    p = make_geometry(model, base, μ, σ, σm)
+function metrics(model, ; T[1]=T[1], T[2]=T[2], autodiff=true)
+    p = make_geometry(model, mask, μ, σ, σm)
     # run simulation
     _step = if autodiff
         maxwell_update
     else
         maxwell_update!
     end
-    u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T1, init=deepcopy(u0))
-    v = reduce(T1+dt:dt:T2, init=(u, v0)) do (u, v), t
+    u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
+    v = reduce(T[1]+dt:dt:T[2], init=(u, port_powers0)) do (u, v), t
         _step(u, p, t, dx, dt, field_padding, source_instances),
         v + dt * power_flux.((u,), monitor_instances,)
     end[2]
     abs.(v)
 end
-# @show const tp = metrics(model, T1=1, T2=2, autodiff=false)[1] # total power_flux
+# @show const tp = metrics(model, T[1]=1, T[2]=2, autodiff=false)[1] # total power_flux
 # error()
 
 function loss(v)
@@ -118,7 +118,7 @@ function loss(v)
     sum(-v)
 end
 
-p0 = make_geometry(model0, base, μ, σ, σm)
+p0 = make_geometry(model0, mask, μ, σ, σm)
 # volume(cpu(p0[1][2]))
 # error()
 
@@ -156,18 +156,18 @@ end
 @show metrics(model)
 function runsave(model)
     # model = re(x)
-    p = make_geometry(model, base, μ, σ, σm)
+    p = make_geometry(model, mask, μ, σ, σm)
     @showtime u = accumulate((u, t) ->
             maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
-        0:dt:T2, init=u0)
+        0:dt:T[2], init=u0)
 
     # move to cpu for plotting
     global source_instances
     if dogpu
         u, p, source_instances = cpu.((u, p, source_instances))
     end
-    Ey = get.(u, :Ey)
-    ϵEy = get(p, :ϵEy)
+    Ey = field.(u, :Ey)
+    ϵEy = field(p, :ϵEy)
     dir = @__DIR__
     # error()
     recordsim("$dir/$(name).mp4", Ey, ;
