@@ -1,6 +1,4 @@
 #=
-# Inverse design of photonic waveguide bend 
-
 We do inverse design of a compact photonic waveguide bend to demonstrate workflow of FDTD adjoint optimization. First, we seed the design using 2d TE adjoint simulations which serve as fast approximations. Optionlly, we finetune the resulting design in full blown 3d adjoint simulations.
 
 =#

@@ -1,6 +1,6 @@
+# Periodic Scattering
 Complete file at [examples folder](https://github.com/paulxshen/Luminescent.jl/tree/master/examples)
 
-# Periodic scattering
 
 We simulate  plane wave scattering on periodic array of dielectric spheres
 ```julia
@@ -8,10 +8,7 @@ We simulate  plane wave scattering on periodic array of dielectric spheres
 using UnPack, LinearAlgebra, GLMakie
 using Luminescent, LuminescentVisualization
 
-# if running directly without module # hide
 # include("$(pwd())/src/main.jl") # hide
-# include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
-
 ``` 
 Set simulation duration and resolution.  Run on CPU by setting `dogpu = false`. If running on a newer GPU, set `F = Float16`
 ```julia
@@ -21,7 +18,6 @@ nx = 20
 dx = 1.0 / nx # pixel resolution in [wavelengths]
 dogpu = false
 F = Float32
-
 ```
 We make unit cell geometry containing a dielectric sphere. Each property is made an array
 ```julia
@@ -37,7 +33,6 @@ b = F.([norm(v .- sz ./ 2) < 0.5 / dx for v = Base.product(Base.oneto.(sz)...)])
 μ = ones(F, sz)
 σ = zeros(F, sz)
 σm = zeros(F, sz)
-
 ```
 We setup boundary conditions, source and monitor surfaces
 ```julia
@@ -52,8 +47,6 @@ monitors = [
     Monitor([δ, l / 2, l / 2], [0, lm, lm]; normal), # (center, dimensions; normal)
     Monitor([l - δ, l / 2, l / 2], [0, lm, lm]; normal),
 ]
-
-
 ```
 We do `maxwell_setup` to instantiate at the given discretisation. We adopt `u, p, t` naming conventions from ODE literature: `u ` as state, `p` as params eg geometry
 ```julia
@@ -69,7 +62,6 @@ if dogpu
     @assert CUDA.functional()
     u0, p, field_padding, source_instances = gpu.((u0, p, field_padding, source_instances))
 end
-
 ```
 We run simulation as an `accumulate` loop. `maxwell_update!` applies Maxwells equations as staggered time stepping on E, H. It's mutating so a copy is made in order to save sequence of states
 ```julia
@@ -82,7 +74,6 @@ port_powers = [power.(u, (m,),) for m = monitor_instances]
 if dogpu
     u, p, field_padding, source_instances = cpu.((u, p, field_padding, source_instances))
 end
-
 ```
 Ready, set, action! We make movie, 
 ```julia
@@ -100,6 +91,5 @@ recordsim("$dir/$(name).mp4", Ez, port_powers;
     axis1=(; title="$name"),
     axis2=(; title="monitor powers"),
 )
-
 ```
 ![](assets/periodic_scattering.mp4)

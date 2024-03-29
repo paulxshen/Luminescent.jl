@@ -1,5 +1,4 @@
 #=
-# Quarter wavelength antenna
 simulation of quarter wavelength antenna above conductor ground plane
 =#
 
