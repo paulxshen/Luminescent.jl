@@ -11,6 +11,7 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
     ϵmin=1,
     # Courant=0.5,
     Courant=F(0.8√(ϵmin / length(sz))),# Courant number)
+    verbose=true,
     kw...)
     dx = F(dx)
 
@@ -113,17 +114,17 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
                 l = j == 1 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 r = j == 2 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
                 info = lazy = false
-                push!(geometry_padding[:ϵ], OutPad(:replicate, l, r,))
-                push!(geometry_padding[:μ], OutPad(:replicate, l, r,))
+                push!(geometry_padding[:ϵ], OutPad(:replicate, l, r, sz))
+                push!(geometry_padding[:μ], OutPad(:replicate, l, r, sz))
 
                 l1 = l .÷ 2
                 r1 = r .÷ 2
-                push!(geometry_padding[:σ], OutPad(ReplicateRamp(F(b.σ)), l1, r1,))
-                push!(geometry_padding[:σm], OutPad(ReplicateRamp(F(b.σ)), l1, r1,))
+                push!(geometry_padding[:σ], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
+                push!(geometry_padding[:σm], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
                 l2 = l - l1
                 r2 = r - r1
-                push!(geometry_padding[:σ], OutPad(F(b.σ), l2, r2,))
-                push!(geometry_padding[:σm], OutPad(F(b.σ), l2, r2,))
+                push!(geometry_padding[:σ], OutPad(F(b.σ), l2, r2, sz))
+                push!(geometry_padding[:σm], OutPad(F(b.σ), l2, r2, sz))
                 if j == 1
                     for k = keys(fl)
                         fl[k][i] += n
@@ -155,7 +156,7 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
         end
     end
 
-    p = OutPad(:replicate, ones(Int, d), ones(Int, d))
+    p = OutPad(:replicate, ones(Int, d), ones(Int, d), sz)
     push!(geometry_padding[:μ], p)
     push!(geometry_padding[:σm], p)
     push!(geometry_padding[:σ], p)
@@ -178,10 +179,15 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
         sizes[:Jy] = sizes[:Ey]
         sizes[:Jz] = sizes[:Ez]
     elseif d == 2
-        fl[:Jx] = fl[:Ex]
-        fl[:Jy] = fl[:Ey]
-        sizes[:Jx] = sizes[:Ex]
-        sizes[:Jy] = sizes[:Ey]
+        if polarization == :TE
+            fl[:Jx] = fl[:Ex]
+            fl[:Jy] = fl[:Ey]
+            sizes[:Jx] = sizes[:Ex]
+            sizes[:Jy] = sizes[:Ey]
+        elseif polarization == :TM
+            fl[:Jz] = fl[:Ez]
+            sizes[:Jz] = sizes[:Ez]
+        end
     end
 
     sizes = NamedTuple([k => Tuple(sizes[k]) for (k) = keys(sizes)])
@@ -251,37 +257,37 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
     end
     geometry_padding = NamedTuple(geometry_padding)
     field_padding = NamedTuple(field_padding)
-    #    verbose &&
-    @info """
- ====
- FDTD configs
- 
- Lengths in characterstic wavelengths, times in characterstic periods, unless otherwise specified
+    verbose &&
+        @info """
+     ====
+     FDTD configs
+     
+     Lengths in characterstic wavelengths, times in characterstic periods, unless otherwise specified
 
- dx: $(dx|>d2) 
- dt: $(dt|>d2) 
- Courant number: $(Courant|>d2)
+     dx: $(dx|>d2) 
+     dt: $(dt|>d2) 
+     Courant number: $(Courant|>d2)
 
- Original array size of all fields in pixels: $sz
- Padded field array sizes in pixels:
- $sizes
- 
- Boundaries:
- $(join("- ".*string.(db),"\n"))
- 
- Sources:
- $(join("- ".*string.(sources),"\n"))
- 
- Monitors:
- $(join("- ".*string.(monitors),"\n"))
- 
- $footer
- ====
- """
+     Original array size of all fields in pixels: $sz
+     Padded field array sizes in pixels:
+     $sizes
+     
+     Boundaries:
+     $(join("- ".*string.(db),"\n"))
+     
+     Sources:
+     $(join("- ".*string.(sources),"\n"))
+     
+     Monitors:
+     $(join("- ".*string.(monitors),"\n"))
+     
+     $footer
+     ====
+     """
 
     (; μ, σ, σm, ϵ,
         geometry_padding, field_padding, geometry_staggering,
         source_instances, monitor_instances,
-        roi, u0, fields, dx, dt, kw...)
+        roi, u0, fields, dx, dt, sz, kw...)
 end
 

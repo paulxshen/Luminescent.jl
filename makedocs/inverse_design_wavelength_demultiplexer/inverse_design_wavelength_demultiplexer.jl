@@ -73,7 +73,7 @@ nt = round(Int, 1 / dt)
 
 T = T[1] + T[2]
 t = 0:dt:T
-port_powers0 = zeros(F, length(monitor_instances))
+port_fluxes0 = zeros(F, length(monitor_instances))
 
 t = F.(t)
 dx, dt, f2, T[1], T[2], T = F.((dx, dt, f2, T[1], T[2], T))
@@ -103,14 +103,14 @@ function metrics(model; T[1]=T[1], T[2]=T[2], autodiff=true)
         maxwell_update!
     end
     u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
-    v = reduce(T[1]+dt:dt:T[1]+T[2], init=(u, port_powers0)) do (u, v), t
+    v = reduce(T[1]+dt:dt:T[1]+T[2], init=(u, port_fluxes0)) do (u, v), t
         _step(u, p, t, dx, dt, field_padding, source_instances),
-        v + [1, cispi.(4 * [1, f2])...] .* power_flux.(monitor_instances, (u,))
+        v + [1, cispi.(4 * [1, f2])...] .* power.(monitor_instances, (u,))
     end[2]
     dt / F(T[2]) * abs.(v)
 
 end
-@show const tp = metrics(model, T[1]=1, T[2]=1, autodiff=false)[1] # total power_flux
+@show const tp = metrics(model, T[1]=1, T[2]=1, autodiff=false)[1] # total power
 @show metrics(model;)
 # error()
 

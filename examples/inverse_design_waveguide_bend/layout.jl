@@ -23,8 +23,8 @@ h = hwg + 2hm
 
 sig = savemodes("$(@__DIR__)/modes.bson", dx, λ, wwg, hwg, wm, hm, ϵ1, ϵ2)
 ports = [
-    (; c=[lwg - lm, w - wm - wd / 2], lb=[0, -wwg / 2 - δ], ub=[0, wwg / 2 + δ], n=[1, 0]),
-    (; c=[l - lm - ld / 2, wm], lb=[-wwg / 2 - δ, 0], ub=[wwg / 2 + δ, 0], n=[0, -1]),
+    (; c=[lwg - lm, w - wm - wd / 2], lb=[0, -wwg / 2 - wm], ub=[0, wwg / 2 + wm], n=[1, 0]),
+    (; c=[l - lm - ld / 2, wm], lb=[-wwg / 2 - wm, 0], ub=[wwg / 2 + wm, 0], n=[0, -1]),
 ]
 signals = [
     merge((; c=[0, w - wm - wd / 2], n=[1, 0]), sig)
@@ -37,7 +37,10 @@ wwg_, hwg_, lwg_, ld_, wd_, l_, w_, h_, lm_, wm_ =
     round.(Int, [wwg, hwg, lwg, ld, wd, l, w, h, lm, wm] ./ dx)
 
 static_mask = zeros(Int, l_ .+ 1, w_ .+ 1)
-static_mask[1:lwg_.+1, (w_-wm_-wd_÷2)-wwg_÷2+1:(w_-wm_-wd_÷2)+wwg_÷2+1] .= 1
-static_mask[(l-lm_-ld_÷2)-wwg_÷2+1:(l_-lm_-ld_÷2)+wwg_÷2+1, 1:lwg_.+1,] .= 1
+wg = ones(lwg_, wwg_)
+place!(static_mask, wg, [1, (w_ - wm_ - wd_ ÷ 2) - wwg_ ÷ 2 + 1],)
+place!(static_mask, wg', [(l_ - lm_ - ld_ ÷ 2) - wwg_ ÷ 2 + 1, 1],)
+# static_mask[1:lwg_.+1, (w_-wm_-wd_÷2)-wwg_÷2+1:(w_-wm_-wd_÷2)+wwg_÷2+1] .= 1
+# static_mask[(l_-lm_-ld_÷2)-wwg_÷2+1:(l_-lm_-ld_÷2)+wwg_÷2+1, 1:lwg_.+1,] .= 1
 
 @save "$(@__DIR__)/layout.bson" static_mask signals ports designs dx λ ϵsub ϵclad ϵcore hsub hwg hclad

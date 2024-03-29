@@ -75,7 +75,7 @@ end
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
     maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-v = [power_flux.(u, (m,),) for m = monitor_instances]
+v = [power.(u, (m,),) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
@@ -148,7 +148,7 @@ end
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
     maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
-v = [power_flux.(u, (m,),) for m = monitor_instances]
+v = [power.(u, (m,),) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu

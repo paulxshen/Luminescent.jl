@@ -74,7 +74,7 @@ configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
 @unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 
 nt = round(Int, 1 / dt)
-port_powers0 = zeros(F, length(monitor_instances))
+port_fluxes0 = zeros(F, length(monitor_instances))
 
 dx, dt, T[1], T[2], T = F.((dx, dt, T[1], T[2], T))
 
@@ -104,13 +104,13 @@ function metrics(model, ; T[1]=T[1], T[2]=T[2], autodiff=true)
         maxwell_update!
     end
     u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
-    v = reduce(T[1]+dt:dt:T[2], init=(u, port_powers0)) do (u, v), t
+    v = reduce(T[1]+dt:dt:T[2], init=(u, port_fluxes0)) do (u, v), t
         _step(u, p, t, dx, dt, field_padding, source_instances),
-        v + dt * power_flux.((u,), monitor_instances,)
+        v + dt * power.((u,), monitor_instances,)
     end[2]
     abs.(v)
 end
-# @show const tp = metrics(model, T[1]=1, T[2]=2, autodiff=false)[1] # total power_flux
+# @show const tp = metrics(model, T[1]=1, T[2]=2, autodiff=false)[1] # total power
 # error()
 
 function loss(v)

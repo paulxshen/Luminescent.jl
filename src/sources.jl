@@ -122,13 +122,17 @@ function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
     _F(x::Complex) = complex(F)(x)
 
     f = _F ∘ f
-    r = [vcat(a:dx:0, dx:dx:b) for (a, b) = zip(lb, ub)]
+    dx *= 1.001
+    r = [a:dx:b for (a, b) = zip(lb, ub)]
     C = F(1 / dx^count(lb .== ub))
     g = Dict([k =>
         C * begin
             if isa(fields[k], AbstractArray)
                 # imresize(fields[k], ratio=1)
-                imresize(_F.(fields[k]), Tuple(length.(r)), method=ImageTransformations.Lanczos4OpenCV())
+                sz0 = size(fields[k])
+                sz = Tuple(length.(r))
+                sz0 != sz && @warn "source spatial profile array $sz0 not same size as source domain $sz. profile will be interpolated"
+                imresize(_F.(fields[k]), sz, method=ImageTransformations.Lanczos4OpenCV())
             else
                 [_F.(fields[k](v...)) for v = Iterators.product(r...)]
             end

@@ -3,7 +3,10 @@
  Supports 1d (Ez, Hy), 2d TE (Hz, Ex, Ey), 2d TM (Ez, Hx, Hy), and 3d. Length and time are in units of wavelength and period. This normalization allows usage of relative  permitivity and permeability  in equations . Fields including electric, magnetic and current density are simply bundled as a vector of vectors of arrays . Boundary conditions pad the field arrays . PML paddings are multilayered, while All other boundaries add single layers. Paddings are stateful and permanent, increasing the size of field and geometry arrays.  Finite differencing happens every update maxwell_update and are coordinated to implictly implement a staggered Yee's grid .
 
 ## Sources
-If a source has fewer nonzero dimensions than the simulation domain, its signal will get normalized along its singleton dimensions. For example, all planar sources in 3d will get scaled up by a factor of `1/dx`. This way, discretisation would not affect radiated power.
+We support plane waves and custom  (eg modal) sources . A source has a time signal and a spatial profile . Both can be complex valued in which case the real component is taken from product of the two. Set excited current fields and their spatial profiles as keywords . A profile can be constant , a spatial function , or an array . In the case of array, it'll get resized automatically to fit the source 's spatial extent (spanning from lower bounds `lb` to upper bounds `ub`). 
+
+If a source has fewer nonzero dimensions (from `ub - lb`) than the simulation domain, its signal will get normalized along its singleton dimensions. For example, all planar sources in 3d will get scaled up by a factor of `1/dx`. This way, discretisation would not affect radiated power.
+
 ```@docs
 PlaneWave
 Source
@@ -21,8 +24,8 @@ PMC
  ```@docs
 Monitor
 field
-power_flux
-power_flux_density
+power
+flux
 ```
 
  ## Physics 

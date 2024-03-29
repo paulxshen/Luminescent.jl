@@ -27,7 +27,7 @@ end
     function Monitor(c, L; normal=nothing, label="")
     function Monitor(c, lb, ub; normal=nothing, label="")
 
-Constructs monitor which can span a point, line, surface, volume or point cloud monitoring fields or power_flux. 
+Constructs monitor which can span a point, line, surface, volume or point cloud monitoring fields or power. 
 
 Args
 - c: origin or center of monitor
@@ -64,6 +64,8 @@ struct OrthogonalMonitorInstance
 end
 # @functor OrthogonalMonitorInstance (n,)
 Base.ndims(m::OrthogonalMonitorInstance) = m.d
+Base.size(m::OrthogonalMonitorInstance) = length.(m.i)
+support(m::OrthogonalMonitorInstance) = m.v
 
 struct PointCloudMonitorInstance
     i
@@ -91,7 +93,7 @@ function MonitorInstance(m::OrthogonalMonitor, dx, lc, flb, fl; F=Float32)
     #         max(1, lc + c + lb):min(s, lc + c + ub)
     #     end for k = fk
     # ])
-    i = range.((1 .+ lc + c + lb), (1 .+ lc + c + ub))
+    i = range.((1 .+ lc + c + lb), (lc + c + ub))
     i = convert(Vector{Any}, i)
     i[singletons] .= first.(getindex.((i,), singletons))
     fi = Dict([k => i .+ v for (k, v) = pairs(flb)])
@@ -186,31 +188,30 @@ end
 # Base.getindex(a::GPUArraysCore.AbstractGPUArray, m::MonitorInstance) = a[m.i...]
 # Base.getindex(a, m::MonitorInstance, k) = a[m.fi[k]...]
 
-# power_flux(m, u) = sum(sum(pf([u[m.i[k]...] for (u, k) = zip(u, fk)]) .* m.n))
+# power(m, u) = sum(sum(pf([u[m.i[k]...] for (u, k) = zip(u, fk)]) .* m.n))
 """
-    function power_flux_density(m::MonitorInstance, u)
+    function flux(m::MonitorInstance, u)
 
- power_flux density (avg Poynting flux) passing thru monitor 
+ Poynting flux profile passing thru monitor 
 """
-function power_flux_density(u, m::OrthogonalMonitorInstance)
+function flux(u, m::OrthogonalMonitorInstance)
     d = ndims(m)
     E = [u[:E][k][m.fi[k]...] for k = keys(u[:E])]
     H = [u[:H][k][m.fi[k]...] for k = keys(u[:H])]
 
-    r = mean(sum((E × H) .* m.n))
-    r
+    sum((E × H) .* m.n)
 end
 
 """
-    function power_flux(m::MonitorInstance, u)
+    function power(m::MonitorInstance, u)
 
-total power_flux (Poynting flux) passing thru monitor surface
+total power (Poynting flux) passing thru monitor surface
 """
-function power_flux(u, m::OrthogonalMonitorInstance)
+function power(u, m::OrthogonalMonitorInstance)
     # @assert ndims(m) == 2
-    m.v * power_flux_density(u, m)
+    m.v * mean(flux(u, m))
 end
-# power_flux(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.i)))]) .* m.n))
+# power(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.i)))]) .* m.n))
 
 function monitors_on_box(c, L)
     ox, oy, oz = c

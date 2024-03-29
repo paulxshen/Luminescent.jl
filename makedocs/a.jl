@@ -55,7 +55,7 @@ function loss(u0, design, static_geometry, fdtd_configs,)
         u = stepTM(u, p, t, fdtd_configs)
     end
 
-    # objective to maximize outgoing power_flux at port 2 during last period
+    # objective to maximize outgoing power at port 2 during last period
     idxs = monitor_configs[2].idxs
     reduce(((u, l), t) -> (stepTM(u, p, t, fdtd_configs), l - (u[1][idxs...])^2), T-1+dt:dt:T, init=(u, 0.0f0))[2]
     # reduce(((u, l), t) -> (stepTM(u, p, t), l + (u[1][idxs...])*u[2][idxs...]), T-1+dt:dt:T, init=(u, 0.0f0))[2]
