@@ -35,9 +35,9 @@ dx = 0.05
 wwg, hwg, lwg, ld, hclad, hsub, l, w, h, wm =
     round.(Int, [wwg, hwg, lwg, ld, hclad, hsub, l, w, h, wm] ./ dx)
 
-base = zeros(Int, l .+ 1, w .+ 1)
-base[1:lwg.+1, (w-wwg)÷2+1:(w+wwg)÷2+1] .= 1
-base[end-lwg:end, wm+1:wm+wwg.+1] .= 1
-base[end-lwg:end, end-wm-wwg:end-wm] .= 1
+mask = zeros(Int, l .+ 1, w .+ 1)
+mask[1:lwg.+1, (w-wwg)÷2+1:(w+wwg)÷2+1] .= 1
+mask[end-lwg:end, wm+1:wm+wwg.+1] .= 1
+mask[end-lwg:end, end-wm-wwg:end-wm] .= 1
 
-@save "$(@__DIR__)/layout.bson" base signals ports designs dx nx
+@save "$(@__DIR__)/layout.bson" mask signals ports designs dx nx

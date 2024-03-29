@@ -71,6 +71,7 @@ struct OutPad
     b
     l
     r
+    default_size
 end
 # @functor OutPad
 
@@ -92,7 +93,8 @@ function apply(p::AbstractVector{<:InPad}, a::AbstractArray)
     end
 
     a_ = Buffer(a)
-    a_ .= a
+    # a_ .= a
+    a_[axes(a)...] = a
     for p = p
         @unpack l, r, b, m = p
         if isnothing(m)
@@ -105,11 +107,13 @@ function apply(p::AbstractVector{<:InPad}, a::AbstractArray)
     copy(a_)
 end
 
-function apply(v::AbstractVector{<:OutPad}, a::Real)
-    for p = v
-        p.b != a && p.b != :replicate && error("cannot pad a constant with different values. it needs to be an array")
-    end
-    a
+function apply(v::AbstractVector{<:OutPad}, x::Real)
+    # for p = v
+    #     p.b != a && p.b != :replicate && error("cannot pad a constant with different values. it needs to be an array")
+    # end
+    # a
+    # apply(p,)
+    apply(v, x * ones(typeof(x), first(v).default_size))
 end
 function apply(p::AbstractVector{<:OutPad}, a)
     l = sum(getproperty.(p, :l))

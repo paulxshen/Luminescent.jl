@@ -1,7 +1,31 @@
 using Documenter
-include("../src/Luminescent.jl")
-using .Luminescent
+# include("../src/Luminescent.jl")
+# using .Luminescent
 
+ex = (
+    "periodic_scattering",
+    "quarter_wavelength_antenna",
+    "inverse_design_waveguide_bend")
+for fn = ex
+    s = read("$(@__DIR__)/../examples/$fn/$fn.jl", String) |> strip
+    if endswith(s, "=#")
+        s = s[1:end-2]
+    else
+        s = s * "\n```"
+    end
+    s = "# " * (replace(fn, "_" => " ") |> titlecase) * "\nComplete file at [examples folder](https://github.com/paulxshen/Luminescent.jl/tree/master/examples)\n\n$s"
+    startswith(s, "#=") && (s = s[3:end])
+    # replace!(s, "\"\"\"\n\n" => "\njulia```\n", "\n\n\"\"\"" => "\n```\n")
+    # replace!(s, "#=" => "julia```", "=#" => "```")
+    s = replace(s, r"\#\=(\n)+" => "#=\n", r"(\n)+\=\#" => "\n=#")
+    # s = replace(s, r"\n[^\n]+# hide\n" => "\n")
+    s = replace(s, r"\n.+# hide\n" => "\n")
+    s = replace(s, "#=" => "```", "=#" => "```julia")
+
+    open("$(@__DIR__)/src/$fn.md", "w") do f
+        write(f, s,)
+    end
+end
 makedocs(
     sitename="Luminescent.jl",
     format=Documenter.HTML(),
@@ -9,7 +33,7 @@ makedocs(
     pages=[
         "index.md",
         "guide.md",
-        "tutorials.md",
+        "Tutorials" => ex .* [".md"],
         "people.md",
     ]
 )

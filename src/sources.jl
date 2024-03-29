@@ -68,7 +68,7 @@ struct Source
 end
 Base.string(m::Source) =
     """
-    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.c), spanning from $(m.lb) to $(m.ub) relative to center, exciting $(join(keys(m.fields),", "))"""
+    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.c|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center, exciting $(join(keys(m.fields),", "))"""
 function Source(f, c, L, label::AbstractString=""; fields...)
     # Source
     # function Source(f, c, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)
@@ -85,7 +85,7 @@ struct SourceInstance
     c
     label
 end
-@functor SourceInstance
+@functor SourceInstance (g, _g,)
 
 function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0; F=Float32)
     @unpack f, fields, dims, label = s
@@ -122,13 +122,17 @@ function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
     _F(x::Complex) = complex(F)(x)
 
     f = _F ∘ f
-    r = [vcat(a:dx:0, dx:dx:b) for (a, b) = zip(lb, ub)]
+    dx *= 1.001
+    r = [a:dx:b for (a, b) = zip(lb, ub)]
     C = F(1 / dx^count(lb .== ub))
     g = Dict([k =>
         C * begin
             if isa(fields[k], AbstractArray)
                 # imresize(fields[k], ratio=1)
-                imresize(_F.(fields[k]), Tuple(length.(r)), method=ImageTransformations.Lanczos4OpenCV())
+                sz0 = size(fields[k])
+                sz = Tuple(length.(r))
+                sz0 != sz && @warn "source spatial profile array $sz0 not same size as source domain $sz. profile will be interpolated"
+                imresize(_F.(fields[k]), sz, method=ImageTransformations.Lanczos4OpenCV())
             else
                 [_F.(fields[k](v...)) for v = Iterators.product(r...)]
             end
@@ -144,10 +148,11 @@ function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
 end
 
 # Complex
-function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
-    [
+apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...) = apply(v, t, kw)
+function apply(v::AbstractVector{<:SourceInstance}, t::Real, kw)
+    dict([
         # sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k])
-        begin
+        k => begin
 
             a = [real(s.f(t) .* s._g[k]) for s = v if k in s.k]
             if isempty(a)
@@ -158,7 +163,7 @@ function apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...)
         end
         for k = keys(kw)
         # end for (k, a) = pairs(kw)
-    ]
+    ])
 end
 
 # function apply(d,t; kw...)

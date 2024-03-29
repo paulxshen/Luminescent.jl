@@ -1,27 +1,8 @@
 ° = π / 180
-
-Base.round(x::AbstractFloat) = Base.round(Int, x)
-Base.ndims(a) = length(size(a))
-# Base.:÷(x, y) = round(Base.div(x, y))
-
-Base.getindex(s::Symbol, i) = Symbol(String(s)[i])
-
-index(v, dx) = round.(Int, v ./ dx .+ 1)
-reindex(i, ratio) = round.(Int, (i .- 1) .* ratio .+ 1)
-Base.size(x::Union{NamedTuple,Tuple}) = (length(x),)
-
-T = Union{Tuple,AbstractArray,Number}
-Base.:-(x::T, y::T) = x .- y
-Base.:+(x::T, y::T) = x .+ y
-Base.:*(x::Number, y::T) = x .* y
-Base.:*(x::T, y::Number) = x .* y
-Base.:/(x::Number, y::T) = x ./ y
-Base.:/(x::T, y::Number) = x ./ y
-
-
-# __precompile__(false)
-(m::Number)(a...) = m
 gaussian(x; μ=0, σ=1) = exp(-((x - μ) / σ)^2)
+
+(m::Number)(a...) = m
+d2(x) = round.(x, sigdigits=2)
 
 function place(a, b, o; lazy=false)
     a + pad(b, 0, Tuple(o) .- 1, size(a) .- size(b) .- Tuple(o) .+ 1)
@@ -42,11 +23,61 @@ function place!(a, b; o)
     place!(a, b, o .- floor.((size(b) .- 1) .÷ 2))
 end
 
+function apply!(p, kw)
+    dict([k => apply!(p[k], kw[k]) for k = keys(kw)])
+    # [apply(p[k], v) for (k, v) = pairs(kw)]
+end
 function apply!(p; kw...)
-    [apply!(p[k], kw[k]) for k = keys(kw)]
+    apply!(p, kw)
+end
+# apply!(p, x::Number) = x
+apply(p, x::Number) = apply(p, x * ones(typeof(x), p.default_size))
+function apply(p, kw)
+    # merge((;), [k => apply(p[k], kw[k]) for k = keys(kw)])
+    dict([k => apply(p[k], kw[k]) for k = keys(kw)])
+    # (; [k => apply(p[k], kw[k]) for k = keys(kw)]...)
+    # NamedTuple([k => apply(p[k], kw[k]) for k = keys(kw)])
+    # [apply(p[k], kw[k]) for k = keys(kw)]
     # [apply(p[k], v) for (k, v) = pairs(kw)]
 end
 function apply(p; kw...)
-    [apply(p[k], kw[k]) for k = keys(kw)]
-    # [apply(p[k], v) for (k, v) = pairs(kw)]
+    apply(p, kw)
 end
+
+function apply(d::Dictlike, a::AbstractArray)
+    dict([k => apply(d[k], a) for k = keys(d)])
+end
+function apply(i::AbstractVector{<:AbstractRange}, a::AbstractArray)
+    getindex(a, i...)
+end
+function mark(p, kw)
+    dict([k => mark(p[k], kw[k]) for k = keys(kw)])
+end
+function mark(p; kw...)
+    # [k => mark(p[k], kw[k]) for k = keys(kw)]
+    # [mark(p[k], kw[k]) for k = keys(kw)]
+    dict([k => mark(p[k], kw[k]) for k = keys(kw)])
+end
+function unmark(kw)
+    dict([k => Array(kw[k]) for k = keys(kw)])
+end
+function unmark(; kw...)
+    dict([k => Array(kw[k]) for k = keys(kw)])
+    # [Array(kw[k]) for k = keys(kw)]
+    # [k => Array(kw[k]) for k = keys(kw)]
+end
+function mark(v::AbstractVector, a)
+    l = sum(v) do p
+        p.l
+    end
+    r = sum(v) do p
+        p.r
+    end
+    PaddedArray(a, l, r)
+end
+
+Flux.gpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.gpu(d[k]) for k = keys(d)])
+Flux.cpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.cpu(d[k]) for k = keys(d)])
+Flux.gpu(v::AbstractVector{T}) where {T<:Dictlike} = gpu.(v)
+Flux.cpu(v::AbstractVector{T}) where {T<:Dictlike} = cpu.(v)
+footer = "Suppress this message by verbose=false\nCreated by Paul Shen <pxshen@alumni.stanford.edu>"

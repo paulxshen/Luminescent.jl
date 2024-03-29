@@ -4,7 +4,7 @@ using BSON: @save, @load
 ϵ1 = 2.25
 ϵ2 = 12.25
 ϵsub = ϵclad = 2.25
-ϵwg = 12.25
+ϵcore = 12.25
 wwg = 0.5
 hwg = 0.25
 hsub = hclad = lm = 0.25
@@ -37,7 +37,7 @@ function main(λ)
 end
 modes1_ = main(λ1)
 modes2_ = main(λ2)
-modes1, modes2 = [[NamedTuple([k => getfield(m, k)' for k = [:Ex, :Ey, :Ez, :Hx, :Hy, :Hz]]) for m = m] for m = (modes1_, modes2_)]
-@save "$(@__DIR__)/modes.bson" modes1 modes2 λ1 λ2 dx ub lb hsub hwg wwg hclad ϵsub ϵclad ϵwg h w
+modes1, modes2 = [[NamedTuple([k => getget(m, k)' for k = [:Ex, :Ey, :Ez, :Hx, :Hy, :Hz]]) for m = m] for m = (modes1_, modes2_)]
+@save "$(@__DIR__)/modes.bson" modes1 modes2 λ1 λ2 dx ub lb hsub hwg wwg hclad ϵsub ϵclad ϵcore h w
 plot_mode_fields(modes1_[1])
 plot_mode_fields(modes2_[1])

@@ -21,24 +21,24 @@ name = "inverse_design_wavelength_demultiplexer"
 nbasis = 6 # complexity of design region
 
 # loads design layout
-@load "$(@__DIR__)/layout.bson" base signals ports designs
-@load "$(@__DIR__)/modes.bson" λ1 λ2 modes1 modes2 lb ub dx hsub wwg hwg hclad ϵsub ϵclad ϵwg
+@load "$(@__DIR__)/layout.bson" mask signals ports designs
+@load "$(@__DIR__)/modes.bson" λ1 λ2 modes1 modes2 lb ub dx hsub wwg hwg hclad ϵsub ϵclad ϵcore
 λ = λ1 # wavelength [um]
 f2 = λ1 / λ2
-T1 = 1 + norm(ports[1].c - ports[2].c) / λ * sqrt(ϵwg) # simulation duration in [periods]
-T2 = 1 / (2(f2 - 1))
+T[1] = 1 + norm(ports[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods]
+T[2] = 1 / (2(f2 - 1))
 ϵmin = ϵclad
 hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
 
-base = F.(base)
-ϵsub, ϵwg, ϵclad = F.((ϵsub, ϵwg, ϵclad))
-ϵdummy = sandwich(base, round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵwg, ϵclad])
+mask = F.(mask)
+ϵsub, ϵcore, ϵclad = F.((ϵsub, ϵcore, ϵclad))
+ϵdummy = sandwich(mask, round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
 sz0 = size(ϵdummy)
 
 # "geometry generator model
 # @load "model.bson" model
 contrast = 10.0
-model = Mask(round.(Int, designs[1].L / λ / dx) .+ 1, nbasis, contrast;)
+model = Blob(round.(Int, designs[1].L / λ / dx) .+ 1, nbasis, contrast;)
 model0 = deepcopy(model)
 
 
@@ -71,46 +71,46 @@ configs = maxwell_setup(boundaries, sources, monitors, dx, sz0; ϵmin, F)
 @unpack μ, σ, σm, dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 nt = round(Int, 1 / dt)
 
-T = T1 + T2
+T = T[1] + T[2]
 t = 0:dt:T
-v0 = zeros(F, length(monitor_instances))
+port_fluxes0 = zeros(F, length(monitor_instances))
 
 t = F.(t)
-dx, dt, f2, T1, T2, T = F.((dx, dt, f2, T1, T2, T))
+dx, dt, f2, T[1], T[2], T = F.((dx, dt, f2, T[1], T[2], T))
 if dogpu
     using CUDA, Flux
     @assert CUDA.functional()
-    u0, model, base, μ, σ, σm, field_padding, source_instances =
-        gpu.((u0, model, base, μ, σ, σm, field_padding, source_instances))
+    u0, model, mask, μ, σ, σm, field_padding, source_instances =
+        gpu.((u0, model, mask, μ, σ, σm, field_padding, source_instances))
 end
 
-function make_geometry(model, base, μ, σ, σm)
-    base_ = Buffer(base)
-    base_[:, :] = base
+function make_geometry(model, mask, μ, σ, σm)
+    base_ = Buffer(mask)
+    base_[:, :] = mask
     place!(base_, model(), round.(Int, designs[1].o / λ / dx) .+ 1)
 
-    ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵwg, ϵclad])
+    ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
     ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
     p = apply(geometry_staggering; ϵ, μ, σ, σm)
 end
 
-function metrics(model; T1=T1, T2=T2, autodiff=true)
-    p = make_geometry(model, base, μ, σ, σm)
+function metrics(model; T[1]=T[1], T[2]=T[2], autodiff=true)
+    p = make_geometry(model, mask, μ, σ, σm)
     # run simulation
     _step = if autodiff
         maxwell_update
     else
         maxwell_update!
     end
-    u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T1, init=deepcopy(u0))
-    v = reduce(T1+dt:dt:T1+T2, init=(u, v0)) do (u, v), t
+    u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
+    v = reduce(T[1]+dt:dt:T[1]+T[2], init=(u, port_fluxes0)) do (u, v), t
         _step(u, p, t, dx, dt, field_padding, source_instances),
-        v + [1, cispi.(4 * [1, f2])...] .* power_flux.(monitor_instances, (u,))
+        v + [1, cispi.(4 * [1, f2])...] .* power.(monitor_instances, (u,))
     end[2]
-    dt / F(T2) * abs.(v)
+    dt / F(T[2]) * abs.(v)
 
 end
-@show const tp = metrics(model, T1=1, T2=1, autodiff=false)[1] # total power_flux
+@show const tp = metrics(model, T[1]=1, T[2]=1, autodiff=false)[1] # total power
 @show metrics(model;)
 # error()
 
@@ -118,7 +118,7 @@ function loss(y)
     sum(-y / tp)
 end
 
-p0 = make_geometry(model0, base, μ, σ, σm)
+p0 = make_geometry(model0, mask, μ, σ, σm)
 # volume(cpu(p0[1][2]))
 # error()
 
@@ -154,7 +154,7 @@ heatmap(cpu(model()))
 @show metrics(model)
 function runsave(x)
     model = re(x)
-    p = make_geometry(model, base, μ, σ, σm)
+    p = make_geometry(model, mask, μ, σ, σm)
     @showtime u = accumulate((u, t) ->
             maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
         t, init=u0)

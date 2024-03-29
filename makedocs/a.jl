@@ -29,8 +29,8 @@ include("$p/plot_recipes.jl")
 F = Float32
 Random.seed!(1)
 function make_geometry(design, static_geometry, geometry_padding)
-    @unpack start, μ, σ, σm, ϵ1, ϵ2, base = static_geometry
-    b = place(base, design, start)
+    @unpack start, μ, σ, σm, ϵ1, ϵ2, mask = static_geometry
+    b = place(mask, design, start)
     ϵ = ϵ2 * b + ϵ1 * (1 .- b)
     ϵ, = apply(geometry_padding; ϵ)
     p = [ϵ, μ, σ, σm]
@@ -41,7 +41,7 @@ function sim(u0, p, T, fdtd_configs)
     u = u0
     [
         begin
-            u = stepTMz(u, p, t, fdtd_configs)
+            u = stepTM(u, p, t, fdtd_configs)
         end for t = 0:dt:T
     ]
 end
@@ -52,13 +52,13 @@ function loss(u0, design, static_geometry, fdtd_configs,)
 
     # run first T - 1 periods
     for t = 0:dt:T-1
-        u = stepTMz(u, p, t, fdtd_configs)
+        u = stepTM(u, p, t, fdtd_configs)
     end
 
-    # objective to maximize outgoing power_flux at port 2 during last period
+    # objective to maximize outgoing power at port 2 during last period
     idxs = monitor_configs[2].idxs
-    reduce(((u, l), t) -> (stepTMz(u, p, t, fdtd_configs), l - (u[1][idxs...])^2), T-1+dt:dt:T, init=(u, 0.0f0))[2]
-    # reduce(((u, l), t) -> (stepTMz(u, p, t), l + (u[1][idxs...])*u[2][idxs...]), T-1+dt:dt:T, init=(u, 0.0f0))[2]
+    reduce(((u, l), t) -> (stepTM(u, p, t, fdtd_configs), l - (u[1][idxs...])^2), T-1+dt:dt:T, init=(u, 0.0f0))[2]
+    # reduce(((u, l), t) -> (stepTM(u, p, t), l + (u[1][idxs...])*u[2][idxs...]), T-1+dt:dt:T, init=(u, 0.0f0))[2]
 end
 
 # schedule=[(8,.1,150),(16,.1,50),(32,.1,8)]
@@ -82,9 +82,9 @@ for (nx, α, nepochs) in schedule
     # loads Google's Ceviche challenge
     λ = 1.28f0 # wavelength in microns
     _dx = λ * dx
-    @unpack base, design_start, design_dims, ports, TE0 = load("waveguide_bend.bson", _dx)
-    L = size(base) .* dx # domain dimensions [wavelength]
-    sz0 = size(base)
+    @unpack mask, design_start, design_dims, ports, TE0 = load("waveguide_bend.bson", _dx)
+    L = size(mask) .* dx # domain dimensions [wavelength]
+    sz0 = size(mask)
     tspan = (0.0f0, T)
 
     x, v = TE0
@@ -92,12 +92,12 @@ for (nx, α, nepochs) in schedule
     v /= maximum(v)
     global model
     if isnothing(model)
-        model = Jello.Mask(design_dims, lmin / λ / dx; diagonal_symmetry=true) # parameterized binary mask for design region
+        model = Jello.Blob(design_dims, lmin / λ / dx; diagonal_symmetry=true) # parameterized binary mask for design region
     else
         global model.dims = design_dims
     end
     # maxwell_setup FDTD
-    polarization = :TMz
+    polarization = :TM
     boundaries = [] # unspecified boundaries default to PML
     monitors = [Monitor(ports[1] / λ, [:Ez, :Hy]), Monitor(ports[2] / λ, [:Ez, :Hx,])]
     g = linear_interpolation(x, v)
@@ -118,7 +118,7 @@ for (nx, α, nepochs) in schedule
     model0 = deepcopy(model)
     ϵ1 = 2.25f0 # oxide
     ϵ2 = 12.25f0 # silicon
-    static_geometry = (; base, start=design_start, ϵ1, ϵ2, μ, σ, σm)
+    static_geometry = (; mask, start=design_start, ϵ1, ϵ2, μ, σ, σm)
 
     # pre-optimization simulation
     p0 = make_geometry(model0(0), static_geometry, fdtd_configs.geometry_padding)

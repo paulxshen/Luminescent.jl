@@ -1,18 +1,20 @@
 using UnPack, LinearAlgebra, Random, StatsBase, ImageTransformations, Functors, DataStructures
-using Porcupine
+using Porcupine: keys, values
 using ChainRules: ignore_derivatives
-using Jello, ArrayPadding
+using ArrayPadding, Porcupine
+using ArrayPadding: left, right
 using Zygote: bufferfrom, Buffer
-using Zygote
+using Zygote, Flux
+using Jello
 # Random.seed!(1)
-include("utils.jl")
-# include("../../ArrayPadding.jl/src/main.jl")
-# include("../../Porcupine.jl/src/del.jl")
+# include("../../Porcupine.jl/src/main.jl")
+# include("../../Jello.jl/src/main.jl")
 include("maxwell_update.jl")
 include("boundaries.jl")
 include("sources.jl")
 include("monitors.jl")
 include("geometry.jl")
+include("utils.jl")
 include("maxwell_setup.jl")
 
 # ]add UnPack, LinearAlgebra, Random, StatsBase, ImageTransformations, Functors, DataStructures,Porcupine,Jello, ArrayPadding,Zygote, GPUArraysCore
