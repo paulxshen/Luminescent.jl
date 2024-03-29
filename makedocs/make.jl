@@ -1,6 +1,6 @@
 using Documenter
-# include("../src/Luminescent.jl")
-# using .Luminescent
+include("../src/Luminescent.jl")
+using .Luminescent
 
 ex = (
     "periodic_scattering",

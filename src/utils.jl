@@ -1,7 +1,6 @@
 ° = π / 180
 gaussian(x; μ=0, σ=1) = exp(-((x - μ) / σ)^2)
 
-(m::Number)(a...) = m
 d2(x) = round.(x, sigdigits=2)
 
 function place(a, b, o; lazy=false)
@@ -18,9 +17,9 @@ function place!(a, b, o)
     a
 end
 
-function place!(a, b; o)
+function place!(a, b; center)
     # @show size(a), size(b), o
-    place!(a, b, o .- floor.((size(b) .- 1) .÷ 2))
+    place!(a, b, center .- floor.((size(b) .- 1) .÷ 2))
 end
 
 function apply!(p, kw)

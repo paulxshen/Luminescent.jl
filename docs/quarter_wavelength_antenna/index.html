@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Quarter Wavelength Antenna · Luminescent.jl</title><meta name="title" content="Quarter Wavelength Antenna · Luminescent.jl"/><meta property="og:title" content="Quarter Wavelength Antenna · Luminescent.jl"/><meta property="twitter:title" content="Quarter Wavelength Antenna · Luminescent.jl"/><meta name="description" content="Documentation for Luminescent.jl."/><meta property="og:description" content="Documentation for Luminescent.jl."/><meta property="twitter:description" content="Documentation for Luminescent.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Luminescent.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../guide/">Guide</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../periodic_scattering/">Periodic Scattering</a></li><li class="is-active"><a class="tocitem" href>Quarter Wavelength Antenna</a></li><li><a class="tocitem" href="../inverse_design_waveguide_bend/">Inverse Design Waveguide Bend</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Quarter Wavelength Antenna</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Quarter Wavelength Antenna</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/paulxshen/fdtd" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/paulxshen/fdtd/blob/master/makedocs/src/quarter_wavelength_antenna.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Quarter-Wavelength-Antenna"><a class="docs-heading-anchor" href="#Quarter-Wavelength-Antenna">Quarter Wavelength Antenna</a><a id="Quarter-Wavelength-Antenna-1"></a><a class="docs-heading-anchor-permalink" href="#Quarter-Wavelength-Antenna" title="Permalink"></a></h1><p>Complete file at <a href="https://github.com/paulxshen/Luminescent.jl/tree/master/examples">examples folder</a></p><p>simulation of quarter wavelength antenna above conductor ground plane</p><pre><code class="language-julia hljs">
+using UnPack, LinearAlgebra, GLMakie
+using Luminescent, LuminescentVisualization
+
+# if running directly without module
+# include(&quot;$(pwd())/../LuminescentVisualization.jl/src/main.jl&quot;) # hide
+
+name = &quot;quarter_wavelength_antenna&quot;
+F = Float32
+dogpu = false
+T = 8.0 # simulation duration in [periods]
+nx = 20
+dx = 1.0 / nx # pixel resolution in [wavelengths]
+
+l = 2 # simulation domain lxlxl box
+sz = nx .* (l, l, l)
+ϵ = ones(F, sz)
+μ = ones(F, sz)
+σ = zeros(F, sz)
+σm = zeros(F, sz)
+
+boundaries = [PEC(-3)] # ground plane on -z, unspecified boundaries default to PML
+monitors = [
+    # (center, dimensions, normal)
+    Monitor([l / 2, l / 2, 1], [1, 1, 0]; normal=[0, 0, 1]),
+]
+sources = [
+    # (signal, center, dimensions)
+    Source(t -&gt; cos(2π * t), [l / 2, l / 2, 0.125], [0, 0, 0.25]; Jz=1),
+]
+
+configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F,)
+@unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+
+p = apply(geometry_padding; ϵ, μ, σ, σm)
+p = apply(geometry_staggering, p)
+
+# move to gpu
+if dogpu
+    using CUDA, Flux
+    @assert CUDA.functional()
+    u0, p, field_padding, source_instances = gpu.((u0, p, field_padding, source_instances))
+end
+
+# run simulation
+@showtime u = accumulate(0:dt:T, init=u0) do u, t
+    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+end
+y = [power.(u, (m,),) for m = monitor_instances]
+
+# move back to cpu for plotting
+if dogpu
+    u, p, field_padding, source_instances = cpu.((u, p, field_padding, source_instances))
+end
+
+# make movie, 
+Ez = field.(u, :Ez)
+ϵEz = field(p, :ϵEz)
+dir = @__DIR__
+recordsim(&quot;$dir/$(name).mp4&quot;, Ez, y;
+    dt,
+    field=:Ez,
+    monitor_instances,
+    source_instances,
+    geometry=ϵEz,
+    elevation=30°,
+    playback=1,
+    axis1=(; title=&quot;$name Ez&quot;),
+    axis2=(; title=&quot;monitor powers&quot;),
+)</code></pre><p><video src="../assets/quarter_wavelength_antenna.mp4" controls="true" title><a href="../assets/quarter_wavelength_antenna.mp4"></a></video></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../periodic_scattering/">« Periodic Scattering</a><a class="docs-footer-nextpage" href="../inverse_design_waveguide_bend/">Inverse Design Waveguide Bend »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Friday 29 March 2024 00:05">Friday 29 March 2024</span>. Using Julia version 1.10.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
