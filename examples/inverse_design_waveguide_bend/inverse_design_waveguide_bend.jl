@@ -26,6 +26,7 @@ record2d = true
 record3d = false
 F = Float32
 ongpu = false
+model_name = nothing # if load saved model
 
 #=
 We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.

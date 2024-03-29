@@ -9,6 +9,7 @@ using UnPack, LinearAlgebra, GLMakie
 using Luminescent, LuminescentVisualization
 
 # if running directly without module
+# include("$(pwd())/src/main.jl") # hide
 # include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 
 name = "quarter_wavelength_antenna"

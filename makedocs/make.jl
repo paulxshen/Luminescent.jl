@@ -21,7 +21,7 @@ for fn = ex
     # s="\n hide\n"
     # s = replace(s, r"\n[^\n]+# hide\n" => "\n")
     # s="\n hide\n"
-    s = replace(s, r"\n.+(hide)\n" => "\n")
+    s = replace(s, r".+(hide).+\n" => "\n")
     s = replace(s, "#=" => "```", "=#" => "```julia")
     s = replace(s, r"```julia(\n)+" => "```julia\n", r"(\n)+```" => "\n```")
 

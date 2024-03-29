@@ -7,7 +7,9 @@ We simulate  plane wave scattering on periodic array of dielectric spheres
 using UnPack, LinearAlgebra, GLMakie
 using Luminescent, LuminescentVisualization
 
+# if running directly without module # hide
 # include("$(pwd())/src/main.jl") # hide
+# include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 ``` 
 Set simulation duration and resolution.  Run on CPU by setting `dogpu = false`. If running on a newer GPU, set `F = Float16`
 ```julia
