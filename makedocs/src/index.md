@@ -4,7 +4,9 @@
 ## Overview
 Generative design meets Maxwell's Equations. Differentiable FDTD package for inverse design & topology optimization in semiconductor photonics, acoustics and RF. GPU and automatic differentiation (AD) compatible. Uses AD by `Zygote.jl` for adjoint optimization. Integrates with [`Jello.jl`](https://github.com/paulxshen/Jello.jl) to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources in 1d/2d/3d. Customizable physics to potentially incorporate dynamics like heat transfer, charge transport.
 ## Gallery
-### Generative Inverse design of compact silicon photonics waveguide bend 
+
+### Generative Inverse design of compact silicon photonics splitter 
+![](assets/inverse_design_signal_splitter.mp4)
 ### Quarter wavelength antenna radiating above conductive ground plane
 ![](assets/quarter_wavelength_antenna.mp4)
 ### Simulation of plane wave scattering on Periodic array

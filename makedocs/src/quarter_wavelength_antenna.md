@@ -1,6 +1,7 @@
+# Quarter Wavelength Antenna
 Complete file at [examples folder](https://github.com/paulxshen/Luminescent.jl/tree/master/examples)
 
-# Quarter wavelength antenna
+
 simulation of quarter wavelength antenna above conductor ground plane
 ```julia
 
@@ -8,7 +9,6 @@ using UnPack, LinearAlgebra, GLMakie
 using Luminescent, LuminescentVisualization
 
 # if running directly without module
-# include("$(pwd())/src/main.jl") # hide
 # include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 
 name = "quarter_wavelength_antenna"
@@ -74,6 +74,5 @@ recordsim("$dir/$(name).mp4", Ez, y;
     axis1=(; title="$name Ez"),
     axis2=(; title="monitor powers"),
 )
-
 ```
 ![](assets/quarter_wavelength_antenna.mp4)

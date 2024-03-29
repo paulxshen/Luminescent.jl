@@ -1,5 +1,4 @@
 #=
-# Periodic scattering
 We simulate  plane wave scattering on periodic array of dielectric spheres
 =#
 

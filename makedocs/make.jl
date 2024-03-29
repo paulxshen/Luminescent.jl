@@ -8,19 +8,22 @@ ex = (
     "inverse_design_waveguide_bend")
 for fn = ex
     s = read("$(@__DIR__)/../examples/$fn/$fn.jl", String) |> strip
+    s = replace(s, "\r\n" => "\n")
     if endswith(s, "=#")
         s = s[1:end-2]
     else
         s = s * "\n```"
     end
-    s = "# " * (replace(fn, "_" => " ") |> titlecase) * "\nComplete file at [examples folder](https://github.com/paulxshen/Luminescent.jl/tree/master/examples)\n\n$s"
     startswith(s, "#=") && (s = s[3:end])
+    s = "# " * (replace(fn, "_" => " ") |> titlecase) * "\nComplete file at [examples folder](https://github.com/paulxshen/Luminescent.jl/tree/master/examples)\n\n$s"
     # replace!(s, "\"\"\"\n\n" => "\njulia```\n", "\n\n\"\"\"" => "\n```\n")
     # replace!(s, "#=" => "julia```", "=#" => "```")
-    s = replace(s, r"\#\=(\n)+" => "#=\n", r"(\n)+\=\#" => "\n=#")
+    # s="\n hide\n"
     # s = replace(s, r"\n[^\n]+# hide\n" => "\n")
-    s = replace(s, r"\n.+# hide\n" => "\n")
+    # s="\n hide\n"
+    s = replace(s, r"\n.+(hide)\n" => "\n")
     s = replace(s, "#=" => "```", "=#" => "```julia")
+    s = replace(s, r"```julia(\n)+" => "```julia\n", r"(\n)+```" => "\n```")
 
     open("$(@__DIR__)/src/$fn.md", "w") do f
         write(f, s,)
@@ -34,7 +37,7 @@ makedocs(
         "index.md",
         "guide.md",
         "Tutorials" => ex .* [".md"],
-        "people.md",
+        # "people.md",
     ]
 )
 

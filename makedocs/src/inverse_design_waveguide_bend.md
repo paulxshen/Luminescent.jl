@@ -1,9 +1,8 @@
+# Inverse Design Waveguide Bend
 Complete file at [examples folder](https://github.com/paulxshen/Luminescent.jl/tree/master/examples)
 
-# Inverse design of photonic waveguide bend 
 
 We do inverse design of a compact photonic waveguide bend to demonstrate workflow of FDTD adjoint optimization. First, we seed the design using 2d TE adjoint simulations which serve as fast approximations. Optionlly, we finetune the resulting design in full blown 3d adjoint simulations.
-
 ```julia
 
 using UnPack, LinearAlgebra, Random, StatsBase, Dates
@@ -15,10 +14,7 @@ using AbbreviatedStackTraces
 # using Jello, Luminescent, LuminescentVisualization
 Random.seed!(1)
 
-# if running directly without module # hide
 # include("$(pwd())/src/main.jl") # hide
-# include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
-
 ```
 We skip 3d finetuning as it's 20x more compute and memory intensive than 2d adjoints. If wishing to do 3d finetuning, set `iterations3d`. In any case, 3d forward simulations (without adjoint) only take a few seconds.
 ```julia
@@ -29,14 +25,12 @@ record2d = true
 record3d = false
 F = Float32
 ongpu = false
-
 ```
 We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.
 ```julia
 
 @load "$(@__DIR__)/layout.bson" static_mask signals ports designs λ dx ϵsub ϵclad ϵcore hsub hwg hclad
 dx, = [dx,] / λ
-
 ```
 We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
 ```julia
@@ -55,7 +49,6 @@ else
 end
 model0 = deepcopy(model)
 heatmap(model())
-
 ```
 We set key time intervals. The signal must first propagate to port 2 after which all port power fluxes will get monitored
 ```julia
@@ -65,7 +58,6 @@ We set key time intervals. The signal must first propagate to port 2 after which
 Δ[1] = 2 + 1.6norm(signals[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
 Δ[2] = 2 # duration to record power at output ports
 T = cumsum(Δ)
-
 ```
 We set boundary conditions, sources , and monitor. The modal source profile is obtained from external mode solver , in our case VectorModesolver.jl . Please refer to guide section of docs website for details . To get an approximate  line source for use in 2d from the cross section profile , we sum and collapse it along its height axis
 ```julia
@@ -108,11 +100,9 @@ if ongpu
         gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))
     merge!(configs, (; u0, field_padding, source_instances))
 end
-
 ```
 We define a geometry update function that'll be called each adjoint iteration. It calls geometry generator model to generate design region which gets placed onto mask of static features.
     ```julia
-
 function make_geometry(model, static_mask, configs)#; make3d=false)
     @unpack sz, geometry_padding, geometry_staggering = configs
     μ = ones(F, sz)
@@ -135,7 +125,6 @@ function make_geometry(model, static_mask, configs)#; make3d=false)
     p = apply(geometry_padding; ϵ, μ, σ, σm)
     p = apply(geometry_staggering, p)
 end
-
 ```
 Optimal design will maximize powers into port 1 and out of port 2. Monitor normals were set so both are positive. `metrics` function compute these figures of merit (FOM) quantities by a differentiable FDTD simulation . `loss` is then defined accordingly 
 ```julia
@@ -178,7 +167,6 @@ end
 # p0 = make_geometry(model0, static_mask, μ, σ, σm)
 history = []
 loss = model -> score(metrics(model, configs; history))
-
 ```
 We now do adjoint optimization. The first few iterations may show very little change but will pick up momentum
 ```julia
@@ -195,7 +183,6 @@ for i = 1:iterations2d
 end
 @save "$(@__DIR__)/2d_model_$(time()).bson" model
 # error()
-
 ```
 We do a simulation movie using optimized geometry
 ```julia
@@ -235,11 +222,9 @@ end
 
 record = model -> runsave(model, configs)
 record2d && record(model)
-
 ```
 ![](assets/2d_inverse_design_waveguide_bend.mp4)
 ```julia
-
 ```
 We now finetune our design in 3d by starting off with optimized model from 2d. We make 3d geometry simply by sandwiching thickened 2d mask between lower substrate and upper clad layers. 
 ```julia
