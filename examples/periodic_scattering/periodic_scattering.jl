@@ -1,7 +1,6 @@
 #=
 We simulate  plane wave scattering on periodic array of dielectric spheres
 =#
-
 using UnPack, LinearAlgebra, GLMakie
 using Luminescent, LuminescentVisualization
 

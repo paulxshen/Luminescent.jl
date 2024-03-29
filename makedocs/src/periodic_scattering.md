@@ -4,7 +4,6 @@ Complete file at [examples folder](https://github.com/paulxshen/Luminescent.jl/t
 
 We simulate  plane wave scattering on periodic array of dielectric spheres
 ```julia
-
 using UnPack, LinearAlgebra, GLMakie
 using Luminescent, LuminescentVisualization
 
