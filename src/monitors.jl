@@ -19,6 +19,7 @@ end
 struct PointCloudMonitor
     p
     n
+    w
     c
     label
 end
@@ -45,7 +46,7 @@ function Monitor(c, lb, ub; normal=nothing, label="")
     OrthogonalMonitor(c, lb, ub, normal, label)
 end
 
-Monitor(p::AbstractMatrix; normal=nothing, label="") = PointCloudMonitor(p, normal, mean(p, dims=2), label)
+Monitor(p::AbstractMatrix; normals=nothing, weights=nothing, label="") = PointCloudMonitor(p, normals, weights, mean(p, dims=2), label)
 
 Monitor(v::AbstractVector; kw...) = Monitor(Matrix(v); kw...)
 Base.string(m::OrthogonalMonitor) =
@@ -71,6 +72,7 @@ struct PointCloudMonitorInstance
     i
     fi
     n
+    w
     c
     label
 end
@@ -104,12 +106,12 @@ function MonitorInstance(m::OrthogonalMonitor, dx, lc, flb, fl; F=Float32)
 end
 
 function MonitorInstance(m::PointCloudMonitor, dx, lc, flb, fl; F=Float32)
-    @unpack p, n, c, label = m
+    @unpack p, n, c, w, label = m
     p = round.(p / dx) .+ 1
     i = p .+ lc
     fi = NamedTuple([k => p .+ v for (k, v) = pairs(fl)])
     c = round.(c / dx) .+ 1 + lc
-    PointCloudMonitorInstance(i, fi, F.(n), c, label)
+    PointCloudMonitorInstance(i, fi, F.(n), w, c, label)
 end
 
 # function Base.getindex(a, m::OrthogonalMonitorInstance, )
@@ -201,6 +203,13 @@ function flux(u, m::OrthogonalMonitorInstance)
 
     sum((E × H) .* m.n)
 end
+function flux(u, m::PointCloudMonitorInstance)
+    @unpack p, n = m
+    E = [[field(u, k)[v...] for v = eachcol(m.fi[k])] for k = keys(u[:E])]
+    H = [[field(u, k)[v...] for v = eachcol(m.fi[k])] for k = keys(u[:H])]
+
+    dot.(stack(E × H) |> eachrow, eachcol(n))
+end
 
 """
     function power(m::MonitorInstance, u)
@@ -211,6 +220,7 @@ function power(u, m::OrthogonalMonitorInstance)
     # @assert ndims(m) == 2
     m.v * mean(flux(u, m))
 end
+power(u, m::PointCloudMonitorInstance) = flux(u, m) ⋅ m.w
 # power(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.i)))]) .* m.n))
 
 function monitors_on_box(c, L)
