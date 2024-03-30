@@ -228,8 +228,8 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
         dict([Symbol("σ$k") => [ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:ϵ]), flb[k], frb[k])] for k = keys(u0[:E])])
 
     source_instances = SourceInstance.(sources, dx, (sizes,), (lc,), (fl,), (sz,); F)
-    monitor_instances = MonitorInstance.(monitors, dx, (lc,), (flb,), (fl,); F)
-    roi = MonitorInstance(Monitor(zeros(d), zeros(d), dx * sz), dx, lc, flb, fl; F)
+    monitor_instances = MonitorInstance.(monitors, dx, (sz,), (lc,), (flb,), (fl,); F)
+    roi = MonitorInstance(Monitor(zeros(d), zeros(d), dx * sz), dx, sz, lc, flb, fl; F)
 
     dt = dx * Courant
     sz = Tuple(sz)

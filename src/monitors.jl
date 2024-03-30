@@ -21,8 +21,11 @@ struct PointCloudMonitor
     n
     w
     c
+    s
+    sz
     label
 end
+sphcoords(m::PointCloudMonitor) = m.s
 
 """
     function Monitor(c, L; normal=nothing, label="")
@@ -46,12 +49,38 @@ function Monitor(c, lb, ub; normal=nothing, label="")
     OrthogonalMonitor(c, lb, ub, normal, label)
 end
 
-Monitor(p::AbstractMatrix; normals=nothing, weights=nothing, label="") = PointCloudMonitor(p, normals, weights, mean(p, dims=2), label)
+Monitor(p::AbstractMatrix; normals=nothing, weights=nothing, label="") = PointCloudMonitor(p, normals, weights, mean(p, dims=2), nothing, nothing, label)
 
 Monitor(v::AbstractVector; kw...) = Monitor(Matrix(v); kw...)
+
+function SphereMonitor(c, r; dθ=15°, dϕ=15°, nsamples=256, nθ=36, nϕ=18, label="")
+    # n = stack(sample(Sphere((0, 0, 0), 1), HomogenousSampling(nsamples)))\
+    θlims = (0, 360° - dθ)
+    ϕlims = (0, 180°)
+    θ = range(θlims...; step=0.999dθ)
+    ϕ = range(ϕlims...; step=0.999dϕ)
+    nθ = length(θ)
+    nϕ = length(ϕ)
+    samples = getproperty.(sample(Sphere((0, 0, 0), 1), RegularSampling(nθ, nϕ)) |> collect, :coords)
+    sz = (nθ, nϕ)
+    n = stack(samples)
+    p = c .+ n * r
+    t = SphericalFromCartesian()
+    s = stack([[sph.r, sph.θ, sph.ϕ] for sph = t.(samples)])
+    A = 4π * r^2
+    # w = A / nsamples
+    # w=map(CartesianIndices(sz)) do i,j
+    w = map(samples) do (θ, ϕ)
+        r^2 * dθ * dϕ * sin(ϕ)
+    end
+    PointCloudMonitor(p, n, w, c, s, sz, label)
+end
 Base.string(m::OrthogonalMonitor) =
     """
     $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.c|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center, flux normal towards $(m.n|>d2)"""
+Base.string(m::PointCloudMonitor) =
+    """
+    $(m.label): point cloud monitor, centered at $(m.c|>d2), $(size(m.p,2)) points"""
 
 struct OrthogonalMonitorInstance
     d
@@ -74,12 +103,14 @@ struct PointCloudMonitorInstance
     n
     w
     c
+    inbounds
     label
 end
+inbounds(m::PointCloudMonitorInstance) = m.inbounds
 Base.length(m::OrthogonalMonitorInstance) = 1
 Base.length(m::PointCloudMonitorInstance) = 1
 
-function MonitorInstance(m::OrthogonalMonitor, dx, lc, flb, fl; F=Float32)
+function MonitorInstance(m::OrthogonalMonitor, dx, sz, lc, flb, fl; F=Float32)
     @unpack n, = m
     L = m.ub - m.lb
     singletons = findall(L .≈ 0,)
@@ -105,13 +136,22 @@ function MonitorInstance(m::OrthogonalMonitor, dx, lc, flb, fl; F=Float32)
     OrthogonalMonitorInstance(d, i, lc + c, fi, n, F(dx), F(v), m.label)
 end
 
-function MonitorInstance(m::PointCloudMonitor, dx, lc, flb, fl; F=Float32)
+function MonitorInstance(m::PointCloudMonitor, dx, sz, lc, flb, fl; F=Float32)
     @unpack p, n, c, w, label = m
     p = round.(p / dx) .+ 1
+    _, i = size(p)
+    inbounds = filter(1:i) do i
+        v = p[:, i]
+        all(v .> 0) && all(v .<= sz)
+    end
+    p = p[:, inbounds]
+    n = n[:, inbounds]
+    # p = stack(@. v[1])
+    # n = stack(@. v[2])
     i = p .+ lc
     fi = NamedTuple([k => p .+ v for (k, v) = pairs(fl)])
     c = round.(c / dx) .+ 1 + lc
-    PointCloudMonitorInstance(i, fi, F.(n), w, c, label)
+    PointCloudMonitorInstance(i, fi, F.(n), w, c, inbounds, label)
 end
 
 # function Base.getindex(a, m::OrthogonalMonitorInstance, )
@@ -165,8 +205,11 @@ end
 function field(u, k, m::PointCloudMonitorInstance,)
     r = _get(u, k, m)
     if isnothing(r)
-        return [field(u, k)[v...] for v = eachcol(m.fi[k])]
+        r = [field(u, k)[v...] for v = eachcol(m.fi[k])]
     end
+    # if !isnothing(m.sz)
+    #     r = reshape(r, m.sz)
+    # end
     r
 end
 function _get(u, k, m,)
@@ -204,7 +247,7 @@ function flux(u, m::OrthogonalMonitorInstance)
     sum((E × H) .* m.n)
 end
 function flux(u, m::PointCloudMonitorInstance)
-    @unpack p, n = m
+    @unpack n = m
     E = [[field(u, k)[v...] for v = eachcol(m.fi[k])] for k = keys(u[:E])]
     H = [[field(u, k)[v...] for v = eachcol(m.fi[k])] for k = keys(u[:H])]
 
