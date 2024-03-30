@@ -1,5 +1,6 @@
-using UnPack, LinearAlgebra, Random, StatsBase, ImageTransformations, Functors, DataStructures
+using UnPack, LinearAlgebra, Random, StatsBase, ImageTransformations, Meshes, CoordinateTransformations, Functors, DataStructures
 using Porcupine: keys, values
+using Meshes: Sphere
 using ChainRules: ignore_derivatives
 using ArrayPadding, Porcupine
 using ArrayPadding: left, right
