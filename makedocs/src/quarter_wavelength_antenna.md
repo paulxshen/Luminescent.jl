@@ -5,12 +5,13 @@ Complete file at [examples folder](https://github.com/paulxshen/Luminescent.jl/t
 We simulate a quarter wavelength antenna above conductor ground plane and compute its nearfield radiation pattern
 ```julia
 
-using UnPack, LinearAlgebra, GLMakie
-# using Luminescent, LuminescentVisualization
+using UnPack, LinearAlgebra, GLMakie, CoordinateTransformations
+using GLMakie: volume
+using Luminescent, LuminescentVisualization
 
 # if running directly without module # hide
-include("$(pwd())/src/main.jl") # hide
-include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
+# include("$(pwd())/src/main.jl") # hide
+# include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 
 name = "quarter_wavelength_antenna"
 F = Float32
@@ -46,8 +47,9 @@ p = apply(geometry_staggering, p)
 
 # move to gpu
 if dogpu
-    using CUDA, Flux
-    @assert CUDA.functional()
+    using Flux
+    # using CUDA
+    # @assert CUDA.functional()
     u0, p, field_padding, source_instances = gpu.((u0, p, field_padding, source_instances))
 end
 ```
