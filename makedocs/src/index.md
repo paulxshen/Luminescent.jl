@@ -2,7 +2,7 @@
 
  Prerelease. First stable release planned for April . Until then, accuracy not validated. Report bugs on [Github](https://github.com/paulxshen/Luminescent.jl) - we usually respond within a day
 ## Overview
-Generative design meets Maxwell's Equations. Differentiable FDTD package for inverse design & topology optimization in semiconductor photonics, acoustics and RF. GPU and automatic differentiation (AD) compatible. Uses AD by `Zygote.jl` for adjoint optimization. Integrates with [`Jello.jl`](https://github.com/paulxshen/Jello.jl) to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources in 1d/2d/3d. Customizable physics to potentially incorporate dynamics like heat transfer, charge transport.
+Generative design meets Maxwell's Equations. GPU and automatic differentiation (AD) compatible FDTD package in Julia for inverse design & topology optimization in semiconductor photonics, acoustics and RF. Uses AD by `Zygote.jl` for adjoint optimization. Integrates with [`Jello.jl`](https://github.com/paulxshen/Jello.jl) to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources in 1d/2d/3d. Customizable physics to potentially incorporate dynamics like heat transfer, charge transport.
 ## Gallery
 
 ### Generative Inverse design of compact silicon photonics splitter 
@@ -13,12 +13,17 @@ Generative design meets Maxwell's Equations. Differentiable FDTD package for inv
 ![](assets/periodic_scattering.mp4)
 Please star us on [Github](https://github.com/paulxshen/Luminescent.jl) if you like our work :)
 ## Installation
-Install via 
+Install Julia preferably with VSCODE. Then add our package  via 
 ```
+using Pkg
 Pkg.add(url="https://github.com/paulxshen/Luminescent.jl")
 Pkg.add(url="https://github.com/paulxshen/LuminescentVisualization.jl")
 ```
-`LuminescentVisualization.jl` contains visualization utilities
+`LuminescentVisualization.jl` contains visualization utilities. If you're running tutorials also add
+```
+]add UnPack, BSON,DataStructures, StatsBase, Zygote, Jello, GLMakie, CoordinateTransformations,AbbreviatedStackTraces,CUDA,Flux
+```
+Omit CUDA if you don't have NVidia GPU
 ## Quickstart
 Please refer to the first tutorial 
 ## People
