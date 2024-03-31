@@ -1,26 +1,132 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Inverse Design Waveguide Bend · Luminescent.jl</title><meta name="title" content="Inverse Design Waveguide Bend · Luminescent.jl"/><meta property="og:title" content="Inverse Design Waveguide Bend · Luminescent.jl"/><meta property="twitter:title" content="Inverse Design Waveguide Bend · Luminescent.jl"/><meta name="description" content="Documentation for Luminescent.jl."/><meta property="og:description" content="Documentation for Luminescent.jl."/><meta property="twitter:description" content="Documentation for Luminescent.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Luminescent.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../guide/">Guide</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../periodic_scattering/">Periodic Scattering</a></li><li><a class="tocitem" href="../quarter_wavelength_antenna/">Quarter Wavelength Antenna</a></li><li class="is-active"><a class="tocitem" href>Inverse Design Waveguide Bend</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Inverse Design Waveguide Bend</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Inverse Design Waveguide Bend</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/paulxshen/fdtd" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/paulxshen/fdtd/blob/master/makedocs/src/inverse_design_waveguide_bend.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Inverse-Design-Waveguide-Bend"><a class="docs-heading-anchor" href="#Inverse-Design-Waveguide-Bend">Inverse Design Waveguide Bend</a><a id="Inverse-Design-Waveguide-Bend-1"></a><a class="docs-heading-anchor-permalink" href="#Inverse-Design-Waveguide-Bend" title="Permalink"></a></h1><p>Complete file at <a href="https://github.com/paulxshen/Luminescent.jl/tree/master/examples">examples folder</a></p><p>We do inverse design of a compact photonic waveguide bend to demonstrate workflow of FDTD adjoint optimization. First, we seed the design using 2d TE adjoint simulations which serve as fast approximations. Optionlly, we finetune the resulting design in full blown 3d adjoint simulations.</p><pre><code class="language-julia hljs">
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inverse Design Waveguide Bend · Luminescent.jl</title>
+    <meta name="title" content="Inverse Design Waveguide Bend · Luminescent.jl" />
+    <meta property="og:title" content="Inverse Design Waveguide Bend · Luminescent.jl" />
+    <meta property="twitter:title" content="Inverse Design Waveguide Bend · Luminescent.jl" />
+    <meta name="description" content="Documentation for Luminescent.jl." />
+    <meta property="og:description" content="Documentation for Luminescent.jl." />
+    <meta property="twitter:description" content="Documentation for Luminescent.jl." />
+    <script data-outdated-warner src="../assets/warner.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css" />
+    <script>documenterBaseURL = ".."</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"
+        data-main="../assets/documenter.js"></script>
+    <script src="../search_index.js"></script>
+    <script src="../siteinfo.js"></script>
+    <script src="../../versions.js"></script>
+    <link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css"
+        data-theme-name="documenter-dark" data-theme-primary-dark />
+    <link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css"
+        data-theme-name="documenter-light" data-theme-primary />
+    <script src="../assets/themeswap.js"></script>
+</head>
+
+<body>
+    <div id="documenter">
+        <nav class="docs-sidebar">
+            <div class="docs-package-name"><span class="docs-autofit"><a href="../">Luminescent.jl</a></span></div>
+            <button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2"
+                id="documenter-search-query">Search docs (Ctrl + /)</button>
+            <ul class="docs-menu">
+                <li><a class="tocitem" href="../">Home</a></li>
+                <li><a class="tocitem" href="../guide/">Guide</a></li>
+                <li><span class="tocitem">Tutorials</span>
+                    <ul>
+                        <li><a class="tocitem" href="../periodic_scattering/">Periodic Scattering</a></li>
+                        <li><a class="tocitem" href="../quarter_wavelength_antenna/">Quarter Wavelength Antenna</a></li>
+                        <li class="is-active"><a class="tocitem" href>Inverse Design Waveguide Bend</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="docs-version-selector field has-addons">
+                <div class="control"><span class="docs-label button is-static is-size-7">Version</span></div>
+                <div class="docs-selector control is-expanded">
+                    <div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div>
+                </div>
+            </div>
+        </nav>
+        <div class="docs-main">
+            <header class="docs-navbar"><a
+                    class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop"
+                    id="documenter-sidebar-button" href="#"></a>
+                <nav class="breadcrumb">
+                    <ul class="is-hidden-mobile">
+                        <li><a class="is-disabled">Tutorials</a></li>
+                        <li class="is-active"><a href>Inverse Design Waveguide Bend</a></li>
+                    </ul>
+                    <ul class="is-hidden-tablet">
+                        <li class="is-active"><a href>Inverse Design Waveguide Bend</a></li>
+                    </ul>
+                </nav>
+                <div class="docs-right"><a class="docs-navbar-link" href="https://github.com/paulxshen/fdtd"
+                        title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span
+                            class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link"
+                        href="https://github.com/paulxshen/fdtd/blob/master/makedocs/src/inverse_design_waveguide_bend.md"
+                        title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a
+                        class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button"
+                        href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up"
+                        id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a>
+                </div>
+            </header>
+            <article class="content" id="documenter-page">
+                <h1 id="Inverse-Design-Waveguide-Bend"><a class="docs-heading-anchor"
+                        href="#Inverse-Design-Waveguide-Bend">Inverse Design Waveguide Bend</a><a
+                        id="Inverse-Design-Waveguide-Bend-1"></a><a class="docs-heading-anchor-permalink"
+                        href="#Inverse-Design-Waveguide-Bend" title="Permalink"></a></h1>
+                <p>Complete file at <a href="https://github.com/paulxshen/Luminescent.jl/tree/master/examples">examples
+                        folder</a></p>
+                <p>We do inverse design of a compact photonic waveguide bend to demonstrate workflow of FDTD adjoint
+                    optimization. First, we seed the design using 2d TE adjoint simulations which serve as fast
+                    approximations. Optionlly, we finetune the resulting design in full blown 3d adjoint simulations.
+                </p>
+                <pre><code class="language-julia hljs">
 using UnPack, LinearAlgebra, Random, StatsBase, Dates
 using Zygote, Flux, CUDA, GLMakie, Jello
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer
 using BSON: @save, @load
 using AbbreviatedStackTraces
-# using Jello, Luminescent, LuminescentVisualization
+using Jello, Luminescent, LuminescentVisualization
 Random.seed!(1)
 
 # if running directly without module # hide
 # include(&quot;$(pwd())/src/main.jl&quot;) # hide
-# include(&quot;$(pwd())/../LuminescentVisualization.jl/src/main.jl&quot;) # hide</code></pre><p>We skip 3d finetuning as it&#39;s 20x more compute and memory intensive than 2d adjoints. If wishing to do 3d finetuning, set <code>iterations3d</code>. In any case, 3d forward simulations (without adjoint) only take a few seconds.</p><pre><code class="language-julia hljs">name = &quot;inverse_design_waveguide_bend&quot;
+# include(&quot;$(pwd())/../LuminescentVisualization.jl/src/main.jl&quot;) # hide</code></pre>
+                <p>We skip 3d finetuning as it&#39;s 20x more compute and memory intensive than 2d adjoints. If wishing
+                    to do 3d finetuning, set <code>iterations3d</code>. In any case, 3d forward simulations (without
+                    adjoint) only take a few seconds.</p>
+                <pre><code class="language-julia hljs">name = &quot;inverse_design_waveguide_bend&quot;
 iterations2d = 10
 iterations3d = 0
 record2d = true
 record3d = false
 F = Float32
 ongpu = false
-model_name = nothing # if load saved model</code></pre><p>We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.</p><pre><code class="language-julia hljs">
+model_name = nothing # if load saved model</code></pre>
+                <p>We load design layout which includes a 2d static_mask of static waveguide geometry as well as
+                    variables with locations of ports, signals, design regions and material properties.</p>
+                <pre><code class="language-julia hljs">
 @load &quot;$(@__DIR__)/layout.bson&quot; static_mask signals ports designs λ dx ϵsub ϵclad ϵcore hsub hwg hclad
-dx, = [dx,] / λ</code></pre><p>We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.</p><pre><code class="language-julia hljs">
+dx, = [dx,] / λ</code></pre>
+                <p>We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters
+                    will get optimized during adjoint optimization. We initialize it with a straight slab connecting
+                    input to output port.</p>
+                <pre><code class="language-julia hljs">
 szd = Tuple(round.(Int, designs[1].L / λ / dx) .+ 1) # design region size
 if isnothing(model_name)
     nbasis = 5 # complexity of design region
@@ -34,12 +140,20 @@ else
     @load &quot;$(@__DIR__)/$model_name&quot; model
 end
 model0 = deepcopy(model)
-heatmap(model())</code></pre><p>We set key time intervals. The signal must first propagate to port 2 after which all port power fluxes will get monitored</p><pre><code class="language-julia hljs">
+heatmap(model())</code></pre>
+                <p>We set key time intervals. The signal must first propagate to port 2 after which all port power
+                    fluxes will get monitored</p>
+                <pre><code class="language-julia hljs">
 Δ = zeros(2)
 # Δ[1] = 1
 Δ[1] = 2 + 1.6norm(signals[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
 Δ[2] = 2 # duration to record power at output ports
-T = cumsum(Δ)</code></pre><p>We set boundary conditions, sources , and monitor. The modal source profile is obtained from external mode solver , in our case VectorModesolver.jl . Please refer to guide section of docs website for details . To get an approximate  line source for use in 2d from the cross section profile , we sum and collapse it along its height axis</p><pre><code class="language-julia hljs">
+T = cumsum(Δ)</code></pre>
+                <p>We set boundary conditions, sources , and monitor. The modal source profile is obtained from external
+                    mode solver , in our case VectorModesolver.jl . Please refer to guide section of docs website for
+                    details . To get an approximate line source for use in 2d from the cross section profile , we sum
+                    and collapse it along its height axis</p>
+                <pre><code class="language-julia hljs">
 boundaries = [] # unspecified boundaries default to PML
 monitors = [
     # (center, lower bound, upper bound; normal)
@@ -77,7 +191,10 @@ if ongpu
     u0, model, static_mask, μ, σ, σm, field_padding, source_instances =
         gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))
     merge!(configs, (; u0, field_padding, source_instances))
-end</code></pre><p>We define a geometry update function that&#39;ll be called each adjoint iteration. It calls geometry generator model to generate design region which gets placed onto mask of static features.</p><pre><code class="language-julia hljs">function make_geometry(model, static_mask, configs)#; make3d=false)
+end</code></pre>
+                <p>We define a geometry update function that&#39;ll be called each adjoint iteration. It calls geometry
+                    generator model to generate design region which gets placed onto mask of static features.</p>
+                <pre><code class="language-julia hljs">function make_geometry(model, static_mask, configs)#; make3d=false)
     @unpack sz, geometry_padding, geometry_staggering = configs
     μ = ones(F, sz)
     σ = zeros(F, sz)
@@ -98,7 +215,11 @@ end</code></pre><p>We define a geometry update function that&#39;ll be called ea
 
     p = apply(geometry_padding; ϵ, μ, σ, σm)
     p = apply(geometry_staggering, p)
-end</code></pre><p>Optimal design will maximize powers into port 1 and out of port 2. Monitor normals were set so both are positive. <code>metrics</code> function compute these figures of merit (FOM) quantities by a differentiable FDTD simulation . <code>loss</code> is then defined accordingly </p><pre><code class="language-julia hljs">
+end</code></pre>
+                <p>Optimal design will maximize powers into port 1 and out of port 2. Monitor normals were set so both
+                    are positive. <code>metrics</code> function compute these figures of merit (FOM) quantities by a
+                    differentiable FDTD simulation . <code>loss</code> is then defined accordingly </p>
+                <pre><code class="language-julia hljs">
 function metrics(model, configs; autodiff=true, history=nothing)
     p = make_geometry(model, static_mask, configs;)
     if !isnothing(history)
@@ -136,7 +257,10 @@ end
 
 # p0 = make_geometry(model0, static_mask, μ, σ, σm)
 history = []
-loss = model -&gt; score(metrics(model, configs; history))</code></pre><p>We now do adjoint optimization. The first few iterations may show very little change but will pick up momentum</p><pre><code class="language-julia hljs">
+loss = model -&gt; score(metrics(model, configs; history))</code></pre>
+                <p>We now do adjoint optimization. The first few iterations may show very little change but will pick up
+                    momentum</p>
+                <pre><code class="language-julia hljs">
 opt = Adam(0.1)
 opt_state = Flux.setup(opt, model)
 # iterations2d = 66
@@ -148,7 +272,9 @@ for i = 1:iterations2d
     println(&quot; $l\n&quot;)
 end
 @save &quot;$(@__DIR__)/2d_model_$(time()).bson&quot; model
-# error()</code></pre><p>We do a simulation movie using optimized geometry</p><pre><code class="language-julia hljs">
+# error()</code></pre>
+                <p>We do a simulation movie using optimized geometry</p>
+                <pre><code class="language-julia hljs">
 # @show metrics(model)
 function runsave(model, configs; kw...)
     p = make_geometry(model, static_mask, configs)
@@ -183,7 +309,13 @@ function runsave(model, configs; kw...)
 end
 
 record = model -&gt; runsave(model, configs)
-record2d &amp;&amp; record(model)</code></pre><p><video src="../assets/2d_inverse_design_waveguide_bend.mp4" controls="true" title><a href="../assets/2d_inverse_design_waveguide_bend.mp4"></a></video></p><pre><code class="language-julia hljs"></code></pre><p>We now finetune our design in 3d by starting off with optimized model from 2d. We make 3d geometry simply by sandwiching thickened 2d mask between lower substrate and upper clad layers. </p><pre><code class="language-julia hljs">
+record2d &amp;&amp; record(model)</code></pre>
+                <p><video src="../assets/2d_inverse_design_waveguide_bend.mp4" controls="true" title><a
+                            href="../assets/2d_inverse_design_waveguide_bend.mp4"></a></video></p>
+                <pre><code class="language-julia hljs"></code></pre>
+                <p>We now finetune our design in 3d by starting off with optimized model from 2d. We make 3d geometry
+                    simply by sandwiching thickened 2d mask between lower substrate and upper clad layers. </p>
+                <pre><code class="language-julia hljs">
 ϵdummy = sandwich(static_mask, round.(Int, [hsub, hwg, hclad] / λ / dx)..., ϵsub, ϵclad)
 sz = size(ϵdummy)
 model2d = deepcopy(model)
@@ -224,4 +356,40 @@ end
 
 
 record = model -&gt; runsave(model, configs; elevation=70°, azimuth=110°)
-record3d &amp;&amp; record(model)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../quarter_wavelength_antenna/">« Quarter Wavelength Antenna</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Saturday 30 March 2024 19:36">Saturday 30 March 2024</span>. Using Julia version 1.10.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+record3d &amp;&amp; record(model)</code></pre>
+            </article>
+            <nav class="docs-footer"><a class="docs-footer-prevpage" href="../quarter_wavelength_antenna/">« Quarter
+                    Wavelength Antenna</a>
+                <div class="flexbox-break"></div>
+                <p class="footer-message">Powered by <a
+                        href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a
+                        href="https://julialang.org/">Julia Programming Language</a>.</p>
+            </nav>
+        </div>
+        <div class="modal" id="documenter-settings">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Settings</p><button class="delete"></button>
+                </header>
+                <section class="modal-card-body">
+                    <p><label class="label">Theme</label>
+                    <div class="select"><select id="documenter-themepicker">
+                            <option value="documenter-light">documenter-light</option>
+                            <option value="documenter-dark">documenter-dark</option>
+                            <option value="auto">Automatic (OS)</option>
+                        </select></div>
+                    </p>
+                    <hr />
+                    <p>This document was generated with <a
+                            href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span
+                            class="colophon-date" title="Saturday 30 March 2024 19:36">Saturday 30 March 2024</span>.
+                        Using Julia version 1.10.1.</p>
+                </section>
+                <footer class="modal-card-foot"></footer>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

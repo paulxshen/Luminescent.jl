@@ -4,11 +4,11 @@ We simulate a quarter wavelength antenna above conductor ground plane and comput
 
 using UnPack, LinearAlgebra, GLMakie
 using GLMakie: volume
-# using Luminescent, LuminescentVisualization
+using Luminescent, LuminescentVisualization
 
 # if running directly without module # hide
-include("$(pwd())/src/main.jl") # hide
-include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
+# include("$(pwd())/src/main.jl") # hide
+# include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 
 name = "quarter_wavelength_antenna"
 F = Float32
