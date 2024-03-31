@@ -1,5 +1,5 @@
 using Pkg
-# ]add UnPack, BSON,DataStructures, StatsBase, Documenter,ImageTransformations,Interpolations, Zygote, Optim,ArrayPadding, Porcupine, Jello, GLMakie, Functors, CoordinateTransformations,Lazy,AbbreviatedStackTraces,ReverseStackTraces,CUDA,Flux
+# ]add UnPack, BSON,DataStructures, StatsBase, Documenter,ImageTransformations,Interpolations, Zygote, Optim,ArrayPadding, Porcupine,NearestNeighbors, Jello, GLMakie, Functors, CoordinateTransformations,Lazy,AbbreviatedStackTraces,ReverseStackTraces,CUDA,Flux
 # Pkg.add(url="https://github.com/paulxshen/ArrayPadding.jl")
 # Pkg.add(url="https://github.com/paulxshen/Jello.jl")
 
