@@ -61,8 +61,9 @@ p = apply(geometry_staggering; p...)
 
 # move to gpu
 if dogpu
-    using CUDA, Flux
-    @assert CUDA.functional()
+    using Flux
+    # using CUDA
+    # @assert CUDA.functional()
     u0, p, field_padding, source_instances = gpu.((u0, p, field_padding, source_instances))
 end
 

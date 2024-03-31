@@ -2,7 +2,7 @@
 We simulate a quarter wavelength antenna above conductor ground plane and compute its nearfield radiation pattern
 =#
 
-using UnPack, LinearAlgebra, GLMakie
+using UnPack, LinearAlgebra, GLMakie, CoordinateTransformations
 using GLMakie: volume
 using Luminescent, LuminescentVisualization
 
@@ -45,8 +45,9 @@ p = apply(geometry_staggering, p)
 
 # move to gpu
 if dogpu
-    using CUDA, Flux
-    @assert CUDA.functional()
+    using Flux
+    # using CUDA
+    # @assert CUDA.functional()
     u0, p, field_padding, source_instances = gpu.((u0, p, field_padding, source_instances))
 end
 

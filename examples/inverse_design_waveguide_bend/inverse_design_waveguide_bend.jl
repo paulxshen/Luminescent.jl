@@ -100,8 +100,9 @@ power_profile = F.(real.(Jy .* conj.(Mz)))
 power_profile /= norm(power_profile)
 
 if ongpu
-    using CUDA, Flux
-    @assert CUDA.functional()
+    using Flux
+    # using CUDA
+    # @assert CUDA.functional()
     u0, model, static_mask, μ, σ, σm, field_padding, source_instances =
         gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))
     merge!(configs, (; u0, field_padding, source_instances))
