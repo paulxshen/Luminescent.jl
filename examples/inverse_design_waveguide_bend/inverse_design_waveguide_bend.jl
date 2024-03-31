@@ -9,7 +9,7 @@ using Flux: mae, Adam
 using Zygote: withgradient, Buffer
 using BSON: @save, @load
 using AbbreviatedStackTraces
-# using Jello, Luminescent, LuminescentVisualization
+using Jello, Luminescent, LuminescentVisualization
 Random.seed!(1)
 
 # if running directly without module # hide
