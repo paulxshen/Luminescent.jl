@@ -4,5 +4,6 @@ using Pkg
 # Pkg.add(url="https://github.com/paulxshen/Jello.jl")
 
 # Pkg.add(url="https://github.com/paulxshen/Porcupine.jl")
+Pkg.update("ArrayPadding")
 Pkg.add(url="https://github.com/paulxshen/Luminescent.jl")
 Pkg.add(url="https://github.com/paulxshen/LuminescentVisualization.jl")

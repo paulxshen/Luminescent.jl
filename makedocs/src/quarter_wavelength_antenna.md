@@ -5,7 +5,7 @@ Complete file at [examples folder](https://github.com/paulxshen/Luminescent.jl/t
 We simulate a quarter wavelength antenna above conductor ground plane and compute its nearfield radiation pattern
 ```julia
 
-using UnPack, LinearAlgebra, GLMakie, CoordinateTransformations
+using UnPack, LinearAlgebra, GLMakie, CoordinateTransformations, NearestNeighbors, Random
 using GLMakie: volume
 using Luminescent, LuminescentVisualization
 
@@ -13,11 +13,12 @@ using Luminescent, LuminescentVisualization
 # include("$(pwd())/src/main.jl") # hide
 # include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 
+Random.seed!
 name = "quarter_wavelength_antenna"
 F = Float32
 dogpu = false
 T = 8.0 # simulation duration in [periods]
-nx = 20
+nx = 30
 dx = 1.0 / nx # pixel resolution in [wavelengths]
 
 l = 2 # simulation domain lxlxl box
@@ -64,20 +65,25 @@ if dogpu
     u, p, field_padding, source_instances = cpu.((u, p, field_padding, source_instances))
 end
 ```
-Plot nearfield Poynting flux thru our Spherical monitor integrated for 1 period
+Compute nearfield Poynting flux  integrated for 1 period thru our Spherical monitor consisting of points on sphere
 ```julia
 nt = round(Int, 1 / dt)
 r = dt * sum(flux.(u[end-nt+1:end], (monitor_instances[1],),))
-
 _, θ, ϕ = eachrow(sphcoords(monitors[1])[:, inbounds(monitor_instances[1])])
+```
+Interpolate onto regular grid for Plot
+```julia
+tree = KDTree(hcat(θ, ϕ)')
+θ = 0:15°:360°
+ϕ = 0:15°:180°
+n = length(ϕ)
+m = length(θ)
+i, = nn(tree, stack(vec(collect.(Base.product(θ, ϕ)))),)
 cfs = CartesianFromSpherical()
-rvecs = cfs.(splat(Spherical).(zip(r, F.(θ), F.(ϕ))))
-
-fig = Figure()
-ax = Axis3(fig[1, 1])
-plot!(ax, getindex.(rvecs, 1), getindex.(rvecs, 2), getindex.(rvecs, 3),)
+rvecs = reshape(cfs.(splat(Spherical).(zip(r[i], θ * ones(n)', ones(m) * ϕ'))), m, n)
+fig = surface(getindex.(rvecs, 1), getindex.(rvecs, 2), getindex.(rvecs, 3),)
 display(fig)
-save("antennapattern.png", fig)
+save("$(@__DIR__)/antennapattern.png", fig)
 ```
 ![](assets/antennapattern.png)
 ```julia

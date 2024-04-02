@@ -52,24 +52,32 @@ end
 Monitor(p::AbstractMatrix; normals=nothing, weights=nothing, label="") = PointCloudMonitor(p, normals, weights, mean(p, dims=2), nothing, nothing, label)
 
 Monitor(v::AbstractVector; kw...) = Monitor(Matrix(v); kw...)
+# Spherical monitor center `c` radius `r` commonly used for antenna pattern . Instantiated to `PointCloudMonitorInstance` consisting of `N` points uniformly sampled on sphere. Points outside simulation domain are automatically discarded 
+# function SphereMonitor(c, r; N=256, label="")
+"""
+    function SphereMonitor(c, r; dθ=5°, dϕ=5°, label="")
 
-function SphereMonitor(c, r; dθ=15°, dϕ=15°, nsamples=256, nθ=36, nϕ=18, label="")
-    # n = stack(sample(Sphere((0, 0, 0), 1), HomogenousSampling(nsamples)))\
-    θlims = (0, 360° - dθ)
+Spherical monitor center `c` radius `r` commonly used for antenna pattern . Instantiated to `PointCloudMonitorInstance` . Points outside simulation domain are automatically discarded 
+    """
+function SphereMonitor(c, r; dθ=2°, dϕ=2°, N=256, nθ=36, nϕ=18, label="")
+    # n = stack(sample(Sphere((0, 0, 0), 1), HomogenousSampling(N)))\
+    θlims = (0, 360°)
     ϕlims = (0, 180°)
-    θ = range(θlims...; step=0.999dθ)
-    ϕ = range(ϕlims...; step=0.999dϕ)
+    θ = range(θlims...; step=dθ)
+    ϕ = range(ϕlims...; step=dϕ)
     nθ = length(θ)
     nϕ = length(ϕ)
     samples = getproperty.(sample(Sphere((0, 0, 0), 1), RegularSampling(nθ, nϕ)) |> collect, :coords)
+    # samples = getproperty.(sample(Sphere((0, 0, 0), 1), HomogeneousSampling(N)) |> collect, :coords)
+    # samples=Base.product(θ,ϕ)
     sz = (nθ, nϕ)
     n = stack(samples)
     p = c .+ n * r
     t = SphericalFromCartesian()
     s = stack([[sph.r, sph.θ, sph.ϕ] for sph = t.(samples)])
-    A = 4π * r^2
-    # w = A / nsamples
-    # w=map(CartesianIndices(sz)) do i,j
+    # A = 4π * r^2
+    # w = A / N
+    # w = map(CartesianIndices(sz)) do i, j
     w = map(samples) do (θ, ϕ)
         r^2 * dθ * dϕ * sin(ϕ)
     end

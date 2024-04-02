@@ -21,7 +21,7 @@ h = hwg + 2hm
 # hwg = 0.25
 
 
-sig = savemodes("$(@__DIR__)/modes.bson", dx, λ, wwg, hwg, wm, hm, ϵ1, ϵ2)
+sig = rectmodes("$(@__DIR__)/modes.bson", dx, λ, wwg, hwg, wm, hm, ϵ1, ϵ2)
 ports = [
     (; c=[lwg - lm, w - wm - wd / 2], lb=[0, -wwg / 2 - wm], ub=[0, wwg / 2 + wm], n=[1, 0]),
     (; c=[l - lm - ld / 2, wm], lb=[-wwg / 2 - wm, 0], ub=[wwg / 2 + wm, 0], n=[0, -1]),
