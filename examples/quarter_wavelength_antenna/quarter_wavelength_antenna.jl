@@ -2,19 +2,20 @@
 We simulate a quarter wavelength antenna above conductor ground plane and compute its nearfield radiation pattern
 =#
 
-using UnPack, LinearAlgebra, GLMakie, CoordinateTransformations, NearestNeighbors
+using UnPack, LinearAlgebra, GLMakie, CoordinateTransformations, NearestNeighbors, Random
 using GLMakie: volume
-# using Luminescent, LuminescentVisualization
+using Luminescent, LuminescentVisualization
 
 # if running directly without module # hide
-include("$(pwd())/src/main.jl") # hide
-include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
+# include("$(pwd())/src/main.jl") # hide
+# include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 
+Random.seed!
 name = "quarter_wavelength_antenna"
 F = Float32
 dogpu = false
 T = 8.0 # simulation duration in [periods]
-nx = 20
+nx = 30
 dx = 1.0 / nx # pixel resolution in [wavelengths]
 
 l = 2 # simulation domain lxlxl box
@@ -83,7 +84,7 @@ cfs = CartesianFromSpherical()
 rvecs = reshape(cfs.(splat(Spherical).(zip(r[i], θ * ones(n)', ones(m) * ϕ'))), m, n)
 fig = surface(getindex.(rvecs, 1), getindex.(rvecs, 2), getindex.(rvecs, 3),)
 display(fig)
-save("antennapattern.png", fig)
+save("$(@__DIR__)/antennapattern.png", fig)
 
 #=
 ![](assets/antennapattern.png)
