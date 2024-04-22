@@ -1,14 +1,15 @@
 
-function sandwich(mask, h1, h, h2, ϵ1, ϵ2)
-    # a = ones(F, size(mask))
-    a = 0 * mask .+ 1
-    # hbox, hwg, hclad = h
-    cat(repeat.(
-            (a * ϵ1, mask, ϵ2 * a),
-            1,
-            1,
-            (h1, h, h2)
-        )..., dims=3)
+function sandwich(layers, heights)
+    sz = (1,)
+    F = Float32
+    for l = layers
+        if isa(l, AbstractMatrix)
+            sz = size(l)
+            F = eltype(l)
+        end
+    end
+    a = ones(F, sz)
+    stack(vcat([repeat(isa(l, AbstractMatrix) ? l : l * a, n) for (l, n) = zip(layers, heights)]...))
 end
 
 

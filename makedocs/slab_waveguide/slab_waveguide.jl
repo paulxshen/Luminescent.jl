@@ -16,7 +16,7 @@ dogpu = true
 F = Float32
 
 # load mode profile and waveguide dimensions from results of external mode solver 
-@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad w h ϵsub ϵclad ϵcore
+@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad w h ϵbase ϵclad ϵcore
 ϵmin = ϵclad
 hsub, wwg, hwg, hclad, w, dx, ub, lb = [hsub, wwg, hwg, hclad, w, dx, ub, lb] / λ
 dx = F(dx)
@@ -102,7 +102,7 @@ recordsim("$dir/2d_$(name).mp4", Ey, v;
 # error()
 
 # begin 3d simulation
-ϵ = sandwich(mask, round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
+ϵ = sandwich(mask, round.(Int, [hsub, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
 sz = size(ϵ)
 μ = 1
 σ = zeros(F, sz)

@@ -12,9 +12,10 @@ wwg = 0.4
 hwg = 0.2
 lwg = 1.0
 ld = 2
-wd = 2
-hsub = hclad = wm = hm = lm = 0.25
-l = 2lwg + ld
+hsub = hclad = wm = hm = lm = 0.1
+d = 0.25
+wd = 2wwg + d
+l = lwg + ld + lm
 w = wd + 2wm
 h = hwg + 2hm
 
@@ -41,7 +42,7 @@ sig = linemodes(dx, λ, wwg, ϵ1, ϵ2, wm,)
 y = wm + wwg / 2
 ports = [
     (; c=[lm, y], lb=[0, -wwg / 2 - wm], ub=[0, wwg / 2 + wm], n=[1, 0]),
-    (; c=[l - lm, y], lb=[0, -wwg / 2 - wm], ub=[0, wwg / 2 + wm], n=[1, 0]),
+    (; c=[lwg - 0.4, d + wm + 1.5wwg], lb=[0, -wwg / 2 - wm], ub=[0, wwg / 2 + wm], n=[-1, 0]),
 ]
 signals = [
     merge((; c=[0, y], n=[1, 0]), sig)
@@ -50,18 +51,15 @@ designs = [
     (; o=[lwg, wm], L=[ld, wd,],)
 ]
 
-wwg_, hwg_, lwg_, ld_, wd_, l_, w_, h_, lm_, wm_ =
-    round.(Int, [wwg, hwg, lwg, ld, wd, l, w, h, lm, wm] ./ dx)
+wwg_, hwg_, lwg_, ld_, wd_, l_, w_, h_, lm_, wm_, d_ =
+    round.(Int, [wwg, hwg, lwg, ld, wd, l, w, h, lm, wm, d] ./ dx)
 
 # static_mask = zeros(Int, l_ .+ 1, w_ .+ 1)
 static_mask = zeros(Int, l_, w_)
 wg = ones(lwg_, wwg_)
-# y = (w_ ÷ 2) - wwg_ ÷ 2 + 1
-# y = 2wm_ + 1
-y = wm_ + 1
-place!(static_mask, wg, [1, y],)
-place!(static_mask, wg, [lwg_ + ld_ + 1, y],)
+place!(static_mask, wg, [1, wm_ + 1],)
+place!(static_mask, wg, [1, d_ + wm_ + wwg_ + 1],)
 # static_mask[1:lwg_.+1, (w_-wm_-wd_÷2)-wwg_÷2+1:(w_-wm_-wd_÷2)+wwg_÷2+1] .= 1
 # static_mask[(l_-lm_-ld_÷2)-wwg_÷2+1:(l_-lm_-ld_÷2)+wwg_÷2+1, 1:lwg_.+1,] .= 1
 heatmap(static_mask) |> display
-@save "$(@__DIR__)/layout.bson" static_mask signals ports designs dx λ ϵbase ϵclad ϵcore hsub hwg hclad modes
+@save "$(@__DIR__)/layout.bson" static_mask signals ports designs dx λ ϵbase ϵclad ϵcore hsub hwg hclad modes l w

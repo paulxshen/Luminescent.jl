@@ -15,7 +15,7 @@ include("$dir/scripts/startup.jl")
 
 # loads design layout
 @load "$(@__DIR__)/layout.bson" mask signals ports designs
-@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad ϵsub ϵclad ϵcore
+@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad ϵbase ϵclad ϵcore
 
 # training params"
 F = Float32
@@ -35,13 +35,13 @@ T[2] = T = T[1] + Δ[2]
 hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
 
 mask = F.(mask)
-ϵsub, ϵcore, ϵclad = F.((ϵsub, ϵcore, ϵclad))
+ϵbase, ϵcore, ϵclad = F.((ϵbase, ϵcore, ϵclad))
 sz = size(mask)
 
 # "geometry generator model
 # @load "$(@__DIR__)/model.bson" model
 model = RealBlob((round.(Int, designs[1].L / λ / dx) .+ 1)...;
-    init, nbasis, contrast, rmin, symmetries=2)
+    init, nbasis, contrast, rmin, symmetry_dims=2)
 model0 = deepcopy(model)
 
 # "boundaries"

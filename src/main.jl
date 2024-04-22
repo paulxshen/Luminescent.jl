@@ -17,5 +17,5 @@ include("monitors.jl")
 include("geometry.jl")
 include("utils.jl")
 include("maxwell_setup.jl")
-
+include("photonics.jl")
 # ]add UnPack, LinearAlgebra, Random, StatsBase, ImageTransformations, Functors, DataStructures,Porcupine,Jello, ArrayPadding,Zygote, GPUArraysCore

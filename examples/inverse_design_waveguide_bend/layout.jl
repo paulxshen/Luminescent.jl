@@ -4,7 +4,7 @@ include("../../scripts/modes.jl")
 F = Float32
 dx = 0.05
 λ = 1.55f0
-ϵ1 = ϵsub = ϵclad = 2.25
+ϵ1 = ϵbase = ϵclad = 2.25
 ϵ2 = ϵcore = 12.25
 
 wwg = 0.4
@@ -43,4 +43,4 @@ place!(static_mask, wg', [(l_ - lm_ - ld_ ÷ 2) - wwg_ ÷ 2 + 1, 1],)
 # static_mask[1:lwg_.+1, (w_-wm_-wd_÷2)-wwg_÷2+1:(w_-wm_-wd_÷2)+wwg_÷2+1] .= 1
 # static_mask[(l_-lm_-ld_÷2)-wwg_÷2+1:(l_-lm_-ld_÷2)+wwg_÷2+1, 1:lwg_.+1,] .= 1
 
-@save "$(@__DIR__)/layout.bson" static_mask signals ports designs dx λ ϵsub ϵclad ϵcore hsub hwg hclad
+@save "$(@__DIR__)/layout.bson" static_mask signals ports designs dx λ ϵbase ϵclad ϵcore hsub hwg hclad

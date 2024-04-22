@@ -32,7 +32,7 @@ model_name = nothing # if load saved model
 We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.
 =#
 
-@load "$(@__DIR__)/layout.bson" static_mask signals ports designs λ dx ϵbase ϵclad ϵcore hsub hwg hclad
+@load "$(@__DIR__)/prob.bson" signals ports opt λ dx ϵbase ϵclad ϵcore hsub hwg hclad
 dx, = [dx,] / λ
 
 #=

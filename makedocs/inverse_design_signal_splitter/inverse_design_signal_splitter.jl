@@ -15,7 +15,7 @@ include("$dir/scripts/startup.jl")
 
 # loads design layout
 @load "$(@__DIR__)/layout.bson" mask signals ports designs
-@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad ϵsub ϵclad ϵcore
+@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad ϵbase ϵclad ϵcore
 
 # training params"
 F = Float32
@@ -35,14 +35,14 @@ T[2] = T = T[1] + Δ[2]
 hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
 
 mask = F.(mask)
-ϵsub, ϵcore, ϵclad = F.((ϵsub, ϵcore, ϵclad))
-ϵdummy = sandwich(mask, round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
+ϵbase, ϵcore, ϵclad = F.((ϵbase, ϵcore, ϵclad))
+ϵdummy = sandwich(mask, round.(Int, [hsub, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
 sz = size(ϵdummy)
 
 # "geometry generator model
 # @load "$(@__DIR__)/model.bson" model
 model = Blob((round.(Int, designs[1].L / λ / dx) .+ 1)...;
-    nbasis, contrast, rmin, symmetries=2)
+    nbasis, contrast, rmin, symmetry_dims=2)
 model0 = deepcopy(model)
 
 # "boundaries"
@@ -90,7 +90,7 @@ function make_geometry(model, mask, μ, σ, σm)
     base_[:, :] = mask
     place!(base_, model(), round.(Int, designs[1].o / λ / dx) .+ 1)
 
-    ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
+    ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
     p = apply(geometry_padding; ϵ, μ, σ, σm)
     p = apply(geometry_staggering, p)
 end

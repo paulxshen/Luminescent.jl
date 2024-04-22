@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="12.5" height="12.5" viewBox="0 -22.5 12.5 12.5">
+<defs>
+<style type="text/css">
+.l101d0 {stroke: #A1CAF1; fill: #A1CAF1; fill-opacity: 0.5;}
+</style>
+<g id="extrude_cfc3aa39">
+<polygon id="00000249ADF8E420" class="l101d0" points="12.5,10 11.92,13.87 10.14,17.37 7.37,20.14 3.87,21.92 0,22.5 0,17.5 2.31,17.1 4.39,16.04 6.04,14.39 7.1,12.31 7.5,10"/>
+</g>
+</defs>
+<rect x="0" y="-22.5" width="12.5" height="12.5" fill="#222222" stroke="none"/>
+<g id="Unnamed_c70b433b" transform="scale(1 -1)">
+<use transform="translate(0 0)" xlink:href="#extrude_cfc3aa39"/>
+</g>
+</svg>

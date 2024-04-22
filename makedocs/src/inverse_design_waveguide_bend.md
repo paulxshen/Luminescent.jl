@@ -32,7 +32,7 @@ model_name = nothing # if load saved model
 We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.
 ```julia
 
-@load "$(@__DIR__)/layout.bson" static_mask signals ports designs λ dx ϵsub ϵclad ϵcore hsub hwg hclad
+@load "$(@__DIR__)/layout.bson" static_mask signals ports designs λ dx ϵbase ϵclad ϵcore hsub hwg hclad
 dx, = [dx,] / λ
 ```
 We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
@@ -85,7 +85,7 @@ sources = [Source(t -> cispi(2t), c, lb_, ub_; Jx, Jy,)]
 
 ϵmin = ϵclad
 static_mask = F.(static_mask)
-ϵsub, ϵcore, ϵclad = F.((ϵsub, ϵcore, ϵclad))
+ϵbase, ϵcore, ϵclad = F.((ϵbase, ϵcore, ϵclad))
 sz = size(static_mask)
 
 configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
@@ -123,7 +123,7 @@ function make_geometry(model, static_mask, configs)#; make3d=false)
     ϵ = mask * ϵcore + (1 .- mask) * ϵclad
 
     if length(sz) == 3
-        ϵ = sandwich(ϵ, round.(Int, [hsub, hwg, hclad] / λ / dx)..., ϵsub, ϵclad)
+        ϵ = sandwich(ϵ, round.(Int, [hsub, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
     end
 
     p = apply(geometry_padding; ϵ, μ, σ, σm)
@@ -233,7 +233,7 @@ record2d && record(model)
 We now finetune our design in 3d by starting off with optimized model from 2d. We make 3d geometry simply by sandwiching thickened 2d mask between lower substrate and upper clad layers. 
 ```julia
 
-ϵdummy = sandwich(static_mask, round.(Int, [hsub, hwg, hclad] / λ / dx)..., ϵsub, ϵclad)
+ϵdummy = sandwich(static_mask, round.(Int, [hsub, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
 sz = size(ϵdummy)
 model2d = deepcopy(model)
 

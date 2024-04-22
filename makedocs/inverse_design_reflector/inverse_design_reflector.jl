@@ -19,8 +19,8 @@ include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 #=
 We skip 3d finetuning as it's 20x more compute and memory intensive than 2d adjoints. If wishing to do 3d finetuning, set `iterations3d`. In any case, 3d forward simulations (without adjoint) only take a few seconds.
 =#
-name = "inverse_design_phase_modulator"
-iterations2d = 50
+name = "inverse_design_reflector"
+iterations2d = 60
 iterations3d = 0
 record2d = true
 record3d = false
@@ -32,7 +32,7 @@ model_name = nothing # if load saved model
 We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.
 =#
 
-@load "$(@__DIR__)/layout.bson" static_mask signals ports designs λ dx ϵbase ϵclad ϵcore hsub hwg hclad
+@load "$(@__DIR__)/layout.bson" static_mask signals ports designs λ dx ϵbase ϵclad ϵcore l w hsub hwg hclad
 dx, = [dx,] / λ
 
 #=
@@ -46,7 +46,7 @@ if isnothing(model_name)
     rmin = nothing
     # init = nothing # random 
     init = 1 # uniform slab
-    model = Blob(szd...; init, nbasis, contrast, rmin, symmetry_dims=1)
+    model = Blob(szd...; init, nbasis, contrast, rmin, symmetry_dims=2)
 else
     @load "$(@__DIR__)/$model_name" model
 end
@@ -59,7 +59,7 @@ We set key time intervals. The signal must first propagate to port 2 after which
 
 Δ = zeros(2)
 # Δ[1] = 1
-Δ[1] = 2 + 1.6norm(signals[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
+Δ[1] = 2 + 2l / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
 Δ[2] = 2 # duration to record power at output ports
 T = cumsum(Δ)
 
@@ -149,11 +149,10 @@ function metrics(model, configs, dϵ=0; autodiff=true, history=nothing)
     # run simulation
     u = reduce((u, t) -> maxwell_update(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
 
-    u, flux_profile, cp = reduce(T[1]+dt:dt:T[2], init=(u, F(0), F(0))) do (u, flux_profile, cp), t
+    u, flux_profile = reduce(T[1]+dt:dt:T[2], init=(u, F(0))) do (u, flux_profile,), t
         ifp = flux.((u,), monitor_instances,)
-        (maxwell_update(u, p, t, dx, dt, field_padding, source_instances),
-            flux_profile + dt * ifp / F(Δ[2]),
-            cp + cispi(F(4t)) * mean.(ifp) .* A / sqrt(F(nt * Δ[2])))
+        maxwell_update(u, p, t, dx, dt, field_padding, source_instances),
+        flux_profile + dt * ifp / F(Δ[2])
     end
 
     global flux_profile
@@ -165,20 +164,15 @@ function metrics(model, configs, dϵ=0; autodiff=true, history=nothing)
     @show port_mode_powers
     # @show cp
     # println("metrics $flux_profile")
-    (port_mode_powers[2], cp)
+    port_mode_powers
     # (port_mode_powers[2], cp[2])
 end
 # @show const tp = metrics(model, T[1]=1, T[2]=2, autodiff=false)[1] # total power
 # error()
 
-function score(v, _v)
-    @show mp2, (cp1, cp2) = v
-    @show _mp2, (_cp1, _cp2) = _v
-    # @show tp1, cp1 = v
-    # @show tp2, cp2 = _v
-    @show a = angle(_cp1 / cp1) / 2
-    @show a = angle(_cp2 / cp2) / 2
-    -(mp2 + _mp2) / mp0 / 2 * abs(a) / dϕ0
+function score(v,)
+    @show mp1, mp2 = v
+    -mean(v) / mp0
 end
 
 history = []
@@ -194,7 +188,7 @@ T = F.(T)
 Δ = F.(Δ)
 ϵbase, ϵcore, ϵclad, dx, dt, dϵ, dϕ0, mp0 = F.((ϵbase, ϵcore, ϵclad, dx, dt, dϵ, dϕ0, mp0))
 
-loss = model -> score(metrics(model, configs), metrics(model, configs, dϵ))
+loss = model -> score(metrics(model, configs))
 loss(model)
 #=
 We now do adjoint optimization. The first few iterations may show very little change but will pick up momentum
@@ -242,7 +236,7 @@ function runsave(model, configs; kw...)
         monitor_instances,
         source_instances,
         geometry=ϵEy,
-        rel_lims=0.5,
+        rel_lims=0.8,
         playback=1,
         axis1=(; title="$(replace( _name,"_"=>" ")|>titlecase)"),
         axis2=(; title="monitor powers"),
