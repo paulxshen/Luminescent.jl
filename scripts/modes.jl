@@ -27,7 +27,7 @@ function main(dx, λ, w, h, wm, hm, ϵ1, ϵ2, neigs=1)
 
 end
 function rectmodes(dx, λ, wwg, hwg, ϵ1, ϵ2, wm=0.25, hm=0.25,)
-    # wm = hsub = hclad = 0.255
+    # wm = hbase = hclad = 0.255
     w = wwg + 2wm
     h = hwg + 2hm
     lb = [-w / 2, -hm]
@@ -35,13 +35,13 @@ function rectmodes(dx, λ, wwg, hwg, ϵ1, ϵ2, wm=0.25, hm=0.25,)
 
     modes_ = main(dx, λ, w, h, wm, hm, ϵ1, ϵ2)
     modes = [NamedTuple([k => transpose(getfield(m, k),) for k = [:neff, :Ex, :Ey, :Ez, :Hx, :Hy, :Hz]]) for m = modes_]
-    # @save fn modes λ dx ub lb hsub hwg wwg hclad ϵbase ϵclad ϵcore h w
+    # @save fn modes λ dx ub lb hbase hwg wwg hclad ϵbase ϵclad ϵcore h w
     display(plot_mode_fields(modes_[1])
     )
-    (; modes, λ, dx, ub, lb, hsub, hwg, wwg, hclad, ϵbase, ϵclad, ϵcore, h, w)
+    (; modes, λ, dx, ub, lb, hbase, hwg, wwg, hclad, ϵbase, ϵclad, ϵcore, h, w)
 end
 function linemodes(dx, λ, wwg, ϵ1, ϵ2, wm=0.25, hm=wm)
-    # wm = hsub = hclad = 0.255
+    # wm = hbase = hclad = 0.255
     w = wwg + 2wm
     lb = [-w / 2,]
     ub = [w / 2,]
@@ -57,7 +57,7 @@ function linemodes(dx, λ, wwg, ϵ1, ϵ2, wm=0.25, hm=wm)
             (; Ex, Ey, Hz)
         end for m = modes
     ]
-    # @save fn modes λ dx ub lb hsub hwg wwg hclad ϵbase ϵclad ϵcore h w
+    # @save fn modes λ dx ub lb hbase hwg wwg hclad ϵbase ϵclad ϵcore h w
     display(plot_mode_fields(modes_[2]))
     display(plot_mode_fields(modes_[3]))
     # display(plot_mode_fields(modes_[4]))

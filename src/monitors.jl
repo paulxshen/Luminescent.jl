@@ -41,13 +41,13 @@ Args
 
 - normal: flux monitor direction (eg normal to flux surface)
 """
-function Monitor(c, L; normal=nothing, label="")
+function Monitor(c, L, normal=nothing; label="")
     OrthogonalMonitor(c, -L / 2, L / 2, normal, label)
 end
 
-function Monitor(c, lb, ub; normal=nothing, label="")
-    OrthogonalMonitor(c, lb, ub, normal, label)
-end
+# function Monitor(c, lb, ub; normal=nothing, label="")
+#     OrthogonalMonitor(c, lb, ub, normal, label)
+# end
 
 Monitor(p::AbstractMatrix; normals=nothing, weights=nothing, label="") = PointCloudMonitor(p, normals, weights, mean(p, dims=2), nothing, nothing, label)
 

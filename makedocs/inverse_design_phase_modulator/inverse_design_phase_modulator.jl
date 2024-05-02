@@ -32,7 +32,7 @@ model_name = nothing # if load saved model
 We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.
 =#
 
-@load "$(@__DIR__)/layout.bson" static_mask signals ports designs λ dx ϵbase ϵclad ϵcore hsub hwg hclad
+@load "$(@__DIR__)/layout.bson" static_mask signals ports designs λ dx ϵbase ϵclad ϵcore hbase hwg hclad
 dx, = [dx,] / λ
 
 #=
@@ -127,7 +127,7 @@ function make_geometry(model, configs, dϵ=0)#; make3d=false)
     ϵ = copy(b)
 
     if length(sz) == 3
-        ϵ = sandwich(ϵ, round.(Int, [hsub, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
+        ϵ = sandwich(ϵ, round.(Int, [hbase, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
     end
 
     p = apply(geometry_padding; ϵ, μ, σ, σm)
@@ -264,21 +264,21 @@ error()
 We now finetune our design in 3d by starting off with optimized model from 2d. We make 3d geometry simply by sandwiching thickened 2d mask between lower substrate and upper clad layers. 
 =#
 
-ϵdummy = sandwich(static_mask, round.(Int, [hsub, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
+ϵdummy = sandwich(static_mask, round.(Int, [hbase, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
 sz = size(ϵdummy)
 model2d = deepcopy(model)
 
 
 # "monitors"
 δ = 0.1 # margin
-monitors = [Monitor([p.c / λ..., hsub / λ], [p.lb / λ..., -δ / λ], [p.ub / λ..., hwg / λ + δ / λ]; normal=[p.n..., 0]) for p = ports]
+monitors = [Monitor([p.c / λ..., hbase / λ], [p.lb / λ..., -δ / λ], [p.ub / λ..., hwg / λ + δ / λ]; normal=[p.n..., 0]) for p = ports]
 
 # modal source
 @unpack Ex, Ey, Ez, = signals[1].modes[1]
 Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
     reshape(a, 1, size(a)...)
 end
-c = [signals[1].c / λ..., hsub / λ]
+c = [signals[1].c / λ..., hbase / λ]
 lb = [0, signals[1].lb...] / λ
 ub = [0, signals[1].ub...] / λ
 sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]

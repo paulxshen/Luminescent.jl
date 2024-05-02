@@ -15,7 +15,7 @@ include("$dir/scripts/startup.jl")
 
 # loads design layout
 @load "$(@__DIR__)/layout.bson" mask signals ports designs
-@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad ϵbase ϵclad ϵcore
+@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hbase wwg hwg hclad ϵbase ϵclad ϵcore
 
 # training params"
 F = Float32
@@ -32,7 +32,7 @@ T[1] = Δ[1] = 1 + 1.3norm(ports[1].c - ports[2].c) / λ * sqrt(ϵcore) # simula
 Δ[2] = 1 # duration to record power at output ports
 T[2] = T = T[1] + Δ[2]
 ϵmin = ϵclad
-hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
+hbase, wwg, hwg, hclad, dx, ub, lb = [hbase, wwg, hwg, hclad, dx, ub, lb] / λ
 
 mask = F.(mask)
 ϵbase, ϵcore, ϵclad = F.((ϵbase, ϵcore, ϵclad))

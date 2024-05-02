@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="2000" height="1300" viewBox="0 -650 2000 1300">
+<defs>
+<style type="text/css">
+.l100d0 {fill:none;stroke:none;stroke-dasharray:8,8;}
+</style>
+<g id="GRID">
+</g>
+<g id="TOP">
+<use transform="translate(0 0) scale(0.05)" xlink:href="#GRID"/>
+</g>
+</defs>
+<rect x="0" y="-650" width="2000" height="1300" fill="#000000" stroke="none"/>
+<g id="Unnamed_14fbc78c" transform="scale(1 -1)">
+<polygon id="000001B3719A0200" class="l100d0" points="0,-650 2000,-650 2000,650 0,650"/>
+<use transform="translate(0 -650)" xlink:href="#TOP"/>
+</g>
+</svg>

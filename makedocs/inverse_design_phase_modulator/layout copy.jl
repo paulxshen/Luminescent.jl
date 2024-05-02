@@ -14,7 +14,7 @@ lwg = 1.0
 ld = 2
 wd = wwg
 # wd = 2
-hsub = hclad = wm = hm = lm = 0.25
+hbase = hclad = wm = hm = lm = 0.25
 l = 2lwg + ld
 w = wd + 3wm
 h = hwg + 2hm
@@ -63,4 +63,4 @@ place!(static_mask, wg, [lwg_ + ld_ + 1, y],)
 # static_mask[1:lwg_.+1, (w_-wm_-wd_÷2)-wwg_÷2+1:(w_-wm_-wd_÷2)+wwg_÷2+1] .= 1
 # static_mask[(l_-lm_-ld_÷2)-wwg_÷2+1:(l_-lm_-ld_÷2)+wwg_÷2+1, 1:lwg_.+1,] .= 1
 
-@save "$(@__DIR__)/layout.bson" static_mask signals ports designs dx λ ϵbase ϵclad ϵcore hsub hwg hclad modes
+@save "$(@__DIR__)/layout.bson" static_mask signals ports designs dx λ ϵbase ϵclad ϵcore hbase hwg hclad modes

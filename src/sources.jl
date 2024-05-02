@@ -1,3 +1,22 @@
+function resize(a, sz)
+    size(a) != Tuple(sz) && @warn "array size $(size(a)) not same as new size $sz. array will be interpolated"
+    imresize(a, sz, method=ImageTransformations.Lanczos4OpenCV())
+
+end
+"""
+"""
+struct ModalSource
+    f
+    center
+    lb
+    ub
+    # zaxis
+    # xaxis
+    fields
+    function ModalSource(f, center, lb, ub, xaxis=nothing; fields...)
+        new(f, center, lb, ub, fields)
+    end
+end
 """
     function PlaneWave(f, dims; fields...)
 
@@ -65,7 +84,11 @@ struct Source
     function Source(f, c, lb, ub, label::String=""; fields...)
         new(f, fields, c, lb, ub, label)
     end
+    function Source(f, c, L, label::String=""; fields...)
+        new(f, fields, c, -L / 2, L / 2, label)
+    end
 end
+# fields(m::Source) = m.fields
 Base.string(m::Source) =
     """
     $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.c|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center, exciting $(join(keys(m.fields),", "))"""
@@ -87,6 +110,47 @@ struct SourceInstance
 end
 @functor SourceInstance (g, _g,)
 
+function SourceInstance(s::ModalSource, dx, sizes, lc, fl, sz0; F=Float32)
+    @unpack f, center, lb, ub, fields = s
+    fields = DefaultDict([0], pairs(fields))
+    @unpack Jx, Jy, Jz = fields
+    L = ub .- lb
+    sz = max.(1, round.(Int, L ./ dx)) |> Tuple
+
+    d = length(center) # 2D or 3D
+    if d == 2
+        xaxis = [L / norm(L)..., 0]
+        yaxis = [0, 0, 1]
+        # xaxis = cross(yaxis, zaxis)
+        zaxis = cross(xaxis, yaxis)
+        J = reshape.(resize.([Jx, Jy, Jz], ((norm(L) / dx |> round,),)), (sz,))
+        # @show J
+        # J = reshape.([Jx, Jy, Jz], (sz,))
+    else
+        yaxis = cross(zaxis, xaxis)
+        J = reshape.([Jx, Jy, Jz], (sz,))
+    end
+
+    perm = findfirst.(x -> abs(x) == 1, [xaxis, yaxis, zaxis])
+    signs = sign.(getindex.([xaxis, yaxis, zaxis], perm))
+    invpermute!(J, perm)
+    # xaxis = reim(im * complex(zaxis))
+    # Jx = xaxis[1] * Ex + zaxis[1] * Ez
+    # Jy = xaxis[2] * Ex + zaxis[2] * Ez
+    # c = signals[1].center / λ
+    # ub = xaxis * signals[1].width / 2 / λ
+    # lb = -ub
+
+    J = [s == -1 ? reverse(J, dims=perm[i]) : J for (i, (s, J)) in enumerate(zip(signs, J))]
+    Jx, Jy, Jz = J
+    if d == 2
+        fields = (; Jx, Jy)
+    else
+        fields = (; Jx, Jy, Jz)
+    end
+    global fields, L, center
+    SourceInstance(Source(f, center, L; fields...), dx, sizes, lc, fl, sz0; F)
+end
 function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0; F=Float32)
     @unpack f, fields, dims, label = s
     _F(x::Real) = F(x)
@@ -168,4 +232,11 @@ end
 
 # function apply(d,t; kw...)
 #     [apply(d[k], kw[k]) for k = keys(kw)]
+# end
+
+function EH2JM(d::T) where {T}
+    dict(Pair.(replace(keys(d), :Ex => :Jx, :Ey => :Jy, :Ez => :Jz, :Hx => :Mx, :Hy => :My, :Hz => :Mz), values(d)))
+end
+# function EH2JM(d::NamedTuple)
+#     NamedTuple((d) |> pairs |> OrderedDict |> EH2JM |> pairs)
 # end

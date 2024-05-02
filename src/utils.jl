@@ -79,4 +79,7 @@ Flux.gpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.gpu(d[k]) for k = keys(d
 Flux.cpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.cpu(d[k]) for k = keys(d)])
 Flux.gpu(v::AbstractVector{T}) where {T<:Dictlike} = gpu.(v)
 Flux.cpu(v::AbstractVector{T}) where {T<:Dictlike} = cpu.(v)
+# Base.getproperty(d::AbstractDict, k::Symbol) = hasfield(d, k) ? getfield(d, k) : (haskey(d, k) ? d[k] : d[string(k)])
+Base.getproperty(d::AbstractDict, k::Symbol) = hasproperty(d, k) ? getfield(d, k) : d[k]
+
 footer = "Suppress this message by verbose=false\nCreated by Paul Shen <pxshen@alumni.stanford.edu>"

@@ -7,10 +7,10 @@ wwg = 0.5
 hwg = 0.25
 lwg = 0.5
 ld = 2
-hsub = hclad = lm = wm = 0.25
+hbase = hclad = lm = wm = 0.25
 l = 2lwg + ld
 w = 2wm + ld
-h = hwg + hsub + hclad
+h = hwg + hbase + hclad
 
 λ = 1.55f0
 
@@ -32,8 +32,8 @@ designs = [
 
 dx = 0.05
 
-wwg, hwg, lwg, ld, hclad, hsub, l, w, h, wm =
-    round.(Int, [wwg, hwg, lwg, ld, hclad, hsub, l, w, h, wm] ./ dx)
+wwg, hwg, lwg, ld, hclad, hbase, l, w, h, wm =
+    round.(Int, [wwg, hwg, lwg, ld, hclad, hbase, l, w, h, wm] ./ dx)
 
 mask = zeros(Int, l .+ 1, w .+ 1)
 mask[1:lwg.+1, (w-wwg)÷2+1:(w+wwg)÷2+1] .= 1

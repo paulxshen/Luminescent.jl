@@ -1,3 +1,15 @@
+function add_current_keys!(d::AbstractDict)
+    for k in keys(d) |> collect
+        if startswith(String(k), "E")
+            d[Symbol("J" * String(k)[2:end])] = d[k]
+        end
+
+        if startswith(String(k), "H")
+            d[Symbol("M" * String(k)[2:end])] = d[k]
+        end
+
+    end
+end
 """
     function maxwell_setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
 
@@ -23,15 +35,15 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
     ϵ *= a
     d = length(sz)
     if d == 1
-        fk = (:Ez, :Hy)
+        field_names = (:Ez, :Hy)
     elseif d == 2
         if polarization == :TM
-            fk = (:Ez, :Hx, :Hy)
+            field_names = (:Ez, :Hx, :Hy)
         elseif polarization == :TE
-            fk = (:Ex, :Ey, :Hz)
+            field_names = (:Ex, :Ey, :Hz)
         end
     else
-        fk = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz)
+        field_names = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz)
     end
     Courant = F(Courant)
 
@@ -39,11 +51,11 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
     db = Any[PML(j * i,) for i = 1:d, j = (-1, 1)]
     field_padding = DefaultDict(() -> InPad[])
     geometry_padding = DefaultDict(() -> OutPad[])
-    fl = Dict([k => zeros(Int, d) for k = fk])
-    flb = Dict([k => zeros(Int, d) for k = fk])
-    frb = Dict([k => zeros(Int, d) for k = fk])
+    fl = Dict([k => zeros(Int, d) for k = field_names])
+    flb = Dict([k => zeros(Int, d) for k = field_names])
+    frb = Dict([k => zeros(Int, d) for k = field_names])
     lc = zeros(Int, d)
-    sizes = Dict([k => collect(sz) for k = fk])
+    sizes = Dict([k => collect(sz) for k = field_names])
 
     for b = boundaries
         for i = b.dims
@@ -141,7 +153,7 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
 
 
             f = nodes[i, j]
-            for k = fk
+            for k = field_names
                 q = startswith(String(k), String(f))
                 if (q ? k[2] in para : k[2] in perp)
                     if t == Periodic
@@ -171,27 +183,17 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
         end
     end
 
-    if d == 3
-        fl[:Jx] = fl[:Ex]
-        fl[:Jy] = fl[:Ey]
-        fl[:Jz] = fl[:Ez]
-        sizes[:Jx] = sizes[:Ex]
-        sizes[:Jy] = sizes[:Ey]
-        sizes[:Jz] = sizes[:Ez]
-    elseif d == 2
-        if polarization == :TE
-            fl[:Jx] = fl[:Ex]
-            fl[:Jy] = fl[:Ey]
-            sizes[:Jx] = sizes[:Ex]
-            sizes[:Jy] = sizes[:Ey]
-        elseif polarization == :TM
-            fl[:Jz] = fl[:Ez]
-            sizes[:Jz] = sizes[:Ez]
-        end
-    end
+    add_current_keys!(fl)
+    add_current_keys!(sizes)
+    # sizes[:Jx] = sizes[:Ex]
+    # sizes[:Jy] = sizes[:Ey]
+    # sizes[:Jz] = sizes[:Ez]
+    # sizes[:Mx] = sizes[:Hx]
+    # sizes[:My] = sizes[:Hy]
+    # sizes[:Mz] = sizes[:Hz]
 
     sizes = NamedTuple([k => Tuple(sizes[k]) for (k) = keys(sizes)])
-    fields = NamedTuple([k => zeros(F, Tuple(sizes[k])) for (k) = fk])
+    fields = NamedTuple([k => zeros(F, Tuple(sizes[k])) for (k) = field_names])
     if d == 1
         pf = u -> [u[1] .* u[2]]
     elseif d == 3
@@ -287,7 +289,7 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz, polarization=:TE;
 
     (; μ, σ, σm, ϵ,
         geometry_padding, field_padding, geometry_staggering,
-        source_instances, monitor_instances,
+        source_instances, monitor_instances, field_names,
         roi, u0, fields, dx, dt, sz, kw...)
 end
 

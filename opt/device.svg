@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="3000" height="1300" viewBox="-1000 -650 3000 1300">
+<defs>
+<style type="text/css">
+.l100d0 {fill:none;stroke:none;stroke-dasharray:8,8;}
+.l31d0 {stroke: #B3446C; fill: #B3446C; fill-opacity: 0.5;}
+</style>
+<g id="GRID">
+</g>
+<g id="TOP">
+<use transform="translate(0 0) scale(0.05)" xlink:href="#GRID"/>
+</g>
+<g id="Unnamed_14fbc78c">
+<polygon id="000001B3719A0510" class="l100d0" points="0,-650 2000,-650 2000,650 0,650"/>
+<use transform="translate(0 -650)" xlink:href="#TOP"/>
+</g>
+<g id="extrude_908d1563">
+<polygon id="000001B3719A0200" class="l31d0" points="0,-250 1000,-250 1000,250 0,250"/>
+</g>
+</defs>
+<rect x="-1000" y="-650" width="3000" height="1300" fill="#000000" stroke="none"/>
+<g id="ubend" transform="scale(1 -1)">
+<use transform="translate(-1000 400)" xlink:href="#extrude_908d1563"/>
+<use transform="translate(-1000 -400)" xlink:href="#extrude_908d1563"/>
+<use transform="translate(0 0)" xlink:href="#Unnamed_14fbc78c"/>
+</g>
+</svg>

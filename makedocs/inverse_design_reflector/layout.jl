@@ -12,7 +12,7 @@ wwg = 0.4
 hwg = 0.2
 lwg = 1.0
 ld = 2
-hsub = hclad = wm = hm = lm = 0.1
+hbase = hclad = wm = hm = lm = 0.1
 d = 0.25
 wd = 2wwg + d
 l = lwg + ld + lm
@@ -62,4 +62,4 @@ place!(static_mask, wg, [1, d_ + wm_ + wwg_ + 1],)
 # static_mask[1:lwg_.+1, (w_-wm_-wd_÷2)-wwg_÷2+1:(w_-wm_-wd_÷2)+wwg_÷2+1] .= 1
 # static_mask[(l_-lm_-ld_÷2)-wwg_÷2+1:(l_-lm_-ld_÷2)+wwg_÷2+1, 1:lwg_.+1,] .= 1
 heatmap(static_mask) |> display
-@save "$(@__DIR__)/layout.bson" static_mask signals ports designs dx λ ϵbase ϵclad ϵcore hsub hwg hclad modes l w
+@save "$(@__DIR__)/layout.bson" static_mask signals ports designs dx λ ϵbase ϵclad ϵcore hbase hwg hclad modes l w

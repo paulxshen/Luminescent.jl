@@ -15,7 +15,7 @@ include("$dir/scripts/startup.jl")
 
 # loads design layout
 @load "$(@__DIR__)/layout.bson" mask signals ports designs
-@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad ϵbase ϵclad ϵcore
+@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hbase wwg hwg hclad ϵbase ϵclad ϵcore
 
 # training params"
 F = Float32
@@ -32,11 +32,11 @@ T[2] = T = T[1] + Δ[2]
 # T[1] = 0.1
 # T[2] = 0.2
 ϵmin = ϵclad
-hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
+hbase, wwg, hwg, hclad, dx, ub, lb = [hbase, wwg, hwg, hclad, dx, ub, lb] / λ
 
 mask = F.(mask)
 ϵbase, ϵcore, ϵclad = F.((ϵbase, ϵcore, ϵclad))
-ϵdummy = sandwich(mask, round.(Int, [hsub, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
+ϵdummy = sandwich(mask, round.(Int, [hbase, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
 sz = size(ϵdummy)
 
 # "geometry generator model
@@ -53,7 +53,7 @@ normal = [1, 0, 0] # normal
 δ = 0.1 / λ # margin
 monitors = [
     # (center, lower bound, upper bound; normal)
-    Monitor([p.c / λ..., hsub], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal=[p.n..., 0])
+    Monitor([p.c / λ..., hbase], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal=[p.n..., 0])
     for p = ports]
 
 # modal source
@@ -62,7 +62,7 @@ Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
     reshape(a, 1, size(a)...)
 end
 # GLMakie.volume(real(Jy))
-c = [signals[1].c / λ..., hsub]
+c = [signals[1].c / λ..., hbase]
 lb = [0, lb...]
 ub = [0, ub...]
 sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
@@ -90,7 +90,7 @@ function make_geometry(model, mask, μ, σ, σm)
     base_[:, :] = mask
     place!(base_, model(), round.(Int, designs[1].o / λ / dx) .+ 1)
 
-    ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
+    ϵ = sandwich(copy(base_), round.(Int, [hbase, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
     p = apply(geometry_padding; ϵ, μ, σ, σm)
     p = apply(geometry_staggering, p)
 end

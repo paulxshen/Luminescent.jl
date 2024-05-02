@@ -1,0 +1,48 @@
+cells:
+  Unnamed_5ad45e8d: {}
+  Unnamed_975a9678: {}
+  extrude_908d1563:
+    add_bbox: true
+    allow_offgrid: null
+    cross_section: null
+    layer:
+    - 31
+    - 0
+    p:
+      hash: 6e1b530a5306f0f01276a6830b8f48df54402af8
+    shear_angle_end: null
+    shear_angle_start: null
+    simplify: null
+    snap_to_grid: false
+    width: 0.5
+  ubend: {}
+function: ''
+info: {}
+module: ''
+name: ubend
+ports:
+  o1:
+    center:
+    - -1.0
+    - 0.4
+    layer:
+    - 31
+    - 0
+    name: o1
+    orientation: 180.0
+    port_type: optical
+    shear_angle: null
+    width: 0.5
+  o2:
+    center:
+    - -1.0
+    - -0.4
+    layer:
+    - 31
+    - 0
+    name: o2
+    orientation: 180.0
+    port_type: optical
+    shear_angle: null
+    width: 0.5
+settings: {}

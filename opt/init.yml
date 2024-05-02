@@ -1,0 +1,34 @@
+cells:
+  GRID: {}
+  TOP: {}
+  Unnamed_14fbc78c: {}
+function: ''
+info: {}
+module: ''
+name: Unnamed_14fbc78c
+ports:
+  o1:
+    center:
+    - 0.0
+    - 0.4
+    layer:
+    - 100
+    - 0
+    name: o1
+    orientation: 180
+    port_type: optical
+    shear_angle: null
+    width: 0.5
+  o2:
+    center:
+    - 0.0
+    - -0.4
+    layer:
+    - 100
+    - 0
+    name: o2
+    orientation: 180
+    port_type: optical
+    shear_angle: null
+    width: 0.5
+settings: {}

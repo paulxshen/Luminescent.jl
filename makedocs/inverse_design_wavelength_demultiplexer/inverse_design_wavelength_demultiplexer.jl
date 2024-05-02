@@ -22,17 +22,17 @@ nbasis = 6 # complexity of design region
 
 # loads design layout
 @load "$(@__DIR__)/layout.bson" mask signals ports designs
-@load "$(@__DIR__)/modes.bson" λ1 λ2 modes1 modes2 lb ub dx hsub wwg hwg hclad ϵbase ϵclad ϵcore
+@load "$(@__DIR__)/modes.bson" λ1 λ2 modes1 modes2 lb ub dx hbase wwg hwg hclad ϵbase ϵclad ϵcore
 λ = λ1 # wavelength [um]
 f2 = λ1 / λ2
 T[1] = 1 + norm(ports[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods]
 T[2] = 1 / (2(f2 - 1))
 ϵmin = ϵclad
-hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
+hbase, wwg, hwg, hclad, dx, ub, lb = [hbase, wwg, hwg, hclad, dx, ub, lb] / λ
 
 mask = F.(mask)
 ϵbase, ϵcore, ϵclad = F.((ϵbase, ϵcore, ϵclad))
-ϵdummy = sandwich(mask, round.(Int, [hsub, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
+ϵdummy = sandwich(mask, round.(Int, [hbase, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
 sz0 = size(ϵdummy)
 
 # "geometry generator model
@@ -47,7 +47,7 @@ normal = [1, 0, 0] # normal
 δ = 0.1 / λ # margin
 # (center, lower bound, upper bound; normal)
 monitors = [Monitor(
-    [p.c / λ..., hsub],
+    [p.c / λ..., hbase],
     [0, -wwg / 2 - δ, -δ],
     [0, wwg / 2 + δ, hwg + δ];
     normal=[p.n..., 0]) for p = ports]
@@ -55,7 +55,7 @@ monitors = [Monitor(
 # modal source
 sources = []
 c = signals[1].c / λ
-c = [c..., hsub]
+c = [c..., hbase]
 lb = [0, lb...]
 ub = [0, ub...]
 for (modes, f) = zip((modes1, modes2), (1, f2))
@@ -89,7 +89,7 @@ function make_geometry(model, mask, μ, σ, σm)
     base_[:, :] = mask
     place!(base_, model(), round.(Int, designs[1].o / λ / dx) .+ 1)
 
-    ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
+    ϵ = sandwich(copy(base_), round.(Int, [hbase, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
     ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
     p = apply(geometry_staggering; ϵ, μ, σ, σm)
 end

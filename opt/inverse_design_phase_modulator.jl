@@ -1,3 +1,102 @@
+
+#=
+We do a simulation movie using optimized geometry
+=#
+
+# @show metrics(model)
+function runsave(model, configs; kw...)
+    p = make_geometry(model, configs)
+    @unpack u0, dx, dt, field_padding, source_instances, monitor_instances = configs
+    @showtime global u = accumulate((u, t) ->
+            maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
+        0:dt:T[2], init=u0)
+
+    # move to cpu for plotting
+    if ongpu
+        u, p, source_instances = cpu.((u, p, source_instances))
+    end
+    Hz = field.(u, :Hz)
+    ϵEy = field(p, :ϵEy)
+    dir = @__DIR__
+    d = ndims(Hz[1])
+    _name = "$(d)d_$name"
+    # error()
+    recordsim("$dir/$(_name).mp4", Hz, ;
+        dt,
+        field=:Hz,
+        monitor_instances,
+        source_instances,
+        geometry=ϵEy,
+        rel_lims=0.8,
+        playback=1,
+        axis1=(; title="$(replace( _name,"_"=>" ")|>titlecase)"),
+        axis2=(; title="monitor powers"),
+        kw...
+    )
+
+end
+
+record = model -> runsave(model, configs)
+record2d && record(model)
+# lines(npf |> vec)
+# lines(pp[1] |> vec)
+error()
+#=
+![](assets/2d_inverse_design_waveguide_bend.mp4)
+=#
+
+#=
+We now finetune our design in 3d by starting off with optimized model from 2d. We make 3d geometry simply by sandwiching thickened 2d mask between lower substrate and upper clad layers. 
+=#
+
+ϵdummy = sandwich(static, round.(Int, [hbase, hwg, hclad] / dx)..., ϵbase, ϵclad)
+sz = size(ϵdummy)
+model2d = deepcopy(model)
+
+
+# "monitors"
+δ = 0.1 # margin
+monitors = [Monitor([p.c / λ..., hbase / λ], [p.lb / λ..., -δ / λ], [p.ub / λ..., hwg / λ + δ / λ]; normal=[p.n..., 0]) for p = ports]
+
+# modal source
+@unpack Ex, Ey, Ez, = signals[1].modes[1]
+Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
+    reshape(a, 1, size(a)...)
+end
+c = [signals[1].c / λ..., hbase / λ]
+lb = [0, signals[1].lb...] / λ
+ub = [0, signals[1].ub...] / λ
+sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
+# sources = [Source(t -> cispi(2t), c, lb, ub; Jx=1)]
+
+configs = maxwell_setup(boundaries, sources, monitors, dx / λ, sz; F, ϵmin, Courant=0.3)
+if ongpu
+    u0, model, static, μ, σ, σm, field_padding, source_instances =
+        gpu.((u0, model, static, μ, σ, σm, field_padding, source_instances))
+    merge!(configs, (; u0, field_padding, source_instances))
+end
+
+
+loss = model -> score(metrics(model, configs;))
+opt = Adam(0.1)
+opt_state = Flux.setup(opt, model)
+for i = 1:iterations3d
+    @time l, (dldm,) = withgradient(loss, model)
+    Flux.update!(opt_state, model, dldm)
+    println("$i $l")
+end
+@save "$(@__DIR__)/3d_model_$(time()).bson" model
+
+
+record = model -> runsave(model, configs; elevation=70°, azimuth=110°)
+record3d && record(model)
+
+
+
+
+
+
+
 #=
 We do inverse design of a compact photonic waveguide bend to demonstrate workflow of FDTD adjoint optimization. First, we seed the design using 2d TE adjoint simulations which serve as fast approximations. Optionlly, we finetune the resulting design in full blown 3d adjoint simulations.
 
@@ -32,7 +131,7 @@ model_name = nothing # if load saved model
 We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.
 =#
 
-@load "$(@__DIR__)/prob.bson" signals ports opt λ dx ϵbase ϵclad ϵcore hsub hwg hclad
+@load "$(@__DIR__)/prob.bson" signals ports opt λ dx ϵbase ϵclad ϵcore hbase hwg hclad
 dx, = [dx,] / λ
 
 #=
@@ -127,7 +226,7 @@ function make_geometry(model, configs, dϵ=0)#; make3d=false)
     ϵ = copy(b)
 
     if length(sz) == 3
-        ϵ = sandwich(ϵ, round.(Int, [hsub, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
+        ϵ = sandwich(ϵ, round.(Int, [hbase, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
     end
 
     p = apply(geometry_padding; ϵ, μ, σ, σm)
@@ -264,21 +363,21 @@ error()
 We now finetune our design in 3d by starting off with optimized model from 2d. We make 3d geometry simply by sandwiching thickened 2d mask between lower substrate and upper clad layers. 
 =#
 
-ϵdummy = sandwich(static_mask, round.(Int, [hsub, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
+ϵdummy = sandwich(static_mask, round.(Int, [hbase, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
 sz = size(ϵdummy)
 model2d = deepcopy(model)
 
 
 # "monitors"
 δ = 0.1 # margin
-monitors = [Monitor([p.c / λ..., hsub / λ], [p.lb / λ..., -δ / λ], [p.ub / λ..., hwg / λ + δ / λ]; normal=[p.n..., 0]) for p = ports]
+monitors = [Monitor([p.c / λ..., hbase / λ], [p.lb / λ..., -δ / λ], [p.ub / λ..., hwg / λ + δ / λ]; normal=[p.n..., 0]) for p = ports]
 
 # modal source
 @unpack Ex, Ey, Ez, = signals[1].modes[1]
 Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
     reshape(a, 1, size(a)...)
 end
-c = [signals[1].c / λ..., hsub / λ]
+c = [signals[1].c / λ..., hbase / λ]
 lb = [0, signals[1].lb...] / λ
 ub = [0, signals[1].ub...] / λ
 sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
