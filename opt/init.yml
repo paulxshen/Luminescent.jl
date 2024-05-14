@@ -1,11 +1,19 @@
 cells:
+  CELL: {}
   GRID: {}
   TOP: {}
-  Unnamed_14fbc78c: {}
+  Unnamed_e1e8ae60: {}
+  _rotate_componentTOP:
+    angle: 90
+    component:
+      function: ''
+      module: ''
+      settings: {}
+    recenter: false
 function: ''
 info: {}
 module: ''
-name: Unnamed_14fbc78c
+name: Unnamed_e1e8ae60
 ports:
   o1:
     center:
@@ -18,7 +26,7 @@ ports:
     orientation: 180
     port_type: optical
     shear_angle: null
-    width: 0.5
+    width: 0.4
   o2:
     center:
     - 0.0
@@ -30,5 +38,5 @@ ports:
     orientation: 180
     port_type: optical
     shear_angle: null
-    width: 0.5
+    width: 0.4
 settings: {}

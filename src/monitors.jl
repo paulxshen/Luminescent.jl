@@ -1,14 +1,5 @@
-# For example, `a::Array[m::MonitorInstance, :Ex]` queries Ex on monitor m.
-fij = (
-    Ex=(1, 1),
-    Ey=(1, 2),
-    Ez=(1, 3),
-    Hx=(2, 1),
-    Hy=(2, 2),
-    Hz=(2, 3),
-)
-
-struct OrthogonalMonitor
+abstract type AbstractMonitor end
+struct OrthogonalMonitor <: AbstractMonitor
     c
     lb
     ub
@@ -16,7 +7,7 @@ struct OrthogonalMonitor
     label
 end
 
-struct PointCloudMonitor
+struct PointCloudMonitor <: AbstractMonitor
     p
     n
     w
@@ -26,6 +17,7 @@ struct PointCloudMonitor
     label
 end
 sphcoords(m::PointCloudMonitor) = m.s
+normal(m::AbstractMonitor) = m.n
 
 """
     function Monitor(c, L; normal=nothing, label="")
@@ -85,17 +77,18 @@ function SphereMonitor(c, r; dθ=2°, dϕ=2°, N=256, nθ=36, nϕ=18, label="")
 end
 Base.string(m::OrthogonalMonitor) =
     """
-    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.c|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center, flux normal towards $(m.n|>d2)"""
+    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.c|>d2), physical size of $((m.ub-m.lb)|>d2) relative to center, flux normal towards $(normal(m)|>d2)"""
 Base.string(m::PointCloudMonitor) =
     """
     $(m.label): point cloud monitor, centered at $(m.c|>d2), $(size(m.p,2)) points"""
 
-struct OrthogonalMonitorInstance
+abstract type MonitorInstance end
+struct OrthogonalMonitorInstance <: MonitorInstance
     d
     i
     c
     fi
-    n
+    frame
     dx
     v
     label
@@ -103,9 +96,9 @@ end
 # @functor OrthogonalMonitorInstance (n,)
 Base.ndims(m::OrthogonalMonitorInstance) = m.d
 Base.size(m::OrthogonalMonitorInstance) = length.(m.i)
-support(m::OrthogonalMonitorInstance) = m.v
+area(m::OrthogonalMonitorInstance) = m.v
 
-struct PointCloudMonitorInstance
+struct PointCloudMonitorInstance <: MonitorInstance
     i
     fi
     n
@@ -118,10 +111,14 @@ inbounds(m::PointCloudMonitorInstance) = m.inbounds
 Base.length(m::OrthogonalMonitorInstance) = 1
 Base.length(m::PointCloudMonitorInstance) = 1
 
+frame(m::OrthogonalMonitorInstance) = m.frame
+normal(m::OrthogonalMonitorInstance) = frame(m)[3][1:length(m.c)]
+
 function MonitorInstance(m::OrthogonalMonitor, dx, sz, lc, flb, fl; F=Float32)
     @unpack n, = m
     L = m.ub - m.lb
     singletons = findall(L .≈ 0,)
+    D = length(L)
     d = length(L) - length(singletons)
     deleteat!(L, singletons)
     v = isempty(L) ? 0 : prod(L,)
@@ -140,8 +137,13 @@ function MonitorInstance(m::OrthogonalMonitor, dx, sz, lc, flb, fl; F=Float32)
     fi = Dict([k => i .+ v for (k, v) = pairs(flb)])
     # fi = (; [k => i .+ v for (k, v) = pairs(flb)]...)
 
-    n = isnothing(n) ? n : F.(n)
-    OrthogonalMonitorInstance(d, i, lc + c, fi, n, F(dx), F(v), m.label)
+    n = isnothing(n) ? n : F.(n |> normalize)
+    if D == 2
+        frame = [[-n[2], n[1], 0], [0, 0, 1], [n..., 0]]
+    elseif D == 3
+        frame = [0, 0, n]
+    end
+    OrthogonalMonitorInstance(d, i, lc + c, fi, frame, F(dx), F(v), m.label)
 end
 
 function MonitorInstance(m::PointCloudMonitor, dx, sz, lc, flb, fl; F=Float32)
@@ -162,39 +164,9 @@ function MonitorInstance(m::PointCloudMonitor, dx, sz, lc, flb, fl; F=Float32)
     PointCloudMonitorInstance(i, fi, F.(n), w, c, inbounds, label)
 end
 
-# function Base.getindex(a, m::OrthogonalMonitorInstance, )
-#     a[m.fi[k]...]
-# end
-
-function field(u, k)
-    # i, j = fij[k]
-    # u[i][j]
-    if k in keys(u)
-        u[k]
-    elseif k == "|E|2"
-        sum(u[1]) do a
-            a .^ 2
-        end
-    elseif k == "|E|"
-        sqrt.(field(u, "|E|2"))
-    elseif k == "|H|2"
-        sum(u[2]) do a
-            a .^ 2
-        end
-    elseif k == "|H|"
-        sqrt.(field(u, "|H|2"))
-    else
-        u[k[1]][k]
-    end
-    # error("invalid field")
-end
-# if k in keys(u)
-#     u[k]
-
 """
-    function field(u, k)
     function field(u, k, m)
-
+    
 queries field, optionally at monitor instance `m`
 
 Args
@@ -202,25 +174,7 @@ Args
 - `k`: symbol or str of Ex, Ey, Ez, Hx, Hy, Hz, |E|, |E|2, |H|, |H|2
 - `m`
 """
-function field(u, k, m::OrthogonalMonitorInstance,)
-    r = _get(u, k, m)
-    if isnothing(r)
-        return field(u, k)[m.fi[k]...]
-    end
-    r
-    # field(u, k, m)
-end
-function field(u, k, m::PointCloudMonitorInstance,)
-    r = _get(u, k, m)
-    if isnothing(r)
-        r = [field(u, k)[v...] for v = eachcol(m.fi[k])]
-    end
-    # if !isnothing(m.sz)
-    #     r = reshape(r, m.sz)
-    # end
-    r
-end
-function _get(u, k, m,)
+function field(u, k, m=nothing)
     if k == "|E|2"
         sum(field.(u, (:Ex, :Ey, :Ez), (m,))) do a
             a .^ 2
@@ -233,15 +187,22 @@ function _get(u, k, m,)
         end
     elseif k == "|H|"
         sqrt.(field(u, "|H|2", m))
+    else
+        global q = u
+        global w = k
+        a = recursive_getindex(u, k)
+        if isnothing(m)
+            return a
+        elseif isa(m, OrthogonalMonitorInstance)
+            return a[m.fi[k]...]
+        elseif isa(m, PointCloudMonitorInstance)
+            return [a[v...] for v = eachcol(m.fi[k])]
+        end
     end
 end
 
-# get
-# Base.getindex(a::Union{AbstractArray,GPUArraysCore.AbstractGPUArray}, m::MonitorInstance) = a[m.i...]
-# Base.getindex(a::GPUArraysCore.AbstractGPUArray, m::MonitorInstance) = a[m.i...]
-# Base.getindex(a, m::MonitorInstance, k) = a[m.fi[k]...]
+Base.getindex(a, k, m::MonitorInstance) = field(a, k, m)
 
-# power(m, u) = sum(sum(pf([u[m.i[k]...] for (u, k) = zip(u, fk)]) .* m.n))
 """
     function flux(m::MonitorInstance, u)
 
@@ -252,7 +213,8 @@ function flux(u, m::OrthogonalMonitorInstance)
     E = [u[:E][k][m.fi[k]...] for k = keys(u[:E])]
     H = [u[:H][k][m.fi[k]...] for k = keys(u[:H])]
 
-    sum((E × H) .* m.n)
+    # (E × H) ⋅ normal(m)
+    sum((E × H) .* normal(m))
 end
 function flux(u, m::PointCloudMonitorInstance)
     @unpack n = m
@@ -272,7 +234,7 @@ function power(u, m::OrthogonalMonitorInstance)
     m.v * mean(flux(u, m))
 end
 power(u, m::PointCloudMonitorInstance) = flux(u, m) ⋅ m.w
-# power(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.i)))]) .* m.n))
+# power(m, u) = sum(sum(pf([u[i...] for (u, i) = zip(u, collect(values(m.i)))]) .* normal(m)))
 
 function monitors_on_box(c, L)
     ox, oy, oz = c

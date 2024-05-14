@@ -10,11 +10,16 @@ struct ModalSource
     center
     lb
     ub
+    normal
     # zaxis
     # xaxis
     fields
-    function ModalSource(f, center, lb, ub, xaxis=nothing; fields...)
-        new(f, center, lb, ub, fields)
+    label
+    function ModalSource(f, center, lb, ub, normal, label::String=""; fields...)
+        new(f, center, lb, ub, normal, fields, label)
+    end
+    function ModalSource(f, center, L, normal, label::String=""; fields...)
+        new(f, center, -L / 2, L / 2, normal, fields, label)
     end
 end
 """
@@ -77,7 +82,7 @@ Args
 struct Source
     f
     fields
-    c
+    center
     lb
     ub
     label
@@ -89,9 +94,9 @@ struct Source
     end
 end
 # fields(m::Source) = m.fields
-Base.string(m::Source) =
+Base.string(m::Union{Source,ModalSource}) =
     """
-    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.c|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center, exciting $(join(keys(m.fields),", "))"""
+    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.center|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center, exciting $(join(keys(m.fields),", "))"""
 function Source(f, c, L, label::AbstractString=""; fields...)
     # Source
     # function Source(f, c, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)
@@ -111,44 +116,41 @@ end
 @functor SourceInstance (g, _g,)
 
 function SourceInstance(s::ModalSource, dx, sizes, lc, fl, sz0; F=Float32)
-    @unpack f, center, lb, ub, fields = s
-    fields = DefaultDict([0], pairs(fields))
+    @unpack f, center, lb, ub, normal = s
+    fields = DefaultDict([0],)
+    for k = keys(s.fields)
+        fields[k] = s.fields[k]
+    end
     @unpack Jx, Jy, Jz = fields
     L = ub .- lb
     sz = max.(1, round.(Int, L ./ dx)) |> Tuple
 
     d = length(center) # 2D or 3D
     if d == 2
-        xaxis = [L / norm(L)..., 0]
+        zaxis = [normal..., 0]
         yaxis = [0, 0, 1]
         # xaxis = cross(yaxis, zaxis)
-        zaxis = cross(xaxis, yaxis)
-        J = reshape.(resize.([Jx, Jy, Jz], ((norm(L) / dx |> round,),)), (sz,))
+        xaxis = cross(yaxis, zaxis)
         # @show J
         # J = reshape.([Jx, Jy, Jz], (sz,))
     else
         yaxis = cross(zaxis, xaxis)
-        J = reshape.([Jx, Jy, Jz], (sz,))
     end
 
-    perm = findfirst.(x -> abs(x) == 1, [xaxis, yaxis, zaxis])
-    signs = sign.(getindex.([xaxis, yaxis, zaxis], perm))
-    invpermute!(J, perm)
-    # xaxis = reim(im * complex(zaxis))
-    # Jx = xaxis[1] * Ex + zaxis[1] * Ez
-    # Jy = xaxis[2] * Ex + zaxis[2] * Ez
-    # c = signals[1].center / λ
-    # ub = xaxis * signals[1].width / 2 / λ
-    # lb = -ub
+    frame = [xaxis, yaxis, zaxis]
+    J = [Jx, Jy, Jz]
+    # J = resize.(J, (sz,))
+    J = reframe(frame, J)
+    if d == 2
+        J = [J[:, :, 1] for J in J]
+    end
 
-    J = [s == -1 ? reverse(J, dims=perm[i]) : J for (i, (s, J)) in enumerate(zip(signs, J))]
     Jx, Jy, Jz = J
     if d == 2
         fields = (; Jx, Jy)
     else
         fields = (; Jx, Jy, Jz)
     end
-    global fields, L, center
     SourceInstance(Source(f, center, L; fields...), dx, sizes, lc, fl, sz0; F)
 end
 function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0; F=Float32)
@@ -181,7 +183,7 @@ function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
 end
 
 function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
-    @unpack f, fields, c, lb, ub, label = s
+    @unpack f, fields, center, lb, ub, label = s
     _F(x::Real) = F(x)
     _F(x::Complex) = complex(F)(x)
 
@@ -203,12 +205,12 @@ function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
         end
 
               for k = keys(fields)])
-    c = round.(c ./ dx) .+ 1
-    o = c + round.(lb ./ dx)
-    c = c + lc
+    center = round.(center ./ dx) .+ 1
+    o = center + round.(lb ./ dx)
+    center = center + lc
     o = NamedTuple([k => fl[k] .+ o for k = keys(fl)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], o[k]) for k = keys(fields)])
-    SourceInstance(f, keys(fields), g, _g, o, c, label)
+    SourceInstance(f, keys(fields), g, _g, o, center, label)
 end
 
 # Complex
@@ -234,6 +236,12 @@ end
 #     [apply(d[k], kw[k]) for k = keys(kw)]
 # end
 
+function E2J(d)
+    k0 = filter(k -> string(k)[1] == 'E', keys(d))
+    k = [Symbol("J" * string(k)[2:end]) for k in k0]
+    v = [d[k] for k in k0]
+    dict(Pair.(k, v))
+end
 function EH2JM(d::T) where {T}
     dict(Pair.(replace(keys(d), :Ex => :Jx, :Ey => :Jy, :Ez => :Jz, :Hx => :Mx, :Hy => :My, :Hz => :Mz), values(d)))
 end

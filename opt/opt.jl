@@ -17,29 +17,28 @@ Random.seed!(1)
 # if running directly without module # hide
 include("$(pwd())/src/main.jl") # hide
 include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
-using Porcupine: keys, values
+# using Porcupine: keys, values
 
 #=
 We skip 3d finetuning as it's 20x more compute and memory intensive than 2d adjoints. If wishing to do 3d finetuning, set `iterations3d`. In any case, 3d forward simulations (without adjoint) only take a few seconds.
 =#
 # name = "ubend"
-iterations2d = 10
-iterations3d = 0
+iterations2d = 0
 record2d = true
 record3d = false
 F = Float32
 ongpu = false
 model_name = nothing # if load saved model
 tol = 1e-3
-offset = 0.1
-Base.round(a) = Base.round.(a)
-
+dosave = false
 
 #=
 We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.
 =#
-@load "$(@__DIR__)/prob.bson" name signals ports designs λ dx ϵbase ϵclad ϵcore hbase hwg hclad layers path_length targets margins
+@load "$(@__DIR__)/prob.bson" name signals ports designs λ dx ϵbase ϵclad ϵcore hbase hwg hclad layers path_length targets margins lmin
 signals, ports, targets = (signals, ports, targets) .|> SortedDict
+polarization = :TE
+
 # error()
 for s = [:device, :init]
     # for name = ["device", "init"]
@@ -65,10 +64,11 @@ We initialize a Jello.jl Blob object which will generate geometry of design regi
 bbox = designs[1].bbox
 L = bbox[2] - bbox[1]
 szd = Tuple(round.(Int, L / dx)) # design region size
-nbasis = 8 # complexity of design region
-contrast = 10 # edge sharpness 
-rmin = nothing
-model = Blob(szd...; init, nbasis, contrast, rmin, symmetry_dims=(designs[1].symmetry_dims.|>Int)[1])
+model = Blob(szd; init,
+    lmin=lmin / dx,
+    contrast=10,
+    rmin=nothing,
+    symmetry_dims=(designs[1].symmetry_dims.|>Int)[1])
 model0 = deepcopy(model)
 heatmap(model())
 
@@ -93,52 +93,64 @@ monitors = [
     # (center, lower bound, upper bound; normal)
     begin
         c = (p.center - origin) / λ
-        c -= offset * p.normal
+        n = p.normal
         if k in keys(signals)
-            c -= offset * p.normal
+            c -= margin_offset * n
+            c -= source_monitor_offset * n
+            n *= -1
+        else
+            c -= source_monitor_offset * n
         end
         L = (p.endpoints[2] - p.endpoints[1])
         L = L / norm(L) * wm / λ
-        Monitor(c, L, p.normal)
+        Monitor(c, L, n)
     end
     for (k, p) = ports |> pairs
 ]
+# monitors = [monitors[1]]
 
 # modal source
 mode = (; [k => transpose(complex.(stack.(v)...)) for (k, v) in sig.mode |> pairs]...)
-ϵ = sig.ϵ |> stack |> transpose
+ϵ = sig.ϵ |> stack |> transpose .|> F
+
+sz = round(sig.size / dx) |> Tuple
+mode = (; Pair.(keys(mode), [resize(v, sz) for v in values(mode)])...)
+ϵ = resize(ϵ, sz)
+
 mode, ϵmode = collapse_mode(mode, ϵ)
+mode = normalize_mode(mode, dx / λ)
 i = round(Int, size(ϵmode, 1) / 2)
 ϵcore_ = ϵmode[i]
 ϵslice = maximum(ϵ, dims=2) |> vec
 ϵslice = min.(ϵslice, ϵcore_)
 
-mode, a, b = calibrate_mode(mode, ϵslice, dx / λ;)
-_, mp0, pp = calibrate_mode(mode, ϵslice, dx / λ;)
+mode, a, b = calibrate_mode(mode, ϵslice, dx / λ; name="1")
+mode = normalize_mode(mode, dx / λ)
+mode_, mp0, = calibrate_mode(mode, ϵslice, dx / λ; name="2")
 @show mp0
-npp = pp / norm(pp)
-@unpack Ex, Ez = mode
+# @unpack Ex, Ez = mode
+
+# error()
 
 # zaxis = sig.normal
-@unpack center, endpoints = sig
-c = (sig.center - origin) / λ - offset * sig.normal
-lb = (sig.endpoints[1] - center) / λ
-ub = (sig.endpoints[2] - center) / λ
-sources = [ModalSource(t -> cispi(2t), c, lb, ub; Jx=Ex, Jz=Ez,)]
+@unpack center, endpoints, = sig
+n = sig.normal
+c = (sig.center - origin) / λ + margin_offset * sig.normal
+L = (sig.endpoints[2] - sig.endpoints[1]) / λ
+# sources = [ModalSource(t -> cispi(2t), c, L, n; Jx=mode.Ex, Jz=mode.Ez)]
+sources = [ModalSource(t -> cispi(2t), c, L, n; Jx=mode.Ex,)]
 
 ϵmin = ϵclad
 sz = size(device)
 
-device = F.(device)
-init = F.(init)
-T = F.(T)
-Δ = F.(Δ)
-ϵbase, ϵcore, ϵclad, dx, mp0 = F.((ϵbase, ϵcore, ϵclad, dx, mp0))
+device, init, T, Δ, ϵbase, ϵcore, ϵcore_, ϵclad, dx, mp0, =
+    F.((device, init, T, Δ, ϵbase, ϵcore, ϵcore_, ϵclad, dx, mp0,))
 
-configs = maxwell_setup(boundaries, sources, monitors, dx / λ, sz; F, ϵmin)
-@unpack dt, sz, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+configs = maxwell_setup(boundaries, sources, monitors, dx / λ, sz; F, ϵmin, polarization,)
+@unpack dt, sz, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, polarization = configs
 nt = round(Int, 1 / dt)
-A = support.(monitor_instances)
+A = area.(monitor_instances)
+# nmp = nfp.Ex ⋅ nfp.Hy * A[1] / length(Ex) / 2
 
 if ongpu
     using Flux
@@ -174,9 +186,10 @@ function make_geometry(model, configs, dϵ=0)#; make3d=false)
     end
 
     p = apply(geometry_padding; ϵ, μ, σ, σm)
+    global q = p
     p = apply(geometry_staggering, p)
 end
-
+# heatmap(q.σ.σEx) |> display
 #=
 Optimal design will maximize powers into port 1 and out of port 2. Monitor normals were set so both are positive. `metrics` function compute these figures of merit (FOM) quantities by a differentiable FDTD simulation . `loss` is then defined accordingly 
 =#
@@ -189,38 +202,64 @@ function metrics(model, configs, dϵ=0; autodiff=true, history=nothing)
         end
     end
     @unpack dx, dt, u0, field_padding, source_instances, monitor_instances = configs
+    Enames = keys(u0.E)
+    Hnames = keys(u0.H)
+
     # run simulation
     u = reduce((u, t) -> maxwell_update(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
 
-    u, pp = reduce(T[1]+dt:dt:T[2], init=(u, F(0))) do (u, pp,), t
-        maxwell_update(u, p, t, dx, dt, field_padding, source_instances),
-        pp + dt / Δ[2] * flux.((u,), monitor_instances,)
+    u, fp, = reduce(T[1]+dt:dt:T[2], init=(u, 0, 0)) do (u, fp,), t
+        fp_ = [
+            begin
+                E = [u[k, m] for k = Enames]
+                H = [u[k, m] for k = Hnames]
+                # fp = dict([ :E=>E, :H=>H])
+                [E, H]
+
+                # E' = E - (E ⋅ normal(m)) * E
+                # H' = H - (H ⋅ normal(m)) * H
+                # mp = (E' × H') ⋅ normal(m)
+            end
+            for m = monitor_instances
+        ]
+        # tp_ = map(fp_, monitor_instances) do (E, H), m
+        #     mean(sum((E × H) .* normal(m))) * area(m)
+        # end
+
+        (
+            maxwell_update(u, p, t, dx, dt, field_padding, source_instances),
+            fp + dt / Δ[2] * fp_ * cispi(-2t),
+            # tp + dt / Δ[2] * tp_,
+        )
     end
 
-    # pp = pp .* A ./ length.(pp)
-    cors = normalize.(vec.(pp)) .⋅ (vec(npp),)
-    port_mode_powers = mean.(pp) .* A .* abs.(cors)
-    # @info "" pp port_mode_powers
-    @show cors
-    @show port_mode_powers
-    # println("metrics $pp")
-    port_mode_powers
+    mp = map(fp, monitor_instances) do (E, H), m
+        if polarization == :TE
+            # global Ex, Hy
+            Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
+        else
+        end
+        ap, am = mode_decomp(mode, (; Ex, Hy))
+        @show abs(ap)^2, abs(am)^2
+        abs(ap)^2 + 0real(Ez[1])
+        # real((Ex ⋅ nfp.Ex) ⋅ (Hy ⋅ nfp.Hy)) * nmp + 0real(Ez[1])
+        # abs(Ex ⋅ nfp.Ex) ⋅ abs(Hy ⋅ nfp.Hy) * nmp + 0real(Ez[1])
+    end
+    # @show mp
+    mp
 end
-# @show const tp = metrics(model, T[1]=1, T[2]=2, autodiff=false)[1] # total power
 # error()
-
+y = getindex.(values(targets), :power)
 function score(v,)
-    @show mp1, mp2 = v
-    mae(getindex.(targets, :power), v / mp0)
+    # mae(F(1.2) * y, v / mp0)
+    # mean(y - v / mp0)
+    y[2] - v[2] / mp0
 end
 
 history = []
-# ,dϵ=2n
-n = sqrt(ϵcore)
-
-
 loss = model -> score(metrics(model, configs))
-loss(model)
+@show loss(model)
+# iterations2d == 0 && error()
 #=
 We now do adjoint optimization. The first few iterations may show very little change but will pick up momentum
 =#
@@ -229,17 +268,22 @@ opt = Adam(1)
 opt_state = Flux.setup(opt, model)
 # iterations2d = 66
 # iterations2d = 400
-for i = 1:iterations2d
+# for i = 1:iterations2d
+for i = 1:40
     println("$i")
     @time l, (dldm,) = withgradient(loss, model)
+    l < 0 && break
     Flux.update!(opt_state, model, dldm)
     println(" $l\n")
 end
 # @save "$(@__DIR__)/2d_model_$(time()).bson" model
-@save "$(@__DIR__)/$(name)_model.bson" model
-mask = model() .< 0.5
-@save "$(@__DIR__)/$(name)_mask.bson" mask
-Images.save("$(@__DIR__)/$(name).png", mask)
+
+if dosave
+    @save "$(@__DIR__)/$(name)_model.bson" model
+    mask = model() .< 0.5
+    @save "$(@__DIR__)/$(name)_mask.bson" mask
+    Images.save("$(@__DIR__)/$(name).png", mask)
+end
 # error()
 
 function runsave(model, configs; kw...)
@@ -273,6 +317,7 @@ function runsave(model, configs; kw...)
     )
 
 end
+heatmap(model())
 
 record = model -> runsave(model, configs)
 record2d && record(model)

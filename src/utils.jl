@@ -31,12 +31,9 @@ function apply!(p; kw...)
 end
 # apply!(p, x::Number) = x
 apply(p, x::Number) = apply(p, x * ones(typeof(x), p.default_size))
+
 function apply(p, kw)
-    # merge((;), [k => apply(p[k], kw[k]) for k = keys(kw)])
     dict([k => apply(p[k], kw[k]) for k = keys(kw)])
-    # (; [k => apply(p[k], kw[k]) for k = keys(kw)]...)
-    # NamedTuple([k => apply(p[k], kw[k]) for k = keys(kw)])
-    # [apply(p[k], kw[k]) for k = keys(kw)]
     # [apply(p[k], v) for (k, v) = pairs(kw)]
 end
 function apply(p; kw...)
@@ -46,6 +43,7 @@ end
 function apply(d::Dictlike, a::AbstractArray)
     dict([k => apply(d[k], a) for k = keys(d)])
 end
+
 function apply(i::AbstractVector{<:AbstractRange}, a::AbstractArray)
     getindex(a, i...)
 end
@@ -82,4 +80,4 @@ Flux.cpu(v::AbstractVector{T}) where {T<:Dictlike} = cpu.(v)
 # Base.getproperty(d::AbstractDict, k::Symbol) = hasfield(d, k) ? getfield(d, k) : (haskey(d, k) ? d[k] : d[string(k)])
 Base.getproperty(d::AbstractDict, k::Symbol) = hasproperty(d, k) ? getfield(d, k) : d[k]
 
-footer = "Suppress this message by verbose=false\nCreated by Paul Shen <pxshen@alumni.stanford.edu>"
+footer = "Suppress this message by verbose=false\n2024 (c) Paul Shen at Luminescent AI\n<pxshen@alumni.stanford.edu>"

@@ -153,7 +153,7 @@ function metrics(model, configs; autodiff=true, history=nothing)
         port_fluxes + dt * flux.((u,), monitor_instances[1:2],)
     end[2] / Δ[2]
 
-    A = support.(monitor_instances)
+    A = area.(monitor_instances)
     port_mode_powers = [mean(vec(a) .* vec(power_profile)) * A for (a, A) = zip(port_fluxes, A)]
     port_powers = mean.(port_fluxes) .* A
     # @info "" port_powers port_mode_powers

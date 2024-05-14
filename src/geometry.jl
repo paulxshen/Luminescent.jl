@@ -1,3 +1,10 @@
+struct Staggering
+    i
+end
+
+function apply(s::Staggering, a::AbstractArray)
+    a[s.i...]
+end
 
 function sandwich(layers, heights)
     sz = (1,)
@@ -13,5 +20,5 @@ function sandwich(layers, heights)
 end
 
 
-_getindex(x::Real, a...) = x
-_getindex(x, a...) = x[a...]
+# recursive_getindex(x::Real, a...) = x
+# recursive_getindex(x, a...) = x[a...]

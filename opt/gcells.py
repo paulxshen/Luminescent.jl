@@ -12,11 +12,12 @@ from gdsfactory.cross_section import Section
 import gdsfactory as gf
 import bson
 import utils
-from utils import ϵcore, ϵclad
+from utils import *
 from layers import *
 
 
-def bend(r, wwg, hwg, lwg=0, ϵcore=ϵcore, ϵclad=ϵclad):
+def bend(r, wwg, hwg, lwg=0, ϵcore=ϵcore, ϵclad=ϵclad, lmin=0.1, **kwargs):
+    name = "bend"
     des = gf.Component()
     init = gf.Component()
     test = gf.Component()
@@ -116,13 +117,14 @@ def ubend(r, wwg, hwg, l, lwg=0,
           λ=1.55, dx=0.05,
           hclad=0.1, hbase=0.1,
           ϵcore=ϵcore, ϵclad=ϵclad,
-          dir="", init=None):
+          dir="", init=None, lmin=0.1, **kwargs):
+    name = "ubend"
     des = gf.Component()
     device = gf.Component("ubend")
     prob = dict()
 
     if lwg == 0:
-        lwg = 2*wwg
+        lwg = 4*wwg
 
     # Extrude the Path and the CrossSection
     wg1 = device << gf.path.extrude(gf.path.straight(
@@ -179,7 +181,7 @@ def ubend(r, wwg, hwg, l, lwg=0,
     # hbase = hclad = hwg/2
     prob["name"] = "ubend"
     targets = {
-        "o1":        {"power": -1},
+        "o1":        {"power": 1},
         "o2":   {"power": 1},
     }
     ports = {
@@ -196,13 +198,13 @@ def ubend(r, wwg, hwg, l, lwg=0,
     prob["ports"] = ports
 
     p = wg1.ports["o1"]
-    modes, ϵ = utils.solve_modes(wwg, hwg, wm=.1, hm=.1,
-                                 dx=dx, ϵcore=ϵcore, ϵclad=ϵclad)
+    modes, ϵ, L = utils.solve_modes(wwg, hwg, wm=.2, hm=.2,
+                                    dx=dx, ϵcore=ϵcore, ϵclad=ϵclad)
     mode = modes[0]
     mode = {k: [np.real(mode[k]).tolist(), np.imag(mode[k]).tolist()]
             for k in mode}
-    width = ϵ.shape[0]*dx
-    height = ϵ.shape[1]*dx
+    width = L[0]
+    height = L[1]
     prob["signals"] = {
         "o1": {
             "wavelength": λ,
@@ -210,6 +212,7 @@ def ubend(r, wwg, hwg, l, lwg=0,
             "center": p.center.flatten().tolist(),
             "width": width,
             "height": height,
+            "size": [width, height],
             "endpoints": [
                 ((p.endpoints[0]-p.center) /
                  np.linalg.norm(p.endpoints[0]-p.center)*width/2).tolist(),
@@ -218,7 +221,7 @@ def ubend(r, wwg, hwg, l, lwg=0,
             ],
             "wwg": wwg,
             "ϵ": ϵ.tolist(),
-            "normal": [cos(p.orientation/180*pi), sin(p.orientation/180*pi)],
+            "normal": [-cos(p.orientation/180*pi), -sin(p.orientation/180*pi)],
             # "endpoints": p.endpoints.tolist(),
             # "ub": p.endpoints[1].flatten().tolist(),
             # "normal": (-p.normal).flatten().tolist()
@@ -253,8 +256,9 @@ def ubend(r, wwg, hwg, l, lwg=0,
     prob["ϵclad"] = ϵclad
     prob["ϵbase"] = ϵclad
     prob["targets"] = targets
+    prob["lmin"] = lmin
 
-    m = wwg/2
+    m = round( λ/2/dx)*dx
     prob["margins"] = [[0, m], [m, m]]
     # bson.encode("prob.bson", prob)
     # np.savez
@@ -268,6 +272,7 @@ def ubend(r, wwg, hwg, l, lwg=0,
 
     # device.wr
     # return prob
+    finish(device, name)
     return device
 
     # @save "$(@__DIR__)/layout.bson" device_mask signals ports designs dx λ ϵbase ϵclad ϵcore hbase hwg hclad modes l w

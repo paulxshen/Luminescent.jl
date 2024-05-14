@@ -25,12 +25,14 @@ import bson
 
 
 def solve_modes(wwg, hwg, λ=1.55, wm=.15, hm=.15, dx=.05, ϵcore=ϵcore, ϵclad=ϵclad):
-    _ = 1e-9
+    tol = 1e-4
 
     w = wwg+2*wm
     h = hwg+2*hm
-    x = numpy.linspace(0, w-dx, round(w/dx))
-    y = numpy.linspace(0, h-dx, round(h/dx))
+    # x = numpy.linspace(0, w, round(w/dx)+1)
+    # y = numpy.linspace(0, h, round(h/dx)+1)
+    x = numpy.linspace(0, w, round(w/dx)+1)
+    y = numpy.linspace(0, h, round(h/dx)+1)
 
     def ϵfunc(x_, y_):
         """Return a matrix describing a 2d material.
@@ -39,14 +41,26 @@ def solve_modes(wwg, hwg, λ=1.55, wm=.15, hm=.15, dx=.05, ϵcore=ϵcore, ϵclad
         :param y_: y values
         :return: 2d-matrix
         """
-        xx, yy = numpy.meshgrid(x_, y_)
-        return numpy.where(
-            # (numpy.abs(xx.T - 1.24) <= 0.24) * (numpy.abs(yy.T - 1.11) <= 0.11),
-            (xx.T < w-wm-_) * (xx.T > wm-_)*(yy.T > hm-_)*(yy.T < h-hm-_),
-            ϵcore,
-            ϵclad,
-        )
+        # xx, yy = numpy.meshgrid(x_, y_)
+        # return numpy.where(
+        #     # (numpy.abs(xx.T - 1.24) <= 0.24) * (numpy.abs(yy.T - 1.11) <= 0.11),
+        #     (xx.T < w-wm-tol) * (xx.T > wm-tol) * \
+        #     (yy.T > hm-tol)*(yy.T < h-hm-tol),
+        #     ϵcore,
+        #     ϵclad,
+        # )
 
+        def f(x, y):
+            if (x < w-wm-tol) and (x > wm+tol) and (y > hm+tol) and (y < h-hm-tol):
+                return ϵcore
+            elif (x > w-wm+tol) or (x < wm-tol) or (y < hm-tol) or (y > h-hm+tol):
+                return ϵclad
+            else:
+                return (ϵcore+ϵclad)/2
+        # return np.ma[f(x, y) for x, y in zip(xx, yy)]
+        r = np.array([[f(x, y) for x in x_] for y in y_]).T
+        # r = np.array([1 for x in 1:2 for y in 1:3])
+        return r
     neigs = 1
     tol = 1e-8
     boundary = "0000"
@@ -60,16 +74,25 @@ def solve_modes(wwg, hwg, λ=1.55, wm=.15, hm=.15, dx=.05, ϵcore=ϵcore, ϵclad
 
     fig.add_subplot(1, 3, 1)
     Ex = numpy.transpose(solver.modes[0].get_field("Ex", x, y))
-    pylab.contourf(x, y, abs(Ex), 50)
+    pylab.imshow(abs(Ex))
     pylab.title("Ex")
+
+    fig.add_subplot(1, 3, 2)
+    Hy = numpy.transpose(solver.modes[0].get_field("Hy", x, y))
+    pylab.imshow(abs(Hy))
+    pylab.title("Hy")
+    fig.add_subplot(1, 3, 3)
+    e = numpy.transpose(ϵfunc(x, y))
+    pylab.imshow(e)
+    pylab.title("eps")
 
     modes = [{k: m.get_field(k, x, y) for k in [
         "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in solver.modes]
     # mode = {"Ex": Ex, "Ey": Ey, "Ez": Ez, "Hx": Hx, "Hy": Hy, "Hz": Hz}
-    # np.savez("modes_{wwg}_{hwg}.npz", **mode)
+    # np.savez("modes_{wwg}tol{hwg}.npz", **mode)
     # pylab.show()
     # return solver.modes
-    return modes, ϵ
+    return modes, ϵ, [w, h]
 
 
 def write_img(dir, f, c, hidden_layer=[]):
@@ -97,3 +120,7 @@ def write_img(dir, f, c, hidden_layer=[]):
 def pic2gds(fileName, sizeOfTheCell, layerNum=1, isDither=false, scale=1):
     picToGDS.main(fileName, sizeOfTheCell, layerNum, isDither, scale)
     return "image.bmp", "image.gds"
+
+
+def finish(c, name):
+    c.add_label(name, position=c.bbox[1])

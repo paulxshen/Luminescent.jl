@@ -187,7 +187,7 @@ sz = size(static_mask)
 configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
 @unpack dx, dt, sz, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
 nt = round(Int, 1 / dt)
-A = support.(monitor_instances)
+A = area.(monitor_instances)
 
 
 # n = (size(Jy) .- size(monitor_instances[1])) .÷ 2
