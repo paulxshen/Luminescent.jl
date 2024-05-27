@@ -31,7 +31,7 @@ L = size(mask) .* microns_dx
 λ = 1.28f0
 L = L ./ λ
 l, _ = L
-lc = (57.5f0 / 108) * l
+common_left_pad_amount = (57.5f0 / 108) * l
 dims = round.(Int, L ./ dx)
 design_dims = round.(Int, design_dims .* microns_dx ./ λ ./ dx)
 design_start = 1 .+ round.(Int, (design_start .- 1) .* microns_dx ./ λ ./ dx)
@@ -48,8 +48,8 @@ b = place(mask, model(), design_start)
 # extrema(ϵ)
 
 boundaries = []
-monitors = [Monitor([0.0f0l, lc], [:Ez, :Hx, :Hy]), Monitor([lc, 0.0f0], [:Ez, :Hx, :Hy])]
-sources = [GaussianBeam(t -> cos(F(2π) * t), 0.05f0, (0.0f0, lc), -1; Ez=1)]
+monitors = [Monitor([0.0f0l, common_left_pad_amount], [:Ez, :Hx, :Hy]), Monitor([common_left_pad_amount, 0.0f0], [:Ez, :Hx, :Hy])]
+sources = [GaussianBeam(t -> cos(F(2π) * t), 0.05f0, (0.0f0, common_left_pad_amount), -1; Ez=1)]
 @unpack geometry_padding, field_padding, source_instances, monitor_configs, save_idxs, fields =
     maxwell_setup(boundaries, sources, monitors, L, dx, polarization; F)
 

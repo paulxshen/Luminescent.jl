@@ -85,8 +85,8 @@ sources = [Source(t -> cispi(2t), c, lb_, ub_; Jx, Jy,)]
 ϵmin = ϵclad
 sz = size(static_mask)
 
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
-@unpack dx, dt, sz, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
+@unpack dx, dt, sz, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 nt = round(Int, 1 / dt)
 A = area.(monitor_instances)
 
@@ -102,15 +102,15 @@ if ongpu
     # @assert CUDA.functional()
     u0, model, static_mask, μ, σ, σm, field_padding, source_instances =
         gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))
-    merge!(configs, (; u0, field_padding, source_instances))
+    merge!(prob, (; u0, field_padding, source_instances))
 end
 
 #=
 We define a geometry update function that'll be called each adjoint iteration. It calls geometry generator model to generate design region which gets placed onto mask of static features.
     =#
 
-function make_geometry(model, configs, dϵ=0)#; make3d=false)
-    @unpack sz, geometry_padding, geometry_staggering = configs
+function make_geometry(model, prob, dϵ=0)#; make3d=false)
+    @unpack sz, geometry_padding, subpixel_averaging = prob
     μ = ones(F, sz)
     σ = zeros(F, sz)
     σm = zeros(F, sz)
@@ -131,21 +131,21 @@ function make_geometry(model, configs, dϵ=0)#; make3d=false)
     end
 
     p = apply(geometry_padding; ϵ, μ, σ, σm)
-    p = apply(geometry_staggering, p)
+    p = apply(subpixel_averaging, p)
 end
 
 #=
 Optimal design will maximize powers into port 1 and out of port 2. Monitor normals were set so both are positive. `metrics` function compute these figures of merit (FOM) quantities by a differentiable FDTD simulation . `loss` is then defined accordingly 
 =#
 
-function metrics(model, configs, dϵ=0; autodiff=true, history=nothing)
-    p = make_geometry(model, configs, dϵ;)
+function metrics(model, prob, dϵ=0; autodiff=true, history=nothing)
+    p = make_geometry(model, prob, dϵ;)
     if !isnothing(history)
         ignore_derivatives() do
             push!(history, p[:ϵ])
         end
     end
-    @unpack u0, field_padding, source_instances, monitor_instances = configs
+    @unpack u0, field_padding, source_instances, monitor_instances = prob
     # run simulation
     u = reduce((u, t) -> maxwell_update(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
 
@@ -194,7 +194,7 @@ T = F.(T)
 Δ = F.(Δ)
 ϵbase, ϵcore, ϵclad, dx, dt, dϵ, dϕ0, mp0 = F.((ϵbase, ϵcore, ϵclad, dx, dt, dϵ, dϕ0, mp0))
 
-loss = model -> score(metrics(model, configs), metrics(model, configs, dϵ))
+loss = model -> score(metrics(model, prob), metrics(model, prob, dϵ))
 loss(model)
 #=
 We now do adjoint optimization. The first few iterations may show very little change but will pick up momentum
@@ -219,9 +219,9 @@ We do a simulation movie using optimized geometry
 =#
 
 # @show metrics(model)
-function runsave(model, configs; kw...)
-    p = make_geometry(model, configs)
-    @unpack u0, dx, dt, field_padding, source_instances, monitor_instances = configs
+function runsave(model, prob; kw...)
+    p = make_geometry(model, prob)
+    @unpack u0, dx, dt, field_padding, source_instances, monitor_instances = prob
     @showtime global u = accumulate((u, t) ->
             maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
         0:dt:T[2], init=u0)
@@ -251,7 +251,7 @@ function runsave(model, configs; kw...)
 
 end
 
-record = model -> runsave(model, configs)
+record = model -> runsave(model, prob)
 record2d && record(model)
 # lines(power_profile |> vec)
 # lines(flux_profile[1] |> vec)
@@ -284,15 +284,15 @@ ub = [0, signals[1].ub...] / λ
 sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 # sources = [Source(t -> cispi(2t), c, lb, ub; Jx=1)]
 
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin, Courant=0.3)
+prob = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin, Courant=0.3)
 if ongpu
     u0, model, static_mask, μ, σ, σm, field_padding, source_instances =
         gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))
-    merge!(configs, (; u0, field_padding, source_instances))
+    merge!(prob, (; u0, field_padding, source_instances))
 end
 
 
-loss = model -> score(metrics(model, configs;))
+loss = model -> score(metrics(model, prob;))
 opt = Adam(0.1)
 opt_state = Flux.setup(opt, model)
 for i = 1:iterations3d
@@ -303,5 +303,5 @@ end
 @save "$(@__DIR__)/3d_model_$(time()).bson" model
 
 
-record = model -> runsave(model, configs; elevation=70°, azimuth=110°)
+record = model -> runsave(model, prob; elevation=70°, azimuth=110°)
 record3d && record(model)

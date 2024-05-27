@@ -58,11 +58,11 @@ monitors = [
 
 # maxwell_setup
 boundaries = []# unspecified boundaries default to PML
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
+@unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_staggering, p)
+p = apply(subpixel_averaging, p)
 
 # move to gpu
 if dogpu
@@ -131,11 +131,11 @@ monitors = [
 
 # maxwell_setup
 boundaries = []# unspecified boundaries default to PML
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
+@unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_staggering, p)
+p = apply(subpixel_averaging, p)
 
 # move to gpu
 if dogpu

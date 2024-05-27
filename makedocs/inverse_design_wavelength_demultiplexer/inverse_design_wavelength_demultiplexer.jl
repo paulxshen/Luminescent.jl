@@ -67,8 +67,8 @@ for (modes, f) = zip((modes1, modes2), (1, f2))
 end
 
 boundaries = [] # unspecified boundaries default to PML
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz0; ϵmin, F)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = maxwell_setup(boundaries, sources, monitors, dx, sz0; ϵmin, F)
+@unpack μ, σ, σm, dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 nt = round(Int, 1 / dt)
 
 T = T[1] + T[2]
@@ -91,7 +91,7 @@ function make_geometry(model, mask, μ, σ, σm)
 
     ϵ = sandwich(copy(base_), round.(Int, [hbase, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
     ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
-    p = apply(geometry_staggering; ϵ, μ, σ, σm)
+    p = apply(subpixel_averaging; ϵ, μ, σ, σm)
 end
 
 function metrics(model; T[1]=T[1], T[2]=T[2], autodiff=true)

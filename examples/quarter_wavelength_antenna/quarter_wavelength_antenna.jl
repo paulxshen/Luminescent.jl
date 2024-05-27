@@ -38,11 +38,11 @@ sources = [
     Source(t -> cos(2π * t), [l / 2, l / 2, 0.125], [0, 0, 0.25]; Jz=1),
 ]
 
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F,)
-@unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = maxwell_setup(boundaries, sources, monitors, dx, sz; F,)
+@unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_staggering, p)
+p = apply(subpixel_averaging, p)
 
 # move to gpu
 if dogpu

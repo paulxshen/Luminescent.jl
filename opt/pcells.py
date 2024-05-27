@@ -37,7 +37,7 @@ def phase_shifter(l, wwg, nbends, ubend):
             pn.ymin = s.center[1]
         else:
             pn.ymax = s.center[1]
-        c.add_label(label, position=pn.center, layer=(501,0))
+        c.add_label(label, position=pn.center, layer=(501, 0))
 
     sout = c << gf.path.extrude(gf.path.straight(
         length=lu), width=wwg, layer=core_layer)
@@ -48,10 +48,10 @@ def phase_shifter(l, wwg, nbends, ubend):
     heater = c << gf.components.rectangle(
         size=(l+2*heater_margin, c.size[1]+2*heater_margin), layer=(61, 0))
     heater.center = center
-    c.add_label("heater pad", position=heater.bbox[1], layer=(502,0))
+    c.add_label("heater pad", position=heater.bbox[1], layer=(502, 0))
 
     c.add_label("zigzag phase shifter", position=(
-        c.center[0], c.ymax), layer=(500,0))
+        c.center[0], c.ymax), layer=(500, 0))
     c.show()
     return c
 
@@ -62,14 +62,14 @@ def ubend_resonator(l, wwg, ubend):
     quarter = gf.Component()
 
     r = 1
-    lc = 8
+    common_left_pad_amount = 8
     lsb = 6
-    ls = (l-lc-2*lsb-2*ubend.size[0])/2
+    ls = (l-common_left_pad_amount-2*lsb-2*ubend.size[0])/2
 
     su = quarter << gf.components.straight(
         length=ls, width=wwg, layer=core_layer)  # Straight section
     sc = quarter << gf.components.straight(
-        length=lc/2, width=wwg, layer=core_layer)  # Straight section
+        length=common_left_pad_amount/2, width=wwg, layer=core_layer)  # Straight section
     sb = quarter << gf.components.bend_s(
         (lsb, 1), 32, gf.cross_section.strip(wwg), )
     sb.mirror(p1=(0, 0), p2=(1, 0))

@@ -15,10 +15,17 @@ struct ModalSource
     # xaxis
     fields
     label
-    function ModalSource(f, center, lb, ub, normal, label::String=""; fields...)
+    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, lb, ub, normal, label::String="";)
+        new(f, center, lb, ub, normal, E2J(mode), label)
+    end
+    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, L, normal, label::String="";)
+        new(f, center, -L / 2, L / 2, normal, E2J(mode), label)
+    end
+
+    function ModalSource(f, center::Base.AbstractVecOrTuple, lb, ub, normal, label::String=""; fields...)
         new(f, center, lb, ub, normal, fields, label)
     end
-    function ModalSource(f, center, L, normal, label::String=""; fields...)
+    function ModalSource(f, center::Base.AbstractVecOrTuple, L, normal, label::String=""; fields...)
         new(f, center, -L / 2, L / 2, normal, fields, label)
     end
 end
@@ -115,7 +122,7 @@ struct SourceInstance
 end
 @functor SourceInstance (g, _g,)
 
-function SourceInstance(s::ModalSource, dx, sizes, lc, fl, sz0; F=Float32)
+function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
     @unpack f, center, lb, ub, normal = s
     fields = DefaultDict([0],)
     for k = keys(s.fields)
@@ -151,14 +158,14 @@ function SourceInstance(s::ModalSource, dx, sizes, lc, fl, sz0; F=Float32)
     else
         fields = (; Jx, Jy, Jz)
     end
-    SourceInstance(Source(f, center, L; fields...), dx, sizes, lc, fl, sz0; F)
+    SourceInstance(Source(f, center, L; fields...), dx, sizes, common_left_pad_amount, fl, sz0; F)
 end
-function SourceInstance(s::PlaneWave, dx, sizes, lc, fl, sz0; F=Float32)
+function SourceInstance(s::PlaneWave, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
     @unpack f, fields, dims, label = s
     _F(x::Real) = F(x)
     _F(x::Complex) = complex(F)(x)
     f = _F ∘ f
-    d = length(lc)
+    d = length(common_left_pad_amount)
     g = Dict([k => _F(fields[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(fields)])
     o = NamedTuple([k =>
         1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
@@ -182,14 +189,13 @@ function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
     SourceInstance(f, keys(fields), g, _g, fl, c, label)
 end
 
-function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
+function SourceInstance(s::Source, dx, sizes, field_origin, common_left_pad_amount, stop; F=Float32)
     @unpack f, fields, center, lb, ub, label = s
     _F(x::Real) = F(x)
     _F(x::Complex) = complex(F)(x)
 
     f = _F ∘ f
-    dx *= 1.001
-    r = [a:dx:b for (a, b) = zip(lb, ub)]
+    r = [a == b ? (a:a) : a+dx/2:dx:b for (a, b) = zip(lb, ub)]
     C = F(1 / dx^count(lb .== ub))
     g = Dict([k =>
         C * begin
@@ -205,12 +211,10 @@ function SourceInstance(s::Source, dx, sizes, lc, fl, stop; F=Float32)
         end
 
               for k = keys(fields)])
-    center = round.(center ./ dx) .+ 1
-    o = center + round.(lb ./ dx)
-    center = center + lc
-    o = NamedTuple([k => fl[k] .+ o for k = keys(fl)])
+    o = NamedTuple([k => (center + lb - o) / dx .+ 1 for (k, o) = pairs(field_origin)])
     _g = Dict([k => place(zeros(F, sizes[k]), g[k], o[k]) for k = keys(fields)])
-    SourceInstance(f, keys(fields), g, _g, o, center, label)
+    _center = round(center / dx) + 1 + common_left_pad_amount
+    SourceInstance(f, keys(fields), g, _g, o, _center, label)
 end
 
 # Complex

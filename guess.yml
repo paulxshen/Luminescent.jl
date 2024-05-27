@@ -1,18 +1,18 @@
 cells:
-  Unnamed_2a5e98af: {}
-  Unnamed_6717d63c: {}
+  Unnamed_f9c2590a: {}
+  design: {}
 function: ''
 info: {}
 module: ''
-name: Unnamed_6717d63c
+name: design
 ports:
   o1:
     center:
     - 0.0
     - 0.4
     layer:
-    - 100
-    - 0
+    - 1
+    - 10
     name: o1
     orientation: 180
     port_type: optical
@@ -23,8 +23,8 @@ ports:
     - 0.0
     - -0.4
     layer:
-    - 100
-    - 0
+    - 1
+    - 10
     name: o2
     orientation: 180
     port_type: optical

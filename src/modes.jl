@@ -10,7 +10,7 @@ function mode_decomp(m, u,)
     Hy = m.Hy ⋅ field(u, :Hy) / norm(m.Hy)^2
     ap = Hy + Ex
     am = Hy - Ex
-    ap, am
+    [ap, am]
 end
 
 

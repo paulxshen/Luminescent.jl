@@ -69,8 +69,8 @@ sources = [Source(t -> cispi(2t), c, lb_, ub_; Jx, Jy,)]
 μ = 1
 σ = zeros(F, sz)
 σm = zeros(F, sz)
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
-@unpack dx, dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
+@unpack dx, dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 nt = round(Int, 1 / dt)
 port_fluxes0 = zeros(F, length(monitor_instances))
@@ -92,7 +92,7 @@ function make_geometry(model, mask, μ, σ, σm)
 
     ϵ = mask * ϵcore + (1 .- mask) * ϵclad
     p = apply(geometry_padding; ϵ, μ, σ, σm)
-    p = apply(geometry_staggering, p)
+    p = apply(subpixel_averaging, p)
 end
 
 function metrics(model, ; T[1]=T[1], T[2]=T[2], autodiff=true)

@@ -67,7 +67,7 @@ schedule = [(8, 0.1, 1), (16, 0.1, 1),]
 model = nothing
 # α = 0.2 # grayscale gradient in design mask
 for (nx, α, nepochs) in schedule
-    # tunable configs
+    # tunable prob
     T = 10.0f0 # simulation duration in [periods]
     opt = Adam(1) # higher learning rate helps
     dx = 1.0f0 / nx # pixel resolution in [wavelengths]

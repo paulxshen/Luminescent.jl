@@ -1,3 +1,8 @@
+function add_current_keys(d)
+    # d=OrderedDict
+    d = dict(pairs(d))
+    add_current_keys!(d)
+end
 function add_current_keys!(d::AbstractDict)
     for k in keys(d) |> collect
         if startswith(String(k), "E")
@@ -9,6 +14,7 @@ function add_current_keys!(d::AbstractDict)
         end
 
     end
+    d
 end
 """
     function maxwell_setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
@@ -18,21 +24,35 @@ Args
 - L: vector of lengths in wavelengths of simulation domain
 - polarization: only applies to 2d which can be :TM (Ez, Hx, Hy) or :TE (Hz, Ex, Ey)
 """
-function maxwell_setup(boundaries, sources, monitors, dx, sz; polarization=:TE,
+function maxwell_setup(boundaries, sources, monitors, dx, sz;
+    polarization=:TE,
+    geometry=OrderedDict(),
+    # transient_duration=max_source_dist(sources), steady_state_duration=2,
+    transient_duration=nothing, steady_state_duration=2,
     ϵ=1, μ=1, σ=0, σm=0, F=Float32,
-    ϵmin=1,
+    wavelengths=[1],
+    # ϵmin=1,
     # Courant=0.5,
-    Courant=F(0.8√(ϵmin / length(sz))),# Courant number)
+    Courant=nothing,
     verbose=true,
     kw...)
-    dx = F(dx)
+    dx, wavelengths = F.((dx, wavelengths))
 
     a = ones(F, sz)
-    # if isa(μ,Number+)
-    μ *= a
-    σ *= a
-    σm *= a
-    ϵ *= a
+    geometry = dict((; ϵ, μ, σ, σm) |> pairs)
+    for (k, v) = pairs(geometry)
+        if isa(v, Number)
+            geometry[k] = a * geometry[k]
+        end
+    end
+    ϵmin, ϵmax = extrema(geometry.ϵ)
+    if isnothing(Courant)
+        Courant = F(0.8√(ϵmin / length(sz)))# Courant number)
+    end
+    if isnothing(transient_duration)
+        transient_duration = sum(sz) * dx * sqrt(ϵmax) + 1
+    end
+
     d = length(sz)
     if d == 1
         field_names = (:Ez, :Hy)
@@ -55,14 +75,14 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz; polarization=:TE,
     end
     Courant = F(Courant)
 
-    global nodes = fill(:U, d, 2)
+    nodes = fill(:U, d, 2)
     db = Any[PML(j * i,) for i = 1:d, j = (-1, 1)]
     field_padding = DefaultDict(() -> InPad[])
     geometry_padding = DefaultDict(() -> OutPad[])
     fl = Dict([k => zeros(Int, d) for k = field_names])
-    flb = Dict([k => zeros(Int, d) for k = field_names])
-    frb = Dict([k => zeros(Int, d) for k = field_names])
-    lc = zeros(Int, d)
+    is_field_on_lb = Dict([k => zeros(Int, d) for k = field_names])
+    is_field_on_ub = Dict([k => zeros(Int, d) for k = field_names])
+    common_left_pad_amount = zeros(Int, d)
     field_sizes = Dict([k => collect(sz) for k = field_names])
 
     for b = boundaries
@@ -130,10 +150,9 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz; polarization=:TE,
         for j = 1:2
             b = db[i, j]
             if isa(b, PML)
-                n = round(Int, b.d / dx)
-                l = j == 1 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
-                r = j == 2 ? [i == a ? n : 0 for a = 1:d] : zeros(Int, d)
-                info = lazy = false
+                pml_amount = round(Int, b.d / dx)
+                l = j == 1 ? [i == a ? pml_amount : 0 for a = 1:d] : zeros(Int, d)
+                r = j == 2 ? [i == a ? pml_amount : 0 for a = 1:d] : zeros(Int, d)
                 push!(geometry_padding[:ϵ], OutPad(:replicate, l, r, sz))
                 push!(geometry_padding[:μ], OutPad(:replicate, l, r, sz))
 
@@ -147,12 +166,12 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz; polarization=:TE,
                 push!(geometry_padding[:σm], OutPad(F(b.σ), l2, r2, sz))
                 if j == 1
                     for k = keys(fl)
-                        fl[k][i] += n
+                        fl[k][i] += pml_amount
                     end
-                    lc[i] += n
+                    common_left_pad_amount[i] += pml_amount
                 end
                 for k = keys(field_sizes)
-                    field_sizes[k][i] += n
+                    field_sizes[k][i] += pml_amount
                 end
             end
             l = j == 1 ? Int.((1:d) .== i) : zeros(Int, d)
@@ -176,18 +195,12 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz; polarization=:TE,
         end
     end
 
-    p = OutPad(:replicate, 0, 1, sz)
-    push!(geometry_padding[:μ], p)
-    push!(geometry_padding[:σm], p)
-    push!(geometry_padding[:σ], p)
-    push!(geometry_padding[:ϵ], p)
 
     for (k, v) = pairs(field_padding)
         for p = v
-            field_sizes[k] += p.l .+ p.r
             fl[k] += p.l
-            flb[k] += p.l
-            frb[k] += p.r
+            is_field_on_lb[k] += p.l
+            is_field_on_ub[k] += p.r
         end
     end
 
@@ -220,28 +233,49 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz; polarization=:TE,
     geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padding[k]) do p
         p.l + p.r
     end for k = keys(geometry_padding)])
-    # geometry_staggering = dict(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
-    geometry_staggering = Dict{Symbol,Any}()
+    # subpixel_averaging = dict(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
+    subpixel_averaging = Dict{Symbol,Any}()
+    field_grids = Dict{Symbol,Any}()
     for k = keys(geometry_sizes)
         if k in (:μ, :σm)
-            v = dict([Symbol("$(k)$f") => Staggering(Base.oneto.(field_sizes[f])) for f = Hnames])
+            names = Hnames
         elseif k in (:ϵ, :σ)
-            v = dict([Symbol("$(k)$f") => Staggering(Base.oneto.(field_sizes[f])) for f = Enames])
+            names = Enames
         end
-        geometry_staggering[k] = v
+        v = dict([
+            begin
+                xyz = f[2]
+                terminations = zip(is_field_on_lb[f], is_field_on_ub[f])
+                g = Symbol("$(k)$xyz$xyz")
+                v = SubpixelAveraging(
+                    stack([
+                        begin
+                            if v == (0, 0)
+                                [0, 0]
+                            elseif v == (0, 1)
+                                [0, 0]
+                            elseif v == (1, 1)
+                                [-1, 1]
+                            elseif v == (1, 0)
+                                [-1, -1]
+                            end
+                        end for v in terminations
+                    ]))
+                if !haskey(field_grids, f)
+                    field_grids[f] = v
+                end
+                g => v
+            end for f = names
+        ])
+        subpixel_averaging[k] = v
     end
-    # geometry_staggering[:μ] =
-    #     dict([Symbol("μ$k") => [ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:μ]), flb[k], frb[k])] for k = keys(u0[:H])])
-    # geometry_staggering[:σm] =
-    #     dict([Symbol("σm$k") => [ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:μ]), flb[k], frb[k])] for k = keys(u0[:H])])
-    # geometry_staggering[:ϵ] =
-    #     dict([Symbol("ϵ$k") => [ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:ϵ]), flb[k], frb[k])] for k = keys(u0[:E])])
-    # geometry_staggering[:σ] =
-    #     dict([Symbol("σ$k") => [ax[2-l:end-1+r] for (ax, l, r) = zip(Base.oneto.(geometry_sizes[:ϵ]), flb[k], frb[k])] for k = keys(u0[:E])])
 
-    source_instances = SourceInstance.(sources, dx, (field_sizes,), (lc,), (fl,), (sz,); F)
-    monitor_instances = MonitorInstance.(monitors, dx, (sz,), (lc,), (flb,), (fl,); F)
-    roi = MonitorInstance(Monitor(zeros(d), zeros(d), dx * sz), dx, sz, lc, flb, fl; F)
+    field_origin = NamedTuple([k => (1 - v) * dx / 2 - common_left_pad_amount * dx for (k, v) = pairs(is_field_on_lb)])
+    field_origin = add_current_keys(field_origin)
+
+    source_instances = SourceInstance.(sources, dx, (field_sizes,), (field_origin,), (common_left_pad_amount,), (sz,); F)
+    monitor_instances = MonitorInstance.(monitors, dx, (field_origin,), (common_left_pad_amount,), (sz,), ; F)
+    # roi = MonitorInstance(Monitor(zeros(d), zeros(d), dx * sz), dx, sz, common_left_pad_amount, is_field_on_lb, fl; F)
 
     dt = dx * Courant
     sz = Tuple(sz)
@@ -272,7 +306,7 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz; polarization=:TE,
     if verbose
         @info """
      ====
-     FDTD configs
+     FDTD prob
      
      Lengths in characterstic wavelengths, times in characterstic periods, unless otherwise specified
 
@@ -298,10 +332,15 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz; polarization=:TE,
      """
     end
 
-    (; μ, σ, σm, ϵ,
-        geometry_padding, field_padding, geometry_staggering,
+    OrderedDict((; geometry_padding, field_padding, subpixel_averaging, field_grids,
         source_instances, monitor_instances, field_names,
         polarization,
-        roi, u0, fields, dx, dt, sz, kw...)
+        transient_duration, steady_state_duration,
+        geometry,
+        wavelengths,
+        # roi,
+        u0, fields, d, dx, dt, sz, kw...) |> pairs)
 end
 
+update = maxwell_update
+setup = maxwell_setup

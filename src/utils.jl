@@ -4,8 +4,16 @@ gaussian(x; μ=0, σ=1) = exp(-((x - μ) / σ)^2)
 d2(x) = round.(x, sigdigits=2)
 
 function place(a, b, o; lazy=false)
-    a + pad(b, 0, Tuple(o) .- 1, size(a) .- size(b) .- Tuple(o) .+ 1)
-    # place!(buf, b, o)
+    i = floor(o)
+    w = 1 - mean(abs.(o - i))
+    w = (w, 1 - w)
+    i = (i, i + 1)
+    for (w, i) = zip(w, i)
+        if w > 0
+            a += eltype(a)(w) * pad(b, 0, Tuple(i) .- 1, size(a) .- size(b) .- Tuple(i) .+ 1)
+        end
+    end
+    a
 end
 # function place!(a::AbstractArray, b, o)
 #     buf = bufferfrom(a)

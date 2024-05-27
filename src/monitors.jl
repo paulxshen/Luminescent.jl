@@ -85,12 +85,11 @@ Base.string(m::PointCloudMonitor) =
 abstract type MonitorInstance end
 struct OrthogonalMonitorInstance <: MonitorInstance
     d
-    i
-    c
-    fi
+    roi
     frame
     dx
     v
+    center
     label
 end
 # @functor OrthogonalMonitorInstance (n,)
@@ -100,7 +99,7 @@ area(m::OrthogonalMonitorInstance) = m.v
 
 struct PointCloudMonitorInstance <: MonitorInstance
     i
-    fi
+    roi
     n
     w
     c
@@ -112,41 +111,41 @@ Base.length(m::OrthogonalMonitorInstance) = 1
 Base.length(m::PointCloudMonitorInstance) = 1
 
 frame(m::OrthogonalMonitorInstance) = m.frame
-normal(m::OrthogonalMonitorInstance) = frame(m)[3][1:length(m.c)]
+normal(m::OrthogonalMonitorInstance) = frame(m)[3][1:length(m.center)]
 
-function MonitorInstance(m::OrthogonalMonitor, dx, sz, lc, flb, fl; F=Float32)
-    @unpack n, = m
+function MonitorInstance(m::OrthogonalMonitor, dx, field_origin, common_left_pad_amount, sz, ; F=Float32)
+    @unpack n, lb, c = m
     L = m.ub - m.lb
     singletons = findall(L .≈ 0,)
     D = length(L)
     d = length(L) - length(singletons)
+
+    L0 = copy(L)
     deleteat!(L, singletons)
     v = isempty(L) ? 0 : prod(L,)
-    c = round.(Int, m.c / dx)
-    lb = round.(Int, m.lb / dx)
-    ub = round.(Int, m.ub / dx)
+    L = L0
 
-    # idxs = Dict([
-    #     k => map(sizes[k],  c, lb, ub) do s, c, lb, ub
-    #         max(1, lc + c + lb):min(s, lc + c + ub)
-    #     end for k = fk
-    # ])
-    i = range.((1 .+ lc + c + lb), (lc + c + ub))
-    i = convert(Vector{Any}, i)
-    i[singletons] .= first.(getindex.((i,), singletons))
-    fi = Dict([k => i .+ v for (k, v) = pairs(flb)])
-    # fi = (; [k => i .+ v for (k, v) = pairs(flb)]...)
-
+    roi = dict([k => begin
+        p = (c + lb - o) / dx
+        i = floor(p)
+        w = 1 - mean(abs.(p - i))
+        w = (w, 1 - w)
+        i = [i .+ map(round(L / dx)) do n
+            n == 0 ? 1 : Base.oneto(n)
+        end for i = (i, i + 1)]
+        [(F(w), i) for (w, i) in zip(w, i) if w > 0]
+    end for (k, o) = pairs(field_origin)])
     n = isnothing(n) ? n : F.(n |> normalize)
     if D == 2
         frame = [[-n[2], n[1], 0], [0, 0, 1], [n..., 0]]
     elseif D == 3
         frame = [0, 0, n]
     end
-    OrthogonalMonitorInstance(d, i, lc + c, fi, frame, F(dx), F(v), m.label)
+    _center = round(c / dx) + 1 + common_left_pad_amount
+    OrthogonalMonitorInstance(d, roi, frame, F(dx), F(v), _center, m.label)
 end
 
-function MonitorInstance(m::PointCloudMonitor, dx, sz, lc, flb, fl; F=Float32)
+function MonitorInstance(m::PointCloudMonitor, dx, sz, common_left_pad_amount, flb, fl; F=Float32)
     @unpack p, n, c, w, label = m
     p = round.(p / dx) .+ 1
     _, i = size(p)
@@ -158,10 +157,10 @@ function MonitorInstance(m::PointCloudMonitor, dx, sz, lc, flb, fl; F=Float32)
     n = n[:, inbounds]
     # p = stack(@. v[1])
     # n = stack(@. v[2])
-    i = p .+ lc
-    fi = NamedTuple([k => p .+ v for (k, v) = pairs(fl)])
-    c = round.(c / dx) .+ 1 + lc
-    PointCloudMonitorInstance(i, fi, F.(n), w, c, inbounds, label)
+    i = p .+ common_left_pad_amount
+    roi = NamedTuple([k => p .+ v for (k, v) = pairs(fl)])
+    c = round.(c / dx) .+ 1 + common_left_pad_amount
+    PointCloudMonitorInstance(i, roi, F.(n), w, c, inbounds, label)
 end
 
 """
@@ -188,15 +187,13 @@ function field(u, k, m=nothing)
     elseif k == "|H|"
         sqrt.(field(u, "|H|2", m))
     else
-        global q = u
-        global w = k
         a = recursive_getindex(u, k)
         if isnothing(m)
             return a
         elseif isa(m, OrthogonalMonitorInstance)
-            return a[m.fi[k]...]
+            return sum([w * a[i...] for (w, i) = m.roi[k]])
         elseif isa(m, PointCloudMonitorInstance)
-            return [a[v...] for v = eachcol(m.fi[k])]
+            return [a[v...] for v = eachcol(m.roi[k])]
         end
     end
 end
@@ -210,16 +207,16 @@ Base.getindex(a, k, m::MonitorInstance) = field(a, k, m)
 """
 function flux(u, m::OrthogonalMonitorInstance)
     d = ndims(m)
-    E = [u[:E][k][m.fi[k]...] for k = keys(u[:E])]
-    H = [u[:H][k][m.fi[k]...] for k = keys(u[:H])]
+    E = [u[k, m] for k = keys(u[:E])]
+    H = [u[k, m] for k = keys(u[:H])]
 
     # (E × H) ⋅ normal(m)
     sum((E × H) .* normal(m))
 end
 function flux(u, m::PointCloudMonitorInstance)
     @unpack n = m
-    E = [[field(u, k)[v...] for v = eachcol(m.fi[k])] for k = keys(u[:E])]
-    H = [[field(u, k)[v...] for v = eachcol(m.fi[k])] for k = keys(u[:H])]
+    E = [[field(u, k)[v...] for v = eachcol(m.roi[k])] for k = keys(u[:E])]
+    H = [[field(u, k)[v...] for v = eachcol(m.roi[k])] for k = keys(u[:H])]
 
     dot.(stack(E × H) |> eachrow, eachcol(n))
 end
