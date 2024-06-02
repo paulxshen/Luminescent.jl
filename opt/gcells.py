@@ -89,7 +89,7 @@ from layers import *
 #     mode = modes[0]
 #     mode = {k: [np.real(mode[k]).tolist(), np.imag(mode[k]).tolist()]
 #             for k in mode}
-#     prob["signals"] = [
+#     prob["sources"] = [
 #         {
 #             "wavelength": λ,
 #             "mode": mode,
@@ -170,15 +170,11 @@ def ubend_template(r, l, wwg, lwg=0,
 
     # design = device << design
     device.add_ref(design, name="design")
-    p0, p2 = device.bbox
-    p = [p0, [p0[0], p2[1]], p2, [p2[0], p0[1]]]
-    device.add_polygon(p, layer=layer_map.WGCLAD)
-    device.add_polygon(p, layer=layer_map.BOX)
     # device << gf.components.re
     # device << test
     device.show()
     # init.show()
-    signals = {
+    sources = {
         "o1": {
             "port": "o1",
             "wavelengths": [λ],
@@ -189,12 +185,12 @@ def ubend_template(r, l, wwg, lwg=0,
             "center": (device.ports["o1"].center),
             "orientation": device.ports["o1"].orientation,
         }}
-    for k in signals:
-        a = signals[k]["orientation"]/180*pi
+    for k in sources:
+        a = sources[k]["orientation"]/180*pi
         normal = [cos(a), sin(a)]
-        signals[k]["normal"] = normal
-        signals[k]["center"] -= .001*np.array(normal)
-        signals[k]["center"] = signals[k]["center"].flatten().tolist()
+        sources[k]["normal"] = normal
+        sources[k]["center"] -= .001*np.array(normal)
+        sources[k]["center"] = sources[k]["center"].flatten().tolist()
 
     targets = {
         "o2":        {
@@ -204,6 +200,6 @@ def ubend_template(r, l, wwg, lwg=0,
             "port": "o2"},
         # {"power": 1,"wavelength": λ,"port": "o1"},
     }
-    # device.metadata["signals"] = signals
+    # device.metadata["sources"] = sources
     # device.metadata["targets"] = targets
-    return device, signals, targets, design
+    return device, sources, targets, design

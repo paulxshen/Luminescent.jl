@@ -6,11 +6,24 @@ function normalize_mode(m, dx)
 end
 
 function mode_decomp(m, u,)
-    Ex = m.Ex ⋅ field(u, :Ex) / norm(m.Ex)^2
-    Hy = m.Hy ⋅ field(u, :Hy) / norm(m.Hy)^2
-    ap = Hy + Ex
-    am = Hy - Ex
-    [ap, am]
+    polarization = get_polarization(u)
+    if polarization == :TM
+        ap_TE = am_TE = 0
+    else
+        Ex = m.Ex ⋅ field(u, :Ex) / norm(m.Ex)^2
+        Hy = m.Hy ⋅ field(u, :Hy) / norm(m.Hy)^2
+        ap_TE = Hy + Ex
+        am_TE = Hy - Ex
+    end
+    if polarization == :TE
+        ap_TM = am_TM = 0
+    else
+        Hx = m.Hx ⋅ field(u, :Hx) / norm(m.Hx)^2
+        Ey = m.Ey ⋅ field(u, :Ey) / norm(m.Ey)^2
+        am_TM = Ey + Hx
+        ap_TM = Ey - Hx
+    end
+    [ap_TE + ap_TM, am_TE + am_TM]
 end
 
 

@@ -20,7 +20,7 @@ img = rasterio.features.rasterize(
     [Polygon(((-1, -1), (-1, 1), (1, 1), (1, -1)))], transform=(dx, 0, 0, 0, dx, 0, 0, 0, dx), out_shape=(50, 50))
 plt.imshow(img)
 
-c = gf.components.coupler_ring()
+c = gf.components.coupler_ring().po
 raise ValueError("stop here")
 scene = c.to_3d(layer_stack=LAYER_STACK)
 # scene.show()

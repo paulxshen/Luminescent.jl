@@ -21,7 +21,7 @@ name = "inverse_design_wavelength_demultiplexer"
 nbasis = 6 # complexity of design region
 
 # loads design layout
-@load "$(@__DIR__)/layout.bson" mask signals ports designs
+@load "$(@__DIR__)/layout.bson" mask sources ports designs
 @load "$(@__DIR__)/modes.bson" λ1 λ2 modes1 modes2 lb ub dx hbase wwg hwg hclad ϵbase ϵclad ϵcore
 λ = λ1 # wavelength [um]
 f2 = λ1 / λ2
@@ -54,7 +54,7 @@ monitors = [Monitor(
 
 # modal source
 sources = []
-c = signals[1].c / λ
+c = sources[1].c / λ
 c = [c..., hbase]
 lb = [0, lb...]
 ub = [0, ub...]

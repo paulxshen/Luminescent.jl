@@ -59,13 +59,13 @@ model2d = deepcopy(model)
 monitors = [Monitor([p.c / λ..., hbase / λ], [p.lb / λ..., -δ / λ], [p.ub / λ..., hwg / λ + δ / λ]; normal=[p.n..., 0]) for p = ports]
 
 # modal source
-@unpack Ex, Ey, Ez, = signals[1].modes[1]
+@unpack Ex, Ey, Ez, = sources[1].modes[1]
 Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
     reshape(a, 1, size(a)...)
 end
-c = [signals[1].c / λ..., hbase / λ]
-lb = [0, signals[1].lb...] / λ
-ub = [0, signals[1].ub...] / λ
+c = [sources[1].c / λ..., hbase / λ]
+lb = [0, sources[1].lb...] / λ
+ub = [0, sources[1].ub...] / λ
 sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 # sources = [Source(t -> cispi(2t), c, lb, ub; Jx=1)]
 
@@ -128,10 +128,10 @@ ongpu = false
 model_name = nothing # if load saved model
 
 #=
-We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.
+We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 =#
 
-@load "$(@__DIR__)/prob.bson" signals ports opt λ dx ϵbase ϵclad ϵcore hbase hwg hclad
+@load "$(@__DIR__)/prob.bson" sources ports opt λ dx ϵbase ϵclad ϵcore hbase hwg hclad
 dx, = [dx,] / λ
 
 #=
@@ -158,7 +158,7 @@ We set key time intervals. The signal must first propagate to port 2 after which
 
 Δ = zeros(2)
 # Δ[1] = 1
-Δ[1] = 2 + 1.6norm(signals[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
+Δ[1] = 2 + 1.6norm(sources[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
 Δ[2] = 2 # duration to record power at output ports
 T = cumsum(Δ)
 
@@ -174,11 +174,11 @@ monitors = [
 ]
 
 # modal source
-@unpack Ex, Ey, Hz = signals[1].modes[1]
+@unpack Ex, Ey, Hz = sources[1].modes[1]
 Jx, Jy, Mz = Ex, Ey, Hz
-c = signals[1].c / λ
-lb_ = [0, signals[1].lb[1]] / λ
-ub_ = [0, signals[1].ub[1]] / λ
+c = sources[1].c / λ
+lb_ = [0, sources[1].lb[1]] / λ
+ub_ = [0, sources[1].ub[1]] / λ
 sources = [Source(t -> cispi(2t), c, lb_, ub_; Jx, Jy,)]
 
 ϵmin = ϵclad
@@ -373,13 +373,13 @@ model2d = deepcopy(model)
 monitors = [Monitor([p.c / λ..., hbase / λ], [p.lb / λ..., -δ / λ], [p.ub / λ..., hwg / λ + δ / λ]; normal=[p.n..., 0]) for p = ports]
 
 # modal source
-@unpack Ex, Ey, Ez, = signals[1].modes[1]
+@unpack Ex, Ey, Ez, = sources[1].modes[1]
 Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
     reshape(a, 1, size(a)...)
 end
-c = [signals[1].c / λ..., hbase / λ]
-lb = [0, signals[1].lb...] / λ
-ub = [0, signals[1].ub...] / λ
+c = [sources[1].c / λ..., hbase / λ]
+lb = [0, sources[1].lb...] / λ
+ub = [0, sources[1].ub...] / λ
 sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 # sources = [Source(t -> cispi(2t), c, lb, ub; Jx=1)]
 

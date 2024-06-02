@@ -19,6 +19,14 @@ include("$(pwd())/src/main.jl") # hide
 include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 # using Porcupine: keys, values
 
+if isempty(ARGS)
+    DIR = pwd()
+    PROB_PATH = "$(DIR)/_prob.bson"
+else
+    PROB_PATH = ARGS[1]
+    DIR = dirname(PROB_PATH)
+
+end
 #=
 We skip 3d finetuning as it's 20x more compute and memory intensive than 2d adjoints. If wishing to do 3d finetuning, set `iterations3d`. In any case, 3d forward simulations (without adjoint) only take a few seconds.
 =#
@@ -33,19 +41,17 @@ tol = 1e-3
 dosave = false
 
 #=
-We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.
+We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 =#
-# dir = @__DIR__
-dir = pwd()
-@load "$(dir)/_prob.bson" name signals ports designs λc dx masks path_length targets margins lmin wavelengths modes
+@load PROB_PATH name runs ports designs λc dx components lmin wavelengths mode_solutions
 #  ϵbase ϵclad ϵcore hbase hwg hclad
-signals, ports, targets = (signals, ports, targets) .|> SortedDict
+ports, = (ports,) .|> SortedDict
 polarization = :TE
 
 # error()
 for s = [:device, :guess]
     # for name = ["device", "guess"]
-    r = Rsvg.handle_new_from_data(masks[s][:svg])
+    r = Rsvg.handle_new_from_data(components[s][:svg])
     # r = Rsvg.handle_new_from_file("$(@__DIR__)/$name.svg")
     d = Rsvg.handle_get_dimensions(r)
     cs = Cairo.CairoImageSurface(1 * (d.width), 1 * (d.height), Cairo.FORMAT_ARGB32)
@@ -54,12 +60,14 @@ for s = [:device, :guess]
     Cairo.write_to_png(cs, "$(@__DIR__)/$s.png")
 end
 
-masks = Dict([k => imresize(F.(convert.(Gray, FileIO.load("$(@__DIR__)/$k.png") |> transpose),), round.(Int, (masks[k].bbox[2] - masks[k].bbox[1]) / dx) |> Tuple) .> tol for k in [:device, :guess]])
+masks = Dict([k => imresize(F.(convert.(Gray, FileIO.load("$(@__DIR__)/$k.png") |> transpose),), round.(Int, (components[k].bbox[2] - components[k].bbox[1]) / dx) |> Tuple) .> tol for k in [:device, :guess]])
 @unpack device, guess = masks
 # heatmap(masks.device) |> display
-lm, rm = round.(margins / dx)
-device = pad(device, 0, lm, rm)
-origin = masks.device.bbox[1] - lm * dx
+# lm, rm = round.(margins / dx)
+# device = pad(device, 0, lm, rm)
+n = round(source_monitor_margin / dx)
+device = pad(device, :replicate, n)
+origin = components.device.bbox[1] - n * dx
 #=
 We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
 =#
@@ -76,92 +84,100 @@ model = Blob(szd;
 model0 = deepcopy(model)
 heatmap(model())
 
-#=
-We set key time intervals. The signal must first propagate to port 2 after which all port power fluxes will get monitored
-=#
 
-Δ = zeros(2)
-# Δ[1] = 1
-Δ[1] = 2 + path_length / λc * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
-Δ[2] = 2 # duration to record power at output ports
-T = cumsum(Δ)
 
 #=
 We set boundary conditions, sources , and monitor. The modal source profile is obtained from external mode solver , in our case VectorModesolver.jl . Please refer to guide section of docs website for details . To get an approximate  line source for use in 2d from the cross section profile , we sum and collapse it along its height axis
 =#
 
 boundaries = [] # unspecified boundaries default to PML
-sig = (signals |> values |> first)
-wm = sig.size[1]
-monitors = [
-    # (center, lower bound, upper bound; normal)
-    begin
-        c = (p.center - origin) / λc
-        n = p.normal
-        if k in keys(signals)
-            c -= margin_offset * n
-            c -= source_monitor_offset * n
-            n *= -1
-        else
-            c -= source_monitor_offset * n
-        end
-        L = (p.endpoints[2] - p.endpoints[1])
-        L = L / norm(L) * wm / λc
-        Monitor(c, L, n)
-    end
-    for (k, p) = ports |> pairs
-]
+sig = (sources |> values |> first)
+wm = sig.width
+
 # monitors = [monitors[1]]
 
-device, guess, T, Δ, ϵbase, ϵcore, ϵclad, dx, λc =
-    F.((device, guess, T, Δ, ϵbase, ϵcore, ϵclad, dx, λc))
+# device, guess,  Δ, ϵbase, ϵcore, ϵclad, dx, λc =
+#     F.((device, guess,  Δ, ϵbase, ϵcore, ϵclad, dx, λc))
+device, guess, dx, λc =
+    F.((device, guess, dx, λc))
 
 # modal source
-sources = []
-_modes = []
-for (port, sig) = signals |> pairs
-    @unpack center, endpoints, wavelengths, mode_numbers = sig
-    for (λ, mn) in zip(wavelengths, mode_numbers)
-        v = (
-            findfirst(mode_info) do v
-                isapprox(λ, v.wavelength) && port ⊂ v.ports
+runs_sources = [
+    begin
+        d = run.d
+        sources = []
+        _modes = []
+        for (port, sig) = run.sources |> pairs
+            @unpack center, endpoints, wavelengths, mode_numbers = sig
+            for (λ, mn) in zip(wavelengths, mode_numbers)
+                i = findfirst(mode_solutions) do v
+                    isapprox(λ, v.wavelength) && String(port) in String.(v.ports)
+                end
+                v = mode_solutions[i]
+                mode = v.modes[mn+1]
+                sz = v.size
+                eps = v.eps
+
+                n = sig.normal
+                c = (sig.center - origin) / λc + margin_offset * sig.normal
+                L = (sig.endpoints[2] - sig.endpoints[1]) / λc
+                mode = (; [k => transpose(complex.(stack.(v)...)) |> F for (k, v) in mode |> pairs]...)
+                ϵmode = eps |> stack |> transpose .|> F
+
+                # sz = round(sz / dx) |> Tuple
+                # # sz = size() - 1
+                # mode = (; Pair.(keys(mode), [resize(v, size(v) - 1) for v in values(mode)])...)
+                # ϵ = resize(ϵ, sz)
+                if d == 2
+                    mode, ϵmode = collapse_mode(mode, ϵmode)
+                    i = round(Int, size(ϵmode, 1) / 2)
+                    global ϵcore_ = ϵmode[i]
+                    ϵmode = maximum(ϵmode, dims=2) |> vec
+                    ϵmode = min.(ϵmode, ϵcore_)
+                end
+                mode = normalize_mode(mode, dx / λc)
+                mode0 = deepcopy(mode)
+
+                @unpack mode = calibrate_mode(mode, ϵmode, dx / λc; name="1", comprehensive=true)
+                # error()
+                mode = normalize_mode(mode, dx / λc)
+                @unpack mode, forward_mode_powers, = calibrate_mode(mode, ϵmode, dx / λc; name="2", comprehensive=true, verbose=true)
+                mp0 = forward_mode_powers[1][1][1]
+                mode /= sqrt(mp0)
+                @show mp0
+                # @unpack Ex, Ez = mode
+
+                # error()
+                # sources = [ModalSource(t -> cispi(2t), c, L, n; Jx=mode.Ex, Jz=mode.Ez)]
+                push!(sources, ModalSource(t -> cispi(2t * λc / λ), mode, c, L, n))
+                push!(sig.calibrated_modes, mode)
             end
-        )
-        mode = v.mode[mn+1]
-        sz = v.size
-        eps = v.eps
+            sig[:calibrated_modes] = []
+        end
+    end for run in runs
+]
 
-        n = sig.normal
-        c = (sig.center - origin) / λc + margin_offset * sig.normal
-        L = (sig.endpoints[2] - sig.endpoints[1]) / λc
-        mode = (; [k => transpose(complex.(stack.(v)...)) |> F for (k, v) in mode |> pairs]...)
-        ϵ = eps |> stack |> transpose .|> F
+runs_monitors = [[
+    # (center, lower bound, upper bound; normal)
+    begin
+        c = (m.center - origin) / λc
+        n = m.normal
+        L = (m.endpoints[2] - m.endpoints[1])
+        L = L / norm(L) * wm / λc
 
-        sz = round(sig.size / dx) |> Tuple
-        mode = (; Pair.(keys(mode), [resize(v, size(v) - 1) for v in values(mode)])...)
-        ϵ = resize(ϵ, sz)
-
-        mode, ϵmode = collapse_mode(mode, ϵ)
-        mode = normalize_mode(mode, dx / λc)
-        i = round(Int, size(ϵmode, 1) / 2)
-        global ϵcore_ = ϵmode[i]
-        ϵslice = maximum(ϵ, dims=2) |> vec
-        ϵslice = min.(ϵslice, ϵcore_)
-        mode0 = deepcopy(mode)
-
-        mode, a, b = calibrate_mode(mode, ϵslice, dx / λc; name="1")
-        # error()
-        mode = normalize_mode(mode, dx / λc)
-        mode_, mp0, = calibrate_mode(mode, ϵslice, dx / λc; name="2")
-        mode /= sqrt(mp0)
-        @show mp0
-        # @unpack Ex, Ez = mode
-
-        # error()
-        # sources = [ModalSource(t -> cispi(2t), c, L, n; Jx=mode.Ex, Jz=mode.Ez)]
-        push!(sources, ModalSource(t -> cispi(2t * λc / λ), mode, c, L, n))
+        modes = [
+            begin
+                i = findfirst(mode_solutions) do v
+                    isapprox(λ, v.wavelength) && String(port) in String.(v.ports)
+                end
+                mode = mode_solutions[i].calibrated_modes[m.mode_number+1]
+            end
+            for λ in m.wavelengths
+        ]
+        ModalMonitor(m.wavelengths, modes, c, L, n)
     end
-end
+    for (port, m) = run.monitors |> pairs
+] for run in runs]
 
 ϵmin = ϵclad
 sz = size(device)

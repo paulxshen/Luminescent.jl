@@ -25,7 +25,7 @@ ports = [
     (; c=[l - δ, w - wm - 1.5wwg], n),
     (; c=[l - δ, wm + 1.5wwg], n),
 ]
-signals = [
+sources = [
     (; c=[0, w / 2])
 ]
 designs = [
@@ -43,4 +43,4 @@ mask[1:lwg.+1, (w-wwg)÷2+1:(w+wwg)÷2+1] .= 1
 mask[end-lwg:end, wm+wwg+1:wm+wwg+wwg.+1] .= 1
 mask[end-lwg:end, end-wm-wwg-wwg:end-wm-wwg] .= 1
 
-@save "$(@__DIR__)/layout.bson" mask signals ports designs dx nx
+@save "$(@__DIR__)/layout.bson" mask sources ports designs dx nx

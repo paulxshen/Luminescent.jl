@@ -8,7 +8,7 @@ import pcells
 import gdsfactory as gf
 # import picToGDS as pg
 import utils
-from gdsfactory.generic_tech import LAYER, LAYER_STACK, LayerMap
+from gdsfactory.generic_tech import LAYER_STACK, LayerMap
 from gdsfactory.technology import (
     LayerLevel,
     LayerStack,
@@ -33,29 +33,30 @@ class MyLayerMap(LayerMap):
     PORT: Layer = (1, 10)
 
 
-LAYER = MyLayerMap()
+LAYER_MAP = MyLayerMap()
 
 box_thickness = 0.5
 thickness_clad = 0.5
 LAYER_STACK.layers.update(dict(
     box=LayerLevel(
-        layer=LAYER.BOX,
+        layer=LAYER_MAP.BOX,
         thickness=box_thickness,
         zmin=-box_thickness,
         material="sio2",
         mesh_order=9,
     ),
     clad=LayerLevel(
-        layer=LAYER.WGCLAD,
+        layer=LAYER_MAP.WGCLAD,
         zmin=0.0,
         material="sio2",
         thickness=thickness_clad,
         mesh_order=10,
     ),))
-c, signals, targets, design = ubend_template(
-    r,  l, wwg, dx=dx, wavelength=1.55, layer_map=LAYER)
+c, sources, targets, design = ubend_template(
+    r,  l, wwg, dx=dx, wavelength=1.55, layer_map=LAYER_MAP)
+c = add_bbox(c, layers=[LAYER_MAP.BOX, LAYER_MAP.WGCLAD], margin=.2)
 prob = inverse_design_problem(
-    c, lmin=lmin, dx=dx, signals=signals, targets=targets, design=design, layer_stack=LAYER_STACK)
+    c, lmin=lmin, dx=dx, sources=sources, targets=targets, design=design, layer_stack=LAYER_STACK)
 solve(prob)
 raise Exception("Not implemented")
 utils.pic2gds("opt/ubend.png", dx)

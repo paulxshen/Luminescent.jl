@@ -30,6 +30,28 @@ material_eps = {
 }
 
 
+def add_bbox(c, layers, margin=0):
+    bbox = c.bbox
+    xmin0, ymin0 = bbox[0]
+    xmax0, ymax0 = bbox[1]
+    xmin, ymin, xmax, ymax = xmin0-margin, ymin0-margin, xmax0+margin, ymax0+margin
+    for k in c.ports:
+        p = c.ports[k]
+        x, y = p.center
+        if x == xmin0:
+            xmin = x
+        if x == xmax0:
+            xmax = x
+        if y == ymin0:
+            ymin = y
+        if y == ymax0:
+            ymax = y
+    p = [(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)]
+    for layer in layers:
+        c.add_polygon(p, layer=layer)
+    return c
+
+
 def solve_modes(eps, λ, dx):
     tol = 1e-4
     m, n = eps.shape
@@ -37,7 +59,7 @@ def solve_modes(eps, λ, dx):
     y = numpy.linspace(0, (n-1)*dx, n)
 
     def ϵfunc(x_, y_):
-        return cv2.resize(eps, dsize=(len(x_), len(y_)), interpolation=cv2.INTER_CUBIC).T
+        return cv2.resize(eps, dsize=(len(y_), len(x_)), interpolation=cv2.INTER_CUBIC)
 
     neigs = 1
     boundary = "0000"
@@ -62,6 +84,7 @@ def solve_modes(eps, λ, dx):
     e = numpy.transpose(ϵfunc(x, y))
     pylab.imshow(e)
     pylab.title("eps")
+    pylab.show()
 
     modes = [{k: m.get_field(k, x, y) for k in [
         "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in solver.modes]
@@ -220,7 +243,7 @@ def raster_slice(scene, dx, center, w, h, normal):
     # plt.show()
 
     img = rasterio.features.rasterize(
-        [p], transform=(dx, 0, 0, 0, dx, 0, 0, 0, dx), out_shape=(round(h/dx)+1, round(w/dx)+1,))
+        [p], transform=(dx, 0, 0, 0, dx, 0, 0, 0, dx), out_shape=(round(h/dx), round(w/dx),)).T
     plt.imshow(img)
     # plt.show()
 

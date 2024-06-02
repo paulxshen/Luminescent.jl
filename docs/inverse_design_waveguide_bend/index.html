@@ -18,8 +18,8 @@ record2d = true
 record3d = false
 F = Float32
 ongpu = false
-model_name = nothing # if load saved model</code></pre><p>We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.</p><pre><code class="language-julia hljs">
-@load &quot;$(@__DIR__)/layout.bson&quot; static_mask signals ports designs λ dx ϵbase ϵclad ϵcore hbase hwg hclad
+model_name = nothing # if load saved model</code></pre><p>We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.</p><pre><code class="language-julia hljs">
+@load &quot;$(@__DIR__)/layout.bson&quot; static_mask sources ports designs λ dx ϵbase ϵclad ϵcore hbase hwg hclad
 dx, = [dx,] / λ</code></pre><p>We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.</p><pre><code class="language-julia hljs">
 szd = Tuple(round.(Int, designs[1].L / λ / dx) .+ 1) # design region size
 if isnothing(model_name)
@@ -37,7 +37,7 @@ model0 = deepcopy(model)
 heatmap(model())</code></pre><p>We set key time intervals. The signal must first propagate to port 2 after which all port power fluxes will get monitored</p><pre><code class="language-julia hljs">
 Δ = zeros(2)
 # Δ[1] = 1
-Δ[1] = 2 + 1.6norm(signals[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
+Δ[1] = 2 + 1.6norm(sources[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
 Δ[2] = 2 # duration to record power at output ports
 T = cumsum(Δ)</code></pre><p>We set boundary conditions, sources , and monitor. The modal source profile is obtained from external mode solver , in our case VectorModesolver.jl . Please refer to guide section of docs website for details . To get an approximate  line source for use in 2d from the cross section profile , we sum and collapse it along its height axis</p><pre><code class="language-julia hljs">
 boundaries = [] # unspecified boundaries default to PML
@@ -48,14 +48,14 @@ monitors = [
 ]
 
 # modal source
-@unpack Ex, Ey, Ez, Hx, Hy, Hz = signals[1].modes[1]
+@unpack Ex, Ey, Ez, Hx, Hy, Hz = sources[1].modes[1]
 Jy, Jx, Mz = map([Ex, Ez, Hy]) do a
     transpose(sum(a, dims=2))
 end
 Jy, Jx = [Jy, Jx] / maximum(maximum.(abs, [Jy, Jx]))
-c = signals[1].c / λ
-lb_ = [0, signals[1].lb[1]] / λ
-ub_ = [0, signals[1].ub[1]] / λ
+c = sources[1].c / λ
+lb_ = [0, sources[1].lb[1]] / λ
+ub_ = [0, sources[1].ub[1]] / λ
 sources = [Source(t -&gt; cispi(2t), c, lb_, ub_; Jx, Jy,)]
 
 ϵmin = ϵclad
@@ -195,13 +195,13 @@ model2d = deepcopy(model)
 monitors = [Monitor([p.c / λ..., hbase / λ], [p.lb / λ..., -δ / λ], [p.ub / λ..., hwg / λ + δ / λ]; normal=[p.n..., 0]) for p = ports]
 
 # modal source
-@unpack Ex, Ey, Ez, = signals[1].modes[1]
+@unpack Ex, Ey, Ez, = sources[1].modes[1]
 Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
     reshape(a, 1, size(a)...)
 end
-c = [signals[1].c / λ..., hbase / λ]
-lb = [0, signals[1].lb...] / λ
-ub = [0, signals[1].ub...] / λ
+c = [sources[1].c / λ..., hbase / λ]
+lb = [0, sources[1].lb...] / λ
+ub = [0, sources[1].ub...] / λ
 sources = [Source(t -&gt; cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 # sources = [Source(t -&gt; cispi(2t), c, lb, ub; Jx=1)]
 

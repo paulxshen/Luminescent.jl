@@ -17,6 +17,7 @@ from gdsfactory.cross_section import Section
 from gdsfactory.generic_tech import LAYER_STACK, get_generic_pdk, LAYER
 import gdsfactory as gf
 import bson
+import scipy as sp
 import utils
 from utils import *
 from layers import *
@@ -27,7 +28,7 @@ LAYER_VIEWS = pdk.layer_views
 # include_layers=[layer_map.WG, layer_map.WAFER], ** kwargs):
 
 
-def setup(c, study, name, dx, wavelengths=[], signals=[], layer_stack=LAYER_STACK, exclude_layers=[DESIGN, GUESS], ):
+def setup(c, study, name, dx, wavelengths=[], sources=[], layer_stack=LAYER_STACK, exclude_layers=[DESIGN, GUESS], ):
     prob = dict()
     prob["name"] = name
     ports = {
@@ -48,12 +49,47 @@ def setup(c, study, name, dx, wavelengths=[], signals=[], layer_stack=LAYER_STAC
         1
     else:
         1
-        # prob["signals"] = c.metadata["signals"]
+        # prob["sources"] = c.metadata["sources"]
         # prob["targets"] = c.metadata["targets"]
+    layers = set(c.layers)-set(exclude_layers)
+    layers = sorted(layers, key=lambda layer: next(
+        x for x in layer_stack.layers.values() if x.layer == layer).mesh_order)
+
+    layer_views = LAYER_VIEWS.copy()
+    layer_views.layer_views["WGCLAD"].visible = True
+    epsmin = 1
+    a = None
+    for layer in layers:
+        layer_views.layer_views[f"{layer}"] = LAYER_VIEWS.layer_views["WGCLAD"]
+        layer_views.layer_views[f"{layer}"].layer = layer
+
+        # for layer in [layer_map.WAFER]:
+        print(layer)
+        eps = material_eps[next(
+            x for x in layer_stack.layers.values() if x.layer == layer).material]
+        scene = c.to_3d(
+            layer_stack=layer_stack,
+            layer_views=layer_views,
+            exclude_layers=list(set(c.layers)-set([layer])))
+        g = sum(scene.geometry.values()).voxelized(dx=dx)
+        if eps < epsmin:
+            epsmin = eps
+        _a = eps * mask
+        if mask is not None:
+            if a is None:
+                a = _a.copy()
+            else:
+                # a += _a*np.where(a == 0, 1, 0)
+                a += _a*np.where(a == 0, 1, 0)
+    eps = a+np.where(a == 0, 1, 0)*epsmin
+    # plt.clf()
+    # plt.imshow(eps)
+    # plt.show()
+    prob["eps"] = eps.tolist()
 
     hcore = layer_stack.layers["core"].thickness
     zcenter = layer_stack.layers["core"].zmin+hcore/2
-    for s in signals.values():
+    for s in sources.values():
         for wl in s["wavelengths"]:
             duplicate = False
             wwg = s["width"]
@@ -67,9 +103,6 @@ def setup(c, study, name, dx, wavelengths=[], signals=[], layer_stack=LAYER_STAC
                 w = wwg+2*wm
                 h = hcore+2*hm
                 a = []
-                layers = set(c.layers)-set(exclude_layers)
-                layers = sorted(layers, key=lambda layer: next(
-                    x for x in layer_stack.layers.values() if x.layer == layer).mesh_order)
                 a = None
                 epsmin = 100
 
@@ -108,7 +141,7 @@ def setup(c, study, name, dx, wavelengths=[], signals=[], layer_stack=LAYER_STAC
                 mode_solutions.append({
                     "modes": modes,
                     "wavelength": wl,
-                    "port": s["port"],
+                    "ports": [s["port"]],
                     "size": [w, h],
                     "eps": eps.tolist(),
                 })
@@ -116,7 +149,7 @@ def setup(c, study, name, dx, wavelengths=[], signals=[], layer_stack=LAYER_STAC
 
     device_svg = utils.write_img("device", c,
                                  hidden_layer=(DESIGN, GUESS))
-    prob["masks"] = {
+    prob["components"] = {
         "device": {
             "svg": device_svg,
             "bbox": c.bbox.tolist(),
@@ -133,19 +166,19 @@ def setup(c, study, name, dx, wavelengths=[], signals=[], layer_stack=LAYER_STAC
     return prob
 
 
-def inverse_design_problem(c,  lmin, dx, signals, targets, design, name="", layer_stack=LAYER_STACK, **kwargs):
-    # wavelengths = c.metadata["signals"]["o1"]["wavelengths"]
-    wavelengths = signals["o1"]["wavelengths"]
+def inverse_design_problem(c,  lmin, dx, sources, targets, design, name="", layer_stack=LAYER_STACK, **kwargs):
+    # wavelengths = c.metadata["sources"]["o1"]["wavelengths"]
+    wavelengths = sources["o1"]["wavelengths"]
     prob = setup(c, name=name, study="inverse_design",
-                 dx=dx, wavelengths=wavelengths, signals=signals, layer_stack=layer_stack)
+                 dx=dx, wavelengths=wavelengths, sources=sources, layer_stack=layer_stack)
     prob["lmin"] = lmin
 
     prob["targets"] = targets
-    prob["signals"] = signals
+    prob["sources"] = sources
     designs = [
         {
             # "bbox": c.named_references["design"].bbox(),
-            "bbox": design.bbox.flatten().tolist(),
+            "bbox": design.bbox.tolist(),
             "symmetry_dims": [2],
         }
     ]
@@ -154,7 +187,7 @@ def inverse_design_problem(c,  lmin, dx, signals, targets, design, name="", laye
     # design = c.child["design"]
     init_svg = utils.write_img(
         "guess", design, hidden_layer=(DESIGN, ))
-    prob["masks"]["guess"] = {
+    prob["components"]["guess"] = {
         "svg": init_svg,
         "bbox": design.bbox.tolist(),
     }
@@ -162,6 +195,49 @@ def inverse_design_problem(c,  lmin, dx, signals, targets, design, name="", laye
     # Encode the document to BSON
 
     return prob
+
+
+def port_number(port):
+    return int(str(port).split("@")[0])
+
+
+def mode_number(port):
+    l = str(port).split("@")
+    return 0 if len(l) == 1 else int(l[1])
+
+
+def write_sparams(c, wavelengths, sparams=None,):
+
+    ports = [int(p[1])
+             for p in sorted(filter(lambda x: x[0] == "o", c.ports.keys()))]
+    if sparams is None:
+        io = {i: ports for i in ports}
+    else:
+        io = dict()
+        for (o, i) in sparams:
+            if i not in io:
+                io[i] = []
+            io[i].append(o)
+    runs = [{
+        "sources": {
+            port_number(i): {
+                "center": c.ports[f"o{i}"].center.tolist(),
+                "width": c.ports[f"o{i}"].width,
+                "normal": c.ports[f"o{i}"].normal.tolist(),
+                "endpoints": c.ports[f"o{i}"].endpoints.tolist(),
+                "wavelengths": wavelengths,
+                "mode_numbers": len(wavelengths)*[mode_number(i)],
+            }},
+        "monitors": {
+            port_number(o): {
+                "center": c.ports[f"o{o}"].center.tolist(),
+                "width": c.ports[f"o{o}"].width,
+                "normal": c.ports[f"o{o}"].normal.tolist(),
+                "endpoints": c.ports[f"o{o}"].endpoints.tolist(),
+                "wavelengths": wavelengths,
+                "mode_numbers": len(wavelengths)*[mode_number(o)],
+            } for o in io[i]},
+    } for i in io]
 
 
 def solve(prob,):
@@ -172,6 +248,6 @@ def solve(prob,):
         # Write the BSON data to the file
         f.write(bson_data)
 
-    # @save "$(@__DIR__)/layout.bson" device_mask signals ports designs dx λ ϵbase ϵclad ϵcore hbase hwg hclad modes l w
+    # @save "$(@__DIR__)/layout.bson" device_mask sources ports designs dx λ ϵbase ϵclad ϵcore hbase hwg hclad modes l w
 # if __module__
 # main(1, .5, .22)

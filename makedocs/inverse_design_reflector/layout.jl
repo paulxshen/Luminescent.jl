@@ -44,7 +44,7 @@ ports = [
     (; c=[lm, y], lb=[0, -wwg / 2 - wm], ub=[0, wwg / 2 + wm], n=[1, 0]),
     (; c=[lwg - 0.4, d + wm + 1.5wwg], lb=[0, -wwg / 2 - wm], ub=[0, wwg / 2 + wm], n=[-1, 0]),
 ]
-signals = [
+sources = [
     merge((; c=[0, y], n=[1, 0]), sig)
 ]
 designs = [
@@ -62,4 +62,4 @@ place!(static_mask, wg, [1, d_ + wm_ + wwg_ + 1],)
 # static_mask[1:lwg_.+1, (w_-wm_-wd_÷2)-wwg_÷2+1:(w_-wm_-wd_÷2)+wwg_÷2+1] .= 1
 # static_mask[(l_-lm_-ld_÷2)-wwg_÷2+1:(l_-lm_-ld_÷2)+wwg_÷2+1, 1:lwg_.+1,] .= 1
 heatmap(static_mask) |> display
-@save "$(@__DIR__)/layout.bson" static_mask signals ports designs dx λ ϵbase ϵclad ϵcore hbase hwg hclad modes l w
+@save "$(@__DIR__)/layout.bson" static_mask sources ports designs dx λ ϵbase ϵclad ϵcore hbase hwg hclad modes l w

@@ -14,7 +14,7 @@ include("$dir/../LuminescentVisualization.jl/src/main.jl")
 include("$dir/scripts/startup.jl")
 
 # loads design layout
-@load "$(@__DIR__)/layout.bson" mask signals ports designs
+@load "$(@__DIR__)/layout.bson" mask sources ports designs
 @load "$(@__DIR__)/modes.bson" modes lb ub λ dx hbase wwg hwg hclad ϵbase ϵclad ϵcore
 
 # training params"
@@ -61,7 +61,7 @@ Jy, Jx = map([Ex, Ez]) do a
     transpose(sum(a, dims=2))
 end
 Jy, Jx = [Jy, Jx] / maximum(maximum.(abs, [Jy, Jx]))
-c = signals[1].c / λ
+c = sources[1].c / λ
 lb_ = [0, lb[1]]
 ub_ = [0, ub[1]]
 sources = [Source(t -> cispi(2t), c, lb_, ub_; Jx, Jy,)]

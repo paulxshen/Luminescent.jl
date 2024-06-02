@@ -14,7 +14,7 @@ include("$dir/../LuminescentVisualization.jl/src/main.jl")
 include("$dir/scripts/startup.jl")
 
 # loads design layout
-@load "$(@__DIR__)/layout.bson" mask signals ports designs
+@load "$(@__DIR__)/layout.bson" mask sources ports designs
 @load "$(@__DIR__)/modes.bson" modes lb ub λ dx hbase wwg hwg hclad ϵbase ϵclad ϵcore
 
 # training params"
@@ -62,7 +62,7 @@ Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
     reshape(a, 1, size(a)...)
 end
 # GLMakie.volume(real(Jy))
-c = [signals[1].c / λ..., hbase]
+c = [sources[1].c / λ..., hbase]
 lb = [0, lb...]
 ub = [0, ub...]
 sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]

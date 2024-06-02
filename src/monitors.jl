@@ -5,6 +5,9 @@ struct OrthogonalMonitor <: AbstractMonitor
     ub
     n
     label
+
+    wavelengths
+    modes
 end
 
 struct PointCloudMonitor <: AbstractMonitor
@@ -34,7 +37,14 @@ Args
 - normal: flux monitor direction (eg normal to flux surface)
 """
 function Monitor(c, L, normal=nothing; label="")
-    OrthogonalMonitor(c, -L / 2, L / 2, normal, label)
+    OrthogonalMonitor(c, -L / 2, L / 2, normal, label, nothing, nothing)
+end
+function ModalMonitor(modes::AbstractVector, c, L, normal; wavelength=1, wavelengths=[wavelength], label="")
+    OrthogonalMonitor(c, -L / 2, L / 2, normal, label, wavelengths, modes)
+end
+function ModalMonitor(mode, a...; kw...)
+    # if 
+    ModalMonitor([mode], a...; kw...)
 end
 
 # function Monitor(c, lb, ub; normal=nothing, label="")
@@ -91,6 +101,9 @@ struct OrthogonalMonitorInstance <: MonitorInstance
     v
     center
     label
+
+    wavelengths
+    modes
 end
 # @functor OrthogonalMonitorInstance (n,)
 Base.ndims(m::OrthogonalMonitorInstance) = m.d
@@ -114,7 +127,7 @@ frame(m::OrthogonalMonitorInstance) = m.frame
 normal(m::OrthogonalMonitorInstance) = frame(m)[3][1:length(m.center)]
 
 function MonitorInstance(m::OrthogonalMonitor, dx, field_origin, common_left_pad_amount, sz, ; F=Float32)
-    @unpack n, lb, c = m
+    @unpack n, lb, c, wavelengths, modes = m
     L = m.ub - m.lb
     singletons = findall(L .≈ 0,)
     D = length(L)
@@ -142,7 +155,7 @@ function MonitorInstance(m::OrthogonalMonitor, dx, field_origin, common_left_pad
         frame = [0, 0, n]
     end
     _center = round(c / dx) + 1 + common_left_pad_amount
-    OrthogonalMonitorInstance(d, roi, frame, F(dx), F(v), _center, m.label)
+    OrthogonalMonitorInstance(d, roi, frame, F(dx), F(v), _center, m.label, wavelengths, modes)
 end
 
 function MonitorInstance(m::PointCloudMonitor, dx, sz, common_left_pad_amount, flb, fl; F=Float32)

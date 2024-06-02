@@ -1,3 +1,12 @@
+function get_polarization(u)
+    # u=flatten(u)
+    if length(u.E) == 2
+        return :TE
+    elseif length(u.H) == 2
+        return :TM
+    end
+    nothing
+end
 function add_current_keys(d)
     # d=OrderedDict
     d = dict(pairs(d))
