@@ -1,15 +1,17 @@
 abstract type AbstractMonitor end
-struct OrthogonalMonitor <: AbstractMonitor
+struct Monitor <: AbstractMonitor
     c
     lb
     ub
     n
+    tangent
     label
 
-    wavelengths
-    modes
+    wavelength_modes
+    meta
 end
 
+wavelengths(m::Monitor) = keys(m.wavelength_modes)
 struct PointCloudMonitor <: AbstractMonitor
     p
     n
@@ -36,20 +38,21 @@ Args
 
 - normal: flux monitor direction (eg normal to flux surface)
 """
-function Monitor(c, L, normal=nothing; label="")
-    OrthogonalMonitor(c, -L / 2, L / 2, normal, label, nothing, nothing)
-end
-function ModalMonitor(modes::AbstractVector, c, L, normal; wavelength=1, wavelengths=[wavelength], label="")
-    OrthogonalMonitor(c, -L / 2, L / 2, normal, label, wavelengths, modes)
-end
-function ModalMonitor(mode, a...; kw...)
-    # if 
-    ModalMonitor([mode], a...; kw...)
+function Monitor(c, L, normal=nothing; label="", kw...)
+    Monitor(c, -L / 2, L / 2, normal, label, nothing, kw)
 end
 
-# function Monitor(c, lb, ub; normal=nothing, label="")
-#     OrthogonalMonitor(c, lb, ub, normal, label)
+function ModalMonitor(wavelength_modes::Dictlike, c, normal, tangent, L; wavelength=1, wavelengths=[wavelength], label="", kw...)
+    if isa(first(values(wavelength_modes)), AbstractArray{<:Number})
+        wavelength_modes = dict([1 => [wavelength_modes]])
+    end
+    Monitor(c, -L / 2, L / 2, normal, tangent, label, wavelength_modes, kw)
+end
+# function ModalMonitor(mode, a...; kw...)
+#     # if 
+#     # ModalMonitor(, a...; kw...)
 # end
+
 
 Monitor(p::AbstractMatrix; normals=nothing, weights=nothing, label="") = PointCloudMonitor(p, normals, weights, mean(p, dims=2), nothing, nothing, label)
 
@@ -85,15 +88,15 @@ function SphereMonitor(c, r; dθ=2°, dϕ=2°, N=256, nθ=36, nϕ=18, label="")
     end
     PointCloudMonitor(p, n, w, c, s, sz, label)
 end
-Base.string(m::OrthogonalMonitor) =
+Base.string(m::Monitor) =
     """
     $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.c|>d2), physical size of $((m.ub-m.lb)|>d2) relative to center, flux normal towards $(normal(m)|>d2)"""
 Base.string(m::PointCloudMonitor) =
     """
     $(m.label): point cloud monitor, centered at $(m.c|>d2), $(size(m.p,2)) points"""
 
-abstract type MonitorInstance end
-struct OrthogonalMonitorInstance <: MonitorInstance
+abstract type AbstractMonitorInstance end
+struct MonitorInstance <: AbstractMonitorInstance
     d
     roi
     frame
@@ -102,15 +105,14 @@ struct OrthogonalMonitorInstance <: MonitorInstance
     center
     label
 
-    wavelengths
-    modes
+    wavelength_modes
 end
-# @functor OrthogonalMonitorInstance (n,)
-Base.ndims(m::OrthogonalMonitorInstance) = m.d
-Base.size(m::OrthogonalMonitorInstance) = length.(m.i)
-area(m::OrthogonalMonitorInstance) = m.v
+# @functor MonitorInstance (n,)
+Base.ndims(m::MonitorInstance) = m.d
+Base.size(m::MonitorInstance) = length.(m.i)
+area(m::MonitorInstance) = m.v
 
-struct PointCloudMonitorInstance <: MonitorInstance
+struct PointCloudMonitorInstance <: AbstractMonitorInstance
     i
     roi
     n
@@ -120,42 +122,45 @@ struct PointCloudMonitorInstance <: MonitorInstance
     label
 end
 inbounds(m::PointCloudMonitorInstance) = m.inbounds
-Base.length(m::OrthogonalMonitorInstance) = 1
+Base.length(m::MonitorInstance) = 1
 Base.length(m::PointCloudMonitorInstance) = 1
 
-frame(m::OrthogonalMonitorInstance) = m.frame
-normal(m::OrthogonalMonitorInstance) = frame(m)[3][1:length(m.center)]
+frame(m::MonitorInstance) = m.frame
+normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
-function MonitorInstance(m::OrthogonalMonitor, dx, field_origin, common_left_pad_amount, sz, ; F=Float32)
-    @unpack n, lb, c, wavelengths, modes = m
-    L = m.ub - m.lb
-    singletons = findall(L .≈ 0,)
-    D = length(L)
-    d = length(L) - length(singletons)
+function MonitorInstance(m::Monitor, dx, field_origin, common_left_pad_amount, sz, ; F=Float32)
+    @unpack n, lb, ub, c, tangent, wavelength_modes, = m
+    n, lb, ub, c, tangent = F.((n, lb, ub, c, tangent))
+    L = ub - lb
+    D = length(c)
+    d = length(lb)
+    A = isempty(L) ? 0 : prod(L,)
+    if D == 2
+        frame = [[-n[2], n[1], 0], [0, 0, 1], [n..., 0]]
 
-    L0 = copy(L)
-    deleteat!(L, singletons)
-    v = isempty(L) ? 0 : prod(L,)
-    L = L0
+    elseif D == 3
+        frame = [tangent, n × tangent, n]
+    end
+    lb = sum(lb .* frame[1:d])[1:D]
+    ub = sum(ub .* frame[1:d])[1:D]
+    v = zip(lb, ub)
+    lb = minimum.(v)
+    ub = maximum.(v)
+    L = ub - lb
 
     roi = dict([k => begin
-        p = (c + lb - o) / dx
+        p = (c + lb - o) / dx + 1.5
         i = floor(p)
         w = 1 - mean(abs.(p - i))
         w = (w, 1 - w)
         i = [i .+ map(round(L / dx)) do n
-            n == 0 ? 1 : Base.oneto(n)
+            n == 0 ? 0 : (0:sign(n):n-sign(n))
         end for i = (i, i + 1)]
         [(F(w), i) for (w, i) in zip(w, i) if w > 0]
     end for (k, o) = pairs(field_origin)])
     n = isnothing(n) ? n : F.(n |> normalize)
-    if D == 2
-        frame = [[-n[2], n[1], 0], [0, 0, 1], [n..., 0]]
-    elseif D == 3
-        frame = [0, 0, n]
-    end
     _center = round(c / dx) + 1 + common_left_pad_amount
-    OrthogonalMonitorInstance(d, roi, frame, F(dx), F(v), _center, m.label, wavelengths, modes)
+    MonitorInstance(d, roi, frame, F(dx), F(A), _center, m.label, wavelength_modes)
 end
 
 function MonitorInstance(m::PointCloudMonitor, dx, sz, common_left_pad_amount, flb, fl; F=Float32)
@@ -203,7 +208,7 @@ function field(u, k, m=nothing)
         a = recursive_getindex(u, k)
         if isnothing(m)
             return a
-        elseif isa(m, OrthogonalMonitorInstance)
+        elseif isa(m, MonitorInstance)
             return sum([w * a[i...] for (w, i) = m.roi[k]])
         elseif isa(m, PointCloudMonitorInstance)
             return [a[v...] for v = eachcol(m.roi[k])]
@@ -218,7 +223,7 @@ Base.getindex(a, k, m::MonitorInstance) = field(a, k, m)
 
  Poynting flux profile passing thru monitor 
 """
-function flux(u, m::OrthogonalMonitorInstance)
+function flux(u, m::MonitorInstance)
     d = ndims(m)
     E = [u[k, m] for k = keys(u[:E])]
     H = [u[k, m] for k = keys(u[:H])]
@@ -239,7 +244,7 @@ end
 
 total power (Poynting flux) passing thru monitor surface
 """
-function power(u, m::OrthogonalMonitorInstance)
+function power(u, m::MonitorInstance)
     # @assert ndims(m) == 2
     m.v * mean(flux(u, m))
 end

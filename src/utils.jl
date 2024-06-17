@@ -1,34 +1,11 @@
-° = π / 180
-gaussian(x; μ=0, σ=1) = exp(-((x - μ) / σ)^2)
-
+function place_mask(a, o, mask, c=1)
+    o = round.(o)
+    _mask = (mask / maximum(abs, mask)) .> 0.5
+    _ksam = .!(_mask)
+    a = a .* pad(_ksam, true, o - 1, size(a) .- size(_ksam) - o + 1)
+    place(a, o, _mask .* mask,)
+end
 d2(x) = round.(x, sigdigits=2)
-
-function place(a, b, o; lazy=false)
-    i = floor(o)
-    w = 1 - mean(abs.(o - i))
-    w = (w, 1 - w)
-    i = (i, i + 1)
-    for (w, i) = zip(w, i)
-        if w > 0
-            a += eltype(a)(w) * pad(b, 0, Tuple(i) .- 1, size(a) .- size(b) .- Tuple(i) .+ 1)
-        end
-    end
-    a
-end
-# function place!(a::AbstractArray, b, o)
-#     buf = bufferfrom(a)
-#     buf = place!(buf, b, o)
-#     copy(buf)
-# end
-function place!(a, b, o)
-    a[[i:j for (i, j) = zip(o, o .+ size(b) .- 1)]...] = b
-    a
-end
-
-function place!(a, b; center)
-    # @show size(a), size(b), o
-    place!(a, b, center .- floor.((size(b) .- 1) .÷ 2))
-end
 
 function apply!(p, kw)
     dict([k => apply!(p[k], kw[k]) for k = keys(kw)])

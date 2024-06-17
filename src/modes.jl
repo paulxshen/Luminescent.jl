@@ -5,8 +5,13 @@ function normalize_mode(m, dx)
     (; Ex=Ex / √p, Hy=Hy / √p)
 end
 
-function mode_decomp(m, u,)
+function keepxy(mode)
+    dict([k => mode[k] for k in keys(mode) if string(k)[2] ∈ ('x', 'y')])
+end
+
+function mode_decomp(m, u, dx)
     polarization = get_polarization(u)
+    m = normalize_mode(m, dx)
     if polarization == :TM
         ap_TE = am_TE = 0
     else
@@ -33,7 +38,8 @@ function collapse_mode(m, ϵ)
     Ex, Ez, Hy = map([Ex, Ez, Hy]) do a
         mean(a, dims=2) |> vec
     end
-    (; Ex, Hy, Ez), sum(E .* ϵ, dims=2) ./ sum(E, dims=2) |> vec
+    # (; Ex, Hy, Ez), sum(E .* ϵ, dims=2) ./ sum(E, dims=2) |> vec
+    (; Ex, Hy, Ez), maximum.(eachrow(ϵ))
 end
 
 function reframe(frame, u, inv=false)
@@ -61,7 +67,6 @@ function reframe(frame, u, inv=false)
 
         u = [s * reverse(a, dims=invdims) for (s, a) in zip(signs, u)]
         u = dropdims.(u, dims=Tuple(d:3))
-        global q = u
         # p = invperm(p)
     else
         u = [reshape(a, size(a)..., fill(1, 3 - ndims(a))...) for a in u]

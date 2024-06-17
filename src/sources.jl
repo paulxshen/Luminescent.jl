@@ -11,23 +11,19 @@ struct ModalSource
     lb
     ub
     normal
+    tangent
     # zaxis
     # xaxis
-    fields
+    mode
     label
-    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, lb, ub, normal, label::String="";)
-        new(f, center, lb, ub, normal, E2J(mode), label)
+    meta
+    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; label::String="", meta=Dict())
+        new(f, center, lb, ub, normal, tangent, E2J(mode), label, meta)
     end
-    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, L, normal, label::String="";)
-        new(f, center, -L / 2, L / 2, normal, E2J(mode), label)
+    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, L, ; label::String="", meta=Dict())
+        new(f, center, -L / 2, L / 2, normal, tangent, E2J(mode), label, meta)
     end
 
-    function ModalSource(f, center::Base.AbstractVecOrTuple, lb, ub, normal, label::String=""; fields...)
-        new(f, center, lb, ub, normal, fields, label)
-    end
-    function ModalSource(f, center::Base.AbstractVecOrTuple, L, normal, label::String=""; fields...)
-        new(f, center, -L / 2, L / 2, normal, fields, label)
-    end
 end
 """
     function PlaneWave(f, dims; fields...)
@@ -93,17 +89,20 @@ struct Source
     lb
     ub
     label
-    function Source(f, c, lb, ub, label::String=""; fields...)
-        new(f, fields, c, lb, ub, label)
+    meta
+    function Source(f, fields, c, lb, ub, label::String=""; kw...)
+        new(f, fields, c, lb, ub, label, kw)
     end
-    function Source(f, c, L, label::String=""; fields...)
-        new(f, fields, c, -L / 2, L / 2, label)
+    function Source(f, fields, c, L, label::String=""; kw...)
+        new(f, fields, c, -L / 2, L / 2, label, kw)
     end
 end
 # fields(m::Source) = m.fields
 Base.string(m::Union{Source,ModalSource}) =
     """
-    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.center|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center, exciting $(join(keys(m.fields),", "))"""
+    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.center|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center,"""
+#  exciting $(join(keys(m.fields),", "))"""
+
 function Source(f, c, L, label::AbstractString=""; fields...)
     # Source
     # function Source(f, c, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)
@@ -119,21 +118,22 @@ struct SourceInstance
     o
     c
     label
+    meta
 end
 @functor SourceInstance (g, _g,)
 
 function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
-    @unpack f, center, lb, ub, normal = s
+    @unpack f, center, lb, ub, normal, tangent, meta = s
     fields = DefaultDict([0],)
-    for k = keys(s.fields)
-        fields[k] = s.fields[k]
+    for k = keys(s.mode)
+        fields[k] = s.mode[k]
     end
     @unpack Jx, Jy, Jz = fields
     L = ub .- lb
     sz = max.(1, round.(Int, L ./ dx)) |> Tuple
-
-    d = length(center) # 2D or 3D
-    if d == 2
+    d = length(lb)
+    D = length(center) # 2D or 3D
+    if D == 2
         zaxis = [normal..., 0]
         yaxis = [0, 0, 1]
         # xaxis = cross(yaxis, zaxis)
@@ -141,27 +141,36 @@ function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, s
         # @show J
         # J = reshape.([Jx, Jy, Jz], (sz,))
     else
+        zaxis = normal |> F
+        xaxis = tangent |> F
         yaxis = cross(zaxis, xaxis)
     end
 
     frame = [xaxis, yaxis, zaxis]
     J = [Jx, Jy, Jz]
     # J = resize.(J, (sz,))
+    print(frame)
     J = reframe(frame, J)
-    if d == 2
+    if D == 2
         J = [J[:, :, 1] for J in J]
     end
+    lb = sum(lb .* frame[1:d])[1:D]
+    ub = sum(ub .* frame[1:d])[1:D]
+    L = ub - lb
 
     Jx, Jy, Jz = J
-    if d == 2
+    if D == 2
         fields = (; Jx, Jy)
     else
         fields = (; Jx, Jy, Jz)
     end
-    SourceInstance(Source(f, center, L; fields...), dx, sizes, common_left_pad_amount, fl, sz0; F)
+    v = zip(lb, ub)
+    lb = minimum.(v)
+    ub = maximum.(v)
+    SourceInstance(Source(f, fields / dx^(D - d), center, lb, ub; meta...), dx, sizes, common_left_pad_amount, fl, sz0; F)
 end
 function SourceInstance(s::PlaneWave, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
-    @unpack f, fields, dims, label = s
+    @unpack f, fields, dims, label, meta = s
     _F(x::Real) = F(x)
     _F(x::Complex) = complex(F)(x)
     f = _F ∘ f
@@ -170,9 +179,9 @@ function SourceInstance(s::PlaneWave, dx, sizes, common_left_pad_amount, fl, sz0
     o = NamedTuple([k =>
         1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
                     for k = keys(fl)])
-    _g = Dict([k => place(zeros(F, sizes[k]), g[k], o[k]) for k = keys(fields)])
+    _g = Dict([k => place(zeros(F, sizes[k]), o[k], g[k],) for k = keys(fields)])
     c = first(values(sizes)) .÷ 2
-    SourceInstance(f, keys(fields), g, _g, o, c, label)
+    SourceInstance(f, keys(fields), g, _g, o, c, label, meta)
 end
 
 function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
@@ -190,31 +199,30 @@ function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
 end
 
 function SourceInstance(s::Source, dx, sizes, field_origin, common_left_pad_amount, stop; F=Float32)
-    @unpack f, fields, center, lb, ub, label = s
+    @unpack f, fields, center, lb, ub, label, meta = s
     _F(x::Real) = F(x)
     _F(x::Complex) = complex(F)(x)
 
     f = _F ∘ f
-    r = [a == b ? (a:a) : a+dx/2:dx:b for (a, b) = zip(lb, ub)]
-    C = F(1 / dx^count(lb .== ub))
     g = Dict([k =>
-        C * begin
+        begin
             if isa(fields[k], AbstractArray)
                 # imresize(fields[k], ratio=1)
                 sz0 = size(fields[k])
-                sz = Tuple(length.(r))
-                sz0 != sz && @warn "source spatial profile array $sz0 not same size as source domain $sz. profile will be interpolated"
+                sz = max.(1, round(abs.(ub - lb) ./ dx)) |> Tuple
+                sz0 != sz && @warn "source array size$sz0 not same  as domain size $sz. source will be interpolated"
                 imresize(_F.(fields[k]), sz, method=ImageTransformations.Lanczos4OpenCV())
             else
+                r = [a == b ? (a:a) : (a+dx/2*sign(b - a):dx*sign(b - a):b) for (a, b) = zip(lb, ub)]
                 [_F.(fields[k](v...)) for v = Iterators.product(r...)]
             end
         end
 
               for k = keys(fields)])
-    o = NamedTuple([k => (center + lb - o) / dx .+ 1 for (k, o) = pairs(field_origin)])
-    _g = Dict([k => place(zeros(F, sizes[k]), g[k], o[k]) for k = keys(fields)])
+    o = NamedTuple([k => F((center + lb - o) / dx .+ 1.5) for (k, o) = pairs(field_origin)])
+    _g = Dict([k => place(zeros(F, sizes[k]), o[k], g[k],) for k = keys(fields)])
     _center = round(center / dx) + 1 + common_left_pad_amount
-    SourceInstance(f, keys(fields), g, _g, o, _center, label)
+    SourceInstance(f, keys(fields), g, _g, o, _center, label, meta)
 end
 
 # Complex

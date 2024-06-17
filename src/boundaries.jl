@@ -119,7 +119,7 @@ function apply(p::AbstractVector{<:OutPad}, a)
     l = sum(getproperty.(p, :l))
     r = sum(getproperty.(p, :r))
     y = Buffer(a, Tuple(l .+ r .+ size(a)))
-    y = place!(y, a, l .+ 1)
+    y = place!(y, l .+ 1, a)
     for p = p
         l -= p.l
         r -= p.r

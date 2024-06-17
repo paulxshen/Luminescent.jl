@@ -2,9 +2,9 @@ import rasterio.features
 from shapely.plotting import plot_polygon, plot_points
 from shapely.ops import clip_by_rect
 from gplugins.common.config import PATH
-from gplugins import plot
+from gplugin import plot
 import gplugins.tidy3d as gt
-import gplugins as gp
+import gplugin as gp
 import tidy3d as td
 import numpy as np
 import matplotlib.pyplot as plt

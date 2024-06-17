@@ -1,30 +1,18 @@
 cells:
-  Unnamed_fefe9888: {}
-  design: {}
-  extrude_6638433f:
-    add_bbox: true
-    allow_offgrid: null
-    cross_section: null
-    layer:
-    - 1
-    - 0
-    p:
-      hash: b05a9b7d2d514da98c3925c1aff6c3a2fb91a415
-    shear_angle_end: null
-    shear_angle_start: null
-    simplify: null
-    snap_to_grid: false
-    width: 0.4
-  ubend: {}
+  Unnamed_5a1b3518: {}
+  straight_length2:
+    cross_section: xs_sc
+    length: 2
+    npoints: 2
 function: ''
 info: {}
 module: ''
-name: ubend
+name: Unnamed_5a1b3518
 ports:
   o1:
     center:
-    - -1.599
-    - 0.4
+    - 0.0
+    - 0.0
     layer:
     - 1
     - 0
@@ -32,17 +20,17 @@ ports:
     orientation: 180.0
     port_type: optical
     shear_angle: null
-    width: 0.4
+    width: 0.5
   o2:
     center:
-    - -1.6
-    - -0.4
+    - 2.0
+    - 0.0
     layer:
     - 1
     - 0
     name: o2
-    orientation: 180.0
+    orientation: 0.0
     port_type: optical
     shear_angle: null
-    width: 0.4
+    width: 0.5
 settings: {}

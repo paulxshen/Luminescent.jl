@@ -1,3 +1,5 @@
 
 margin_offset = 0.1
-source_monitor_offset = 0.4
+SOURCE_MONITOR_MARGIN = 0.2
+SOURCE_BOUNDARY_MARGIN = 0.2
+MODE_MARGIN = 0.0

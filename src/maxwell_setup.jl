@@ -1,9 +1,17 @@
 function get_polarization(u)
     # u=flatten(u)
-    if length(u.E) == 2
-        return :TE
-    elseif length(u.H) == 2
-        return :TM
+    if haskey(u, :E)
+        if length(u.E) == 2
+            return :TE
+        elseif length(u.H) == 2
+            return :TM
+        end
+    else
+        if haskey(u, :Hy)
+            return :TE
+        elseif haskey(u, :Ey)
+            return :TM
+        end
     end
     nothing
 end
@@ -37,30 +45,45 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz;
     polarization=:TE,
     geometry=OrderedDict(),
     # transient_duration=max_source_dist(sources), steady_state_duration=2,
-    transient_duration=nothing, steady_state_duration=2,
+    transient_duration=0, steady_state_duration=0,
     ϵ=1, μ=1, σ=0, σm=0, F=Float32,
-    wavelengths=[1],
     # ϵmin=1,
     # Courant=0.5,
     Courant=nothing,
     verbose=true,
     kw...)
-    dx, wavelengths = F.((dx, wavelengths))
+    dx, = F.((dx,))
 
-    a = ones(F, sz)
+    a = ones(F, Tuple(sz))
     geometry = dict((; ϵ, μ, σ, σm) |> pairs)
     for (k, v) = pairs(geometry)
         if isa(v, Number)
-            geometry[k] = a * geometry[k]
+            geometry[k] = a * geometry[k] |> F
         end
     end
     ϵmin, ϵmax = extrema(geometry.ϵ)
     if isnothing(Courant)
         Courant = F(0.8√(ϵmin / length(sz)))# Courant number)
     end
-    if isnothing(transient_duration)
+
+    if transient_duration == 0
         transient_duration = sum(sz) * dx * sqrt(ϵmax) + 1
     end
+    if steady_state_duration == 0
+        if isempty(monitors)
+            steady_state_duration = 2
+        else
+            steady_state_duration = maximum(monitors) do m
+                if length(wavelengths(m)) == 1
+                    2
+                else
+                    2 / minimum(diff( 1 ./ wavelengths(m)))
+                end
+            end
+        end
+    end
+    transient_duration, steady_state_duration = F.((transient_duration, steady_state_duration))
+
 
     d = length(sz)
     if d == 1
@@ -341,12 +364,12 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz;
      """
     end
 
+    transient_duration, steady_state_duration = F.((transient_duration, steady_state_duration))
     OrderedDict((; geometry_padding, field_padding, subpixel_averaging, field_grids,
         source_instances, monitor_instances, field_names,
         polarization,
         transient_duration, steady_state_duration,
         geometry,
-        wavelengths,
         # roi,
         u0, fields, d, dx, dt, sz, kw...) |> pairs)
 end
