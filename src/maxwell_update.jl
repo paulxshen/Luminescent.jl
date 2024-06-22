@@ -47,7 +47,7 @@ maxwell_update!(u, p, t, dx, dt, field_padding, source_instances) = maxwell_upda
     
 Updates fields for 3d in a manner amenable to AD. See also Mutating `maxwell_update!`
         """
-function maxwell_update(u, p, t, dx, dt, field_padding, source_instances; ignore_boundary_autodiff=false)
+function maxwell_update(u, p, t, dx, dt, field_padding, source_instances)
     @unpack ϵ, μ, σ, σm = p
     # ϵ, μ, σ, σm = Ref.([ϵ, μ, σ, σm])
     @unpack E, H, J = u

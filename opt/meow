@@ -63,7 +63,7 @@ We define a geometry update function that'll be called each adjoint iteration. I
 
 ϵ2 = d == 2 ? ϵcore_ : ϵcore
 ϵ1 = ϵclad
-model_origin = round.(Int, (designs[1].bbox[1] - origin) / dx) .+ 1
+model_origin = round.(Int, (designs[1].bbox_np()[1] - origin) / dx) .+ 1
 function make_geometry(mask, ϵ1, ϵ2, model, origin)#; make3d=false)
     sz = size(mask)
     μ = ones(F, sz)
@@ -122,8 +122,8 @@ We now do adjoint optimization. The first few iterations may show very little ch
 
 #     designs = [
 #         {
-#             # "bbox": c.named_references["design"].bbox(),
-#             "bbox": design.bbox.tolist(),
+#             # "bbox": c.named_references["design"].bbox_np()(),
+#             "bbox": design.bbox_np().tolist(),
 #             "symmetry_dims": [2],
 #         }
 #     ]
@@ -134,7 +134,7 @@ We now do adjoint optimization. The first few iterations may show very little ch
 #         "guess", design, hidden_layer=(DESIGN, ))
 #     prob["components"]["guess"] = {
 #         "svg": init_svg,
-#         "bbox": design.bbox.tolist(),
+#         "bbox": design.bbox_np().tolist(),
 #     }
 
 #     # Encode the document to BSON
@@ -155,5 +155,5 @@ We now do adjoint optimization. The first few iterations may show very little ch
 #     Cairo.write_to_png(cs, joinpath(DIR, "$s.png"))
 # end
 
-# masks = Dict([k => imresize(F.(convert.(Gray, FileIO.load(joinpath(DIR, "$k.png")) |> transpose),), round.(Int, (components[k].bbox[2] - components[k].bbox[1]) / dx) |> Tuple) .> tol for k in component_names])
+# masks = Dict([k => imresize(F.(convert.(Gray, FileIO.load(joinpath(DIR, "$k.png")) |> transpose),), round.(Int, (components[k].bbox_np()[2] - components[k].bbox_np()[1]) / dx) |> Tuple) .> tol for k in component_names])
 # @unpack device, = masks

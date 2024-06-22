@@ -1,6 +1,6 @@
 function normalize_mode(m, dx)
     @unpack Ex, Hy = m
-    @show p = real(Ex ⋅ Hy) * dx^ndims(Ex) / 2
+    p = real(Ex ⋅ Hy) * dx^ndims(Ex) / 2
     # (; Ex=Ex / √p, Hy=Hy / √p, Ez=Ez / √p)
     (; Ex=Ex / √p, Hy=Hy / √p)
 end
@@ -9,7 +9,11 @@ function keepxy(mode)
     dict([k => mode[k] for k in keys(mode) if string(k)[2] ∈ ('x', 'y')])
 end
 
+
+# function mode_decomp(m, u::AbstractVector, dx)
+#     Ex,Hy,Hz
 function mode_decomp(m, u, dx)
+
     polarization = get_polarization(u)
     m = normalize_mode(m, dx)
     if polarization == :TM
@@ -28,7 +32,14 @@ function mode_decomp(m, u, dx)
         am_TM = Ey + Hx
         ap_TM = Ey - Hx
     end
-    [ap_TE + ap_TM, am_TE + am_TM]
+    # [ap_TE + ap_TM, am_TE + am_TM]
+    if polarization == :TM
+        return [ap_TM, am_TM]
+    end
+    if polarization == :TE
+        return [ap_TE, am_TE]
+    end
+    return [ap_TE, am_TE]
 end
 
 
@@ -42,25 +53,28 @@ function collapse_mode(m, ϵ)
     (; Ex, Hy, Ez), maximum.(eachrow(ϵ))
 end
 
-function reframe(frame, u, inv=false)
-    d = p = signs = sz = invdims = 0
-    ignore_derivatives() do
-        d = ndims(u[1]) + 1
-        p = findfirst.(x -> abs(1 - abs(x)) < 1.0f-3, frame)
-        signs = sign.(getindex.(frame, p))
-        invdims = findall(isequal(-1), signs) |> Tuple
-        # println(p)
+function insert(a, i, v)
+    if i == 1
+        [v, a...]
+    else
+        [a[1:i-1]..., v, a[i:end]...]
     end
+end
+function reframe(frame, u, inv=false)
+    # p = = 0
+    d = ndims(u[1]) + 1
+    p = findfirst.(x -> abs(1 - abs(x)) < 1.0f-3, frame)
+    signs = sign.(getindex.(frame, p))
+    invdims = findall(isequal(-1), signs) |> Tuple
     if inv
-        ignore_derivatives() do
-            sz = collect(size(u[1]))
-            insert!(sz, p[3], 1)
-            if d == 2
-                insert!(sz, p[2], 1)
-                (@assert p[2] == 3)
-            end
-            sz = Tuple(sz)
+        sz = size(u[1])
+        sz = insert(sz, p[3], 1)
+        if d == 2
+            sz = insert(sz, p[2], 1)
+            # (@assert p[2] == 3)
         end
+        sz = Tuple(sz)
+
         u = [reshape(a, sz) for a in u]
         u = permutedims.(u, (p,))
         u = u[p]

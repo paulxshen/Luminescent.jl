@@ -116,14 +116,19 @@ function apply(v::AbstractVector{<:OutPad}, x::Real)
     apply(v, x * ones(typeof(x), first(v).default_size))
 end
 function apply(p::AbstractVector{<:OutPad}, a)
-    l = sum(getproperty.(p, :l))
-    r = sum(getproperty.(p, :r))
-    y = Buffer(a, Tuple(l .+ r .+ size(a)))
-    y = place!(y, l .+ 1, a)
+    # l = sum(getproperty.(p, :l))
+    # r = sum(getproperty.(p, :r))
+    # y = Buffer(a, Tuple(l .+ r .+ size(a)))
+    # y = place!(y, l .+ 1, a)
+    # for p = p
+    #     l -= p.l
+    #     r -= p.r
+    #     y = pad!(y, p.b, p.l, p.r, l, r)
+    # end
+    # copy(y)
     for p = p
-        l -= p.l
-        r -= p.r
-        y = pad!(y, p.b, p.l, p.r, l, r)
+        @unpack l, r, b = p
+        a = pad(a, b, l, r)
     end
-    copy(y)
+    a
 end

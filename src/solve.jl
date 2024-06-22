@@ -1,10 +1,13 @@
 
-function solve(prob, ; autodiff=true, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, kwargs...)
-    @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, monitor_instances, transient_duration, steady_state_duration, geometry, d = prob
+function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, kwargs...)
+    @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, steady_state_duration, d = prob
 
     p = geometry
+    p = cpu(p)
     p = apply(geometry_padding, p)
     p = apply(subpixel_averaging, p)
+    p = gpu(p)
+    # return p.ϵ.ϵxx
 
     Δ = [transient_duration, steady_state_duration]
     T = cumsum(Δ)
@@ -26,9 +29,12 @@ function solve(prob, ; autodiff=true, history=nothing, comprehensive=true, verbo
         # save && push!(h, u)
         mode_fields_ = [
             [begin
-                E = dict([k => u[k, m] for k = Enames])
-                H = dict([k => u[k, m] for k = Hnames])
-                (; E, H)
+                # E = dict([k => u[k, m] for k = Enames])
+                # H = dict([k => u[k, m] for k = Hnames])
+                # (; E, H)
+                E = [u[k, m] for k = Enames]
+                H = [u[k, m] for k = Hnames]
+                [E, H]
             end * cispi(-2t / λ) for λ = m.wavelength_modes |> keys]
             for m = monitor_instances
         ]
@@ -45,10 +51,11 @@ function solve(prob, ; autodiff=true, history=nothing, comprehensive=true, verbo
         )
     end
 
-    v = map(mode_fields, monitor_instances) do v, m
-        map(v, m.wavelength_modes |> keys) do u, λ
-            E = values(u.E)
-            H = values(u.H)
+    v = map(mode_fields, monitor_instances) do mf, m
+        map(mf, values(m.wavelength_modes)) do u, wm
+            # E = values(u.E)
+            # H = values(u.H)
+            E, H = u
             if d == 2
                 if polarization == :TE
                     # global E, H
@@ -67,8 +74,8 @@ function solve(prob, ; autodiff=true, history=nothing, comprehensive=true, verbo
                 Hx, Hy, Hz = invreframe(frame(m), H)
                 _mode = (; Ex, Ey, Ez, Hx, Hy, Hz)
             end
-            _mode = keepxy(_mode)
-            c = mode_decomp.(m.wavelength_modes[λ], (_mode,), dx)
+            # _mode = keepxy(_mode)
+            c = mode_decomp.(wm, (_mode,), dx)
             fp = [abs(v[1])^2 for v = c]
             rp = [abs(v[2])^2 for v = c]
             _mode, c, fp, rp
@@ -86,8 +93,5 @@ function solve(prob, ; autodiff=true, history=nothing, comprehensive=true, verbo
     if !isnothing(plotpath)
 
     end
-    if comprehensive
-        return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, total_powers)
-    end
-    forward_mode_powers
+    return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, total_powers)
 end

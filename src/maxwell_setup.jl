@@ -77,7 +77,7 @@ function maxwell_setup(boundaries, sources, monitors, dx, sz;
                 if length(wavelengths(m)) == 1
                     2
                 else
-                    2 / minimum(diff( 1 ./ wavelengths(m)))
+                    2 / minimum(abs.(diff(1 ./ wavelengths(m))))
                 end
             end
         end

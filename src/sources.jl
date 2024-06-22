@@ -149,7 +149,6 @@ function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, s
     frame = [xaxis, yaxis, zaxis]
     J = [Jx, Jy, Jz]
     # J = resize.(J, (sz,))
-    print(frame)
     J = reframe(frame, J)
     if D == 2
         J = [J[:, :, 1] for J in J]
@@ -210,7 +209,7 @@ function SourceInstance(s::Source, dx, sizes, field_origin, common_left_pad_amou
                 # imresize(fields[k], ratio=1)
                 sz0 = size(fields[k])
                 sz = max.(1, round(abs.(ub - lb) ./ dx)) |> Tuple
-                sz0 != sz && @warn "source array size$sz0 not same  as domain size $sz. source will be interpolated"
+                # sz0 != sz && @warn "source array size$sz0 not same  as domain size $sz. source will be interpolated"
                 imresize(_F.(fields[k]), sz, method=ImageTransformations.Lanczos4OpenCV())
             else
                 r = [a == b ? (a:a) : (a+dx/2*sign(b - a):dx*sign(b - a):b) for (a, b) = zip(lb, ub)]
@@ -232,12 +231,16 @@ function apply(v::AbstractVector{<:SourceInstance}, t::Real, kw)
         # sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k])
         k => begin
 
-            a = [real(s.f(t) .* s._g[k]) for s = v if k in s.k]
-            if isempty(a)
-                kw[k]
-            else
-                kw[k] .+ sum(a)
+            a = kw[k]
+            a = cpu(a)
+            for s = v
+                if k in s.k
+                    mode = s._g[k]
+                    mode = cpu(mode)
+                    a += real(s.f(t) .* mode)
+                end
             end
+            gpu(a)
         end
         for k = keys(kw)
         # end for (k, a) = pairs(kw)

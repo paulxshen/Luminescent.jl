@@ -1,26 +1,13 @@
-import rasterio.features
-from shapely.plotting import plot_polygon, plot_points
-from shapely.ops import clip_by_rect
-from gplugins.common.config import PATH
-from gplugin import plot
-import gplugins.tidy3d as gt
-import gplugin as gp
-import tidy3d as td
-import numpy as np
-import matplotlib.pyplot as plt
-from gdsfactory.generic_tech import LAYER_STACK, get_generic_pdk, LAYER
-import gdsfactory as gf
-from shapely import GeometryCollection, Polygon
-import matplotlib.pyplot as plt
-a = next(x for x in LAYER_STACK.layers.values() if x.layer == (1, 0)).material
-# pdk = get_generic_pdk()
-# pdk.activate()
-dx = .1
-img = rasterio.features.rasterize(
-    [Polygon(((-1, -1), (-1, 1), (1, 1), (1, -1)))], transform=(dx, 0, 0, 0, dx, 0, 0, 0, dx), out_shape=(50, 50))
-plt.imshow(img)
+import json
+import os
 
-c = gf.components.coupler_ring().po
+dir = "_temp"
+p = os.path.join(dir, "sol.json")
+# sol = bson.loads(p, "rb").read())["sol"]
+sol = json.loads(open(p).read())
+sol["sparams"] = {k: (v[0]+1j*v[1])
+                  for k, v in sol["sparams"].items()}
+# sol["designs"] = [np.array(d) for d in sol["designs"]]
 raise ValueError("stop here")
 scene = c.to_3d(layer_stack=LAYER_STACK)
 # scene.show()
