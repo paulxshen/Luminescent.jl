@@ -1,5 +1,5 @@
 # Home
-06/2024 update: we've taken down temporarily the Julia API documentation after significant revamp. Meanwhile , refer to our [Python gdsfactory plugin](py.html) for simulation & inverse design of photonic integrated circuits 
+06/2024 update: we've taken down temporarily the Julia API documentation after significant revamp. Meanwhile , refer to our [Python gdsfactory plugin](luminescent.html) for simulation & inverse design of photonic integrated circuits 
 ## Overview
 Generative design meets Maxwell's Equations. GPU and automatic differentiation (AD) compatible FDTD package in Julia for inverse design & topology optimization in semiconductor photonics, acoustics and RF. Uses AD by `Zygote.jl` for adjoint optimization. Integrates with [`Jello.jl`](https://github.com/paulxshen/Jello.jl) to generate length scale controlled paramaterized geometry . Staggered Yee grid update with fully featured boundary conditions & sources in 1d/2d/3d. 
 ## Gallery
