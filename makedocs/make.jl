@@ -1,7 +1,8 @@
 using Documenter
 include("../src/Luminescent.jl")
 using .Luminescent
-
+]add https://github.com/paulxshen/Luminescent.jl
+]add UnPack, BSON, DataStructures, StatsBase, Zygote, Jello,ArrayPadding, AbbreviatedStackTraces,  Flux, FileIO,JSON,Images,GLMakie,Functors,Lazy
 ex = (
     "periodic_scattering",
     "quarter_wavelength_antenna",
