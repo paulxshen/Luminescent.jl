@@ -14,7 +14,8 @@ using AbbreviatedStackTraces
 Random.seed!(1)
 
 # if running directly without module # hide
-include("$(pwd())/src/main.jl") # hide
+# include("$(pwd())/src/main.jl") # hide
+include("src/main.jl") # hide
 # include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 include("snapshot.jl")
 
