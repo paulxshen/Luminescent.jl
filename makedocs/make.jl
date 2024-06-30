@@ -35,8 +35,8 @@ makedocs(
     # modules=[Luminescent],
     pages=[
         "index.md",
-        "guide.md",
-        "Tutorials" => ex .* [".md"],
+        # "guide.md",
+        # "Tutorials" => ex .* [".md"],
         # "people.md",
     ]
 )

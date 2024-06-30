@@ -51,13 +51,13 @@ monitors = [
 
 
 #=
-We do `maxwell_setup` to instantiate at the given discretisation. We adopt `u, p, t` naming conventions from ODE literature: `u ` as state, `p` as params eg geometry
+We do `setup` to instantiate at the given discretisation. We adopt `u, p, t` naming conventions from ODE literature: `u ` as state, `p` as params eg geometry
 =#
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
+@unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_staggering; p...)
+p = apply(subpixel_averaging; p...)
 
 # move to gpu
 if dogpu
@@ -68,10 +68,10 @@ if dogpu
 end
 
 #=
-We run simulation as an `accumulate` loop. `maxwell_update!` applies Maxwells equations as staggered time stepping on E, H. It's mutating so a copy is made in order to save sequence of states
+We run simulation as an `accumulate` loop. `update!` applies Maxwells equations as staggered time stepping on E, H. It's mutating so a copy is made in order to save sequence of states
 =#
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
 port_powers = [power.(u, (m,),) for m = monitor_instances]
 

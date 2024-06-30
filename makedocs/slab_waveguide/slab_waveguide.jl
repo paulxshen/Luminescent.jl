@@ -16,9 +16,9 @@ dogpu = true
 F = Float32
 
 # load mode profile and waveguide dimensions from results of external mode solver 
-@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad w h ϵsub ϵclad ϵcore
+@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hbase wwg hwg hclad w h ϵbase ϵclad ϵcore
 ϵmin = ϵclad
-hsub, wwg, hwg, hclad, w, dx, ub, lb = [hsub, wwg, hwg, hclad, w, dx, ub, lb] / λ
+hbase, wwg, hwg, hclad, w, dx, ub, lb = [hbase, wwg, hwg, hclad, w, dx, ub, lb] / λ
 dx = F(dx)
 
 # geometry
@@ -56,13 +56,13 @@ monitors = [
     Monitor([l - δ, w / 2,], [0, -wwg / 2 - δ,], [0, wwg / 2 + δ,]; normal,),
 ]
 
-# maxwell_setup
+# setup
 boundaries = []# unspecified boundaries default to PML
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
+@unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_staggering, p)
+p = apply(subpixel_averaging, p)
 
 # move to gpu
 if dogpu
@@ -73,7 +73,7 @@ end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
 v = [power.(u, (m,),) for m = monitor_instances]
 
@@ -102,7 +102,7 @@ recordsim("$dir/2d_$(name).mp4", Ey, v;
 # error()
 
 # begin 3d simulation
-ϵ = sandwich(mask, round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
+ϵ = sandwich(mask, round.(Int, [hbase, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
 sz = size(ϵ)
 μ = 1
 σ = zeros(F, sz)
@@ -115,7 +115,7 @@ Jy, Jz, Jx = map([Ex, Ey, Ez]) do a
 end
 Jz, Jy, Jx = [Jz, Jy, Jx] / maximum(maximum.(abs, [Jz, Jy, Jx]))
 # GLMakie.volume(real(Jy))
-c = [0, w / 2, hsub]
+c = [0, w / 2, hbase]
 lb_ = [0, lb...]
 ub_ = [0, ub...]
 sources = [Source(t -> cispi(2t), c, lb_, ub_; Jx, Jy, Jz)]
@@ -125,17 +125,17 @@ normal = [1, 0, 0] # normal
 δ = 0.1 / λ # margin
 monitors = [
     # (center, lower bound, upper bound; normal)
-    Monitor([l / 2, w / 2, hsub], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal,),
-    Monitor([l - δ, w / 2, hsub], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal,),
+    Monitor([l / 2, w / 2, hbase], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal,),
+    Monitor([l - δ, w / 2, hbase], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal,),
 ]
 
-# maxwell_setup
+# setup
 boundaries = []# unspecified boundaries default to PML
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
+@unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_staggering, p)
+p = apply(subpixel_averaging, p)
 
 # move to gpu
 if dogpu
@@ -146,7 +146,7 @@ end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
 v = [power.(u, (m,),) for m = monitor_instances]
 

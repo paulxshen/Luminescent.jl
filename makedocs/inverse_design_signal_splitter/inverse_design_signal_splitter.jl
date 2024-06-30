@@ -14,8 +14,8 @@ include("$dir/../LuminescentVisualization.jl/src/main.jl")
 include("$dir/scripts/startup.jl")
 
 # loads design layout
-@load "$(@__DIR__)/layout.bson" mask signals ports designs
-@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hsub wwg hwg hclad ϵsub ϵclad ϵcore
+@load "$(@__DIR__)/layout.bson" mask sources ports designs
+@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hbase wwg hwg hclad ϵbase ϵclad ϵcore
 
 # training params"
 F = Float32
@@ -32,17 +32,17 @@ T[2] = T = T[1] + Δ[2]
 # T[1] = 0.1
 # T[2] = 0.2
 ϵmin = ϵclad
-hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
+hbase, wwg, hwg, hclad, dx, ub, lb = [hbase, wwg, hwg, hclad, dx, ub, lb] / λ
 
 mask = F.(mask)
-ϵsub, ϵcore, ϵclad = F.((ϵsub, ϵcore, ϵclad))
-ϵdummy = sandwich(mask, round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
+ϵbase, ϵcore, ϵclad = F.((ϵbase, ϵcore, ϵclad))
+ϵdummy = sandwich(mask, round.(Int, [hbase, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
 sz = size(ϵdummy)
 
 # "geometry generator model
 # @load "$(@__DIR__)/model.bson" model
 model = Blob((round.(Int, designs[1].L / λ / dx) .+ 1)...;
-    nbasis, contrast, rmin, symmetries=2)
+    nbasis, contrast, rmin, symmetry_dims=2)
 model0 = deepcopy(model)
 
 # "boundaries"
@@ -53,7 +53,7 @@ normal = [1, 0, 0] # normal
 δ = 0.1 / λ # margin
 monitors = [
     # (center, lower bound, upper bound; normal)
-    Monitor([p.c / λ..., hsub], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal=[p.n..., 0])
+    Monitor([p.c / λ..., hbase], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal=[p.n..., 0])
     for p = ports]
 
 # modal source
@@ -62,7 +62,7 @@ Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
     reshape(a, 1, size(a)...)
 end
 # GLMakie.volume(real(Jy))
-c = [signals[1].c / λ..., hsub]
+c = [sources[1].c / λ..., hbase]
 lb = [0, lb...]
 ub = [0, ub...]
 sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
@@ -70,8 +70,8 @@ sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 μ = 1
 σ = zeros(F, sz)
 σm = zeros(F, sz)
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
-@unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
+@unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 nt = round(Int, 1 / dt)
 port_fluxes0 = zeros(F, length(monitor_instances))
@@ -90,18 +90,18 @@ function make_geometry(model, mask, μ, σ, σm)
     base_[:, :] = mask
     place!(base_, model(), round.(Int, designs[1].o / λ / dx) .+ 1)
 
-    ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
+    ϵ = sandwich(copy(base_), round.(Int, [hbase, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
     p = apply(geometry_padding; ϵ, μ, σ, σm)
-    p = apply(geometry_staggering, p)
+    p = apply(subpixel_averaging, p)
 end
 
 function metrics(model, ; T[1]=T[1], T[2]=T[2], autodiff=true)
     p = make_geometry(model, mask, μ, σ, σm)
     # run simulation
     _step = if autodiff
-        maxwell_update
+        update
     else
-        maxwell_update!
+        update!
     end
     u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
     v = reduce(T[1]+dt:dt:T[2], init=(u, port_fluxes0)) do (u, v), t
@@ -156,7 +156,7 @@ function runsave(model)
     # model = re(x)
     p = make_geometry(model, mask, μ, σ, σm)
     @showtime u = accumulate((u, t) ->
-            maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
+            update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
         0:dt:T[2], init=u0)
 
     # move to cpu for plotting

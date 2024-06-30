@@ -1,0 +1,163 @@
+if dosave
+    @save "$(@__DIR__)/$(name)_model.bson" model
+    mask = model() .< 0.5
+    @save "$(@__DIR__)/$(name)_mask.bson" mask
+    Images.save("$(@__DIR__)/$(name).png", mask)
+end
+# error()
+
+function runsave(model, prob; kw...)
+    p = make_geometry(model, prob)
+    @unpack u0, dx, dt, field_padding, source_instances, monitor_instances = prob
+    @showtime global u = accumulate((u, t) ->
+            update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
+        0:dt:T[2], init=u0)
+
+    # move to cpu for plotting
+    if ongpu
+        u, p, source_instances = cpu.((u, p, source_instances))
+    end
+    Hz = field.(u, :Hz)
+    ϵEy = field(p, :ϵyy)
+    dir = @__DIR__
+    d = ndims(Hz[1])
+    _name = "$(d)d_$name"
+    # error()
+    recordsim("$dir/$(_name).mp4", Hz, ;
+        dt,
+        field=:Hz,
+        monitor_instances,
+        source_instances,
+        geometry=ϵEy,
+        rel_lims=0.8,
+        playback=1,
+        axis1=(; title="$(replace( _name,"_"=>" ")|>titlecase)"),
+        axis2=(; title="monitor powers"),
+        kw...
+    )
+
+end
+heatmap(model())
+
+record = model -> runsave(model, prob)
+record2d && record(model)
+
+
+@unpack dt, sz, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, polarization = prob
+nt = round(Int, 1 / dt)
+A = area.(monitor_instances)
+# nmp = nfp.Ex ⋅ nfp.Hy * A[1] / length(Ex) / 2
+
+if ongpu
+    using Flux
+    # using CUDA
+    # @assert CUDA.functional()
+    u0, model, device, μ, σ, σm, field_padding, source_instances =
+        gpu.((u0, model, device, μ, σ, σm, field_padding, source_instances))
+    merge!(prob, (; u0, field_padding, source_instances))
+end
+
+#=
+We define a geometry update function that'll be called each adjoint iteration. It calls geometry generator model to generate design region which gets placed onto mask of device features.
+    =#
+
+ϵ2 = d == 2 ? ϵcore_ : ϵcore
+ϵ1 = ϵclad
+model_origin = round.(Int, (designs[1].bbox_np()[1] - origin) / dx) .+ 1
+function make_geometry(mask, ϵ1, ϵ2, model, origin)#; make3d=false)
+    sz = size(mask)
+    μ = ones(F, sz)
+    σ = zeros(F, sz)
+    σm = zeros(F, sz)
+    d = length(sz)
+
+    ϵ = mask * (ϵ2) + (1 .- mask) * ϵ1
+    b = Zygote.Buffer(ϵ)
+    copyto!(b, ϵ)
+    a = model()
+    ϵm = a * (ϵ2) + (1 .- a) * ϵ1
+    place!(b, ϵm, origin)
+    ϵ = copy(b)
+
+    if d == 3
+        ϵ = sandwich(ϵ, round.(Int, [hbase, hwg, hclad] / dx)..., ϵbase, ϵclad)
+    end
+
+    (; ϵ, μ, σ, σm)
+end
+# heatmap(q.σ.σEx) |> display
+#=
+Optimal design will maximize powers into port 1 and out of port 2. Monitor normals were set so both are positive. `metrics` function compute these figures of merit (FOM) quantities by a differentiable FDTD simulation . `loss` is then defined accordingly 
+=#
+
+y = getindex.(values(monitors), :power)
+ij = [(t.port[2] |> Int, findfirst(isapprox(t.wavelength), wavelengths)) for t in values(monitors)]
+function score(a)
+    mae([abs(a[1, i, j])^2 for (i, j,) = ij], y)
+end
+
+# iterations2d == 0 && error()
+#=
+We now do adjoint optimization. The first few iterations may show very little change but will pick up momentum
+=#
+
+# @save "$(DIR)/2d_model_$(time()).bson" model
+
+
+# def inverse_design_problem(c,  lmin, dx, sources, monitors, design, name="", layer_stack=LAYER_STACK, approx_2D=True, ** kwargs):
+#     d = 2 if approx_2D else 3
+
+#     # wavelengths = c.metadata["sources"]["o1"]["wavelengths"]
+#     wavelengths = sources["o1"]["wavelengths"]
+#     prob = setup(c, name=name, study="inverse_design",
+#                  dx=dx, wavelengths=wavelengths, sources=sources, layer_stack=layer_stack)
+#     prob["lmin"] = lmin
+
+#     runs = [dict()]
+#     run = runs[0]
+#     run["monitors"] = monitors
+#     run["sources"] = sources
+#     run["d"] = d
+#     prob["runs"] = runs
+
+#     designs = [
+#         {
+#             # "bbox": c.named_references["design"].bbox_np()(),
+#             "bbox": design.bbox_np().tolist(),
+#             "symmetry_dims": [2],
+#         }
+#     ]
+#     prob["designs"] = designs
+
+#     # design = c.child["design"]
+#     init_svg = utils.write_img(
+#         "guess", design, hidden_layer=(DESIGN, ))
+#     prob["components"]["guess"] = {
+#         "svg": init_svg,
+#         "bbox": design.bbox_np().tolist(),
+#     }
+
+#     # Encode the document to BSON
+
+#     return prob
+
+
+# error()
+# component_names = keys(components)
+# for s = component_names
+#     # for name = ["device", "guess"]
+#     r = Rsvg.handle_new_from_data(components[s][:svg])
+#     # r = Rsvg.handle_new_from_file("$(DIR)/$name.svg")
+#     global d = Rsvg.handle_get_dimensions(r)
+#     cs = Cairo.CairoImageSurface(1 * (d.width), 1 * (d.height), Cairo.FORMAT_ARGB32)
+#     c = Cairo.CairoContext(cs)
+#     Rsvg.handle_render_cairo(c, r)
+#     Cairo.write_to_png(cs, joinpath(DIR, "$s.png"))
+# end
+
+# masks = Dict([k => imresize(F.(convert.(Gray, FileIO.load(joinpath(DIR, "$k.png")) |> transpose),), round.(Int, (components[k].bbox_np()[2] - components[k].bbox_np()[1]) / dx) |> Tuple) .> tol for k in component_names])
+# @unpack device, = masks
+print("pre optim tparams:")
+print(json.dumps(sol["before"]["tparams"]))
+print("post optim tparams:")
+print(json.dumps(sol["after"]["tparams"]))

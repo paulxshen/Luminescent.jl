@@ -1,16 +1,26 @@
-
-function sandwich(mask, h1, h, h2, ϵ1, ϵ2)
-    # a = ones(F, size(mask))
-    a = 0 * mask .+ 1
-    # hbox, hwg, hclad = h
-    cat(repeat.(
-            (a * ϵ1, mask, ϵ2 * a),
-            1,
-            1,
-            (h1, h, h2)
-        )..., dims=3)
+struct SubpixelAveraging
+    v
 end
 
+function apply(s::SubpixelAveraging, a::AbstractArray)
+    d = ndims(a)
+    # for (i, (do_smooth, pad_left, pad_right)) in enumerate(s.v)
+    for (i, (l, r)) = enumerate(eachcol(s.v))
+        select = i .== (1:d) |> Tuple
+        if l == -1
+            a = pad(a, :replicate, select, 0)
+        end
+        if r == 1
+            a = pad(a, :replicate, 0, select)
+        end
+        if l != 0 && r != 0
+            # a = conv(a, reshape([1, 1], 1 + select)) / 2
+            a = (2selectdim(a, i, 1:(size(a, i)-1)) + diff(a, dims=i)) / 2
+        end
+        if l == 0 && r == 0
+            a += 0
+        end
+    end
+    a
+end
 
-_getindex(x::Real, a...) = x
-_getindex(x, a...) = x[a...]

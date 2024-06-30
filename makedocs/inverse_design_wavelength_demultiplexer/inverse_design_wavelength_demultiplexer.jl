@@ -21,18 +21,18 @@ name = "inverse_design_wavelength_demultiplexer"
 nbasis = 6 # complexity of design region
 
 # loads design layout
-@load "$(@__DIR__)/layout.bson" mask signals ports designs
-@load "$(@__DIR__)/modes.bson" λ1 λ2 modes1 modes2 lb ub dx hsub wwg hwg hclad ϵsub ϵclad ϵcore
+@load "$(@__DIR__)/layout.bson" mask sources ports designs
+@load "$(@__DIR__)/modes.bson" λ1 λ2 modes1 modes2 lb ub dx hbase wwg hwg hclad ϵbase ϵclad ϵcore
 λ = λ1 # wavelength [um]
 f2 = λ1 / λ2
 T[1] = 1 + norm(ports[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods]
 T[2] = 1 / (2(f2 - 1))
 ϵmin = ϵclad
-hsub, wwg, hwg, hclad, dx, ub, lb = [hsub, wwg, hwg, hclad, dx, ub, lb] / λ
+hbase, wwg, hwg, hclad, dx, ub, lb = [hbase, wwg, hwg, hclad, dx, ub, lb] / λ
 
 mask = F.(mask)
-ϵsub, ϵcore, ϵclad = F.((ϵsub, ϵcore, ϵclad))
-ϵdummy = sandwich(mask, round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
+ϵbase, ϵcore, ϵclad = F.((ϵbase, ϵcore, ϵclad))
+ϵdummy = sandwich(mask, round.(Int, [hbase, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
 sz0 = size(ϵdummy)
 
 # "geometry generator model
@@ -47,15 +47,15 @@ normal = [1, 0, 0] # normal
 δ = 0.1 / λ # margin
 # (center, lower bound, upper bound; normal)
 monitors = [Monitor(
-    [p.c / λ..., hsub],
+    [p.c / λ..., hbase],
     [0, -wwg / 2 - δ, -δ],
     [0, wwg / 2 + δ, hwg + δ];
     normal=[p.n..., 0]) for p = ports]
 
 # modal source
 sources = []
-c = signals[1].c / λ
-c = [c..., hsub]
+c = sources[1].c / λ
+c = [c..., hbase]
 lb = [0, lb...]
 ub = [0, ub...]
 for (modes, f) = zip((modes1, modes2), (1, f2))
@@ -67,8 +67,8 @@ for (modes, f) = zip((modes1, modes2), (1, f2))
 end
 
 boundaries = [] # unspecified boundaries default to PML
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz0; ϵmin, F)
-@unpack μ, σ, σm, dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = setup(boundaries, sources, monitors, dx, sz0; ϵmin, F)
+@unpack μ, σ, σm, dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 nt = round(Int, 1 / dt)
 
 T = T[1] + T[2]
@@ -89,18 +89,18 @@ function make_geometry(model, mask, μ, σ, σm)
     base_[:, :] = mask
     place!(base_, model(), round.(Int, designs[1].o / λ / dx) .+ 1)
 
-    ϵ = sandwich(copy(base_), round.(Int, [hsub, hwg, hclad] / dx), [ϵsub, ϵcore, ϵclad])
+    ϵ = sandwich(copy(base_), round.(Int, [hbase, hwg, hclad] / dx), [ϵbase, ϵcore, ϵclad])
     ϵ, μ, σ, σm = apply(geometry_padding; ϵ, μ, σ, σm)
-    p = apply(geometry_staggering; ϵ, μ, σ, σm)
+    p = apply(subpixel_averaging; ϵ, μ, σ, σm)
 end
 
 function metrics(model; T[1]=T[1], T[2]=T[2], autodiff=true)
     p = make_geometry(model, mask, μ, σ, σm)
     # run simulation
     _step = if autodiff
-        maxwell_update
+        update
     else
-        maxwell_update!
+        update!
     end
     u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
     v = reduce(T[1]+dt:dt:T[1]+T[2], init=(u, port_fluxes0)) do (u, v), t
@@ -140,7 +140,7 @@ x = deepcopy(x0)
 
 # adjoint optimization
 opt = Adam(0.2)
-opt_state = Flux.maxwell_setup(opt, model)
+opt_state = Flux.setup(opt, model)
 n = 8
 for i = 1:n
     @time l, (dldm,) = withgradient(m -> loss(metrics(m)), model)
@@ -156,7 +156,7 @@ function runsave(x)
     model = re(x)
     p = make_geometry(model, mask, μ, σ, σm)
     @showtime u = accumulate((u, t) ->
-            maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
+            update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
         t, init=u0)
 
     # move to cpu for plotting

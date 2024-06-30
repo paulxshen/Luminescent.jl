@@ -1,15 +1,112 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Periodic Scattering · Luminescent.jl</title><meta name="title" content="Periodic Scattering · Luminescent.jl"/><meta property="og:title" content="Periodic Scattering · Luminescent.jl"/><meta property="twitter:title" content="Periodic Scattering · Luminescent.jl"/><meta name="description" content="Documentation for Luminescent.jl."/><meta property="og:description" content="Documentation for Luminescent.jl."/><meta property="twitter:description" content="Documentation for Luminescent.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Luminescent.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../guide/">Guide</a></li><li><span class="tocitem">Tutorials</span><ul><li class="is-active"><a class="tocitem" href>Periodic Scattering</a></li><li><a class="tocitem" href="../quarter_wavelength_antenna/">Quarter Wavelength Antenna</a></li><li><a class="tocitem" href="../inverse_design_waveguide_bend/">Inverse Design Waveguide Bend</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Periodic Scattering</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Periodic Scattering</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/paulxshen/fdtd" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/paulxshen/fdtd/blob/master/makedocs/src/periodic_scattering.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Periodic-Scattering"><a class="docs-heading-anchor" href="#Periodic-Scattering">Periodic Scattering</a><a id="Periodic-Scattering-1"></a><a class="docs-heading-anchor-permalink" href="#Periodic-Scattering" title="Permalink"></a></h1><p>Complete file at <a href="https://github.com/paulxshen/Luminescent.jl/tree/master/examples">examples folder</a></p><p>We simulate  plane wave scattering on periodic array of dielectric spheres</p><pre><code class="language-julia hljs">using UnPack, LinearAlgebra, GLMakie
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Periodic Scattering · Luminescent.jl</title>
+    <meta name="title" content="Periodic Scattering · Luminescent.jl" />
+    <meta property="og:title" content="Periodic Scattering · Luminescent.jl" />
+    <meta property="twitter:title" content="Periodic Scattering · Luminescent.jl" />
+    <meta name="description" content="Documentation for Luminescent.jl." />
+    <meta property="og:description" content="Documentation for Luminescent.jl." />
+    <meta property="twitter:description" content="Documentation for Luminescent.jl." />
+    <script data-outdated-warner src="../assets/warner.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet"
+        type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css" />
+    <script>documenterBaseURL = ".."</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"
+        data-main="../assets/documenter.js"></script>
+    <script src="../search_index.js"></script>
+    <script src="../siteinfo.js"></script>
+    <script src="../../versions.js"></script>
+    <link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css"
+        data-theme-name="documenter-dark" data-theme-primary-dark />
+    <link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css"
+        data-theme-name="documenter-light" data-theme-primary />
+    <script src="../assets/themeswap.js"></script>
+</head>
+
+<body>
+    <div id="documenter">
+        <nav class="docs-sidebar">
+            <div class="docs-package-name"><span class="docs-autofit"><a href="../">Luminescent.jl</a></span></div>
+            <button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2"
+                id="documenter-search-query">Search docs (Ctrl + /)</button>
+            <ul class="docs-menu">
+                <li><a class="tocitem" href="../">Home</a></li>
+                <li><a class="tocitem" href="../guide/">Guide</a></li>
+                <li><span class="tocitem">Tutorials</span>
+                    <ul>
+                        <li class="is-active"><a class="tocitem" href>Periodic Scattering</a></li>
+                        <li><a class="tocitem" href="../quarter_wavelength_antenna/">Quarter Wavelength Antenna</a></li>
+                        <li><a class="tocitem" href="../inverse_design_waveguide_bend/">Inverse Design Waveguide
+                                Bend</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="docs-version-selector field has-addons">
+                <div class="control"><span class="docs-label button is-static is-size-7">Version</span></div>
+                <div class="docs-selector control is-expanded">
+                    <div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div>
+                </div>
+            </div>
+        </nav>
+        <div class="docs-main">
+            <header class="docs-navbar"><a
+                    class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop"
+                    id="documenter-sidebar-button" href="#"></a>
+                <nav class="breadcrumb">
+                    <ul class="is-hidden-mobile">
+                        <li><a class="is-disabled">Tutorials</a></li>
+                        <li class="is-active"><a href>Periodic Scattering</a></li>
+                    </ul>
+                    <ul class="is-hidden-tablet">
+                        <li class="is-active"><a href>Periodic Scattering</a></li>
+                    </ul>
+                </nav>
+                <div class="docs-right"><a class="docs-navbar-link" href="https://github.com/paulxshen/fdtd"
+                        title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span
+                            class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link"
+                        href="https://github.com/paulxshen/fdtd/blob/master/makedocs/src/periodic_scattering.md"
+                        title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a
+                        class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button"
+                        href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up"
+                        id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a>
+                </div>
+            </header>
+            <article class="content" id="documenter-page">
+                <h1 id="Periodic-Scattering"><a class="docs-heading-anchor" href="#Periodic-Scattering">Periodic
+                        Scattering</a><a id="Periodic-Scattering-1"></a><a class="docs-heading-anchor-permalink"
+                        href="#Periodic-Scattering" title="Permalink"></a></h1>
+                <p>Complete file at <a href="https://github.com/paulxshen/Luminescent.jl/tree/master/examples">examples
+                        folder</a></p>
+                <p>We simulate plane wave scattering on periodic array of dielectric spheres</p>
+                <pre><code class="language-julia hljs">using UnPack, LinearAlgebra, GLMakie
 using Luminescent, LuminescentVisualization
 
 # if running directly without module # hide
 # include(&quot;$(pwd())/src/main.jl&quot;) # hide
-# include(&quot;$(pwd())/../LuminescentVisualization.jl/src/main.jl&quot;) # hide</code></pre><p>Set simulation duration and resolution.  Run on CPU by setting <code>dogpu = false</code>. If running on a newer GPU, set <code>F = Float16</code></p><pre><code class="language-julia hljs">name = &quot;periodic_scattering&quot;
+# include(&quot;$(pwd())/../LuminescentVisualization.jl/src/main.jl&quot;) # hide</code></pre>
+                <p>Set simulation duration and resolution. Run on CPU by setting <code>dogpu = false</code>. If running
+                    on a newer GPU, set <code>F = Float16</code></p>
+                <pre><code class="language-julia hljs">name = &quot;periodic_scattering&quot;
 T = 10 # simulation duration in [periods]
 nx = 20
 dx = 1.0 / nx # pixel resolution in [wavelengths]
 dogpu = false
-F = Float32</code></pre><p>We make unit cell geometry containing a dielectric sphere. Each property is made an array</p><pre><code class="language-julia hljs">l = 2 # domain physical size length in [wavelengths]
+F = Float32</code></pre>
+                <p>We make unit cell geometry containing a dielectric sphere. Each property is made an array</p>
+                <pre><code class="language-julia hljs">l = 2 # domain physical size length in [wavelengths]
 sz = nx .* (l, l, l) # domain voxel dimensions
 
 ϵ1 = ϵmin = 1 #
@@ -20,7 +117,9 @@ b = F.([norm(v .- sz ./ 2) &lt; 0.5 / dx for v = Base.product(Base.oneto.(sz)...
 # μ = 1
 μ = ones(F, sz)
 σ = zeros(F, sz)
-σm = zeros(F, sz)</code></pre><p>We setup boundary conditions, source and monitor surfaces</p><pre><code class="language-julia hljs">boundaries = [Periodic(2), Periodic(3)]# unspecified boundaries default to PML
+σm = zeros(F, sz)</code></pre>
+                <p>We setup boundary conditions, source and monitor surfaces</p>
+                <pre><code class="language-julia hljs">boundaries = [Periodic(2), Periodic(3)]# unspecified boundaries default to PML
 sources = [
     PlaneWave(t -&gt; cos(2π * t), -1; Jz=1) # Jz excited plane wave from -x plane (eg -1)
 ]
@@ -30,11 +129,15 @@ lm = 1 # monitor side length
 monitors = [
     Monitor([δ, l / 2, l / 2], [0, lm, lm]; normal), # (center, dimensions; normal)
     Monitor([l - δ, l / 2, l / 2], [0, lm, lm]; normal),
-]</code></pre><p>We do <code>maxwell_setup</code> to instantiate at the given discretisation. We adopt <code>u, p, t</code> naming conventions from ODE literature: <code>u</code> as state, <code>p</code> as params eg geometry</p><pre><code class="language-julia hljs">configs = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+]</code></pre>
+                <p>We do <code>setup</code> to instantiate at the given discretisation. We adopt <code>u, p, t</code>
+                    naming conventions from ODE literature: <code>u</code> as state, <code>p</code> as params eg
+                    geometry</p>
+                <pre><code class="language-julia hljs">prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
+@unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, σm)
-p = apply(geometry_staggering; p...)
+p = apply(subpixel_averaging; p...)
 
 # move to gpu
 if dogpu
@@ -42,15 +145,21 @@ if dogpu
     # using CUDA
     # @assert CUDA.functional()
     u0, p, field_padding, source_instances = gpu.((u0, p, field_padding, source_instances))
-end</code></pre><p>We run simulation as an <code>accumulate</code> loop. <code>maxwell_update!</code> applies Maxwells equations as staggered time stepping on E, H. It&#39;s mutating so a copy is made in order to save sequence of states</p><pre><code class="language-julia hljs">@showtime u = accumulate(0:dt:T, init=u0) do u, t
-    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+end</code></pre>
+                <p>We run simulation as an <code>accumulate</code> loop. <code>update!</code> applies Maxwells equations
+                    as staggered time stepping on E, H. It&#39;s mutating so a copy is made in order to save sequence of
+                    states</p>
+                <pre><code class="language-julia hljs">@showtime u = accumulate(0:dt:T, init=u0) do u, t
+    update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
 port_powers = [power.(u, (m,),) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
     u, p, field_padding, source_instances = cpu.((u, p, field_padding, source_instances))
-end</code></pre><p>Ready, set, action! We make movie, </p><pre><code class="language-julia hljs">Ez = field.(u, :Ez)
+end</code></pre>
+                <p>Ready, set, action! We make movie, </p>
+                <pre><code class="language-julia hljs">Ez = field.(u, :Ez)
 ϵEz = field(p, :ϵEz)
 dir = @__DIR__
 recordsim(&quot;$dir/$(name).mp4&quot;, Ez, port_powers;
@@ -63,4 +172,42 @@ recordsim(&quot;$dir/$(name).mp4&quot;, Ez, port_powers;
     playback=1,
     axis1=(; title=&quot;$name&quot;),
     axis2=(; title=&quot;monitor powers&quot;),
-)</code></pre><p><video src="../assets/periodic_scattering.mp4" controls="true" title><a href="../assets/periodic_scattering.mp4"></a></video></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../guide/">« Guide</a><a class="docs-footer-nextpage" href="../quarter_wavelength_antenna/">Quarter Wavelength Antenna »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Sunday 31 March 2024 12:12">Sunday 31 March 2024</span>. Using Julia version 1.10.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+)</code></pre>
+                <p><video src="../assets/periodic_scattering.mp4" controls="true" title><a
+                            href="../assets/periodic_scattering.mp4"></a></video></p>
+            </article>
+            <nav class="docs-footer"><a class="docs-footer-prevpage" href="../guide/">« Guide</a><a
+                    class="docs-footer-nextpage" href="../quarter_wavelength_antenna/">Quarter Wavelength Antenna »</a>
+                <div class="flexbox-break"></div>
+                <p class="footer-message">Powered by <a
+                        href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a
+                        href="https://julialang.org/">Julia Programming Language</a>.</p>
+            </nav>
+        </div>
+        <div class="modal" id="documenter-settings">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Settings</p><button class="delete"></button>
+                </header>
+                <section class="modal-card-body">
+                    <p><label class="label">Theme</label>
+                    <div class="select"><select id="documenter-themepicker">
+                            <option value="auto">Automatic (OS)</option>
+                            <option value="documenter-light">documenter-light</option>
+                            <option value="documenter-dark">documenter-dark</option>
+                        </select></div>
+                    </p>
+                    <hr />
+                    <p>This document was generated with <a
+                            href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span
+                            class="colophon-date" title="Sunday 31 March 2024 12:12">Sunday 31 March 2024</span>. Using
+                        Julia version 1.10.1.</p>
+                </section>
+                <footer class="modal-card-foot"></footer>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

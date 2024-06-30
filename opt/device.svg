@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="4600" height="1200" viewBox="-1600 -600 4600 1200">
+<defs>
+<style type="text/css">
+.l101d0 {fill:none;stroke:none;stroke-dasharray:8,8;}
+.l100d0 {fill:none;stroke:none;stroke-dasharray:8,8;}
+.l31d0 {stroke: #B3446C; fill: #B3446C; fill-opacity: 0.5;}
+</style>
+<g id="extrude_44a5671b">
+<polygon id="000001B723D6D8D0" class="l31d0" points="0,-200 1600,-200 1600,200 0,200"/>
+</g>
+<g id="Unnamed_2a5e98af">
+<polygon id="000001B723D6E2E0" class="l101d0" points="0,-600 3000,-600 3000,600 0,600"/>
+</g>
+<g id="Unnamed_6717d63c">
+<polygon id="000001B723D6E4A0" class="l100d0" points="0,-600 3000,-600 3000,600 0,600"/>
+<use transform="translate(0 0)" xlink:href="#Unnamed_2a5e98af"/>
+</g>
+</defs>
+<rect x="-1600" y="-600" width="4600" height="1200" fill="#000000" stroke="none"/>
+<g id="ubend" transform="scale(1 -1)">
+<use transform="translate(-1600 400)" xlink:href="#extrude_44a5671b"/>
+<use transform="translate(-1600 -400)" xlink:href="#extrude_44a5671b"/>
+<use transform="translate(0 0)" xlink:href="#Unnamed_6717d63c"/>
+</g>
+</svg>

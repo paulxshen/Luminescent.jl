@@ -29,10 +29,10 @@ F = Float32
 ongpu = false
 model_name = nothing # if load saved model
 ```
-We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, signals, design regions and material properties.
+We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 ```julia
 
-@load "$(@__DIR__)/layout.bson" static_mask signals ports designs λ dx ϵsub ϵclad ϵcore hsub hwg hclad
+@load "$(@__DIR__)/layout.bson" static_mask sources ports designs λ dx ϵbase ϵclad ϵcore hbase hwg hclad
 dx, = [dx,] / λ
 ```
 We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
@@ -58,7 +58,7 @@ We set key time intervals. The signal must first propagate to port 2 after which
 
 Δ = zeros(2)
 # Δ[1] = 1
-Δ[1] = 2 + 1.6norm(signals[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
+Δ[1] = 2 + 1.6norm(sources[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
 Δ[2] = 2 # duration to record power at output ports
 T = cumsum(Δ)
 ```
@@ -73,23 +73,23 @@ monitors = [
 ]
 
 # modal source
-@unpack Ex, Ey, Ez, Hx, Hy, Hz = signals[1].modes[1]
+@unpack Ex, Ey, Ez, Hx, Hy, Hz = sources[1].modes[1]
 Jy, Jx, Mz = map([Ex, Ez, Hy]) do a
     transpose(sum(a, dims=2))
 end
 Jy, Jx = [Jy, Jx] / maximum(maximum.(abs, [Jy, Jx]))
-c = signals[1].c / λ
-lb_ = [0, signals[1].lb[1]] / λ
-ub_ = [0, signals[1].ub[1]] / λ
+c = sources[1].c / λ
+lb_ = [0, sources[1].lb[1]] / λ
+ub_ = [0, sources[1].ub[1]] / λ
 sources = [Source(t -> cispi(2t), c, lb_, ub_; Jx, Jy,)]
 
 ϵmin = ϵclad
 static_mask = F.(static_mask)
-ϵsub, ϵcore, ϵclad = F.((ϵsub, ϵcore, ϵclad))
+ϵbase, ϵcore, ϵclad = F.((ϵbase, ϵcore, ϵclad))
 sz = size(static_mask)
 
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
-@unpack dx, dt, sz, geometry_padding, geometry_staggering, field_padding, source_instances, monitor_instances, u0, = configs
+prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
+@unpack dx, dt, sz, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 # n = (size(Jy) .- size(monitor_instances[1])) .÷ 2
 # power_profile = F.(abs.(Jy[range.(1 .+ n, size(Jy) .- n)...]))
@@ -102,13 +102,13 @@ if ongpu
     # @assert CUDA.functional()
     u0, model, static_mask, μ, σ, σm, field_padding, source_instances =
         gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))
-    merge!(configs, (; u0, field_padding, source_instances))
+    merge!(prob, (; u0, field_padding, source_instances))
 end
 ```
 We define a geometry update function that'll be called each adjoint iteration. It calls geometry generator model to generate design region which gets placed onto mask of static features.
     ```julia
-function make_geometry(model, static_mask, configs)#; make3d=false)
-    @unpack sz, geometry_padding, geometry_staggering = configs
+function make_geometry(model, static_mask, prob)#; make3d=false)
+    @unpack sz, geometry_padding, subpixel_averaging = prob
     μ = ones(F, sz)
     σ = zeros(F, sz)
     σm = zeros(F, sz)
@@ -123,29 +123,29 @@ function make_geometry(model, static_mask, configs)#; make3d=false)
     ϵ = mask * ϵcore + (1 .- mask) * ϵclad
 
     if length(sz) == 3
-        ϵ = sandwich(ϵ, round.(Int, [hsub, hwg, hclad] / λ / dx)..., ϵsub, ϵclad)
+        ϵ = sandwich(ϵ, round.(Int, [hbase, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
     end
 
     p = apply(geometry_padding; ϵ, μ, σ, σm)
-    p = apply(geometry_staggering, p)
+    p = apply(subpixel_averaging, p)
 end
 ```
 Optimal design will maximize powers into port 1 and out of port 2. Monitor normals were set so both are positive. `metrics` function compute these figures of merit (FOM) quantities by a differentiable FDTD simulation . `loss` is then defined accordingly 
 ```julia
 
-function metrics(model, configs; autodiff=true, history=nothing)
-    p = make_geometry(model, static_mask, configs;)
+function metrics(model, prob; autodiff=true, history=nothing)
+    p = make_geometry(model, static_mask, prob;)
     if !isnothing(history)
         ignore_derivatives() do
             push!(history, p[:ϵ])
         end
     end
-    @unpack u0, field_padding, source_instances, monitor_instances = configs
+    @unpack u0, field_padding, source_instances, monitor_instances = prob
     # run simulation
     _step = if autodiff
-        maxwell_update
+        update
     else
-        maxwell_update!
+        update!
     end
     u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
     port_fluxes = reduce(T[1]+dt:dt:T[2], init=(u, 0)) do (u, port_fluxes), t
@@ -153,7 +153,7 @@ function metrics(model, configs; autodiff=true, history=nothing)
         port_fluxes + dt * flux.((u,), monitor_instances[1:2],)
     end[2] / Δ[2]
 
-    A = support.(monitor_instances)
+    A = area.(monitor_instances)
     port_mode_powers = [mean(vec(a) .* vec(power_profile)) * A for (a, A) = zip(port_fluxes, A)]
     port_powers = mean.(port_fluxes) .* A
     # @info "" port_powers port_mode_powers
@@ -170,7 +170,7 @@ end
 
 # p0 = make_geometry(model0, static_mask, μ, σ, σm)
 history = []
-loss = model -> score(metrics(model, configs; history))
+loss = model -> score(metrics(model, prob; history))
 ```
 We now do adjoint optimization. The first few iterations may show very little change but will pick up momentum
 ```julia
@@ -192,11 +192,11 @@ We do a simulation movie using optimized geometry
 ```julia
 
 # @show metrics(model)
-function runsave(model, configs; kw...)
-    p = make_geometry(model, static_mask, configs)
-    @unpack u0, dx, dt, field_padding, source_instances, monitor_instances = configs
+function runsave(model, prob; kw...)
+    p = make_geometry(model, static_mask, prob)
+    @unpack u0, dx, dt, field_padding, source_instances, monitor_instances = prob
     @showtime global u = accumulate((u, t) ->
-            maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
+            update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
         0:dt:T[2], init=u0)
 
     # move to cpu for plotting
@@ -224,7 +224,7 @@ function runsave(model, configs; kw...)
 
 end
 
-record = model -> runsave(model, configs)
+record = model -> runsave(model, prob)
 record2d && record(model)
 ```
 ![](assets/2d_inverse_design_waveguide_bend.mp4)
@@ -233,35 +233,35 @@ record2d && record(model)
 We now finetune our design in 3d by starting off with optimized model from 2d. We make 3d geometry simply by sandwiching thickened 2d mask between lower substrate and upper clad layers. 
 ```julia
 
-ϵdummy = sandwich(static_mask, round.(Int, [hsub, hwg, hclad] / λ / dx)..., ϵsub, ϵclad)
+ϵdummy = sandwich(static_mask, round.(Int, [hbase, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
 sz = size(ϵdummy)
 model2d = deepcopy(model)
 
 
 # "monitors"
 δ = 0.1 # margin
-monitors = [Monitor([p.c / λ..., hsub / λ], [p.lb / λ..., -δ / λ], [p.ub / λ..., hwg / λ + δ / λ]; normal=[p.n..., 0]) for p = ports]
+monitors = [Monitor([p.c / λ..., hbase / λ], [p.lb / λ..., -δ / λ], [p.ub / λ..., hwg / λ + δ / λ]; normal=[p.n..., 0]) for p = ports]
 
 # modal source
-@unpack Ex, Ey, Ez, = signals[1].modes[1]
+@unpack Ex, Ey, Ez, = sources[1].modes[1]
 Jy, Jz, Jx = map([Ex, Ey, Ez] / maximum(maximum.(abs, [Ex, Ey, Ez]))) do a
     reshape(a, 1, size(a)...)
 end
-c = [signals[1].c / λ..., hsub / λ]
-lb = [0, signals[1].lb...] / λ
-ub = [0, signals[1].ub...] / λ
+c = [sources[1].c / λ..., hbase / λ]
+lb = [0, sources[1].lb...] / λ
+ub = [0, sources[1].ub...] / λ
 sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 # sources = [Source(t -> cispi(2t), c, lb, ub; Jx=1)]
 
-configs = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin, Courant=0.3)
+prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin, Courant=0.3)
 if ongpu
     u0, model, static_mask, μ, σ, σm, field_padding, source_instances =
         gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))
-    merge!(configs, (; u0, field_padding, source_instances))
+    merge!(prob, (; u0, field_padding, source_instances))
 end
 
 
-loss = model -> score(metrics(model, configs;))
+loss = model -> score(metrics(model, prob;))
 opt = Adam(0.1)
 opt_state = Flux.setup(opt, model)
 for i = 1:iterations3d
@@ -272,6 +272,6 @@ end
 @save "$(@__DIR__)/3d_model_$(time()).bson" model
 
 
-record = model -> runsave(model, configs; elevation=70°, azimuth=110°)
+record = model -> runsave(model, prob; elevation=70°, azimuth=110°)
 record3d && record(model)
 ```
