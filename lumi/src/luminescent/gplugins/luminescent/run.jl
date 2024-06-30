@@ -4,7 +4,7 @@ We do inverse design of a compact photonic waveguide bend to demonstrate workflo
 =#
 
 using UnPack, LinearAlgebra, Random, StatsBase, Dates, DataStructures, JSON, Images
-using Zygote, Flux, GLMakie, Jello
+using Zygote, Flux, Jello
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer
 using BSON: @save, @load
@@ -15,8 +15,8 @@ Random.seed!(1)
 
 # if running directly without module # hide
 include("$(pwd())/src/main.jl") # hide
-include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
-# using Porcupine: keys, values
+# include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
+include("snapshot.jl")
 
 if isempty(ARGS)
     path = joinpath(pwd(), "lumi_runs")
@@ -27,10 +27,7 @@ else
     path = dirname(PROB_PATH)
 
 end
-#=
-We skip 3d finetuning as it's 20x more compute and memory intensive than 2d adjoints. If wishing to do 3d finetuning, set `iterations3d`. In any case, 3d forward simulations (without adjoint) only take a few seconds.
-=#
-# name = "ubend"
+
 calibrate = false
 F = Float32
 model_name = nothing # if load saved model
@@ -40,7 +37,7 @@ verbose = false
 #=
 We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 =#
-@load PROB_PATH name runs ports λc dx components study mode_solutions eps_2D eps_3D mode_height zmin use_gpu
+@load PROB_PATH name runs ports λc dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend
 eps_2D = F(stack(stack.(eps_2D)))'
 eps_3D = F(permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
 # heatmap(eps_2D) |> display
@@ -59,9 +56,10 @@ port_source_offset = n * dx
 eps_2D = pad(eps_2D, :replicate, m + n)
 eps_3D = pad(eps_3D, :replicate, (m + n, m + n, 0))
 origin = components.device.bbox[1] - (m + n) * dx
+heatmap(eps_2D) |> display
 
 if study == "inverse_design"
-    @load PROB_PATH designs design_layer targets maxiters design_config
+    @load PROB_PATH designs design_layer targets target_type eta maxiters design_config
     #=
     We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
     =#
@@ -89,7 +87,6 @@ if study == "inverse_design"
         end for (i, d) = enumerate(designs)
     ]
 
-    targets = SortedDict([F(λ) => SortedDict([(k) => v for (k, v) = pairs(d)]) for (λ, d) = pairs(targets)])
     # model0 = deepcopy(model)
     # heatmap(model())
 end
@@ -242,18 +239,26 @@ run_probs = [
             eps_3D
         end
         sz = size(ϵ)
-        prob = maxwell_setup(boundaries, sources, monitors, dx / λc, sz; F, ϵ, verbose)
+        prob = setup(boundaries, sources, monitors, dx / λc, sz; F, ϵ, zpml=0.2, verbose)
     end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
 ]
 
-if use_gpu
-    using CUDA
-    CUDA.allowscalar(false)
-    @assert CUDA.functional()
+if !isempty(gpu_backend)
+    Flux.gpu_backend!(gpu_backend)
+    if gpu_backend == "CUDA"
+        using CUDA
+        CUDA.allowscalar(true)
+        @assert CUDA.functional()
+    elseif gpu_backend == "AMDGPU"
+        using AMDGPU
+    elseif gpu_backend == "Metal"
+        using Metal
+    end
     run_probs = gpu.(run_probs)
 end
+g0 = run_probs[1].geometry |> deepcopy
 
-function write_sparams(model=nothing)
+function write_sparams(model=nothing; img=nothing)
     geometry = make_geometry(model)
     sol = [
         begin
@@ -263,10 +268,15 @@ function write_sparams(model=nothing)
             sol = solve(prob; verbose)
 
             ignore() do
-                try
-                    GLMakie.save(joinpath(path, "run$i.png"), quickie(sol),)
-                catch e
-                    @show e
+                if !isnothing(img)
+                    if img == ""
+                        img = "run$i.png"
+                    end
+                    try
+                        GLMakie.save(joinpath(path, img), quickie(sol),)
+                    catch e
+                        @show e
+                    end
                 end
             end
             sol
@@ -314,88 +324,83 @@ end
 #         end
 #         for (k, v) = pairs(d)
 #     ]) for (λ, d) = pairs(targets)])
-g0 = run_probs[1].geometry |> deepcopy
 # g0 = (; ϵ=eps_2D, μ=ones(F, size(eps_2D)), σ=zeros(F, size(eps_2D)), σm=zeros(F, size(eps_2D)))
 function make_geometry(model)
+    g = deepcopy(g0)
     if isnothing(model)
-        return deepcopy(g0)
+        return g
     end
     dict([k => begin
-        a = g0[k]
+        a = g[k]
         if haskey(design_config.fill, k)
             for (m, d) in zip(model, designs)
                 mask = m()
-
-                println(k)
-                # if k in props
-
                 f = design_config.fill[k]
                 v = design_config.void[k]
                 # for (f, v) = zip(design_config.fill, design_config.void)
                 p = (v .* (1 - mask) + f .* mask)
-                a = place(a, ((d.bbox[1] - origin) / dx) + 1, p; replace=true) |> F
-                # a = g0[k]
-                # b = Zygote.Buffer(a)
-                # copyto!(b, a)
-                # place!(b, round((d.bbox[1] - origin) / dx) + 1, p |> F)
-                # g[k] = copy(b)
+                # a = place(a, ((d.bbox[1] - origin) / dx) + 1, p; replace=true) |> F
+                b = Zygote.Buffer(a)
+                copyto!(b, a)
+                place!(b, round((d.bbox[1] - origin) / dx) + 1, p |> F)
+                a = copy(b)
             end
         end
         a
-    end for k = keys(g0,)])
+    end for k = keys(g,)])
 end
-# g = make_geometry(model)
-# f, a, pl = heatmap(g[:ϵ])
-# f, a, pl = heatmap(p)
-# Colorbar(f[1, 2], pl)
-# f
-
-function loss(sparams,)# targets)
+function loss(params,)# targets)
     # prob[:geometry] = make_geometry(device, ϵ1, ϵ2, model, model_origin)
-    mean([mae(abs.(sum.(getindex.((yhat,), string.(keys(y))))), values(y).mag) for (y, yhat) = zip(values(targets), values(sparams))])
+    mean([mae(getindex.((yhat,), string.(keys(y))), values(y)) for (y, yhat) = zip(values(targets), values(params))])
     # mean([mae(values(yhat),values(y)) for (yhat,y)=zip(targets,[solve(prob;geometry) for prob=run_probs])])
 end
-function sparam_family(sparams)
-
-    tparams = apply(abs2, sparams)
-    sparam_phasors = apply(sparams) do z
-        (abs(z), angle(z))
-    end
-    println(tparams)
-    # sparams = apply(reim, sparams)
-    sol = (; sparams, tparams, sparam_phasors)
-end
+virgin = true
 if study == "sparams"
-    sparams = write_sparams()
+    sparams = write_sparams(img="")
     # tparams = dict([k => abs(sparams[k])^2 for k = keys(sparams)])
-    # sol = [(; wavelength=λ, sparams=dict([k => reim(v) for (k, v) = pairs(d)])) for (λ, d) = pairs(sparams)]
     sol = sparam_family(sparams)
 elseif study == "inverse_design"
-    model = model
-    @show write_sparams(model)
-    opt = Adam(1)
+    sparams0 = 0
+    # @show write_sparams(model)
+    opt = Adam(eta)
     opt_state = Flux.setup(opt, model)
-    # for i = 1:maxiters
-    for i = 1:5
-        println("$i")
+    for i = 1:maxiters
+        # println("$i")
+        img = if virgin
+            global virgin = false
+            "before.png"
+        elseif i == maxiters
+            "after.png"
+        else
+            nothing
+        end
         @time global l, (dldm,) = withgradient(model) do m
-            global sparams = write_sparams(m)
-            loss(sparams)
+            global sparams = write_sparams(m; img)
+            params = if target_type == "sparams"
+                sparams
+            else
+                Porcupine.apply(abs2, sparams)
+            end
+            loss(params)
             # abs(sparams[1].mode_coeffs[2][1][1][1])
 
         end
-        l < 0 && break
+        if i == 1
+            global sparams0 = deepcopy(sparams)
+        end
+        # l < 0 && break
         Flux.update!(opt_state, model, dldm)
-        println(" $l\n")
+        println("$i loss $l\n")
     end
     for (i, (m, d)) = enumerate(zip(model, designs))
         Images.save(joinpath(path, "design$i.png"), Gray.(m() .< 0.5))
     end
-    model = model
     sol = (;
-        sparam_family(sparams)...,
+        before=sparam_family(sparams0),
+        after=sparam_family(sparams),
         designs,
-
+        path,
+        dx,
         # model,
         # designs=[m() for m in model],
     )

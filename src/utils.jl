@@ -60,10 +60,7 @@ end
 
 # Flux.gpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.gpu(d[k]) for k = keys(d)])
 # Flux.cpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.cpu(d[k]) for k = keys(d)])
-Flux.gpu(d::Dictlike) = apply(Flux.gpu, d)
-Flux.cpu(d::Dictlike) = apply(Flux.cpu, d)
-Flux.gpu(v::AbstractVector{T}) where {T<:Dictlike} = gpu.(v)
-Flux.cpu(v::AbstractVector{T}) where {T<:Dictlike} = cpu.(v)
+
 # Base.getproperty(d::AbstractDict, k::Symbol) = hasfield(d, k) ? getfield(d, k) : (haskey(d, k) ? d[k] : d[string(k)])
 Base.getproperty(d::AbstractDict, k::Symbol) = hasproperty(d, k) ? getfield(d, k) : d[k]
 

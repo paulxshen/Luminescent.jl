@@ -91,7 +91,7 @@ static_mask = F.(static_mask)
 ϵbase, ϵcore, ϵclad = F.((ϵbase, ϵcore, ϵclad))
 sz = size(static_mask)
 
-prob = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
+prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
 @unpack dx, dt, sz, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 # n = (size(Jy) .- size(monitor_instances[1])) .÷ 2
@@ -149,9 +149,9 @@ function metrics(model, prob; autodiff=true, history=nothing)
     @unpack u0, field_padding, source_instances, monitor_instances = prob
     # run simulation
     _step = if autodiff
-        maxwell_update
+        update
     else
-        maxwell_update!
+        update!
     end
     u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
     port_fluxes = reduce(T[1]+dt:dt:T[2], init=(u, 0)) do (u, port_fluxes), t
@@ -204,7 +204,7 @@ function runsave(model, prob; kw...)
     p = make_geometry(model, static_mask, prob)
     @unpack u0, dx, dt, field_padding, source_instances, monitor_instances = prob
     @showtime global u = accumulate((u, t) ->
-            maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
+            update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
         0:dt:T[2], init=u0)
 
     # move to cpu for plotting
@@ -263,7 +263,7 @@ ub = [0, sources[1].ub...] / λ
 sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 # sources = [Source(t -> cispi(2t), c, lb, ub; Jx=1)]
 
-prob = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin, Courant=0.3)
+prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin, Courant=0.3)
 if ongpu
     u0, model, static_mask, μ, σ, σm, field_padding, source_instances =
         gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))

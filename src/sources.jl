@@ -232,15 +232,29 @@ function apply(v::AbstractVector{<:SourceInstance}, t::Real, kw)
         k => begin
 
             a = kw[k]
-            a = cpu(a)
+            # gpu = isa(first(v).g, CuArray)
+            # if gpu
+            #     ignore() do
+            #         a = cpu(a)
+            #     end
+            # end
             for s = v
                 if k in s.k
                     mode = s._g[k]
-                    mode = cpu(mode)
+                    # if gpu
+                    #     ignore() do
+                    #         mode = cpu(mode)
+                    #     end
+                    # end
                     a += real(s.f(t) .* mode)
                 end
             end
-            gpu(a)
+            # if gpu
+            #     ignore() do
+            #         a = gpu(a)
+            #     end
+            # end
+            a
         end
         for k = keys(kw)
         # end for (k, a) = pairs(kw)

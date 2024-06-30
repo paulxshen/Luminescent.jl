@@ -25,7 +25,7 @@ function solve(prob, model=nothing; autodiff=true, history=nothing, comprehensiv
     # extrema(abs.(prob.source_instances[1]._g.Jy))
 
     # if save
-    _update = !autodiff && !save ? maxwell_update! : maxwell_update
+    _update = !autodiff && !save ? update! : update
     h = []
 
     # run simulation

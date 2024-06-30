@@ -9,7 +9,7 @@ include("../Porcupine.jl/src/del.jl")
 include("../Jello.jl/src/Base.jl")
 F = Float32
 include("utils.jl")
-include("maxwell_maxwell_setup.jl")
+include("setup.jl")
 include("plotstep.jl")
 
 Random.seed!(1)
@@ -51,7 +51,7 @@ boundaries = []
 monitors = [Monitor([0.0f0l, common_left_pad_amount], [:Ez, :Hx, :Hy]), Monitor([common_left_pad_amount, 0.0f0], [:Ez, :Hx, :Hy])]
 sources = [GaussianBeam(t -> cos(F(2π) * t), 0.05f0, (0.0f0, common_left_pad_amount), -1; Ez=1)]
 @unpack geometry_padding, field_padding, source_instances, monitor_configs, save_idxs, fields =
-    maxwell_setup(boundaries, sources, monitors, L, dx, polarization; F)
+    setup(boundaries, sources, monitors, L, dx, polarization; F)
 
 static_geometry = (; μ=ones(Int, dims), σ=zeros(Int, dims), σm=zeros(Int, dims))
 geometry = (; ϵ, static_geometry...)
@@ -124,7 +124,7 @@ if train
     # error()
     opt = Adam(0.1)
     # opt = AdaGrad()
-    opt_state = Flux.maxwell_setup(opt, model)
+    opt_state = Flux.setup(opt, model)
 
     # fig = Figure()
     # heatmap(fig[1, 1], m(0), axis=(; title="start of training"))

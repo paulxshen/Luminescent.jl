@@ -1,3 +1,6 @@
+import imageio.v3 as iio
+import textwrap
+from cairosvg import svg2png
 from .picToGDS import main
 import rasterio.features
 import shapely
@@ -18,18 +21,12 @@ from math import cos, pi, sin, tan
 import trimesh
 import matplotlib.pyplot as plt
 import numpy as np
-from .generic_tech import LAYER_STACK, LAYER_MAP, LAYER_VIEWS
+from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
+from .materials import MATERIAL_LIBRARY
 
 from gdsfactory.cross_section import Section
 import gdsfactory as gf
 import bson
-
-MATERIAL_EPS = {
-    "si": 3.4757**2,
-    "sio2": 1.444**2,
-    "Si": 3.4757**2,
-    "SiO2": 1.444**2,
-}
 
 
 def extend(endpoints, wm):
@@ -175,6 +172,35 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
     # return modes, ϵ, [w, h]
 
 
+def s2svg(area, bbox, dx):
+    # specify margin in coordinate units
+
+    width = bbox[2] - bbox[0]
+    height = bbox[3] - bbox[1]
+    props = {
+        'version': '1.1',
+        'baseProfile': 'full',
+        'width': '{width:.0f}px'.format(width=round(width/dx)),
+        'height': '{height:.0f}px'.format(height=round(height/dx)),
+        'viewBox': '%.1f,%.1f,%.1f,%.1f' % (bbox[0], bbox[1], width, height),
+        'xmlns': 'http://www.w3.org/2000/svg',
+        'xmlns:ev': 'http://www.w3.org/2001/xml-events',
+        'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+        # "fill": "#FFFFFF",
+    }
+
+    return textwrap.dedent(r'''
+        <?xml version="1.0" encoding="utf-8" ?>
+        <svg {attrs:s}>
+        {data:s}
+        </svg>
+    ''').format(
+        attrs=' '.join(['{key:s}="{val:s}"'.format(
+            key=key, val=props[key]) for key in props]),
+        data=area.svg()
+    ).strip().replace('stroke-width="2.0"', 'stroke-width="0.0"')
+
+
 def write_img(f, c, hidden_layer=[]):
     pgds = os.path.join(f"{f}.gds")
     c.write_gds(pgds, with_metadata=True)
@@ -191,9 +217,6 @@ def write_img(f, c, hidden_layer=[]):
                                  "stroke-dasharray": "8,8"} for k in hidden_layer},
         pad=0)
     return io.open(psvg, "r").read()
-    # png = cairosvg.svg2png(url="tmp", write_to=f)
-
-    # read svg -> write png
     # renderPM.drawToFile(svg2rlg("tmp"), f, fmt='PNG')
 
 
@@ -257,11 +280,20 @@ def raster_slice(scene, dx, center, w, h, normal):
     # plt.show()
 
     p = shapely.affinity.translate(p, (xmax-xmin)/2-x, (ymax-ymin)/2-y)
+    svg = s2svg(p, [0, 0, w, h], dx)
+    svg2png(bytestring=svg, write_to='_.png', background_color="#00000000",
+            output_width=round(w/dx), output_height=round(h/dx))
+    # p.plot()
+    # with open('_.svg', 'w') as f:
+    #     f.write(svg)
     # plot_polygon(p,)
     # plt.show()
 
-    img = rasterio.features.rasterize(
-        [p], transform=(dx, 0, 0, 0, dx, 0, 0, 0, dx), out_shape=(round(h/dx), round(w/dx),)).T
+    img = iio.imread('_.png')
+    img = np.sum(img, 2).T
+    img = (img-np.min(img))/(np.max(img)-np.min(img))
+    # img = rasterio.features.rasterize(
+    #     [p], transform=(dx, 0, 0, 0, dx, 0, 0, 0, dx), out_shape=(round(h/dx), round(w/dx),)).T
     # plt.imshow(img)
     # plt.show()
 
@@ -272,16 +304,15 @@ def material_slice(c, dx, center, w, h, normal, layers, layer_stack, layer_views
     layer_views = layer_views.copy()
     layer_views.layer_views["WGCLAD"].visible = True
     epsmin = 100
-    eps_array = None
+    eps_array = 0
     for layer in layers:
         layer_views.layer_views[f"{layer}"] = layer_views.layer_views["WGCLAD"]
         layer_views.layer_views[f"{layer}"].layer = layer
 
-        # for layer in [layer_map.WAFER]:
-        print(tuple(layer))
+        # print(tuple(layer))
         m = get_layer(layer_stack, layer).material
         if m is not None:
-            eps = MATERIAL_EPS[m]
+            eps = MATERIAL_LIBRARY[m].epsilon
             scene = c.to_3d(
                 layer_stack=layer_stack,
                 layer_views=layer_views,
@@ -294,11 +325,7 @@ def material_slice(c, dx, center, w, h, normal, layers, layer_stack, layer_views
             # _mask = trimesh.voxel.creation.voxelize(mesh, dx)
             if eps < epsmin:
                 epsmin = eps
-            _eps_array = eps * _mask
-            if eps_array is None:
-                eps_array = _eps_array
-            else:
-                eps_array += _eps_array*np.where(eps_array == 0, 1, 0)
+            eps_array = _mask*eps+(1-_mask)*eps_array
     eps_array = eps_array+np.where(eps_array == 0, 1, 0)*epsmin
     # plt.clf()
     # plt.imshow(eps_array)
@@ -307,7 +334,7 @@ def material_slice(c, dx, center, w, h, normal, layers, layer_stack, layer_views
 
 
 def material_voxelate(c, dx, center, l, w, h,  normal, layers, layer_stack, layer_views=LAYER_VIEWS):
-    return np.stack([material_slice(c, dx, [center[0]+x]+center[1:], w, h, normal,    layers, layer_stack, layer_views) for x in np.arange(0.001, l-.001, dx)],)
+    return np.stack([material_slice(c, dx, [center[0]+x]+center[1:], w, h, normal,    layers, layer_stack, layer_views) for x in np.arange(dx/2, l-.001, dx)],)
 
 
 def get_layer(layer_stack, layer):

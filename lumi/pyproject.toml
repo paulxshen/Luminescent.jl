@@ -1,21 +1,16 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-[project]
+[tool.poetry]
 name = "luminescent"
 version = "0.1.0"
-authors = [
-  { name="Paul Shen", email="pxshen@alumni.stanford.edu" },
-]
-description = "A small example package"
+description = "Calculate word counts in a text file."
+authors = ["Paul Shen"]
+license = "MIT"
 readme = "README.md"
-requires-python = ">=3.8"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
 
-[project.urls]
-Homepage = "https://github.com/paulxshen/Luminescent.jl"
-Issues = "https://github.com/paulxshen/Luminescent.jl/issues"
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

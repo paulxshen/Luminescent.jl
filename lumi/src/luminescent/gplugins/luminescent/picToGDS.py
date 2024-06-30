@@ -77,7 +77,7 @@ def main(fileName, sizeOfTheCell, layerNum, isDither, scale):
     for x in range(width):
         for y in range(height):
             if binaryImage.item(y, x) == 0:
-                print("({0}, {1}) is black".format(x, y))
+                # print("({0}, {1}) is black".format(x, y))
                 cell = gdspy.CellReference(
                     unitCell, origin=(x, height - y - 1))
                 grid.add(cell)

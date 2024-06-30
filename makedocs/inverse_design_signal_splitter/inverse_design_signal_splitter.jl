@@ -70,7 +70,7 @@ sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 μ = 1
 σ = zeros(F, sz)
 σm = zeros(F, sz)
-prob = maxwell_setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
+prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
 @unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 nt = round(Int, 1 / dt)
@@ -99,9 +99,9 @@ function metrics(model, ; T[1]=T[1], T[2]=T[2], autodiff=true)
     p = make_geometry(model, mask, μ, σ, σm)
     # run simulation
     _step = if autodiff
-        maxwell_update
+        update
     else
-        maxwell_update!
+        update!
     end
     u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
     v = reduce(T[1]+dt:dt:T[2], init=(u, port_fluxes0)) do (u, v), t
@@ -156,7 +156,7 @@ function runsave(model)
     # model = re(x)
     p = make_geometry(model, mask, μ, σ, σm)
     @showtime u = accumulate((u, t) ->
-            maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
+            update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
         0:dt:T[2], init=u0)
 
     # move to cpu for plotting

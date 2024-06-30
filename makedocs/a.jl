@@ -21,7 +21,7 @@ include("$p/boundaries.jl")
 include("$p/sources.jl")
 include("$p/monitors.jl")
 include("$p/utils.jl")
-include("$p/maxwell_maxwell_setup.jl")
+include("$p/setup.jl")
 
 using CairoMakie
 include("$p/plot_recipes.jl")
@@ -96,13 +96,13 @@ for (nx, α, nepochs) in schedule
     else
         global model.dims = design_dims
     end
-    # maxwell_setup FDTD
+    # setup FDTD
     polarization = :TM
     boundaries = [] # unspecified boundaries default to PML
     monitors = [Monitor(ports[1] / λ, [:Ez, :Hy]), Monitor(ports[2] / λ, [:Ez, :Hx,])]
     g = linear_interpolation(x, v)
     sources = [Source(t -> cos(F(2π) * t), (x, y) -> g(y), ports[1] / λ, [0, 0.6 / λ]; Jz=1)]
-    fdtd_configs = maxwell_setup(boundaries, sources, monitors, L, dx, polarization; F, Courant, T)
+    fdtd_configs = setup(boundaries, sources, monitors, L, dx, polarization; F, Courant, T)
     @unpack dt, geometry_padding, field_padding, source_instances, monitor_configs, fields = fdtd_configs
 
     a = ones(F, sz0)
@@ -114,7 +114,7 @@ for (nx, α, nepochs) in schedule
 
     dims = size(first(fields)) # full field size including PML padding
 
-    # maxwell_setup design region to be optimized
+    # setup design region to be optimized
     model0 = deepcopy(model)
     ϵ1 = 2.25f0 # oxide
     ϵ2 = 12.25f0 # silicon
@@ -125,7 +125,7 @@ for (nx, α, nepochs) in schedule
     @showtime global sol0 = sim(u0, p0, T, fdtd_configs)
     # recordsim(sol0, p0, "bend-pre.gif", title="start of training"; frameat, framerate)
 
-    opt_state = Flux.maxwell_setup(opt, model)
+    opt_state = Flux.setup(opt, model)
     # for i = 1:32
 
     for i = 1:nepochs

@@ -5,45 +5,37 @@ import json
 import subprocess
 import sys
 import time
-from arrow import get
-from flask import g
-import pylab
-import EMpy
-# import EMpy as em
-import numpy
 from functools import partial
 from math import cos, pi, sin
 import os
-import matplotlib.pyplot as plt
 import numpy as np
 
 from gdsfactory.cross_section import Section
 from sortedcontainers import SortedDict, SortedSet
-from .generic_tech import LAYER_STACK, LAYER_MAP, LAYER_VIEWS
+from sympy import N
+from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
 import gdsfactory as gf
 import bson
-import scipy as sp
 from .utils import *
 from .layers import *
 from .constants import *
 from .utils import *
 
-
-# include_layers=[layer_map.WG, layer_map.WAFER], ** kwargs):
+# include_layers=[LAYER.WG, LAYER.WAFER], ** kwargs):
 
 
 def setup(c, study, center_wavelength,  dx,
           zmargin,
           xmargin, name="",
           runs=[], wavelengths=[], sources=[], layer_stack=LAYER_STACK, layer_views=LAYER_VIEWS, exclude_layers=[
-              LAYER_MAP.DESIGN, GUESS], approx_2D=False,
-          use_gpu=False,
+              LAYER.DESIGN, GUESS], approx_2D=False,
+          gpu=None,
           path=PATH, plot=False, **kwargs):
     prob = dict()
     prob["path"] = os.path.join(
         path, datetime.datetime.now().isoformat(timespec="seconds").replace(":", "-"))
     prob["name"] = name
-    prob["use_gpu"] = use_gpu
+    prob["gpu_backend"] = gpu if gpu else ""
     ports = {
         p.name: {
             "center": p.center,
@@ -58,14 +50,14 @@ def setup(c, study, center_wavelength,  dx,
     prob["ports"] = ports
 
     mode_solutions = []
-    if study == "sparams":
+    if study == "detailed_sparams":
         1
     else:
         1
         # prob["sources"] = c.metadata["sources"]
         # prob["monitors"] = c.metadata["monitors"]
     layers = set(c.layers)-set(exclude_layers)
-    layers = sorted(layers, key=lambda layer: get_layer(
+    layers = sorted(layers, key=lambda layer: -get_layer(
         layer_stack, layer).mesh_order)
 
     hcore = layer_stack.layers["core"].thickness
@@ -118,15 +110,15 @@ def setup(c, study, center_wavelength,  dx,
                     })
     prob["mode_solutions"] = mode_solutions
     prob["runs"] = runs
-
-    device_svg = write_img("device", c,
-                           hidden_layer=(DESIGN, GUESS))
+    # device_svg = write_img("device", c,
+    #                        hidden_layer=(DESIGN, GUESS))
     prob["components"] = {
         "device": {
-            "svg": device_svg,
+            # "svg": device_svg,
             "bbox": c.bbox_np().tolist(),
         }}
     prob["dx"] = dx
+    prob["component"] = c
     # λc = (wavelengths[0]+wavelengths[-1])/2
     if center_wavelength is None:
         center_wavelength = mode_solutions[0]["wavelength"]
@@ -157,32 +149,3 @@ def longname(s):
     po, pi = port_number(o), port_number(i)
     mo, mi = mode_number(o), mode_number(i)
     return f"o{po}@{mo},o{pi}@{mi}"
-
-
-def solve(prob, ):
-    bson_data = bson.dumps(prob)
-    path = prob["path"]
-    if not os.path.exists(path):
-        os.makedirs(path)
-    prob_path = os.path.join(path, "prob.bson")
-    with open(prob_path, "wb") as f:
-        # Write the BSON data to the file
-        f.write(bson_data)
-    subprocess.run(
-        [f"julia", os.path.join(os.path.dirname(os.path.abspath(__file__)), "run.jl"), prob_path,])
-    return load_solution(path)
-
-
-def load_solution(path):
-    prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())
-    p = os.path.join(path, "sol.json")
-    # sol = bson.loads(p, "rb").read())["sol"]
-    sol = json.loads(open(p).read())
-    sol["sparams"] = {wl: {k: (v["re"]+1j*v["im"])
-                      for k, v in d.items()} for wl, d in sol["sparams"].items()}
-    if prob["study"] == "sparams":
-        pass
-    elif prob["study"] == "inverse_design":
-        # sol["designs"] = [np.array(d) for d in sol["designs"]]
-        pass
-    return sol

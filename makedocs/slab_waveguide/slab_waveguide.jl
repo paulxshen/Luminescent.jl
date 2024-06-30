@@ -56,9 +56,9 @@ monitors = [
     Monitor([l - δ, w / 2,], [0, -wwg / 2 - δ,], [0, wwg / 2 + δ,]; normal,),
 ]
 
-# maxwell_setup
+# setup
 boundaries = []# unspecified boundaries default to PML
-prob = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
+prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
 @unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, σm)
@@ -73,7 +73,7 @@ end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
 v = [power.(u, (m,),) for m = monitor_instances]
 
@@ -129,9 +129,9 @@ monitors = [
     Monitor([l - δ, w / 2, hbase], [0, -wwg / 2 - δ, -δ], [0, wwg / 2 + δ, hwg + δ]; normal,),
 ]
 
-# maxwell_setup
+# setup
 boundaries = []# unspecified boundaries default to PML
-prob = maxwell_setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
+prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
 @unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, σm)
@@ -146,7 +146,7 @@ end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
 v = [power.(u, (m,),) for m = monitor_instances]
 

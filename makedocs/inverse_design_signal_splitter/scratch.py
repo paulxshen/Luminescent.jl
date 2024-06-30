@@ -1,6 +1,10 @@
 import json
 import os
+import cairosvg
 
+from cairosvg import svg2png
+from tidy3d import material_library
+a = material_library
 dir = "_temp"
 p = os.path.join(dir, "sol.json")
 # sol = bson.loads(p, "rb").read())["sol"]

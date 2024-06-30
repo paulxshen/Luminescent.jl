@@ -96,7 +96,7 @@ Base.string(m::PointCloudMonitor) =
     $(m.label): point cloud monitor, centered at $(m.c|>d2), $(size(m.p,2)) points"""
 
 abstract type AbstractMonitorInstance end
-struct MonitorInstance <: AbstractMonitorInstance
+mutable struct MonitorInstance <: AbstractMonitorInstance
     d
     roi
     frame
@@ -107,7 +107,7 @@ struct MonitorInstance <: AbstractMonitorInstance
 
     wavelength_modes
 end
-# @functor MonitorInstance (n,)
+@functor MonitorInstance (wavelength_modes,)
 Base.ndims(m::MonitorInstance) = m.d
 Base.size(m::MonitorInstance) = length.(m.i)
 area(m::MonitorInstance) = m.v
@@ -205,7 +205,7 @@ function field(u, k, m=nothing)
     elseif k == "|H|"
         sqrt.(field(u, "|H|2", m))
     else
-        a = recursive_getindex(u, k)
+        a = u(k)
         if isnothing(m)
             return a
         elseif isa(m, MonitorInstance)

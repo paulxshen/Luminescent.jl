@@ -3,11 +3,20 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, steady_state_duration, d = prob
 
     p = geometry
-    p = cpu(p)
+    gpu = isa(first(values(p)), AbstractGPUArray)
+    # if gpu
+    #     ignore() do
+    #         p = cpu(p)
+    #     end
+    # end
     p = apply(geometry_padding, p)
     p = apply(subpixel_averaging, p)
-    p = gpu(p)
-    # return p.ϵ.ϵxx
+    if gpu
+        ignore() do
+            p = gpu(p)
+        end
+    end
+    global aaaa = p
 
     Δ = [transient_duration, steady_state_duration]
     T = cumsum(Δ)
@@ -16,7 +25,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     # extrema(abs.(prob.source_instances[1]._g.Jy))
 
     # if save
-    _update = !autodiff && !save ? maxwell_update! : maxwell_update
+    _update = !autodiff && !save ? update! : update
     h = []
 
     # run simulation
@@ -32,8 +41,9 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
                 # E = dict([k => u[k, m] for k = Enames])
                 # H = dict([k => u[k, m] for k = Hnames])
                 # (; E, H)
-                E = [u[k, m] for k = Enames]
-                H = [u[k, m] for k = Hnames]
+                E = [u[k, m] |> F for k = Enames]
+                H = [u[k, m] |> F for k = Hnames]
+                # global aaab, bbbb = E, H
                 [E, H]
             end * cispi(-2t / λ) for λ = m.wavelength_modes |> keys]
             for m = monitor_instances
@@ -60,8 +70,10 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
                 if polarization == :TE
                     # global E, H
                     Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
-                    Ex += 0real(Ez[1])
-                    Hy += 0real(Ez[1])
+                    if !gpu
+                        Ex += 0real(Ez[1])
+                        Hy += 0real(Ez[1])
+                    end
                     _mode = (; Ex, Hy, Ez)
                 else
                     Hx, Ey, Hz = invreframe(frame(m), vcat(H, E))

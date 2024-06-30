@@ -1,29 +1,16 @@
-from ast import mod
-from multiprocessing.reduction import duplicate
-import signal
-import wave
-from cv2 import add, norm
-import pylab
-import EMpy
-# import EMpy as em
-import numpy
-from functools import partial
-from math import cos, pi, sin
-import os
-import matplotlib.pyplot as plt
-import numpy as np
 
 from gdsfactory.cross_section import Section
-from .generic_tech import LAYER_STACK, LAYER_MAP, LAYER_VIEWS
+from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
 
 import gdsfactory as gf
 import bson
 # import .utils as utils
 from .utils import *
+from .constants import *
 # from layers import *
 
 
-def bend(r, wwg=.5, lwg=1, layer_map=LAYER_MAP, **kwargs):
+def bend(r, wwg=.5, lwg=1, LAYER=LAYER, **kwargs):
     name = "bend"
     design = gf.Component()
     init = gf.Component()
@@ -37,19 +24,19 @@ def bend(r, wwg=.5, lwg=1, layer_map=LAYER_MAP, **kwargs):
     lstub = lwg/2
     # Extrude the Path and the CrossSection
     wg1 = device << gf.path.extrude(gf.path.straight(
-        length=lwg), layer=layer_map.WG, width=wwg)
+        length=lwg), layer=LAYER.WG, width=wwg)
     wg2 = device << gf.path.extrude(gf.path.straight(
-        length=lwg), layer=layer_map.WG, width=wwg)
+        length=lwg), layer=LAYER.WG, width=wwg)
     arc = device << gf.path.extrude(gf.path.arc(
-        r, start_angle=0), layer=layer_map.WG, width=wwg)
+        r, start_angle=0), layer=LAYER.WG, width=wwg)
 
     ld = wd = 2*r
     design.add_polygon([(0, 0), (ld, 0), (ld, wd), (0, wd)],
-                       layer=layer_map.DESIGN)
+                       layer=LAYER.DESIGN)
     design.add_port(name="o1", center=(0, r), width=wwg,
-                    orientation=180, layer=layer_map.WG)
+                    orientation=180, layer=LAYER.WG)
     design.add_port(name="o2", center=(r, 0), width=wwg,
-                    orientation=-90, layer=layer_map.WG)
+                    orientation=-90, layer=LAYER.WG)
     design = device << design
 
     wg1.connect("o2", design.ports["o1"])
@@ -61,15 +48,52 @@ def bend(r, wwg=.5, lwg=1, layer_map=LAYER_MAP, **kwargs):
 
     # utils.write_img("device", device, DESIGN)
     # utils.write_img("guess", init, DESIGN)
-    c = add_bbox(device, layers=[layer_map.WGCLAD, layer_map.BOX],
+    c = add_bbox(device, layers=[LAYER.WGCLAD, LAYER.BOX],
                  nonport_margin=0.4)
+    return c
+
+
+def mimo(l, w, wwg, m, n,
+         layer_wg=LAYER.WG, layer_wgclad=LAYER.WGCLAD, layer_box=LAYER.BOX, layer_design=LAYER.DESIGN,
+         **kwargs):
+    design = gf.Component()
+
+    c = gf.Component("mimo")
+    lwg = 2*wwg
+    p = [(0, 0), (l, 0), (l, w), (0, w)]
+    design.add_polygon(p,                       layer=layer_design)
+    c.add_polygon(p,                       layer=layer_wg)
+
+    din = w/m
+    dout = w/n
+    yin = din/2
+    yout = dout/2
+    for i in range(m):
+        name = "o"+str(i+1)
+        design.add_port(name=name, center=(0, yin), width=wwg,
+                        orientation=180, layer=layer_wg)
+        wg = c << gf.components.straight(length=lwg, width=wwg, layer=layer_wg)
+        wg.connect("o2", design.ports[name])
+        c.add_port(name=name, port=wg.ports["o1"])
+        yin += din
+    for i in range(n):
+        name = "o"+str(i+1+m)
+        design.add_port(name=name, center=(l, yout), width=wwg,
+                        orientation=0, layer=layer_wg)
+        wg = c << gf.components.straight(length=lwg, width=wwg, layer=layer_wg)
+        wg.connect("o2", design.ports[name])
+        c.add_port(name=name, port=wg.ports["o1"])
+        yout += dout
+    design = c << design
+    c = add_bbox(c, layers=[layer_wgclad, layer_box],
+                 nonport_margin=XMARGIN)
     return c
 
 
 # def ubend_template(r, l, wwg, lwg=0,
     #                wavelength=1.55, dx=0.05,
     #                #    ϵcore=ϵcore, ϵclad=ϵclad,
-    #                dir="", init=None, lmin=0.1, layer_map=LAYER, **kwargs):
+    #                dir="", init=None, lmin=0.1, LAYER=LAYER, **kwargs):
     # name = "ubend"
     # design = gf.Component("design")
     # device = gf.Component("ubend")
@@ -80,9 +104,9 @@ def bend(r, wwg=.5, lwg=1, layer_map=LAYER_MAP, **kwargs):
 
     # # Extrude the Path and the CrossSection
     # wg1 = device << gf.path.extrude(gf.path.straight(
-    #     length=lwg), layer=layer_map.WG, width=wwg)
+    #     length=lwg), layer=LAYER.WG, width=wwg)
     # wg2 = device << gf.path.extrude(gf.path.straight(
-    #     length=lwg), layer=layer_map.WG, width=wwg)
+    #     length=lwg), layer=LAYER.WG, width=wwg)
 
     # ld = l
     # wd = 2*r+wwg
@@ -102,9 +126,9 @@ def bend(r, wwg=.5, lwg=1, layer_map=LAYER_MAP, **kwargs):
     #     init = design << init
 
     # design.add_port(name="o1", center=(0, r), width=wwg,
-    #                 orientation=180, layer=layer_map.PORT)
+    #                 orientation=180, layer=LAYER.PORT)
     # design.add_port(name="o2", center=(0, -r), width=wwg,
-    #                 orientation=180, layer=layer_map.PORT)
+    #                 orientation=180, layer=LAYER.PORT)
     # # design = device << design
 
     # wg1.connect("o2", design.ports["o1"], allow_layer_mismatch=True)

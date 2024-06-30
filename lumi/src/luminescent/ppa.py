@@ -8,7 +8,7 @@ import pcells
 import gdsfactory as gf
 # import picToGDS as pg
 import luminescent.gplugins.luminescent.utils as utils
-from generic_tech import LAYER_STACK, LAYER_MAP, LAYER_VIEWS
+from generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
 
 dx = .05
 wwg = 0.4
@@ -19,8 +19,8 @@ lmin = 0.1
 
 
 c, sources, monitors, design = ubend_template(
-    r,  l, wwg, dx=dx, wavelength=1.55, layer_map=LAYER_MAP)
-c = add_bbox(c, layers=[LAYER_MAP.BOX, LAYER_MAP.WGCLAD], margin=.2)
+    r,  l, wwg, dx=dx, wavelength=1.55, LAYER=LAYER)
+c = add_bbox(c, layers=[LAYER.BOX, LAYER.WGCLAD], margin=.2)
 prob = inverse_design_problem(
     c, lmin=lmin, dx=dx, sources=sources, monitors=monitors, design=design, layer_stack=LAYER_STACK)
 solve(prob)

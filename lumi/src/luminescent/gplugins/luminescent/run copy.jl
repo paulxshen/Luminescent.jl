@@ -41,7 +41,7 @@ verbose = false
 #=
 We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 =#
-@load PROB_PATH name runs ports λc dx components study mode_solutions eps_2D eps_3D mode_height zmin use_gpu
+@load PROB_PATH name runs ports λc dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu
 eps_2D = F(stack(stack.(eps_2D)))'
 eps_3D = F(permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
 # heatmap(eps_2D) |> display
@@ -243,12 +243,12 @@ run_probs = [
             eps_3D
         end
         sz = size(ϵ)
-        prob = maxwell_setup(boundaries, sources, monitors, dx / λc, sz; F, ϵ)
+        prob = setup(boundaries, sources, monitors, dx / λc, sz; F, ϵ)
         global bb = prob
     end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
 ]
 
-if use_gpu
+if gpu
     CUDA.allowscalar(false)
     @assert CUDA.functional()
     run_probs = gpu.(run_probs)

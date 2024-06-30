@@ -10,7 +10,7 @@ function runsave(model, prob; kw...)
     p = make_geometry(model, prob)
     @unpack u0, dx, dt, field_padding, source_instances, monitor_instances = prob
     @showtime global u = accumulate((u, t) ->
-            maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
+            update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
         0:dt:T[2], init=u0)
 
     # move to cpu for plotting
@@ -157,3 +157,7 @@ We now do adjoint optimization. The first few iterations may show very little ch
 
 # masks = Dict([k => imresize(F.(convert.(Gray, FileIO.load(joinpath(DIR, "$k.png")) |> transpose),), round.(Int, (components[k].bbox_np()[2] - components[k].bbox_np()[1]) / dx) |> Tuple) .> tol for k in component_names])
 # @unpack device, = masks
+print("pre optim tparams:")
+print(json.dumps(sol["before"]["tparams"]))
+print("post optim tparams:")
+print(json.dumps(sol["after"]["tparams"]))

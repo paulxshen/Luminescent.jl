@@ -1,4 +1,3 @@
-from re import L
 import gdsfactory as gf
 from gdsfactory.generic_tech.layer_map import LAYER
 from gdsfactory.technology import LogicalLayer, LayerStack, LayerLevel
@@ -31,7 +30,6 @@ class MyLayerMap(LayerMap):
     GUESS: Layer = (201, 0)
 
 
-LAYER_MAP = MyLayerMap
 LAYER = MyLayerMap
 
 nm = 1e-3
@@ -51,20 +49,20 @@ LAYER_STACK.layers.update(dict(
         layer=layer_core,
         thickness=thickness_wg,
         zmin=0,
-        material="si",
+        material="Si",
         mesh_order=2,
     ),
     box=LayerLevel(
         layer=layer_box,
         thickness=box_thickness,
         zmin=-box_thickness,
-        material="sio2",
+        material="SiO2",
         mesh_order=9,
     ),
     clad=LayerLevel(
         layer=layer_clad,
         zmin=0.0,
-        material="sio2",
+        material="SiO2",
         thickness=thickness_clad,
         mesh_order=10,
     ),

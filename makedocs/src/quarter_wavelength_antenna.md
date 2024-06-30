@@ -40,7 +40,7 @@ sources = [
     Source(t -> cos(2π * t), [l / 2, l / 2, 0.125], [0, 0, 0.25]; Jz=1),
 ]
 
-prob = maxwell_setup(boundaries, sources, monitors, dx, sz; F,)
+prob = setup(boundaries, sources, monitors, dx, sz; F,)
 @unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, σm)
@@ -54,10 +54,10 @@ if dogpu
     u0, p, field_padding, source_instances = gpu.((u0, p, field_padding, source_instances))
 end
 ```
-We run simulation as an `accumulate` loop. `maxwell_update!` applies Maxwells equations as staggered time stepping on E, H. It's mutating so a copy is made in order to save sequence of states
+We run simulation as an `accumulate` loop. `update!` applies Maxwells equations as staggered time stepping on E, H. It's mutating so a copy is made in order to save sequence of states
 ```julia
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    maxwell_update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
 end
 
 # move back to cpu for plotting

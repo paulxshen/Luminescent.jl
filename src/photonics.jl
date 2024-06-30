@@ -28,7 +28,7 @@ function calibrate_mode(mode, ϵmode, dx, λ=1.55; F=Float32, verbose=false, nam
     tangent = [0, -1, zeros(d - 2)...]
     m = [ModalMonitor(mode, [x, (L / 2)...], normal, tangent, L) for x = range(0, l0, 3) + source_monitor_margin + source_boundary_margin]
     s = ModalSource(t -> cispi(2t), mode, [source_monitor_margin, (L / 2)...], -normal, tangent, L;)
-    prob = maxwell_setup([], [s], m, dx, sz; F, ϵ, verbose)
+    prob = setup([], [s], m, dx, sz; F, ϵ, verbose)
     global aa = prob
     sol = solve(prob; comprehensive=true, verbose=true,)
     @unpack fields, modes, forward_mode_powers = sol

@@ -103,7 +103,7 @@
                     are simply bundled as a vector of vectors of arrays . Boundary conditions pad the field arrays . PML
                     paddings are multilayered, while All other boundaries add single layers. Paddings are stateful and
                     permanent, increasing the size of field and geometry arrays. Finite differencing happens every
-                    update maxwell_update and are coordinated to implictly implement a staggered Yee&#39;s grid .</p>
+                    update update and are coordinated to implictly implement a staggered Yee&#39;s grid .</p>
                 <h2 id="Sources"><a class="docs-heading-anchor" href="#Sources">Sources</a><a id="Sources-1"></a><a
                         class="docs-heading-anchor-permalink" href="#Sources" title="Permalink"></a></h2>
                 <p>If a source has fewer nonzero dimensions than the simulation domain, its signal will get normalized
@@ -276,38 +276,36 @@ function Monitor(c, lb, ub; normal=nothing, label=&quot;&quot;)</code></pre>
                         class="docs-heading-anchor-permalink" href="#Physics" title="Permalink"></a></h2>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding"
-                            id="Main.Luminescent.maxwell_update!"
-                            href="#Main.Luminescent.maxwell_update!"><code>Main.Luminescent.maxwell_update!</code></a> —
+                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminescent.update!"
+                            href="#Main.Luminescent.update!"><code>Main.Luminescent.update!</code></a> —
                         <span class="docstring-category">Function</span>
                     </header>
                     <section>
                         <div>
-                            <pre><code class="language-julia hljs">function maxwell_update!(u, p, t, field_padding, source_instances)
-function maxwell_update!(u1, u, p, t, field_padding, source_instances)</code></pre>
-                            <p>Updates fields for 3d. Please use <code>maxwell_update</code> instead of
-                                <code>maxwell_update!</code> when doing AD. Mutating <code>maxwell_update!</code> Writes
+                            <pre><code class="language-julia hljs">function update!(u, p, t, field_padding, source_instances)
+function update!(u1, u, p, t, field_padding, source_instances)</code></pre>
+                            <p>Updates fields for 3d. Please use <code>update</code> instead of
+                                <code>update!</code> when doing AD. Mutating <code>update!</code> Writes
                                 new fields either onto old fields or into buffer arrays u1
                             </p>
                         </div><a class="docs-sourcelink" target="_blank"
-                            href="https://github.com/paulxshen/fdtd/blob/fcac5a329d42bfaca96c4863efa75a99f6707086/src/maxwell_update.jl#L14-L19">source</a>
+                            href="https://github.com/paulxshen/fdtd/blob/fcac5a329d42bfaca96c4863efa75a99f6707086/src/update.jl#L14-L19">source</a>
                     </section>
                 </article>
                 <article class="docstring">
                     <header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;"
-                            title="Collapse docstring"></a><a class="docstring-binding"
-                            id="Main.Luminescent.maxwell_update"
-                            href="#Main.Luminescent.maxwell_update"><code>Main.Luminescent.maxwell_update</code></a> —
+                            title="Collapse docstring"></a><a class="docstring-binding" id="Main.Luminescent.update"
+                            href="#Main.Luminescent.update"><code>Main.Luminescent.update</code></a> —
                         <span class="docstring-category">Function</span>
                     </header>
                     <section>
                         <div>
-                            <pre><code class="language-julia hljs">function maxwell_update(u, p, t, field_padding, source_instances)</code></pre>
+                            <pre><code class="language-julia hljs">function update(u, p, t, field_padding, source_instances)</code></pre>
                             <p>Updates fields for 3d in a manner amenable to AD. See also Mutating
-                                <code>maxwell_update!</code>
+                                <code>update!</code>
                             </p>
                         </div><a class="docs-sourcelink" target="_blank"
-                            href="https://github.com/paulxshen/fdtd/blob/fcac5a329d42bfaca96c4863efa75a99f6707086/src/maxwell_update.jl#L94-L98">source</a>
+                            href="https://github.com/paulxshen/fdtd/blob/fcac5a329d42bfaca96c4863efa75a99f6707086/src/update.jl#L94-L98">source</a>
                     </section>
                 </article>
                 <h2 id="GPU-support"><a class="docs-heading-anchor" href="#GPU-support">GPU support</a><a
@@ -320,7 +318,7 @@ function maxwell_update!(u1, u, p, t, field_padding, source_instances)</code></p
                         id="Automatic-differentiation-adjoints-1"></a><a class="docs-heading-anchor-permalink"
                         href="#Automatic-differentiation-adjoints" title="Permalink"></a></h2>
                 <p>Compatible with <code>Zygote.jl</code> and <code>Flux.jl</code>. Please use
-                    <code>maxwell_update</code> instead of <code>maxwell_update!</code> when doing AD. See inverse
+                    <code>update</code> instead of <code>update!</code> when doing AD. See inverse
                     design examples
                 </p>
                 <h2 id="Generative-inverse-design"><a class="docs-heading-anchor"

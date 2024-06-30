@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from gdsfactory.cross_section import Section
-from .generic_tech import LAYER_STACK, LAYER_MAP, LAYER_VIEWS
+from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
 import gdsfactory as gf
 from .utils import *
 from .layers import *
@@ -60,7 +60,3 @@ def sparams_problem(c: gf.Component, xmargin=XMARGIN, zmargin=ZMARGIN, dx=.05, w
     # prob["runs"] = runs
     prob["study"] = "sparams"
     return prob
-
-
-def write_sparams(*args, **kwargs):
-    return solve(sparams_problem(*args, **kwargs))

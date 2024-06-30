@@ -6,12 +6,13 @@ import subprocess
 from functools import partial
 from math import cos, pi, sin
 import os
+import wave
 import matplotlib.pyplot as plt
 import numpy as np
 
 from gdsfactory.cross_section import Section
 from sortedcontainers import SortedDict, SortedSet
-from .generic_tech import LAYER_STACK, LAYER_MAP, LAYER_VIEWS
+from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
 import gdsfactory as gf
 import bson
 import scipy as sp
@@ -21,20 +22,41 @@ from .constants import *
 from .utils import *
 from .setup import *
 from .sparams import *
+from .materials import MATERIAL_LIBRARY
 
 
-def inverse_design_problem(c, sparam_targets, lmin=.1, symmetries=[],
-                           maxiters=25,
-                           design_region_layer=LAYER_MAP.DESIGN,
-                           design_guess_layer=LAYER_MAP.GUESS,
-                           design_layer=LAYER_MAP.WG,
-                           void_layer=LAYER_MAP.WGCLAD,
+def inverse_design_problem(c,  lmin=.1, symmetries=[],
+                           tparam_targets={}, sparam_targets={},
+                           maxiters=25, eta=.1,
+                           design_region_layer=LAYER.DESIGN,
+                           design_guess_layer=LAYER.GUESS,
+                           design_layer=LAYER.WG,
+                           void_layer=LAYER.WGCLAD,
                            layer_stack=LAYER_STACK,
-                           plot=False, **kwargs):
+                           plot=False, approx_2D=True, **kwargs):
+    if not approx_2D:
+        raise NotImplementedError(
+            "3D inverse design feature must be requested from Luminescent AI info@luminescentai.com")
+
+    if tparam_targets:
+        target_type = "tparams"
+        targets = tparam_targets
+    elif sparam_targets:
+        target_type = "sparams"
+        targets = sparam_targets
+
     targets = {
-        wl: {longname(k): v for k, v in d.items()}for wl, d in sparam_targets.items()}
-    keys = list(targets.values())[0].keys()
-    prob = sparams_problem(c, layer_stack=layer_stack, keys=keys, **kwargs)
+        wl: {
+            longname(k): v for k, v in d.items()
+        } for wl, d in targets.items()}
+    keys = sorted(set(sum([list(d.keys()) for d in targets.values()], [])))
+    wavelengths = sorted(targets.keys())
+
+    prob = sparams_problem(c, layer_stack=layer_stack, wavelengths=wavelengths,
+                           keys=keys, approx_2D=approx_2D, ** kwargs)
+    prob["targets"] = targets
+    prob["target_type"] = target_type
+    prob["eta"] = eta
     prob["study"] = "inverse_design"
     polys = c.extract([design_region_layer]).get_polygons()
     if not symmetries:
@@ -60,26 +82,25 @@ def inverse_design_problem(c, sparam_targets, lmin=.1, symmetries=[],
     l = get_layer(layer_stack, design_layer)
     d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
     # d = vars(prob["design_layer"])
-    d["ϵ"] = MATERIAL_EPS[d["material"]]
+    d["ϵ"] = MATERIAL_LIBRARY[d["material"]].epsilon
     prob["design_config"]["fill"] = d
 
     l = get_layer(layer_stack, void_layer)
     d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
-    d["ϵ"] = MATERIAL_EPS[d["material"]]
+    d["ϵ"] = MATERIAL_LIBRARY[d["material"]].epsilon
     prob["design_config"]["void"] = d
 
     prob["design_layer"] = d
-    prob["targets"] = targets
     prob["maxiters"] = maxiters
     return prob
 
 
-def apply_design(c0, prob, sol):
-    path = prob["path"]
+def apply_design(c0,  sol):
+    path = sol["path"]
     a = gf.Component()
     a.add_ref(c0)
     dl = 0
-    for i, d in enumerate(prob["designs"]):
+    for i, d in enumerate(sol["designs"]):
         dl = d["layer"]
         x0, y0 = d["bbox"][0]
         x1, y1 = d["bbox"][1]
@@ -93,7 +114,7 @@ def apply_design(c0, prob, sol):
         if layer != dl:
             c.add_ref(c0.extract([layer]))
     c.show()
-    pic2gds(os.path.join(path, f"design{i+1}.png"), prob["dx"])
+    pic2gds(os.path.join(path, f"design{i+1}.png"), sol["dx"])
     g = gf.import_gds(os.path.join(path, f"design{i+1}.gds"), "TOP",
                       read_metadata=True)
     g = c << g
