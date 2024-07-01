@@ -38,7 +38,7 @@ verbose = false
 #=
 We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 =#
-@load PROB_PATH name runs ports λc dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend
+@load PROB_PATH name runs ports λc dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
 eps_2D = F(stack(stack.(eps_2D)))'
 eps_3D = F(permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
 # heatmap(eps_2D) |> display
@@ -109,6 +109,51 @@ device = 0
 device, dx, λc =
     F.((device, dx, λc))
 # guess = F.(guess)
+for ms = mode_solutions
+    if !haskey(ms, :calibrated_modes)
+        ms[:calibrated_modes] = []
+    end
+    for mode in ms.modes
+
+        sz = ms.size
+        eps = ms.eps
+
+        mode = (; [k => transpose(complex.(stack.(v)...)) |> F for (k, v) in mode |> pairs]...)
+        ϵmode = eps |> stack |> transpose .|> F
+
+        # sz = round(sz / dx) |> Tuple
+        # # sz = size() - 1
+        # mode = (; Pair.(keys(mode), [resize(v, size(v) - 1) for v in values(mode)])...)
+        # ϵ = resize(ϵ, sz)
+        if d == 2
+            mode, ϵmode = collapse_mode(mode, ϵmode)
+            i = round(Int, size(ϵmode, 1) / 2)
+            ϵcore_ = ϵmode[i]
+            ϵmode = maximum(ϵmode, dims=2) |> vec
+            ϵmode = min.(ϵmode, ϵcore_)
+        end
+        # mode = normalize_mode(mode, dx / λc)
+        mode = keepxy(mode)
+        global mode0 = deepcopy(mode)
+
+        if calibrate
+            @unpack mode, power = calibrate_mode(mode, ϵmode, dx / λc)
+            # global mode /= sqrt(power)
+            # plot(abs.(mode.Ex)) |> display
+            # plot(abs.(mode0.Ex)) |> display
+            @unpack power, = calibrate_mode(mode, ϵmode, dx / λc;)
+            mode /= sqrt(power)
+
+            @unpack power, sol = calibrate_mode(mode, ϵmode, dx / λc; verbose=true)
+            GLMakie.save(joinpath(path, "calibration.png"), quickie(sol),)
+            @show power
+            # global mode2 = deepcopy(mode)
+        end
+
+        # error()
+        push!(ms[:calibrated_modes], mode)
+    end
+end
 
 # modal source
 runs_sources = [
@@ -124,52 +169,7 @@ runs_sources = [
                     i = findfirst(mode_solutions) do v
                         isapprox(λ, v.wavelength) && string(port) in string.(v.ports)
                     end
-                    ms = mode_solutions[i]
-                    if !haskey(ms, :calibrated_modes)
-                        ms[:calibrated_modes] = Any[nothing for i = eachindex(ms.modes)]
-                    end
-                    mode = ms[:calibrated_modes][mn+1]
-                    if isnothing(mode)
-                        mode = ms.modes[mn+1]
-
-                        sz = ms.size
-                        eps = ms.eps
-
-                        mode = (; [k => transpose(complex.(stack.(v)...)) |> F for (k, v) in mode |> pairs]...)
-                        ϵmode = eps |> stack |> transpose .|> F
-
-                        # sz = round(sz / dx) |> Tuple
-                        # # sz = size() - 1
-                        # mode = (; Pair.(keys(mode), [resize(v, size(v) - 1) for v in values(mode)])...)
-                        # ϵ = resize(ϵ, sz)
-                        if d == 2
-                            mode, ϵmode = collapse_mode(mode, ϵmode)
-                            i = round(Int, size(ϵmode, 1) / 2)
-                            ϵcore_ = ϵmode[i]
-                            ϵmode = maximum(ϵmode, dims=2) |> vec
-                            ϵmode = min.(ϵmode, ϵcore_)
-                        end
-                        # mode = normalize_mode(mode, dx / λc)
-                        mode = keepxy(mode)
-                        global mode0 = deepcopy(mode)
-
-                        if calibrate
-                            @unpack mode, power = calibrate_mode(mode, ϵmode, dx / λc)
-                            # global mode /= sqrt(power)
-                            # plot(abs.(mode.Ex)) |> display
-                            # plot(abs.(mode0.Ex)) |> display
-                            @unpack power, = calibrate_mode(mode, ϵmode, dx / λc;)
-                            mode /= sqrt(power)
-
-                            @unpack power, sol = calibrate_mode(mode, ϵmode, dx / λc; verbose=true)
-                            GLMakie.save(joinpath(path, "calibration.png"), quickie(sol),)
-                            @show power
-                            # global mode2 = deepcopy(mode)
-                        end
-
-                        # error()
-                        ms[:calibrated_modes][mn+1] = mode
-                    end
+                    mode = mode_solutions[i].calibrated_modes[mn+1]
                     # sum(abs.(aa.source_instances[1].g.Jy))
                     # heatmap(abs.(bb.source_instances[1]._g.Jy))
                     n = -sig.normal

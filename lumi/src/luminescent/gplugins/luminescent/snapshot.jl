@@ -5,17 +5,17 @@ catch e
 end
 ° = π / 180
 function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorithm=nothing,
-    azimuth=-75°, elevation=75°,
+    azimuth=75°, elevation=75°,
     kw...)
     if ndims(a) == 2
         if isnothing(colorrange)
-            colorrange = extrema(a)
+            colorrange = 2extrema(a)
         end
         aspect = size(a, 1) / size(a, 2)
         ax, pl = heatmap(g[1, 1], real(a); axis=(; kw..., title, aspect), colormap, colorrange=colorrange)
     else
         if isnothing(colorrange)
-            colorrange = extrema(a) * 0.2
+            colorrange = extrema(a) * 0.1
         end
         ax, pl = GLMakie.volume(g[1, 1], real(a), ; axis=(; kw..., type=Axis3, title,), colormap, colorrange, algorithm)
         ax.elevation[] = elevation

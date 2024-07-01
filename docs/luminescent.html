@@ -7484,20 +7484,6 @@ a.anchor-link {
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h1 id="Lumi-FDTD-with-GPU-acceleration-&amp;-inverse-design-(experimental)">Lumi FDTD with GPU acceleration &amp; inverse design (experimental)<a class="anchor-link" href="#Lumi-FDTD-with-GPU-acceleration-&amp;-inverse-design-(experimental)">¶</a></h1><h2 id="Intro">Intro<a class="anchor-link" href="#Intro">¶</a></h2><p>Lumi FDTD by <a href="https://luminescentai.com/">Luminescent AI</a> is a GPU and automatic differentiation (AD) compatible FDTD package for simulation and inverse design in semiconductor photonics. Create layout in gdsfactory. Then use the Lumi Python  plugin for calculating sparams or perform inverse design on Lumi's Julia backend.</p>
 <p>Experimental release . Expect bugs</p>
-<h2 id="Installation">Installation<a class="anchor-link" href="#Installation">¶</a></h2><p>Install Python frontend . recommend Anaconda. Inside Anaconda Prompt do:</p>
-<ul>
-<li><code>pip install luminescent</code></li>
-</ul>
-<p>Install Julia backend</p>
-<ul>
-<li>Install Julia language</li>
-<li>Open Julia REPL via <code>julia</code> in terminal. Then install packages via</li>
-</ul>
-<p><code>]add UnPack, BSON,JSON,Dates, DataStructures,ImageTransformations, Meshes, CoordinateTransformations, GPUArraysCore, StatsBase, Zygote, Jello,ArrayPadding, AbbreviatedStackTraces, Flux, FileIO,Images,GLMakie,Functors,Lazy</code></p>
-<ul>
-<li>If using GPU, install corresponding Julia GPU backend</li>
-</ul>
-<p><code>]add CUDA</code> or <code>AMDGPU</code> or <code>Metal</code></p>
 </div>
 </div>
 </div>
@@ -7508,6 +7494,20 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Gallery">Gallery<a class="anchor-link" href="#Gallery">¶</a></h2><p><img alt="" src="assets/demux.png"/>
+Inverse Design of wavelength domain demultiplexer</p>
+<h2 id="Installation">Installation<a class="anchor-link" href="#Installation">¶</a></h2><p>Install Python frontend . recommend Anaconda. Inside Anaconda Prompt do:</p>
+<ul>
+<li><code>pip install luminescent</code></li>
+</ul>
+<p>Install Julia backend</p>
+<ul>
+<li>Install Julia language</li>
+<li>Open Julia REPL via <code>julia</code> in terminal. Then install packages via</li>
+<li><code>]add UnPack, BSON,JSON,Dates, DataStructures,ImageTransformations, Meshes, CoordinateTransformations, GPUArraysCore, StatsBase, Zygote, Jello,ArrayPadding, AbbreviatedStackTraces, Flux, FileIO,Images,GLMakie,Functors,Lazy</code></li>
+<li>If using GPU, install corresponding Julia GPU backend</li>
+<li><code>]add CUDA</code> or <code>AMDGPU</code> or <code>Metal</code></li>
+</ul>
 </div>
 </div>
 </div>
@@ -7719,7 +7719,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Community-support">Community support<a class="anchor-link" href="#Community-support">¶</a></h2><p>File issues &amp; discussions on <a href="https://github.com/paulxshen/Luminescent.jl">GitHub</a>. Please star us if you found us helpful :) Private messages to info@luminescentai.com . Stay on top of new features and bug fixes by signing up for our <a href="https://docs.google.com/forms/d/e/1FAIpQLSccBKPX13H1wlXjJutSuTtc2su6VvIhNYKBj0k3tij_oQJzDQ/viewform?pli=1">newsletter</a></p>
+<h2 id="Community-support">Community support<a class="anchor-link" href="#Community-support">¶</a></h2><p>File issues &amp; discussions on <a href="https://github.com/paulxshen/Luminescent.jl">GitHub</a>. Please star us if you found us helpful :) Private messages to info@luminescentai.com or pxshen@alumni.stanford.edu . Stay on top of new features and bug fixes by signing up for our <a href="https://docs.google.com/forms/d/e/1FAIpQLSccBKPX13H1wlXjJutSuTtc2su6VvIhNYKBj0k3tij_oQJzDQ/viewform?pli=1">newsletter</a></p>
 </div>
 </div>
 </div>

@@ -73,6 +73,7 @@ def setup(c, study, center_wavelength,  dx,
     prob["eps_3D"] = eps.tolist()
     prob["eps_2D"] = eps_2D.tolist()
     prob["zmin"] = -zmargin
+    prob["d"] = 2 if approx_2D else 3
 
     for run in runs:
         for s in list(run["sources"].values())+list(run["monitors"].values()):
@@ -81,7 +82,7 @@ def setup(c, study, center_wavelength,  dx,
                 w = s["width"]
                 mode_numbers = s["wavelength_mode_numbers"][wl]
                 for m in mode_solutions:
-                    if m["wavelength"] == wl and len(mode_numbers) <= len(m["modes"]) and m["width"] == s["width"]:
+                    if m["wavelength"] == wl and max(mode_numbers) < len(m["modes"]) and m["width"] == s["width"]:
                         m["ports"].append(s["port"])
                         duplicate = True
                 if not duplicate:
