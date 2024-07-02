@@ -1,9 +1,10 @@
-try
-    using GLMakie
-    global gl = true
-catch e
-    global gl = false
-end
+# try
+#     using GLMakie
+#     using GLMakie: volume
+#     global gl = true
+# catch e
+# using CairoMakie
+global gl = false
 
 ° = π / 180
 function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorithm=nothing,
@@ -13,7 +14,8 @@ function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorit
         if isnothing(colorrange)
             colorrange = 2extrema(a)
         end
-        if !gl
+        if ndims(a) == 3
+            println("3D array: plotting middle slice")
             a = a[:, :, round(Int, size(a, 3) / 2)]
         end
         aspect = size(a, 1) / size(a, 2)

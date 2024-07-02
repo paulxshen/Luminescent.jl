@@ -57,7 +57,7 @@ port_source_offset = n * dx
 eps_2D = pad(eps_2D, :replicate, m + n)
 eps_3D = pad(eps_3D, :replicate, (m + n, m + n, 0))
 origin = components.device.bbox[1] - (m + n) * dx
-heatmap(eps_2D) |> display
+# heatmap(eps_2D) |> display
 
 if study == "inverse_design"
     @load PROB_PATH designs design_layer targets target_type eta maxiters design_config
@@ -145,7 +145,7 @@ for ms = mode_solutions
             mode /= sqrt(power)
 
             @unpack power, sol = calibrate_mode(mode, ϵmode, dx / λc; verbose=true)
-            GLMakie.save(joinpath(path, "calibration.png"), quickie(sol),)
+            MyMakie.save(joinpath(path, "calibration.png"), quickie(sol),)
             @show power
             # global mode2 = deepcopy(mode)
         end
@@ -259,14 +259,14 @@ if !isempty(gpu_backend)
 end
 g0 = run_probs[1].geometry |> deepcopy
 
-try
-    using GLMakie
-    using GLMakie: volume
-    global MyMakie = GLMakie
-catch
-    using CairoMakie
-    global MyMakie = CairoMakie
-end
+# try
+#     using GLMakie
+#     using GLMakie: volume
+#     global MyMakie = GLMakie
+# catch
+using CairoMakie
+global MyMakie = CairoMakie
+# end
 function write_sparams(model=nothing; img=nothing)
     geometry = make_geometry(model)
     sol = [
@@ -284,7 +284,6 @@ function write_sparams(model=nothing; img=nothing)
                     try
                         MyMakie.save(joinpath(path, img), quickie(sol),)
                     catch e
-                        @show e
                     end
                 end
             end
