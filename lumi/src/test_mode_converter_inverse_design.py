@@ -6,7 +6,7 @@ name = "mode_converter"
 c = lumi.gcells.mimo(l=3.0, w=2.0, m=1, n=1, wwg=.5)
 targets = {
     1.55: {
-        "o1@1,o1@0": 1.0
+        "o2@1,o1@0": 1.0
     }}
 
 prob = lumi.inverse_design_problem(

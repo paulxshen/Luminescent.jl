@@ -1,6 +1,6 @@
 function normalize_mode(m, dx)
     @unpack Ex, Hy = m
-    p = abs(real(Ex ⋅ Hy) * dx^ndims(Ex) / 2)
+    p = real(Ex ⋅ Hy) * dx^ndims(Ex) / 2
     # (; Ex=Ex / √p, Hy=Hy / √p, Ez=Ez / √p)
     (; Ex=Ex / √p, Hy=Hy / √p)
 end

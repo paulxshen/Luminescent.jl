@@ -259,6 +259,14 @@ if !isempty(gpu_backend)
 end
 g0 = run_probs[1].geometry |> deepcopy
 
+try
+    using GLMakie
+    using GLMakie: volume
+    global MyMakie = GLMakie
+catch
+    using CairoMakie
+    global MyMakie = CairoMakie
+end
 function write_sparams(model=nothing; img=nothing)
     geometry = make_geometry(model)
     sol = [
@@ -274,7 +282,7 @@ function write_sparams(model=nothing; img=nothing)
                         img = "run$i.png"
                     end
                     try
-                        GLMakie.save(joinpath(path, img), quickie(sol),)
+                        MyMakie.save(joinpath(path, img), quickie(sol),)
                     catch e
                         @show e
                     end
