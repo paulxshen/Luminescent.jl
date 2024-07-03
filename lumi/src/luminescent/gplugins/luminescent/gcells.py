@@ -53,7 +53,8 @@ def bend(r, wwg=.5, lwg=1, LAYER=LAYER, **kwargs):
     return c
 
 
-def mimo(l, w, wwg, m, n,
+def mimo(l, w, wwg,
+         nwest=0, nnorth=0, neast=0, nsouth=0,
          layer_wg=LAYER.WG, layer_wgclad=LAYER.WGCLAD, layer_box=LAYER.BOX, layer_design=LAYER.DESIGN,
          **kwargs):
     design = gf.Component()
@@ -64,26 +65,26 @@ def mimo(l, w, wwg, m, n,
     design.add_polygon(p,                       layer=layer_design)
     c.add_polygon(p,                       layer=layer_wg)
 
-    din = w/m
-    dout = w/n
-    yin = din/2
-    yout = dout/2
-    for i in range(m):
-        name = "o"+str(i+1)
-        design.add_port(name=name, center=(0, yin), width=wwg,
-                        orientation=180, layer=layer_wg)
-        wg = c << gf.components.straight(length=lwg, width=wwg, layer=layer_wg)
-        wg.connect("o2", design.ports[name])
-        c.add_port(name=name, port=wg.ports["o1"])
-        yin += din
-    for i in range(n):
-        name = "o"+str(i+1+m)
-        design.add_port(name=name, center=(l, yout), width=wwg,
-                        orientation=0, layer=layer_wg)
-        wg = c << gf.components.straight(length=lwg, width=wwg, layer=layer_wg)
-        wg.connect("o2", design.ports[name])
-        c.add_port(name=name, port=wg.ports["o1"])
-        yout += dout
+    j = 0
+    for (n, x, y, dx, dy, a) in zip(
+        [nwest, nnorth, neast, nsouth],
+        [0, 0, l, l],
+        [0, w, w, 0],
+        [0, l/max(1,nnorth), 0, -l/max(1,nsouth)],
+        [w/max(1,nwest), 0, -w/max(1,neast), 0],
+        [180, 90, 0, -90]
+    ):
+        for i in range(n):
+
+            name = "o"+str(i+j+1)
+            design.add_port(name=name, center=(x+dx*(i+.5), y+dy*(i+.5)), width=wwg,
+                            orientation=a, layer=layer_wg)
+            wg = c << gf.components.straight(
+                length=lwg, width=wwg, layer=layer_wg)
+            wg.connect("o2", design.ports[name])
+            c.add_port(name=name, port=wg.ports["o1"])
+        j += n
+
     design = c << design
     c = add_bbox(c, layers=[layer_wgclad, layer_box],
                  nonport_margin=XMARGIN)

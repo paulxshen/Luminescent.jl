@@ -124,11 +124,13 @@ end
 
 function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
     @unpack f, center, lb, ub, normal, tangent, meta = s
-    fields = DefaultDict([0],)
+    C = complex(F)
+    J = dict([:Jx => [C(0)], :Jy => [C(0)], :Jz => [C(0)]])
     for k = keys(s.mode)
-        fields[k] = s.mode[k]
+        J[k] = s.mode[k]
     end
-    @unpack Jx, Jy, Jz = fields
+    J = values(J)
+
     L = ub .- lb
     sz = max.(1, round.(Int, L ./ dx)) |> Tuple
     d = length(lb)
@@ -147,7 +149,6 @@ function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, s
     end
 
     frame = [xaxis, yaxis, zaxis]
-    J = [Jx, Jy, Jz]
     # J = resize.(J, (sz,))
     J = reframe(frame, J)
     if D == 2

@@ -38,7 +38,7 @@ verbose = false
 #=
 We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 =#
-@load PROB_PATH name runs ports λc dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
+@load PROB_PATH name portsides runs ports λc dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
 eps_2D = F(stack(stack.(eps_2D)))'
 eps_3D = F(permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
 # heatmap(eps_2D) |> display
@@ -49,14 +49,17 @@ ports, = (ports,) .|> SortedDict
 polarization = :TE
 
 _dx = dx / λc
-m = round(SOURCE_MARGIN / dx)
+m = round(SOURCE_MARGIN / _dx)
 source_margin = m * dx
-n = round(PORT_SOURCE_OFFSET / dx)
+n = round(PORT_SOURCE_OFFSET / _dx)
 port_source_offset = n * dx
 # device = pad(device, :replicate, n)
-eps_2D = pad(eps_2D, :replicate, m + n)
-eps_3D = pad(eps_3D, :replicate, (m + n, m + n, 0))
-origin = components.device.bbox[1] - (m + n) * dx
+xy = (m + n) * portsides
+eps_2D = pad(eps_2D, :replicate, xy...)
+origin = components.device.bbox[1] - dx * xy[1]
+push!(xy[1], 0)
+push!(xy[2], 0)
+eps_3D = pad(eps_3D, :replicate, xy...)
 # heatmap(eps_2D) |> display
 
 if study == "inverse_design"
@@ -136,17 +139,15 @@ for ms = mode_solutions
         mode = keepxy(mode)
         global mode0 = deepcopy(mode)
 
-        if calibrate
+        if calibrate && d == 2
             @unpack mode, power = calibrate_mode(mode, ϵmode, dx / λc)
             # global mode /= sqrt(power)
-            # plot(abs.(mode.Ex)) |> display
-            # plot(abs.(mode0.Ex)) |> display
-            @unpack power, = calibrate_mode(mode, ϵmode, dx / λc;)
-            mode /= sqrt(power)
+            # @unpack power, = calibrate_mode(mode, ϵmode, dx / λc;)
+            # mode /= sqrt(power)
 
-            @unpack power, sol = calibrate_mode(mode, ϵmode, dx / λc; verbose=true)
-            MyMakie.save(joinpath(path, "calibration.png"), quickie(sol),)
-            @show power
+            # @unpack power, sol = calibrate_mode(mode, ϵmode, dx / λc; verbose=true)
+            # MyMakie.save(joinpath(path, "calibration.png"), quickie(sol),)
+            # @show power
             # global mode2 = deepcopy(mode)
         end
 
@@ -169,7 +170,8 @@ runs_sources = [
                     i = findfirst(mode_solutions) do v
                         isapprox(λ, v.wavelength) && string(port) in string.(v.ports)
                     end
-                    mode = mode_solutions[i].calibrated_modes[mn+1]
+                    ms = mode_solutions[i]
+                    mode = ms.calibrated_modes[mn+1]
                     # sum(abs.(aa.source_instances[1].g.Jy))
                     # heatmap(abs.(bb.source_instances[1]._g.Jy))
                     n = -sig.normal

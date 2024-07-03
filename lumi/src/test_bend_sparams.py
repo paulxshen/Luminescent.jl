@@ -8,6 +8,6 @@ c = lumi.add_bbox(c, layers=[LAYER.WGCLAD, LAYER.BOX], nonport_margin=XMARGIN)
 # c.show()
 
 sol = lumi.write_sparams(c, wavelengths=[1.55], keys=["2,1"],
-                         dx=0.05, approx_2D=True, gpu=None,)
+                         dx=0.05, approx_2D=False, gpu=None,)
 # sol = lumi.load_solution()
 pp.pprint(sol)

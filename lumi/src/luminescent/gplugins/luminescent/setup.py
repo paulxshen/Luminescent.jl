@@ -130,6 +130,7 @@ def setup(c, study, center_wavelength,  dx,
 
     m = round(center_wavelength/2/dx)*dx
     # prob["margins"] = [[m, m], [m, m]]
+    prob["portsides"] = portsides(c)
     return prob
 
 

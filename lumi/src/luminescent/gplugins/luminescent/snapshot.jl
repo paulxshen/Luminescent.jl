@@ -16,6 +16,7 @@ function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorit
         end
         if ndims(a) == 3
             println("3D array: plotting middle slice")
+            title *= " (middle slice of 3D array)"
             a = a[:, :, round(Int, size(a, 3) / 2)]
         end
         aspect = size(a, 1) / size(a, 2)
@@ -32,7 +33,6 @@ function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorit
         Colorbar(g[1, 2], pl)
     end
 end
-
 function quickie(sol; kw...)
     @unpack fields, geometry = sol
     fig = Figure()

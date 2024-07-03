@@ -36,6 +36,24 @@ def extend(endpoints, wm):
         (endpoints[0]-wm*v).tolist(), (endpoints[1]+wm*v).tolist()]
 
 
+def portsides(c):
+    res = [[False, False], [False, False]]
+    bbox = c.bbox_np()
+    xmin0, ymin0 = bbox[0]
+    xmax0, ymax0 = bbox[1]
+    for p in c.ports:
+        x, y = np.array(p.center)/1e3
+        if x == xmin0:
+            res[0][0] = True
+        if x == xmax0:
+            res[1][0] = True
+        if y == ymin0:
+            res[0][1] = True
+        if y == ymax0:
+            res[1][1] = True
+    return res
+
+
 def add_bbox(c, layers, nonport_margin=0):
     margin = nonport_margin
     bbox = c.bbox_np()

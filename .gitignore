@@ -5,3 +5,5 @@
 /*.mp4
 /.vscode
 docs/build/
+/lumi_runs
+/lumi/dist
