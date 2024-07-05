@@ -1,3 +1,4 @@
+from PIL import Image
 import imageio.v3 as iio
 import textwrap
 from cairosvg import svg2png
@@ -16,14 +17,13 @@ import pylab
 import EMpy
 # import EMpy as em
 import numpy
-from functools import partial
 from math import cos, pi, sin, tan
 import trimesh
 import matplotlib.pyplot as plt
 import numpy as np
 from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
 from .materials import MATERIAL_LIBRARY
-
+from .constants import PATH
 from gdsfactory.cross_section import Section
 import gdsfactory as gf
 import bson
@@ -363,3 +363,21 @@ def get_layer(layer_stack, layer):
 
         # if hasattr(x.layer, "layer1") and x.layer.layer1.layer == layer:
         #     return x
+
+
+def show_solution(path=None):
+
+    if path is None:
+        path = sorted(os.listdir(PATH))[-1]
+        path = os.path.join(PATH, path)
+    print(f"showing solution from {path}")
+    # Load an image
+    for s in ["after.png", "run1.png"]:
+        try:
+            img = Image.open(os.path.join(path, s))
+        except:
+            pass
+        else:
+            img.show()
+            return
+    print("no plot image found")

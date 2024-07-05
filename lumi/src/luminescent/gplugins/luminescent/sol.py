@@ -63,7 +63,8 @@ def load_solution(path=None):
     elif prob["study"] == "inverse_design":
         for k in ["before", "after"]:
             sol[k]["sparams"] = load_sparams(sol[k]["sparams"])
-
+        for k in sol["after"]:
+            sol[k] = sol["after"][k]
         # sol["designs"] = [np.array(d) for d in sol["designs"]]
         pass
     return sol

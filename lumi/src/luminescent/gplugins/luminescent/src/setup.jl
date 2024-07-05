@@ -47,7 +47,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     # transient_duration=max_source_dist(sources), steady_state_duration=2,
     transient_duration=0, steady_state_duration=0,
     ϵ=1, μ=1, σ=0, σm=0, F=Float32,
-    xpml=0.5, ypml=0.5, zpml=0.5,
+    xpml=0.4, ypml=0.4, zpml=0.4,
     # ϵmin=1,
     # Courant=0.5,
     Courant=nothing,
@@ -190,8 +190,8 @@ function setup(boundaries, sources, monitors, dx, sz;
                 push!(geometry_padding[:ϵ], OutPad(:replicate, l, r, sz))
                 push!(geometry_padding[:μ], OutPad(:replicate, l, r, sz))
 
-                l1 = round.(l / 2)
-                r1 = round.(r / 2)
+                l1 = round.(0.2l)
+                r1 = round.(0.2r)
                 push!(geometry_padding[:σ], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
                 push!(geometry_padding[:σm], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
                 l2 = l - l1

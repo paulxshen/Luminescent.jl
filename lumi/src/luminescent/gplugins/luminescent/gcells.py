@@ -53,8 +53,8 @@ def bend(r, wwg=.5, lwg=1, LAYER=LAYER, **kwargs):
     return c
 
 
-def mimo(l, w, wwg,
-         nwest=0, nnorth=0, neast=0, nsouth=0,
+def mimo(west=0, east=0, south=0, north=0,
+         l=2.0, w=2.0, wwg=.5,
          layer_wg=LAYER.WG, layer_wgclad=LAYER.WGCLAD, layer_box=LAYER.BOX, layer_design=LAYER.DESIGN,
          **kwargs):
     design = gf.Component()
@@ -67,12 +67,12 @@ def mimo(l, w, wwg,
 
     j = 0
     for (n, x, y, dx, dy, a) in zip(
-        [nwest, nnorth, neast, nsouth],
-        [0, 0, l, l],
-        [0, w, w, 0],
-        [0, l/max(1,nnorth), 0, -l/max(1,nsouth)],
-        [w/max(1,nwest), 0, -w/max(1,neast), 0],
-        [180, 90, 0, -90]
+        [west, north, east, south],
+        [0,  l, 0, 0],
+        [0, 0, 0, w],
+        [0,  0, l/max(1, south), l/max(1, north),],
+        [w/max(1, west), w/max(1, east), 0, 0],
+        [180, 0, -90, 90]
     ):
         for i in range(n):
 

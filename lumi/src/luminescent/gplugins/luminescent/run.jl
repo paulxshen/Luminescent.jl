@@ -63,7 +63,7 @@ eps_3D = pad(eps_3D, :replicate, xy...)
 # heatmap(eps_2D) |> display
 
 if study == "inverse_design"
-    @load PROB_PATH designs design_layer targets target_type eta maxiters design_config
+    @load PROB_PATH init designs design_layer minloss targets target_type eta maxiters design_config
     #=
     We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
     =#
@@ -74,28 +74,28 @@ if study == "inverse_design"
             bbox = d.bbox
             L = bbox[2] - bbox[1]
             szd = Tuple(round.(Int, L / dx)) # design region size
-            s = d.symmetries
+            symmetry_dims = [length(string(s)) == 1 ? Int(s) + 1 : s for s = d.symmetries]
             o = round((bbox[1] - origin) / dx) + 1
-            init = 1
-            if !isa(init, AbstractArray)
+            # if !isa(init, AbstractArray)
+            if init == ""
                 init = eps_2D[o[1]:o[1]+szd[1]-1, o[2]:o[2]+szd[2]-1]
                 # init = init .> (maximum(init) + minimum(init)) / 2
                 global init = init .≈ design_config.fill.ϵ |> F
+            elseif init == "random"
+                init = nothing
             end
             Blob(szd;
                 init,
                 lmin=d.lmin / dx,
                 contrast=10,
-                rmin=nothing,
-                symmetry_dims=isempty(s) ? s : s + 1, verbose)
+                symmetry_dims, verbose)
         end for (i, d) = enumerate(designs)
     ]
 
     # model0 = deepcopy(model)
-    # heatmap(model())
+    # using CairoMakie
+    # heatmap(model[1]())
 end
-# Flux.trainable(v::AbstractArray{Blob}) = NamedTuple([Symbol("a$i") => Flux.trainable(model) for (i, model) = enumerate(v)])
-# Flux.trainable(model)
 # error()
 #=
 We set boundary conditions, sources , and monitor. The modal source profile is obtained from external mode solver , in our case VectorModesolver.jl . Please refer to guide section of docs website for details . To get an approximate  line source for use in 2d from the cross section profile , we sum and collapse it along its height axis
@@ -400,6 +400,10 @@ elseif study == "inverse_design"
         end
         # l < 0 && break
         Flux.update!(opt_state, model, dldm)
+        if l < minloss
+            @info "Loss below threshold, stopping optimization."
+            break
+        end
         println("$i loss $l\n")
     end
     for (i, (m, d)) = enumerate(zip(model, designs))

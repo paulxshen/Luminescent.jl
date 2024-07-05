@@ -1,3 +1,3 @@
-ZMARGIN = .4
-XMARGIN = YMARGIN = .8
+ZMARGIN = .3
+MARGIN = XMARGIN = YMARGIN = .6
 PATH = "lumi_runs"
