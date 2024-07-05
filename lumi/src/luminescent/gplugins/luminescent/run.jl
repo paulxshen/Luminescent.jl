@@ -53,13 +53,17 @@ m = round(SOURCE_MARGIN / _dx)
 source_margin = m * dx
 n = round(PORT_SOURCE_OFFSET / _dx)
 port_source_offset = n * dx
-# device = pad(device, :replicate, n)
-xy = (m + n) * portsides
-eps_2D = pad(eps_2D, :replicate, xy...)
-origin = components.device.bbox[1] - dx * xy[1]
-push!(xy[1], 0)
-push!(xy[2], 0)
-eps_3D = pad(eps_3D, :replicate, xy...)
+
+p = m + n
+eps_3D = pad(eps_3D, :replicate, [p, p, 0])
+eps_2D = pad(eps_2D, :replicate, p)
+
+# xy = (m + n) * portsides
+# eps_2D = pad(eps_2D, :replicate, xy...)
+# origin = components.device.bbox[1] - dx * xy[1]
+# push!(xy[1], 0)
+# push!(xy[2], 0)
+# eps_3D = pad(eps_3D, :replicate, xy...)
 # heatmap(eps_2D) |> display
 
 if study == "inverse_design"
