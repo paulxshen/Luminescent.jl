@@ -1,3 +1,7 @@
+try:
+    from IPython.display import display
+except ImportError:
+    pass
 from PIL import Image
 import imageio.v3 as iio
 import textwrap
@@ -379,5 +383,9 @@ def show_solution(path=None):
             pass
         else:
             img.show()
+            try:
+                display(img)
+            except:
+                pass
             return
     print("no plot image found")

@@ -11,6 +11,9 @@ from .layers import *
 from .constants import *
 
 
+from subprocess import Popen, PIPE
+
+
 def solve(prob, ):
     c0 = prob["component"]
     del prob["component"]
@@ -22,7 +25,7 @@ def solve(prob, ):
         os.makedirs(path)
     print(f"""
           using simulation folder {path}
-          started julia simulation
+          started julia process
           """)
     prob_path = os.path.join(path, "prob.bson")
     with open(prob_path, "wb") as f:
@@ -30,9 +33,15 @@ def solve(prob, ):
         f.write(bson_data)
 
     start_time = time.time()
-    subprocess.run(
-        [f"julia", os.path.join(os.path.dirname(os.path.abspath(__file__)), "run.jl"), prob_path,])
-    print(f"julia simulation took {time.time()-start_time} seconds")
+
+    cmd = [f"julia", os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "run.jl"), prob_path,]
+    with Popen(cmd,  stdout=PIPE, ) as p:
+        for line in p.stdout:
+            print(line, flush=True)
+    # exit_code = p.poll()
+    # subprocess.run()
+    # print(f"julia simulation took {time.time()-start_time} seconds")
     print(f"images and results saved in {path}")
     sol = load_solution(path)
     if prob["study"] == "inverse_design":

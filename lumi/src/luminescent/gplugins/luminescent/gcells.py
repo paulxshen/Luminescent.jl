@@ -49,7 +49,7 @@ def bend(r, wwg=.5, lwg=1, LAYER=LAYER, **kwargs):
     # utils.write_img("device", device, DESIGN)
     # utils.write_img("guess", init, DESIGN)
     c = add_bbox(device, layers=[LAYER.WGCLAD, LAYER.BOX],
-                 nonport_margin=0.4)
+                 nonport_margin=0.1)
     return c
 
 
@@ -59,7 +59,7 @@ def mimo(west=0, east=0, south=0, north=0,
          **kwargs):
     design = gf.Component()
 
-    c = gf.Component("mimo")
+    c = gf.Component()
     lwg = 2*wwg
     p = [(0, 0), (l, 0), (l, w), (0, w)]
     design.add_polygon(p,                       layer=layer_design)
@@ -67,7 +67,7 @@ def mimo(west=0, east=0, south=0, north=0,
 
     j = 0
     for (n, x, y, dx, dy, a) in zip(
-        [west, north, east, south],
+        [west,  east, south, north],
         [0,  l, 0, 0],
         [0, 0, 0, w],
         [0,  0, l/max(1, south), l/max(1, north),],

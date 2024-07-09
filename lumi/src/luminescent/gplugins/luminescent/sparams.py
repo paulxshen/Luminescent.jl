@@ -15,6 +15,7 @@ from .setup import *
 def sparams_problem(c: gf.Component, xmargin=XMARGIN, zmargin=ZMARGIN, dx=.05, wavelengths=[1.55], center_wavelength=None, keys=None,
                     approx_2D=False, layer_stack=LAYER_STACK,
                     **kwargs):
+    wavelengths = sorted(wavelengths)
     d = 2 if approx_2D else 3
     prob = dict()
 
@@ -54,9 +55,9 @@ def sparams_problem(c: gf.Component, xmargin=XMARGIN, zmargin=ZMARGIN, dx=.05, w
             } for o in io[i]},
     } for i in io]
 
-    prob = setup(c, study="sparams", center_wavelength=center_wavelength, dx=dx,
+    prob = setup(c, study="sparams",  dx=dx,
                  runs=runs, xmargin=xmargin,
                  zmargin=zmargin, layer_stack=layer_stack, approx_2D=approx_2D, **kwargs)
-    # prob["runs"] = runs
+    prob["wavelengths"] = wavelengths
     prob["study"] = "sparams"
     return prob

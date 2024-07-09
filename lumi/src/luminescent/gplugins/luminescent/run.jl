@@ -1,24 +1,20 @@
-#=
-We do inverse design of a compact photonic waveguide bend to demonstrate workflow of FDTD adjoint optimization. First, we seed the design using 2d TE adjoint simulations which serve as fast approximations. Optionlly, we finetune the resulting design in full blown 3d adjoint simulations.
-
-=#
-
-using UnPack, LinearAlgebra, Random, StatsBase, Dates, DataStructures, JSON, Images
+using UnPack, LinearAlgebra, Random, StatsBase, Dates, DataStructures, JSON, Images, BSON
 using Zygote, Flux, Jello
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer
-using BSON: @save, @load
+using BSON: @save, @load, load
 using AbbreviatedStackTraces
+using CairoMakie
+global MyMakie = CairoMakie
+
 # using Jello, Luminescent, LuminescentVisualization
 # using Luminescent:keys, values
 Random.seed!(1)
 
-# if running directly without module # hide
-# include("$(pwd())/src/main.jl") # hide
 include("src/main.jl") # hide
-# include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 include("snapshot.jl")
-
+# @info "setting up simulation..."
+println("setting up simulation...")
 if isempty(ARGS)
     path = joinpath(pwd(), "lumi_runs")
     path = filter(isdir, readdir(path, join=true)) |> sort |> last
@@ -29,7 +25,7 @@ else
 
 end
 
-calibrate = false
+calibrate = true
 F = Float32
 model_name = nothing # if load saved model
 tol = 1e-3
@@ -38,7 +34,8 @@ verbose = false
 #=
 We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 =#
-@load PROB_PATH name portsides runs ports λc dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
+@load PROB_PATH name portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
+λc = median(load(PROB_PATH)[:wavelengths])
 eps_2D = F(stack(stack.(eps_2D)))'
 eps_3D = F(permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
 # heatmap(eps_2D) |> display
@@ -55,12 +52,12 @@ n = round(PORT_SOURCE_OFFSET / _dx)
 port_source_offset = n * dx
 
 p = m + n
+origin = components.device.bbox[1] - dx * p
 eps_3D = pad(eps_3D, :replicate, [p, p, 0])
 eps_2D = pad(eps_2D, :replicate, p)
-
+# [UnPack, BSON, JSON, Dates, DataStructures, ImageTransformations, Meshes, CoordinateTransformations, GPUArraysCore, StatsBase, Zygote, Porcupine, Jello, ArrayPadding, AbbreviatedStackTraces, Flux, FileIO, Images, CairoMakie, Functors, Lazy]
 # xy = (m + n) * portsides
 # eps_2D = pad(eps_2D, :replicate, xy...)
-# origin = components.device.bbox[1] - dx * xy[1]
 # push!(xy[1], 0)
 # push!(xy[2], 0)
 # eps_3D = pad(eps_3D, :replicate, xy...)
@@ -144,7 +141,7 @@ for ms = mode_solutions
         global mode0 = deepcopy(mode)
 
         if calibrate && d == 2
-            @unpack mode, power = calibrate_mode(mode, ϵmode, dx / λc)
+            # @unpack mode, power = calibrate_mode(mode, ϵmode, dx / ms.wavelength)
             # global mode /= sqrt(power)
             # @unpack power, = calibrate_mode(mode, ϵmode, dx / λc;)
             # mode /= sqrt(power)
@@ -212,7 +209,7 @@ runs_monitors = [[
         end
 
         zcenter = nothing
-        wavelength_modes = OrderedDict([
+        wavelength_modes = SortedDict([
             begin
                 λ = parse(F, string(λ))
                 λ / λc => [
@@ -270,8 +267,6 @@ g0 = run_probs[1].geometry |> deepcopy
 #     using GLMakie: volume
 #     global MyMakie = GLMakie
 # catch
-using CairoMakie
-global MyMakie = CairoMakie
 # end
 function write_sparams(model=nothing; img=nothing)
     geometry = make_geometry(model)
@@ -315,9 +310,6 @@ function write_sparams(model=nothing; img=nothing)
             end
         end
     end
-    # sparams = dict([λ => dict([k => begin
-    #     coeffs[λ][k][1] / coeffs[λ][(k[2], k[2])][2]
-    # end for (k) = keys(coeffs[λ])]) for λ = keys(coeffs)])
 
     sparams = OrderedDict([λ => OrderedDict([k => begin
         s = ignore() do
@@ -369,8 +361,13 @@ function loss(params,)# targets)
     # mean([mae(values(yhat),values(y)) for (yhat,y)=zip(targets,[solve(prob;geometry) for prob=run_probs])])
 end
 virgin = true
+t0 = time()
 if study == "sparams"
+    # @info "Computing s-parameters..."
+    println("Computing s-parameters...")
     sparams = write_sparams(img="")
+    # @info "Done in $(time() - t0) ."
+    # println("Done in $(time() - t0) .")
     # tparams = dict([k => abs(sparams[k])^2 for k = keys(sparams)])
     sol = sparam_family(sparams)
 elseif study == "inverse_design"
@@ -378,15 +375,18 @@ elseif study == "inverse_design"
     # @show write_sparams(model)
     opt = Adam(eta)
     opt_state = Flux.setup(opt, model)
+    # @info "starting optimization... first iter will be slow due to compilation."
+    println("starting optimization... first iter will be slow due to compilation.")
+    stop = false
+    img = nothing
     for i = 1:maxiters
-        # println("$i")
-        img = if virgin
+        global img = if virgin
             global virgin = false
             "before.png"
         elseif i == maxiters
             "after.png"
         else
-            nothing
+            img
         end
         @time global l, (dldm,) = withgradient(model) do m
             global sparams = write_sparams(m; img)
@@ -399,17 +399,24 @@ elseif study == "inverse_design"
             # abs(sparams[1].mode_coeffs[2][1][1][1])
 
         end
+        if stop
+            break
+        end
         if i == 1
             global sparams0 = deepcopy(sparams)
         end
         # l < 0 && break
         Flux.update!(opt_state, model, dldm)
         if l < minloss
-            @info "Loss below threshold, stopping optimization."
-            break
+            # @info "Loss below threshold, stopping optimization."
+            println("Loss below threshold, stopping optimization.")
+            global stop = true
+            global img = "after.png"
         end
         println("$i loss $l\n")
     end
+    # @info "Done in $(time() - t0) ."
+    println("Done in $(time() - t0) .")
     for (i, (m, d)) = enumerate(zip(model, designs))
         Images.save(joinpath(path, "design$i.png"), Gray.(m() .< 0.5))
     end

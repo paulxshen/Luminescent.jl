@@ -1,7 +1,6 @@
 function calibrate_mode(mode, ϵmode, dx, ; F=Float32, verbose=false, name="", kwargs...)
-    # mode, ϵmode, dx, = (mode, ϵmode, dx,) |> F
+    mode, ϵmode, dx, = (mode, ϵmode, dx,) |> F
     d = ndims(ϵmode) + 1
-    n = sqrt(mean(ϵmode))
 
     source_margin, port_source_offset, mode_margin = whole.((SOURCE_MARGIN, PORT_SOURCE_OFFSET, MODE_MARGIN), dx)
     l0 = 2
@@ -29,13 +28,13 @@ function calibrate_mode(mode, ϵmode, dx, ; F=Float32, verbose=false, name="", k
     s = ModalSource(t -> cispi(2t), mode, [source_margin, w / 2], -normal, tangent, L;)
 
     prob = setup([], [s], m, dx, sz; F, ϵ, verbose)
-    global aa = prob
     sol = solve(prob)
 
     @unpack fields, modes, forward_mode_powers = sol
     mode = modes[1][1]
     power = forward_mode_powers[1][1][1]
     @show forward_mode_powers
-    (; mode, power, sol)
+    quickie(sol)|> display
+    global ret = (; mode, power, sol)
 
 end

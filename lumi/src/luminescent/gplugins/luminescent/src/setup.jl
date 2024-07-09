@@ -68,18 +68,18 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
     if transient_duration == 0
-        transient_duration = sum(sz) * dx * sqrt(ϵmax) + 1
+        transient_duration = sum(sz) * dx * sqrt(ϵmax) + 4
     end
     if steady_state_duration == 0
         if isempty(monitors)
-            steady_state_duration = 2
+            steady_state_duration = 4
         else
-            steady_state_duration = maximum(monitors) do m
-                if length(wavelengths(m)) == 1
-                    2
-                else
-                    2 / minimum(abs.(diff(1 ./ wavelengths(m))))
-                end
+            v = reduce(vcat, wavelengths.(monitors)) |> Set |> collect |> sort |> reverse
+            if length(v) == 1
+                steady_state_duration = 4
+
+            else
+                steady_state_duration = 20 / minimum(diff([0, (1 ./ v)...]))
             end
         end
     end
@@ -371,7 +371,7 @@ function setup(boundaries, sources, monitors, dx, sz;
         source_instances, monitor_instances, field_names,
         polarization,
         transient_duration, steady_state_duration,
-        geometry,
+        geometry, n=sqrt(ϵmax),
         # roi,
         u0, fields, d, dx, dt, sz, kw...) |> pairs)
 end

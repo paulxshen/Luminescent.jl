@@ -9,7 +9,7 @@ targets = {
         1.55: {
             "2,1": 1
         }}}
-c.show()
+# c.show()
 
 prob = lumi.inverse_design_problem(
     c, targets=targets, wavelengths=[1.55],
