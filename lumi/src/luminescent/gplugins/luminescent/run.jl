@@ -1,24 +1,20 @@
-#=
-We do inverse design of a compact photonic waveguide bend to demonstrate workflow of FDTD adjoint optimization. First, we seed the design using 2d TE adjoint simulations which serve as fast approximations. Optionlly, we finetune the resulting design in full blown 3d adjoint simulations.
-
-=#
-
-using UnPack, LinearAlgebra, Random, StatsBase, Dates, DataStructures, JSON, Images
+using UnPack, LinearAlgebra, Random, StatsBase, Dates, DataStructures, JSON, Images, BSON
 using Zygote, Flux, Jello
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer
-using BSON: @save, @load
+using BSON: @save, @load, load
 using AbbreviatedStackTraces
+using CairoMakie
+global MyMakie = CairoMakie
+
 # using Jello, Luminescent, LuminescentVisualization
 # using Luminescent:keys, values
 Random.seed!(1)
 
-# if running directly without module # hide
-# include("$(pwd())/src/main.jl") # hide
 include("src/main.jl") # hide
-# include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 include("snapshot.jl")
-
+# @info "setting up simulation..."
+println("setting up simulation...")
 if isempty(ARGS)
     path = joinpath(pwd(), "lumi_runs")
     path = filter(isdir, readdir(path, join=true)) |> sort |> last
@@ -29,7 +25,7 @@ else
 
 end
 
-calibrate = false
+calibrate = true
 F = Float32
 model_name = nothing # if load saved model
 tol = 1e-3
@@ -38,7 +34,8 @@ verbose = false
 #=
 We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 =#
-@load PROB_PATH name runs ports λc dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend
+@load PROB_PATH name portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
+λc = median(load(PROB_PATH)[:wavelengths])
 eps_2D = F(stack(stack.(eps_2D)))'
 eps_3D = F(permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
 # heatmap(eps_2D) |> display
@@ -49,18 +46,25 @@ ports, = (ports,) .|> SortedDict
 polarization = :TE
 
 _dx = dx / λc
-m = round(SOURCE_MARGIN / dx)
+m = round(SOURCE_MARGIN / _dx)
 source_margin = m * dx
-n = round(PORT_SOURCE_OFFSET / dx)
+n = round(PORT_SOURCE_OFFSET / _dx)
 port_source_offset = n * dx
-# device = pad(device, :replicate, n)
-eps_2D = pad(eps_2D, :replicate, m + n)
-eps_3D = pad(eps_3D, :replicate, (m + n, m + n, 0))
-origin = components.device.bbox[1] - (m + n) * dx
-heatmap(eps_2D) |> display
+
+p = m + n
+origin = components.device.bbox[1] - dx * p
+eps_3D = pad(eps_3D, :replicate, [p, p, 0])
+eps_2D = pad(eps_2D, :replicate, p)
+# [UnPack, BSON, JSON, Dates, DataStructures, ImageTransformations, Meshes, CoordinateTransformations, GPUArraysCore, StatsBase, Zygote, Porcupine, Jello, ArrayPadding, AbbreviatedStackTraces, Flux, FileIO, Images, CairoMakie, Functors, Lazy]
+# xy = (m + n) * portsides
+# eps_2D = pad(eps_2D, :replicate, xy...)
+# push!(xy[1], 0)
+# push!(xy[2], 0)
+# eps_3D = pad(eps_3D, :replicate, xy...)
+# heatmap(eps_2D) |> display
 
 if study == "inverse_design"
-    @load PROB_PATH designs design_layer targets target_type eta maxiters design_config
+    @load PROB_PATH init designs design_layer minloss targets target_type eta maxiters design_config
     #=
     We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
     =#
@@ -71,28 +75,28 @@ if study == "inverse_design"
             bbox = d.bbox
             L = bbox[2] - bbox[1]
             szd = Tuple(round.(Int, L / dx)) # design region size
-            s = d.symmetries
+            symmetry_dims = [length(string(s)) == 1 ? Int(s) + 1 : s for s = d.symmetries]
             o = round((bbox[1] - origin) / dx) + 1
-            init = 1
-            if !isa(init, AbstractArray)
+            # if !isa(init, AbstractArray)
+            if init == ""
                 init = eps_2D[o[1]:o[1]+szd[1]-1, o[2]:o[2]+szd[2]-1]
                 # init = init .> (maximum(init) + minimum(init)) / 2
                 global init = init .≈ design_config.fill.ϵ |> F
+            elseif init == "random"
+                init = nothing
             end
             Blob(szd;
                 init,
                 lmin=d.lmin / dx,
                 contrast=10,
-                rmin=nothing,
-                symmetry_dims=isempty(s) ? s : s + 1, verbose)
+                symmetry_dims, verbose)
         end for (i, d) = enumerate(designs)
     ]
 
     # model0 = deepcopy(model)
-    # heatmap(model())
+    # using CairoMakie
+    # heatmap(model[1]())
 end
-# Flux.trainable(v::AbstractArray{Blob}) = NamedTuple([Symbol("a$i") => Flux.trainable(model) for (i, model) = enumerate(v)])
-# Flux.trainable(model)
 # error()
 #=
 We set boundary conditions, sources , and monitor. The modal source profile is obtained from external mode solver , in our case VectorModesolver.jl . Please refer to guide section of docs website for details . To get an approximate  line source for use in 2d from the cross section profile , we sum and collapse it along its height axis
@@ -109,6 +113,49 @@ device = 0
 device, dx, λc =
     F.((device, dx, λc))
 # guess = F.(guess)
+for ms = mode_solutions
+    if !haskey(ms, :calibrated_modes)
+        ms[:calibrated_modes] = []
+    end
+    for mode in ms.modes
+
+        sz = ms.size
+        eps = ms.eps
+
+        mode = (; [k => transpose(complex.(stack.(v)...)) |> F for (k, v) in mode |> pairs]...)
+        ϵmode = eps |> stack |> transpose .|> F
+
+        # sz = round(sz / dx) |> Tuple
+        # # sz = size() - 1
+        # mode = (; Pair.(keys(mode), [resize(v, size(v) - 1) for v in values(mode)])...)
+        # ϵ = resize(ϵ, sz)
+        if d == 2
+            mode, ϵmode = collapse_mode(mode, ϵmode)
+            i = round(Int, size(ϵmode, 1) / 2)
+            ϵcore_ = ϵmode[i]
+            ϵmode = maximum(ϵmode, dims=2) |> vec
+            ϵmode = min.(ϵmode, ϵcore_)
+        end
+        # mode = normalize_mode(mode, dx / λc)
+        mode = keepxy(mode)
+        global mode0 = deepcopy(mode)
+
+        if calibrate && d == 2
+            # @unpack mode, power = calibrate_mode(mode, ϵmode, dx / ms.wavelength)
+            # global mode /= sqrt(power)
+            # @unpack power, = calibrate_mode(mode, ϵmode, dx / λc;)
+            # mode /= sqrt(power)
+
+            # @unpack power, sol = calibrate_mode(mode, ϵmode, dx / λc; verbose=true)
+            # MyMakie.save(joinpath(path, "calibration.png"), quickie(sol),)
+            # @show power
+            # global mode2 = deepcopy(mode)
+        end
+
+        # error()
+        push!(ms[:calibrated_modes], mode)
+    end
+end
 
 # modal source
 runs_sources = [
@@ -125,51 +172,7 @@ runs_sources = [
                         isapprox(λ, v.wavelength) && string(port) in string.(v.ports)
                     end
                     ms = mode_solutions[i]
-                    if !haskey(ms, :calibrated_modes)
-                        ms[:calibrated_modes] = Any[nothing for i = eachindex(ms.modes)]
-                    end
-                    mode = ms[:calibrated_modes][mn+1]
-                    if isnothing(mode)
-                        mode = ms.modes[mn+1]
-
-                        sz = ms.size
-                        eps = ms.eps
-
-                        mode = (; [k => transpose(complex.(stack.(v)...)) |> F for (k, v) in mode |> pairs]...)
-                        ϵmode = eps |> stack |> transpose .|> F
-
-                        # sz = round(sz / dx) |> Tuple
-                        # # sz = size() - 1
-                        # mode = (; Pair.(keys(mode), [resize(v, size(v) - 1) for v in values(mode)])...)
-                        # ϵ = resize(ϵ, sz)
-                        if d == 2
-                            mode, ϵmode = collapse_mode(mode, ϵmode)
-                            i = round(Int, size(ϵmode, 1) / 2)
-                            ϵcore_ = ϵmode[i]
-                            ϵmode = maximum(ϵmode, dims=2) |> vec
-                            ϵmode = min.(ϵmode, ϵcore_)
-                        end
-                        # mode = normalize_mode(mode, dx / λc)
-                        mode = keepxy(mode)
-                        global mode0 = deepcopy(mode)
-
-                        if calibrate
-                            @unpack mode, power = calibrate_mode(mode, ϵmode, dx / λc)
-                            # global mode /= sqrt(power)
-                            # plot(abs.(mode.Ex)) |> display
-                            # plot(abs.(mode0.Ex)) |> display
-                            @unpack power, = calibrate_mode(mode, ϵmode, dx / λc;)
-                            mode /= sqrt(power)
-
-                            @unpack power, sol = calibrate_mode(mode, ϵmode, dx / λc; verbose=true)
-                            GLMakie.save(joinpath(path, "calibration.png"), quickie(sol),)
-                            @show power
-                            # global mode2 = deepcopy(mode)
-                        end
-
-                        # error()
-                        ms[:calibrated_modes][mn+1] = mode
-                    end
+                    mode = ms.calibrated_modes[mn+1]
                     # sum(abs.(aa.source_instances[1].g.Jy))
                     # heatmap(abs.(bb.source_instances[1]._g.Jy))
                     n = -sig.normal
@@ -206,7 +209,7 @@ runs_monitors = [[
         end
 
         zcenter = nothing
-        wavelength_modes = OrderedDict([
+        wavelength_modes = SortedDict([
             begin
                 λ = parse(F, string(λ))
                 λ / λc => [
@@ -259,6 +262,12 @@ if !isempty(gpu_backend)
 end
 g0 = run_probs[1].geometry |> deepcopy
 
+# try
+#     using GLMakie
+#     using GLMakie: volume
+#     global MyMakie = GLMakie
+# catch
+# end
 function write_sparams(model=nothing; img=nothing)
     geometry = make_geometry(model)
     sol = [
@@ -274,9 +283,8 @@ function write_sparams(model=nothing; img=nothing)
                         img = "run$i.png"
                     end
                     try
-                        GLMakie.save(joinpath(path, img), quickie(sol),)
+                        MyMakie.save(joinpath(path, img), quickie(sol),)
                     catch e
-                        @show e
                     end
                 end
             end
@@ -302,9 +310,6 @@ function write_sparams(model=nothing; img=nothing)
             end
         end
     end
-    # sparams = dict([λ => dict([k => begin
-    #     coeffs[λ][k][1] / coeffs[λ][(k[2], k[2])][2]
-    # end for (k) = keys(coeffs[λ])]) for λ = keys(coeffs)])
 
     sparams = OrderedDict([λ => OrderedDict([k => begin
         s = ignore() do
@@ -356,8 +361,13 @@ function loss(params,)# targets)
     # mean([mae(values(yhat),values(y)) for (yhat,y)=zip(targets,[solve(prob;geometry) for prob=run_probs])])
 end
 virgin = true
+t0 = time()
 if study == "sparams"
+    # @info "Computing s-parameters..."
+    println("Computing s-parameters...")
     sparams = write_sparams(img="")
+    # @info "Done in $(time() - t0) ."
+    # println("Done in $(time() - t0) .")
     # tparams = dict([k => abs(sparams[k])^2 for k = keys(sparams)])
     sol = sparam_family(sparams)
 elseif study == "inverse_design"
@@ -365,15 +375,18 @@ elseif study == "inverse_design"
     # @show write_sparams(model)
     opt = Adam(eta)
     opt_state = Flux.setup(opt, model)
+    # @info "starting optimization... first iter will be slow due to compilation."
+    println("starting optimization... first iter will be slow due to compilation.")
+    stop = false
+    img = nothing
     for i = 1:maxiters
-        # println("$i")
-        img = if virgin
+        global img = if virgin
             global virgin = false
             "before.png"
         elseif i == maxiters
             "after.png"
         else
-            nothing
+            img
         end
         @time global l, (dldm,) = withgradient(model) do m
             global sparams = write_sparams(m; img)
@@ -386,13 +399,24 @@ elseif study == "inverse_design"
             # abs(sparams[1].mode_coeffs[2][1][1][1])
 
         end
+        if stop
+            break
+        end
         if i == 1
             global sparams0 = deepcopy(sparams)
         end
         # l < 0 && break
         Flux.update!(opt_state, model, dldm)
+        if l < minloss
+            # @info "Loss below threshold, stopping optimization."
+            println("Loss below threshold, stopping optimization.")
+            global stop = true
+            global img = "after.png"
+        end
         println("$i loss $l\n")
     end
+    # @info "Done in $(time() - t0) ."
+    println("Done in $(time() - t0) .")
     for (i, (m, d)) = enumerate(zip(model, designs))
         Images.save(joinpath(path, "design$i.png"), Gray.(m() .< 0.5))
     end

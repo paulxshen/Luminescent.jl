@@ -49,41 +49,42 @@ def bend(r, wwg=.5, lwg=1, LAYER=LAYER, **kwargs):
     # utils.write_img("device", device, DESIGN)
     # utils.write_img("guess", init, DESIGN)
     c = add_bbox(device, layers=[LAYER.WGCLAD, LAYER.BOX],
-                 nonport_margin=0.4)
+                 nonport_margin=0.1)
     return c
 
 
-def mimo(l, w, wwg, m, n,
+def mimo(west=0, east=0, south=0, north=0,
+         l=2.0, w=2.0, wwg=.5,
          layer_wg=LAYER.WG, layer_wgclad=LAYER.WGCLAD, layer_box=LAYER.BOX, layer_design=LAYER.DESIGN,
          **kwargs):
     design = gf.Component()
 
-    c = gf.Component("mimo")
+    c = gf.Component()
     lwg = 2*wwg
     p = [(0, 0), (l, 0), (l, w), (0, w)]
     design.add_polygon(p,                       layer=layer_design)
     c.add_polygon(p,                       layer=layer_wg)
 
-    din = w/m
-    dout = w/n
-    yin = din/2
-    yout = dout/2
-    for i in range(m):
-        name = "o"+str(i+1)
-        design.add_port(name=name, center=(0, yin), width=wwg,
-                        orientation=180, layer=layer_wg)
-        wg = c << gf.components.straight(length=lwg, width=wwg, layer=layer_wg)
-        wg.connect("o2", design.ports[name])
-        c.add_port(name=name, port=wg.ports["o1"])
-        yin += din
-    for i in range(n):
-        name = "o"+str(i+1+m)
-        design.add_port(name=name, center=(l, yout), width=wwg,
-                        orientation=0, layer=layer_wg)
-        wg = c << gf.components.straight(length=lwg, width=wwg, layer=layer_wg)
-        wg.connect("o2", design.ports[name])
-        c.add_port(name=name, port=wg.ports["o1"])
-        yout += dout
+    j = 0
+    for (n, x, y, dx, dy, a) in zip(
+        [west,  east, south, north],
+        [0,  l, 0, 0],
+        [0, 0, 0, w],
+        [0,  0, l/max(1, south), l/max(1, north),],
+        [w/max(1, west), w/max(1, east), 0, 0],
+        [180, 0, -90, 90]
+    ):
+        for i in range(n):
+
+            name = "o"+str(i+j+1)
+            design.add_port(name=name, center=(x+dx*(i+.5), y+dy*(i+.5)), width=wwg,
+                            orientation=a, layer=layer_wg)
+            wg = c << gf.components.straight(
+                length=lwg, width=wwg, layer=layer_wg)
+            wg.connect("o2", design.ports[name])
+            c.add_port(name=name, port=wg.ports["o1"])
+        j += n
+
     design = c << design
     c = add_bbox(c, layers=[layer_wgclad, layer_box],
                  nonport_margin=XMARGIN)

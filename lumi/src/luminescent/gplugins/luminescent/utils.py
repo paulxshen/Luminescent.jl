@@ -1,3 +1,8 @@
+try:
+    from IPython.display import display
+except ImportError:
+    pass
+from PIL import Image
 import imageio.v3 as iio
 import textwrap
 from cairosvg import svg2png
@@ -16,14 +21,13 @@ import pylab
 import EMpy
 # import EMpy as em
 import numpy
-from functools import partial
 from math import cos, pi, sin, tan
 import trimesh
 import matplotlib.pyplot as plt
 import numpy as np
 from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
 from .materials import MATERIAL_LIBRARY
-
+from .constants import PATH
 from gdsfactory.cross_section import Section
 import gdsfactory as gf
 import bson
@@ -34,6 +38,24 @@ def extend(endpoints, wm):
     v = v/np.linalg.norm(v)
     return [
         (endpoints[0]-wm*v).tolist(), (endpoints[1]+wm*v).tolist()]
+
+
+def portsides(c):
+    res = [[False, False], [False, False]]
+    bbox = c.bbox_np()
+    xmin0, ymin0 = bbox[0]
+    xmax0, ymax0 = bbox[1]
+    for p in c.ports:
+        x, y = np.array(p.center)/1e3
+        if x == xmin0:
+            res[0][0] = True
+        if x == xmax0:
+            res[1][0] = True
+        if y == ymin0:
+            res[0][1] = True
+        if y == ymax0:
+            res[1][1] = True
+    return res
 
 
 def add_bbox(c, layers, nonport_margin=0):
@@ -345,3 +367,25 @@ def get_layer(layer_stack, layer):
 
         # if hasattr(x.layer, "layer1") and x.layer.layer1.layer == layer:
         #     return x
+
+
+def show_solution(path=None):
+
+    if path is None:
+        path = sorted(os.listdir(PATH))[-1]
+        path = os.path.join(PATH, path)
+    print(f"showing solution from {path}")
+    # Load an image
+    for s in ["after.png", "run1.png"]:
+        try:
+            img = Image.open(os.path.join(path, s))
+        except:
+            pass
+        else:
+            img.show()
+            try:
+                display(img)
+            except:
+                pass
+            return
+    print("no plot image found")

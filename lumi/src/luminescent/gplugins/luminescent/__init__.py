@@ -23,8 +23,10 @@ __all__ = [
     "solve",
     "apply_design",
     "add_bbox",
+    "MARGIN",
     "XMARGIN",
     "YMARGIN",
     "load_solution",
+    "show_solution",
     "gcells",
 ]

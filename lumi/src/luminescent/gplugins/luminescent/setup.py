@@ -24,7 +24,7 @@ from .utils import *
 # include_layers=[LAYER.WG, LAYER.WAFER], ** kwargs):
 
 
-def setup(c, study, center_wavelength,  dx,
+def setup(c, study,   dx,
           zmargin,
           xmargin, name="",
           runs=[], wavelengths=[], sources=[], layer_stack=LAYER_STACK, layer_views=LAYER_VIEWS, exclude_layers=[
@@ -73,6 +73,7 @@ def setup(c, study, center_wavelength,  dx,
     prob["eps_3D"] = eps.tolist()
     prob["eps_2D"] = eps_2D.tolist()
     prob["zmin"] = -zmargin
+    prob["d"] = 2 if approx_2D else 3
 
     for run in runs:
         for s in list(run["sources"].values())+list(run["monitors"].values()):
@@ -81,7 +82,7 @@ def setup(c, study, center_wavelength,  dx,
                 w = s["width"]
                 mode_numbers = s["wavelength_mode_numbers"][wl]
                 for m in mode_solutions:
-                    if m["wavelength"] == wl and len(mode_numbers) <= len(m["modes"]) and m["width"] == s["width"]:
+                    if m["wavelength"] == wl and max(mode_numbers) < len(m["modes"]) and m["width"] == s["width"]:
                         m["ports"].append(s["port"])
                         duplicate = True
                 if not duplicate:
@@ -120,15 +121,11 @@ def setup(c, study, center_wavelength,  dx,
     prob["dx"] = dx
     prob["component"] = c
     # λc = (wavelengths[0]+wavelengths[-1])/2
-    if center_wavelength is None:
-        center_wavelength = mode_solutions[0]["wavelength"]
-    prob["λc"] = center_wavelength
     # prob["wavelengths"] = wavelengths
     prob["mode_solutions"] = mode_solutions
     # prob["path_length"] = 2*(l+r+lwg)
 
-    m = round(center_wavelength/2/dx)*dx
-    # prob["margins"] = [[m, m], [m, m]]
+    prob["portsides"] = portsides(c)
     return prob
 
 

@@ -14,6 +14,8 @@ __all__ = [
     "add_bbox",
     "XMARGIN",
     "YMARGIN",
+    "MARGIN",
     "load_solution",
+    "show_solution",
     "gcells",
 ]

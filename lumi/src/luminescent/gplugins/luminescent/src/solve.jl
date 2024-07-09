@@ -1,9 +1,10 @@
 
-function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, kwargs...)
-    @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, steady_state_duration, d = prob
+function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, _time=true, kwargs...)
+    t0 = time()
+    @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, steady_state_duration, d, n = prob
 
     p = geometry
-    gpu = isa(first(values(p)), AbstractGPUArray)
+    _gpu = isa(first(values(p)), AbstractGPUArray)
     # if gpu
     #     ignore() do
     #         p = cpu(p)
@@ -11,7 +12,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     # end
     p = apply(geometry_padding, p)
     p = apply(subpixel_averaging, p)
-    if gpu
+    if _gpu
         ignore() do
             p = gpu(p)
         end
@@ -37,15 +38,17 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     u, mode_fields, total_powers = reduce(T[1]+dt:dt:T[2], init=(u, 0, 0)) do (u, mode_fields, tp), t
         # save && push!(h, u)
         mode_fields_ = [
-            [begin
-                # E = dict([k => u[k, m] for k = Enames])
-                # H = dict([k => u[k, m] for k = Hnames])
-                # (; E, H)
-                E = [u[k, m] |> F for k = Enames]
-                H = [u[k, m] |> F for k = Hnames]
-                # global aaab, bbbb = E, H
-                [E, H]
-            end * cispi(-2t / λ) for λ = m.wavelength_modes |> keys]
+            [
+                begin
+                    # λ = dispersion_compensation(dx, dt, n, λ)
+                    # E = dict([k => u[k, m] for k = Enames])
+                    # H = dict([k => u[k, m] for k = Hnames])
+                    # (; E, H)
+                    E = [u[k, m] |> F for k = Enames]
+                    H = [u[k, m] |> F for k = Hnames]
+                    # global aaab, bbbb = E, H
+                    [E, H] * cispi(-2t / λ)
+                end for λ = m.wavelength_modes |> keys]
             for m = monitor_instances
         ]
         tp_ = map(monitor_instances) do m
@@ -70,7 +73,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
                 if polarization == :TE
                     # global E, H
                     Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
-                    if !gpu
+                    if !_gpu
                         Ex += 0real(Ez[1])
                         Hy += 0real(Ez[1])
                     end
@@ -104,6 +107,9 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     end
     if !isnothing(plotpath)
 
+    end
+    if _time
+        println("simulation took: ", time() - t0)
     end
     return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, total_powers)
 end

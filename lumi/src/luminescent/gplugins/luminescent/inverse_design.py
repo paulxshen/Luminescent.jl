@@ -27,7 +27,7 @@ from .materials import MATERIAL_LIBRARY
 
 def inverse_design_problem(c,  lmin=.1, symmetries=[],
                            tparam_targets={}, sparam_targets={},
-                           maxiters=25, eta=.1,
+                           maxiters=25, eta=.1, init="", minloss=.01,
                            design_region_layer=LAYER.DESIGN,
                            design_guess_layer=LAYER.GUESS,
                            design_layer=LAYER.WG,
@@ -55,14 +55,17 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
     prob = sparams_problem(c, layer_stack=layer_stack, wavelengths=wavelengths,
                            keys=keys, approx_2D=approx_2D, ** kwargs)
     prob["targets"] = targets
+    prob["wavelengths"] = wavelengths
     prob["target_type"] = target_type
+    prob["init"] = init
+    prob["minloss"] = minloss
     prob["eta"] = eta
     prob["study"] = "inverse_design"
     polys = c.extract([design_region_layer]).get_polygons()
     if not symmetries:
         symmetries = [[]]*len(polys)
     else:
-        if type(symmetries[0]) is int:
+        if type(symmetries[0]) is not list:
             symmetries = [symmetries]*len(polys)
 
     def _bbox(b):
@@ -113,7 +116,7 @@ def apply_design(c0,  sol):
     for layer in c0.layers:
         if layer != dl:
             c.add_ref(c0.extract([layer]))
-    c.show()
+    # c.show()
     pic2gds(os.path.join(path, f"design{i+1}.png"), sol["dx"])
     g = gf.import_gds(os.path.join(path, f"design{i+1}.gds"), "TOP",
                       read_metadata=True)

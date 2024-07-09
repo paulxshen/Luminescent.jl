@@ -1,23 +1,31 @@
-try
-    using GLMakie
-catch e
-    println(e)
-end
+# try
+#     using GLMakie
+#     using GLMakie: volume
+#     global gl = true
+# catch e
+# using CairoMakie
+global gl = false
+
 ° = π / 180
 function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorithm=nothing,
-    azimuth=-75°, elevation=75°,
+    azimuth=75°, elevation=75°,
     kw...)
-    if ndims(a) == 2
+    if ndims(a) == 2 || !gl
         if isnothing(colorrange)
-            colorrange = extrema(a)
+            colorrange = 2extrema(a)
+        end
+        if ndims(a) == 3
+            println("3D array: plotting middle slice")
+            title *= " (middle slice of 3D array)"
+            a = a[:, :, round(Int, size(a, 3) / 2)]
         end
         aspect = size(a, 1) / size(a, 2)
         ax, pl = heatmap(g[1, 1], real(a); axis=(; kw..., title, aspect), colormap, colorrange=colorrange)
     else
         if isnothing(colorrange)
-            colorrange = extrema(a) * 0.2
+            colorrange = extrema(a) * 0.1
         end
-        ax, pl = GLMakie.volume(g[1, 1], real(a), ; axis=(; kw..., type=Axis3, title,), colormap, colorrange, algorithm)
+        ax, pl = volume(g[1, 1], real(a), ; axis=(; kw..., type=Axis3, title,), colormap, colorrange, algorithm)
         ax.elevation[] = elevation
         ax.azimuth[] = azimuth
     end
@@ -25,7 +33,6 @@ function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorit
         Colorbar(g[1, 2], pl)
     end
 end
-
 function quickie(sol; kw...)
     @unpack fields, geometry = sol
     fig = Figure()
