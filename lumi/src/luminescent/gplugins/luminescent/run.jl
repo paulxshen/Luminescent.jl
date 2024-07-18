@@ -148,7 +148,7 @@ for ms = mode_solutions
             # ϵmode = min.(ϵmode, ϵcore_)
         end
         # mode = normalize_mode(mode, dx / λc)
-        # mode = keepxy(mode)
+        mode = keepxy(mode)
         global mode0 = deepcopy(mode)
 
         if calibrate && d == 2
