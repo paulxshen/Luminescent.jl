@@ -8,5 +8,6 @@ docs/build/
 /lumi_runs
 /lumi/dist
 *.lock
-*/*.pyc
+*.pyc
+*.*.pyc
 *.pyo

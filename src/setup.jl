@@ -79,7 +79,7 @@ function setup(boundaries, sources, monitors, dx, sz;
                 steady_state_duration = 4
 
             else
-                steady_state_duration = 20 / minimum(diff([0, (1 ./ v)...]))
+                steady_state_duration = 8 / minimum(diff([0, (1 ./ v)...]))
             end
         end
     end

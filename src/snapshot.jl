@@ -10,19 +10,25 @@ global gl = false
 function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorithm=nothing,
     azimuth=75°, elevation=75°,
     kw...)
-    if ndims(a) == 2 || !gl
+    d = ndims(a)
+    if d == 2 || !gl
         if isnothing(colorrange)
             colorrange = 2extrema(a)
         end
-        if ndims(a) == 3
+        aspect = size(a, 1) / size(a, 2)
+        if d == 3
             println("3D array: plotting middle slice")
             title *= " (middle slice of 3D array)"
-            a = a[:, :, round(Int, size(a, 3) / 2)]
+
+            a1 = a[:, :, round(Int, size(a, 3) / 2)]
+            ax, pl = heatmap(g[1, 1], real(a1); axis=(; kw..., title, aspect), colormap, colorrange=colorrange)
+
+            a1 = a[round(Int, size(a, 1) / 2), :, :]
+            ax, pl = heatmap(g[1, 2], real(a1); axis=(; kw..., title, aspect), colormap, colorrange=colorrange)
         else
             title *= " (2D array)"
+            ax, pl = heatmap(g[1, 1], real(a); axis=(; kw..., title, aspect), colormap, colorrange=colorrange)
         end
-        aspect = size(a, 1) / size(a, 2)
-        ax, pl = heatmap(g[1, 1], real(a); axis=(; kw..., title, aspect), colormap, colorrange=colorrange)
     else
         if isnothing(colorrange)
             colorrange = extrema(a) * 0.1
@@ -32,7 +38,7 @@ function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorit
         ax.azimuth[] = azimuth
     end
     if diff(collect(extrema(a)))[1] > 0
-        Colorbar(g[1, 2], pl)
+        Colorbar(g[1, d], pl)
     end
 end
 function quickie(sol; kw...)

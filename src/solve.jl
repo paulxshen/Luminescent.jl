@@ -13,11 +13,11 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     _gpu = isa(first(values(p)), AbstractGPUArray)
     p = apply(geometry_padding, p)
     # global aaaaaaaaa = p
-    # if _gpu
-    #     ignore() do
-    #         p = gpu(p)
-    #     end
-    # end
+    if _gpu
+        ignore() do
+            p = gpu(p)
+        end
+    end
     p = apply(subpixel_averaging, p)
     global aaaaaaaada = p
 

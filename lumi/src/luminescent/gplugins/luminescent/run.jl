@@ -53,7 +53,7 @@ polarization = :TE
 _dx = dx / λc
 port_source_offset = whole(PORT_SOURCE_OFFSET, _dx)
 source_margin = whole(SOURCE_MARGIN, _dx)
-n = round((port_source_offset + source_margin)/_dx)
+n = round((port_source_offset + source_margin) / _dx)
 
 # p = m + n
 # origin = components.device.bbox[1] - dx * p
@@ -72,7 +72,11 @@ push!(lr[2], 0)
 eps_3D = pad(eps_3D, :replicate, lr...)
 # heatmap(eps_2D) |> display
 origin = components.device.bbox[1] - dx * n * portsides[1]
-
+# using GLMakie
+# volume(eps_3D) |> display
+# heatmap(eps_3D[:, :, 4]) |> display
+# heatmap(eps_2D) |> display
+# error()
 if study == "inverse_design"
     @load PROB_PATH init design_configs design_layer targets target_type eta maxiters design_config
     prob = load(PROB_PATH)
@@ -261,7 +265,7 @@ run_probs = [
         prob = setup(boundaries, sources, monitors, dx / λc, sz; F, ϵ, zpml=0.2, verbose)
     end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
 ]
-
+# error()
 if !isempty(gpu_backend)
     Flux.gpu_backend!(gpu_backend)
     if gpu_backend == "CUDA"
@@ -395,6 +399,7 @@ function loss(params,)# targets)
     # mean([mae(values(yhat),values(y)) for (yhat,y)=zip(targets,[solve(prob;geometry) for prob=run_probs])])
 end
 virgin = true
+# error()
 t0 = time()
 if study == "sparams"
     # @info "Computing s-parameters..."

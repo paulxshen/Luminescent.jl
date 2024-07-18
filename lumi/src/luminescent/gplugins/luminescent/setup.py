@@ -96,8 +96,8 @@ def setup(c, study,   dx,
                         eps, λ=wl, dx=dx, neigs=max(mode_numbers)+1, plot=plot)
                     # _modes = [0]
                     # mode = _modes[0]
-                    modes = [{k: [np.real(mode[k]).tolist(), np.imag(
-                        mode[k]).tolist()] for k in mode} for mode in _modes]
+                    modes = [{k: [np.real(mode[k].T).tolist(), np.imag(
+                        mode[k].T).tolist()] for k in mode} for mode in _modes]
                     modes1 = [{k: [np.real(mode[k]).tolist(), np.imag(
                         mode[k]).tolist()] for k in mode} for mode in _modes1]
                     # for mn in mode_numbers:

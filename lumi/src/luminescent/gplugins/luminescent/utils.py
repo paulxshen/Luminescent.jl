@@ -118,24 +118,24 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
     solvers = EMpy.modesolvers.FD.VFDModeSolver(
         λ, x, y1, ϵfunc1, "SS00").solve(neigs, tol)
 
-    if plot:
-        fig = pylab.figure()
-        fig.add_subplot(2, 3, 1)
-        Hy = numpy.transpose(solver.modes[0].get_field("Hy", x, y))
-        pylab.imshow(abs(Hy))
-        fig.add_subplot(2, 3, 2)
-        Hy = numpy.transpose(solvera.modes[0].get_field("Hy", x, y1))
-        pylab.imshow(abs(Hy))
-        fig.add_subplot(2, 3, 3)
-        Hy = numpy.transpose(solvers.modes[0].get_field("Hy", x, y1))
-        pylab.imshow(abs(Hy))
-        fig.add_subplot(2, 3, 4)
-        e = numpy.transpose(ϵfunc(x, y))
-        pylab.imshow(e)
-        fig.add_subplot(2, 3, 5)
-        e = numpy.transpose(ϵfunc1(x, y1))
-        pylab.imshow(e)
-        pylab.show()
+    # if plot:
+    # fig = pylab.figure()
+    # fig.add_subplot(2, 3, 1)
+    # Hy = numpy.transpose(solver.modes[0].get_field("Hy", x, y))
+    # pylab.imshow(abs(Hy))
+    # fig.add_subplot(2, 3, 2)
+    # Hy = numpy.transpose(solvera.modes[0].get_field("Hy", x, y1))
+    # pylab.imshow(abs(Hy))
+    # fig.add_subplot(2, 3, 3)
+    # Hy = numpy.transpose(solvers.modes[0].get_field("Hy", x, y1))
+    # pylab.imshow(abs(Hy))
+    # fig.add_subplot(2, 3, 4)
+    # e = numpy.transpose(ϵfunc(x, y))
+    # pylab.imshow(e)
+    # fig.add_subplot(2, 3, 5)
+    # e = numpy.transpose(ϵfunc1(x, y1))
+    # pylab.imshow(e)
+    # pylab.show()
 
     modes = [{k: m.get_field(k, x, y) for k in [
         "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in solver.modes]
