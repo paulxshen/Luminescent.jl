@@ -74,7 +74,9 @@ def load_solution(path=None):
             sol[k]["sparams"] = load_sparams(sol[k]["sparams"])
         for k in sol["after"]:
             sol[k] = sol["after"][k]
-        # sol["designs"] = [np.array(d) for d in sol["designs"]]
+    # pic2gds(os.path.join(path, f"design{i+1}.png"), sol["dx"])
+
+        sol["designs"] = [np.array(d) for d in sol["designs"]]
         pass
     return sol
 

@@ -47,7 +47,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     # transient_duration=max_source_dist(sources), steady_state_duration=2,
     transient_duration=0, steady_state_duration=0,
     ϵ=1, μ=1, σ=0, σm=0, F=Float32,
-    xpml=0.5, ypml=0.5, zpml=0.5,
+    xpml=0.4, ypml=0.4, zpml=0.4,
     # ϵmin=1,
     # Courant=0.5,
     Courant=nothing,
@@ -68,18 +68,18 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
     if transient_duration == 0
-        transient_duration = sum(sz) * dx * sqrt(ϵmax) + 1
+        transient_duration = sum(sz) * dx * sqrt(ϵmax) + 4
     end
     if steady_state_duration == 0
         if isempty(monitors)
-            steady_state_duration = 2
+            steady_state_duration = 4
         else
-            steady_state_duration = maximum(monitors) do m
-                if length(wavelengths(m)) == 1
-                    2
-                else
-                    2 / minimum(abs.(diff(1 ./ wavelengths(m))))
-                end
+            v = reduce(vcat, wavelengths.(monitors)) |> Set |> collect |> sort |> reverse
+            if length(v) == 1
+                steady_state_duration = 4
+
+            else
+                steady_state_duration = 20 / minimum(diff([0, (1 ./ v)...]))
             end
         end
     end
@@ -190,8 +190,8 @@ function setup(boundaries, sources, monitors, dx, sz;
                 push!(geometry_padding[:ϵ], OutPad(:replicate, l, r, sz))
                 push!(geometry_padding[:μ], OutPad(:replicate, l, r, sz))
 
-                l1 = round.(l / 2)
-                r1 = round.(r / 2)
+                l1 = round.(0.2l)
+                r1 = round.(0.2r)
                 push!(geometry_padding[:σ], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
                 push!(geometry_padding[:σm], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
                 l2 = l - l1
@@ -367,11 +367,12 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
     transient_duration, steady_state_duration = F.((transient_duration, steady_state_duration))
-    OrderedDict((; geometry_padding, field_padding, subpixel_averaging, field_grids,
+    OrderedDict((;
+        geometry_padding, field_padding, subpixel_averaging, field_grids,
         source_instances, monitor_instances, field_names,
-        polarization,
+        polarization, F, Courant,
         transient_duration, steady_state_duration,
-        geometry,
+        geometry, n=sqrt(ϵmax),
         # roi,
         u0, fields, d, dx, dt, sz, kw...) |> pairs)
 end

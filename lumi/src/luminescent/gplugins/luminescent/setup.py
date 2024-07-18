@@ -29,9 +29,10 @@ def setup(c, study,   dx,
           xmargin, name="",
           runs=[], wavelengths=[], sources=[], layer_stack=LAYER_STACK, layer_views=LAYER_VIEWS, exclude_layers=[
               LAYER.DESIGN, GUESS], approx_2D=False,
-          gpu=None,
+          gpu=None, dtype=np.float32,
           path=PATH, plot=False, **kwargs):
     prob = dict()
+    prob["dtype"] = str(dtype)
     prob["path"] = os.path.join(
         path, datetime.datetime.now().isoformat(timespec="seconds").replace(":", "-"))
     prob["name"] = name
@@ -92,15 +93,18 @@ def setup(c, study,   dx,
                     center = np.array(center)-.001*np.array(normal)
                     eps = material_slice(
                         c, dx, center, w, h, normal, layers, layer_stack, layer_views=layer_views)
-                    _modes = solve_modes(
+                    _modes, _modes1 = solve_modes(
                         eps, λ=wl, dx=dx, neigs=max(mode_numbers)+1, plot=plot)
                     # _modes = [0]
                     # mode = _modes[0]
                     modes = [{k: [np.real(mode[k]).tolist(), np.imag(
                         mode[k]).tolist()] for k in mode} for mode in _modes]
+                    modes1 = [{k: [np.real(mode[k]).tolist(), np.imag(
+                        mode[k]).tolist()] for k in mode} for mode in _modes1]
                     # for mn in mode_numbers:
                     mode_solutions.append({
                         "modes": modes,
+                        "modes1": modes1,
                         "wavelength": wl,
                         # "mode_number": mn,
                         "ports": [s["port"]],
