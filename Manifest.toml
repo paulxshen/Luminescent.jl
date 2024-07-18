@@ -2,7 +2,7 @@
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "f33bacad3e34ed9c20921806ee9108170c3b04b7"
+project_hash = "6fced2e7fc0876c87dc0cff29d7ead1402300072"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -714,6 +714,12 @@ deps = ["BitTwiddlingConvenienceFunctions", "IfElse", "Libdl", "Static"]
 git-tree-sha1 = "8e070b599339d622e9a081d17230d74a5c473293"
 uuid = "3e5b6fbb-0976-4d2c-9146-d79de83f2fb0"
 version = "0.1.17"
+
+[[deps.Humanize]]
+deps = ["Dates", "Printf", "Test"]
+git-tree-sha1 = "f7f2a0a920ad015da58d016587aaf4af4fa6ad5e"
+uuid = "7ec9b9c5-1998-51e1-b7fc-fc3590c18259"
+version = "1.0.0"
 
 [[deps.HypergeometricFunctions]]
 deps = ["DualNumbers", "LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]

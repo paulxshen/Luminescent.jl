@@ -1,4 +1,4 @@
-using UnPack, LinearAlgebra, Random, Jello, StatsBase, ImageTransformations, Meshes, CoordinateTransformations, Functors, DataStructures, GPUArraysCore
+using Humanize, UnPack, LinearAlgebra, Random, Jello, StatsBase, ImageTransformations, Meshes, CoordinateTransformations, Functors, DataStructures, GPUArraysCore
 using Meshes: Sphere
 using ArrayPadding: left, right
 using Zygote: bufferfrom, Buffer, ignore_derivatives

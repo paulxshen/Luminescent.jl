@@ -25,8 +25,7 @@ from .utils import *
 
 
 def setup(c, study,   dx,
-          zmargin,
-          xmargin, name="",
+          zmargin, name="",
           runs=[], wavelengths=[], sources=[], layer_stack=LAYER_STACK, layer_views=LAYER_VIEWS, exclude_layers=[
               LAYER.DESIGN, GUESS], approx_2D=False,
           gpu=None, dtype=np.float32,

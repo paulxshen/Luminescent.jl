@@ -51,23 +51,27 @@ ports, = (ports,) .|> SortedDict
 polarization = :TE
 
 _dx = dx / λc
-m = round(SOURCE_MARGIN / _dx)
-source_margin = m * dx
-n = round(PORT_SOURCE_OFFSET / _dx)
-port_source_offset = n * dx
+port_source_offset = whole(PORT_SOURCE_OFFSET, _dx)
+source_margin = whole(SOURCE_MARGIN, _dx)
+n = round((port_source_offset + source_margin)/_dx)
 
-p = m + n
-origin = components.device.bbox[1] - dx * p
-eps_3D = pad(eps_3D, :replicate, [p, p, 0])
-eps_2D = pad(eps_2D, :replicate, p)
+# p = m + n
+# origin = components.device.bbox[1] - dx * p
+# eps_3D = pad(eps_3D, :replicate, [p, p, 0])
+# eps_2D = pad(eps_2D, :replicate, p)
 model = nothing
+
 # [UnPack, BSON, JSON, Dates, DataStructures, ImageTransformations, Meshes, CoordinateTransformations, GPUArraysCore, StatsBase, Zygote, Porcupine, Jello, ArrayPadding, AbbreviatedStackTraces, Flux, FileIO, Images, CairoMakie, Functors, Lazy]
-# xy = (m + n) * portsides
-# eps_2D = pad(eps_2D, :replicate, xy...)
-# push!(xy[1], 0)
-# push!(xy[2], 0)
-# eps_3D = pad(eps_3D, :replicate, xy...)
+# nnp=whole(XYMARGIN,_dx)
+# lr = n* portsides+nnp*(1-portsides)
+lr = n * portsides
+eps_2D = pad(eps_2D, :replicate, lr...)
+# nz=whole(ZMARGIN,_dx)
+push!(lr[1], 0)
+push!(lr[2], 0)
+eps_3D = pad(eps_3D, :replicate, lr...)
 # heatmap(eps_2D) |> display
+origin = components.device.bbox[1] - dx * n * portsides[1]
 
 if study == "inverse_design"
     @load PROB_PATH init design_configs design_layer targets target_type eta maxiters design_config

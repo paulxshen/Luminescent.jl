@@ -39,6 +39,9 @@ def solve(prob, ):
     with Popen(cmd,  stdout=PIPE, ) as p:
         for line in p.stdout:
             print(line, flush=True)
+        if p.stderr is not None:
+            for line in p.stderr:
+                print(line, flush=True)
     # exit_code = p.poll()
     # subprocess.run()
     # print(f"julia simulation took {time.time()-start_time} seconds")
