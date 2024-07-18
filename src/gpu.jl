@@ -1,5 +1,5 @@
-Flux.gpu(d::Dictlike) = apply(Flux.gpu, d)
-Flux.cpu(d::Dictlike) = apply(Flux.cpu, d)
+Flux.gpu(d::Dictlike) = apply_func(Flux.gpu, d)
+Flux.cpu(d::Dictlike) = apply_func(Flux.cpu, d)
 
 S = Union{MonitorInstance,Collection}
 Flux.gpu(v::AbstractVector{T}) where {T<:S} = gpu.(v)

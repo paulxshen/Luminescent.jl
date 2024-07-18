@@ -61,8 +61,8 @@ end
 # Flux.gpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.gpu(d[k]) for k = keys(d)])
 # Flux.cpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.cpu(d[k]) for k = keys(d)])
 
-Base.Float16(x::Dictlike) = f16(x)
-Base.Float32(x::Dictlike) = f32(x)
+# Base.Float16(x) = f16(x)
+# Base.Float32(x) = f32(x)
 
 
 footer = "Suppress this message by verbose=false\n2024 (c) Paul Shen at Luminescent AI\n<pxshen@alumni.stanford.edu>"

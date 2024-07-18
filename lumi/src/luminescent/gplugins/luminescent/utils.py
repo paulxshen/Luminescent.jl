@@ -2,10 +2,12 @@ try:
     from IPython.display import display
 except ImportError:
     pass
+from re import T
 from PIL import Image
 import imageio.v3 as iio
 import textwrap
 from cairosvg import svg2png
+from regex import F
 from .picToGDS import main
 import rasterio.features
 import shapely
@@ -88,110 +90,60 @@ def add_bbox(c, layers, nonport_margin=0):
 def solve_modes(eps, λ, dx, neigs=1, plot=False):
     tol = 1e-4
     m, n = eps.shape
-    x = numpy.linspace(0, (m-1)*dx, m)
-    y = numpy.linspace(0, (n-1)*dx, n)
+    # print(m, n)
+    x = numpy.linspace(0.5*dx, (m-.5)*dx, m)
+    y = numpy.linspace(0.5*dx, (n-.5)*dx, n)
+
+    i = round(n/2)
+    y1 = y[i:i+4]
+    e = eps[:, i]
+    eps1 = np.stack([e, e, e, e]).T
 
     def ϵfunc(x_, y_):
-        return cv2.resize(eps, dsize=(len(y_), len(x_)), interpolation=cv2.INTER_CUBIC)
-        # return eps.T
-    boundary = "0000"
+        m, n = len(x_), len(y_)
+        return cv2.resize(eps, dsize=(n, m), interpolation=cv2.INTER_CUBIC)
+
+    def ϵfunc1(x_, y_):
+        m, n = len(x_), len(y_)
+        return cv2.resize(eps1, dsize=(n, m), interpolation=cv2.INTER_CUBIC)
+        # return ϵfunc(x_, y_)[i:i+len(y_), :]
 
     tol = 1e-6
-    solver = EMpy.modesolvers.FD.VFDModeSolver(λ, x, y, ϵfunc, boundary).solve(
-        neigs, tol
-    )
+    # plot = True
+    # neigs = 2
+    solver = EMpy.modesolvers.FD.VFDModeSolver(
+        λ, x, y, ϵfunc,  "0000").solve(neigs, tol)
+    solvera = EMpy.modesolvers.FD.VFDModeSolver(
+        λ, x, y1, ϵfunc1,  "AA00").solve(neigs, tol)
+    solvers = EMpy.modesolvers.FD.VFDModeSolver(
+        λ, x, y1, ϵfunc1, "SS00").solve(neigs, tol)
 
     if plot:
         fig = pylab.figure()
-
-        fig.add_subplot(1, 3, 1)
-        Ex = numpy.transpose(solver.modes[0].get_field("Ex", x, y))
-        pylab.imshow(abs(Ex))
-        pylab.title("Ex")
-
-        fig.add_subplot(1, 3, 2)
+        fig.add_subplot(2, 3, 1)
         Hy = numpy.transpose(solver.modes[0].get_field("Hy", x, y))
         pylab.imshow(abs(Hy))
-        pylab.title("Hy")
-        fig.add_subplot(1, 3, 3)
+        fig.add_subplot(2, 3, 2)
+        Hy = numpy.transpose(solvera.modes[0].get_field("Hy", x, y1))
+        pylab.imshow(abs(Hy))
+        fig.add_subplot(2, 3, 3)
+        Hy = numpy.transpose(solvers.modes[0].get_field("Hy", x, y1))
+        pylab.imshow(abs(Hy))
+        fig.add_subplot(2, 3, 4)
         e = numpy.transpose(ϵfunc(x, y))
         pylab.imshow(e)
-        pylab.title("eps")
+        fig.add_subplot(2, 3, 5)
+        e = numpy.transpose(ϵfunc1(x, y1))
+        pylab.imshow(e)
         pylab.show()
 
     modes = [{k: m.get_field(k, x, y) for k in [
         "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in solver.modes]
-    return modes
-
-# def solve_modes(wwg, hwg, λ=1.55, wm=.15, hm=.15, dx=.05, ϵcore=ϵcore, ϵclad=ϵclad):
-    # tol = 1e-4
-
-    # w = wwg+2*wm
-    # h = hwg+2*hm
-    # # x = numpy.linspace(0, w, round(w/dx)+1)
-    # # y = numpy.linspace(0, h, round(h/dx)+1)
-    # x = numpy.linspace(0, w, round(w/dx)+1)
-    # y = numpy.linspace(0, h, round(h/dx)+1)
-
-    # def ϵfunc(x_, y_):
-    #     """Return a matrix describing a 2d material.
-
-    #     :param x_: x values
-    #     :param y_: y values
-    #     :return: 2d-matrix
-    #     """
-    #     # xx, yy = numpy.meshgrid(x_, y_)
-    #     # return numpy.where(
-    #     #     # (numpy.abs(xx.T - 1.24) <= 0.24) * (numpy.abs(yy.T - 1.11) <= 0.11),
-    #     #     (xx.T < w-wm-tol) * (xx.T > wm-tol) * \
-    #     #     (yy.T > hm-tol)*(yy.T < h-hm-tol),
-    #     #     ϵcore,
-    #     #     ϵclad,
-    #     # )
-
-    #     def f(x, y):
-    #         if (x < w-wm-tol) and (x > wm+tol) and (y > hm+tol) and (y < h-hm-tol):
-    #             return ϵcore
-    #         elif (x > w-wm+tol) or (x < wm-tol) or (y < hm-tol) or (y > h-hm+tol):
-    #             return ϵclad
-    #         else:
-    #             return (ϵcore+ϵclad)/2
-    #     # return np.ma[f(x, y) for x, y in zip(xx, yy)]
-    #     r = np.array([[f(x, y) for x in x_] for y in y_]).T
-    #     # r = np.array([1 for x in 1:2 for y in 1:3])
-    #     return r
-    # neigs = 1
-    # tol = 1e-8
-    # boundary = "0000"
-
-    # ϵ = ϵfunc(x, y)
-    # solver = EMpy.modesolvers.FD.VFDModeSolver(λ, x, y, ϵfunc, boundary).solve(
-    #     neigs, tol
-    # )
-
-    # fig = pylab.figure()
-
-    # fig.add_subplot(1, 3, 1)
-    # Ex = numpy.transpose(solver.modes[0].get_field("Ex", x, y))
-    # pylab.imshow(abs(Ex))
-    # pylab.title("Ex")
-
-    # fig.add_subplot(1, 3, 2)
-    # Hy = numpy.transpose(solver.modes[0].get_field("Hy", x, y))
-    # pylab.imshow(abs(Hy))
-    # pylab.title("Hy")
-    # fig.add_subplot(1, 3, 3)
-    # e = numpy.transpose(ϵfunc(x, y))
-    # pylab.imshow(e)
-    # pylab.title("eps")
-
-    # modes = [{k: m.get_field(k, x, y) for k in [
-    #     "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in solver.modes]
-    # # mode = {"Ex": Ex, "Ey": Ey, "Ez": Ez, "Hx": Hx, "Hy": Hy, "Hz": Hz}
-    # # np.savez("modes_{wwg}tol{hwg}.npz", **mode)
-    # # pylab.show()
-    # # return solver.modes
-    # return modes, ϵ, [w, h]
+    modes1 = [{k: m.get_field(k, x, y1)[:, 0] for k in [
+        "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in sorted(solvera.modes, key=lambda x: -np.abs(x.neff))]
+    # "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in sorted(solvera.modes+solvers.modes, key=lambda x: -np.abs(x.neff))]
+    # print(solver.modes[0].get_field("Ex", x, y).shape)
+    return modes, modes1
 
 
 def s2svg(area, bbox, dx):
@@ -320,6 +272,12 @@ def raster_slice(scene, dx, center, w, h, normal):
     # plt.show()
 
     return img
+
+
+p = shapely.Polygon([(0, 0), (1, 0), (1, 1), (0, 1)])
+svg = s2svg(p, [0, 0, 2, 2], .2)
+svg2png(bytestring=svg, write_to='_.png', background_color="#00000000",
+        output_width=10, output_height=10)
 
 
 def material_slice(c, dx, center, w, h, normal, layers, layer_stack, layer_views=LAYER_VIEWS):

@@ -1,8 +1,9 @@
 function normalize_mode(m, dx)
-    @unpack Ex, Hy = m
+    @unpack Ex, Hy, = m
+    # @unpack Ex, Hy, Ez = m
     p = real(Ex ⋅ Hy) * dx^ndims(Ex) / 2
+    m / √p
     # (; Ex=Ex / √p, Hy=Hy / √p, Ez=Ez / √p)
-    (; Ex=Ex / √p, Hy=Hy / √p)
 end
 
 function keepxy(mode)

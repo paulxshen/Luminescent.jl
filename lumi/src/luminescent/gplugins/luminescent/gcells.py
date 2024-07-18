@@ -1,5 +1,7 @@
 
 from gdsfactory.cross_section import Section
+from networkx import center
+from numpy import cumsum
 from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
 
 import gdsfactory as gf
@@ -55,39 +57,51 @@ def bend(r, wwg=.5, lwg=1, LAYER=LAYER, **kwargs):
 
 def mimo(west=0, east=0, south=0, north=0,
          l=2.0, w=2.0, wwg=.5,
+         wwg_west=None, wwg_east=None, wwg_south=None, wwg_north=None,
          layer_wg=LAYER.WG, layer_wgclad=LAYER.WGCLAD, layer_box=LAYER.BOX, layer_design=LAYER.DESIGN,
          **kwargs):
     design = gf.Component()
 
     c = gf.Component()
-    lwg = 2*wwg
+    lwg = 4*wwg
     p = [(0, 0), (l, 0), (l, w), (0, w)]
     design.add_polygon(p,                       layer=layer_design)
     c.add_polygon(p,                       layer=layer_wg)
 
-    j = 0
-    for (n, x, y, dx, dy, a) in zip(
-        [west,  east, south, north],
+    ld = [west,  east, south, north]
+    for i, v, d in zip(range(4), ld, [w, w, l, l]):
+        if type(v) is int:
+            ld[i] = [(.5+j)*d/v for j in range(v)]
+    lwwg = [wwg_west, wwg_east, wwg_south, wwg_north]
+    for i, v in enumerate(lwwg):
+        if v is None:
+            v = wwg
+        if type(v) is float or type(v) is int:
+            lwwg[i] = [v]*len(ld[i])
+
+    n = 0
+    for (i, x, y, d, wwg, a) in zip(
+        range(4),
         [0,  l, 0, 0],
         [0, 0, 0, w],
-        [0,  0, l/max(1, south), l/max(1, north),],
-        [w/max(1, west), w/max(1, east), 0, 0],
+        ld,
+        lwwg,
         [180, 0, -90, 90]
     ):
-        for i in range(n):
-
-            name = "o"+str(i+j+1)
-            design.add_port(name=name, center=(x+dx*(i+.5), y+dy*(i+.5)), width=wwg,
+        for wwg, v in zip(wwg, cumsum(d)):
+            center = (x, y+v) if i in [0, 1] else (x+v, y)
+            name = "o"+str(n+1)
+            design.add_port(name=name, center=center, width=wwg,
                             orientation=a, layer=layer_wg)
             wg = c << gf.components.straight(
                 length=lwg, width=wwg, layer=layer_wg)
             wg.connect("o2", design.ports[name])
             c.add_port(name=name, port=wg.ports["o1"])
-        j += n
+            n += 1
 
     design = c << design
     c = add_bbox(c, layers=[layer_wgclad, layer_box],
-                 nonport_margin=XMARGIN)
+                 nonport_margin=.1)
     return c
 
 

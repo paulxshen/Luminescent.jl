@@ -18,6 +18,8 @@ function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorit
             println("3D array: plotting middle slice")
             title *= " (middle slice of 3D array)"
             a = a[:, :, round(Int, size(a, 3) / 2)]
+        else
+            title *= " (2D array)"
         end
         aspect = size(a, 1) / size(a, 2)
         ax, pl = heatmap(g[1, 1], real(a); axis=(; kw..., title, aspect), colormap, colorrange=colorrange)

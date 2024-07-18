@@ -1,22 +1,26 @@
 
-function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, kwargs...)
-    @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, steady_state_duration, d = prob
+function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, _time=true, kwargs...)
+    t0 = ignore() do
+        time()
+    end
+    @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
+    sz = size(first(values(geometry)))
+    points = prod(sz)
+    steps = (transient_duration + steady_state_duration) / dt |> round
+    println("$points points x $steps steps = $(points*steps) point-steps")
     p = geometry
-    gpu = isa(first(values(p)), AbstractGPUArray)
-    # if gpu
+    _gpu = isa(first(values(p)), AbstractGPUArray)
+    p = apply(geometry_padding, p)
+    # global aaaaaaaaa = p
+    # if _gpu
     #     ignore() do
-    #         p = cpu(p)
+    #         p = gpu(p)
     #     end
     # end
-    p = apply(geometry_padding, p)
     p = apply(subpixel_averaging, p)
-    if gpu
-        ignore() do
-            p = gpu(p)
-        end
-    end
-    global aaaa = p
+    global aaaaaaaada = p
+
 
     Δ = [transient_duration, steady_state_duration]
     T = cumsum(Δ)
@@ -25,7 +29,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     # extrema(abs.(prob.source_instances[1]._g.Jy))
 
     # if save
-    _update = !autodiff && !save ? update! : update
+    _update = !autodiff ? update! : update
     h = []
 
     # run simulation
@@ -37,15 +41,17 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     u, mode_fields, total_powers = reduce(T[1]+dt:dt:T[2], init=(u, 0, 0)) do (u, mode_fields, tp), t
         # save && push!(h, u)
         mode_fields_ = [
-            [begin
-                # E = dict([k => u[k, m] for k = Enames])
-                # H = dict([k => u[k, m] for k = Hnames])
-                # (; E, H)
-                E = [u[k, m] |> F for k = Enames]
-                H = [u[k, m] |> F for k = Hnames]
-                # global aaab, bbbb = E, H
-                [E, H]
-            end * cispi(-2t / λ) for λ = m.wavelength_modes |> keys]
+            [
+                begin
+                    # λ = dispersion_compensation(dx, dt, n, λ)
+                    # E = dict([k => u[k, m] for k = Enames])
+                    # H = dict([k => u[k, m] for k = Hnames])
+                    # (; E, H)
+                    E = [u[k, m] |> F for k = Enames]
+                    H = [u[k, m] |> F for k = Hnames]
+                    # global aaab, bbbb = E, H
+                    [E, H] * cispi(-2t / λ)
+                end for λ = m.wavelength_modes |> keys]
             for m = monitor_instances
         ]
         tp_ = map(monitor_instances) do m
@@ -70,10 +76,9 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
                 if polarization == :TE
                     # global E, H
                     Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
-                    if !gpu
-                        Ex += 0real(Ez[1])
-                        Hy += 0real(Ez[1])
-                    end
+                    Ex += 0sum(Ez[1:2])
+                    Hy += 0sum(Ez[1:2])
+                    # end
                     _mode = (; Ex, Hy, Ez)
                 else
                     Hx, Ey, Hz = invreframe(frame(m), vcat(H, E))
@@ -105,5 +110,10 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     if !isnothing(plotpath)
 
     end
+    # if _time
+    #     ignore() do
+    #         println("simulation took: ", time() - t0)
+    #     end
+    # end
     return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, total_powers)
 end
