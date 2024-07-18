@@ -2,7 +2,7 @@ module Luminescent
 include("main.jl")
 export sandwich
 export Periodic, PML, PEC, PMC, InPad, OutPad
-export PlaneWave, GaussianBeam, Source, ModalSource
+export PlaneWave, GaussianBeam, Source, ModalSource, keepxy
 export Monitor, ModalMonitor, SphereMonitor, power, flux, field, support, sphcoords, inbounds
 export setup, apply, apply!, °, update!, update
 export calibrate_mode, collapse_mode
