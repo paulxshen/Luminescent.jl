@@ -36,12 +36,19 @@ def solve(prob, ):
 
     cmd = [f"julia", os.path.join(os.path.dirname(
         os.path.abspath(__file__)), "run.jl"), prob_path,]
-    with Popen(cmd,  stdout=PIPE, ) as p:
-        for line in p.stdout:
+
+    proc = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # proc.wait()
+    with proc:
+        for line in proc.stdout:
             print(line, flush=True)
-        if p.stderr is not None:
-            for line in p.stderr:
-                print(line, flush=True)
+    err_message = proc.stderr.read().decode()
+    print(err_message)
+
+    # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:
+    #     if p.stderr is not None:
+    #         for line in p.stderr:
+    #             print(line, flush=True)
     # exit_code = p.poll()
     # subprocess.run()
     # print(f"julia simulation took {time.time()-start_time} seconds")

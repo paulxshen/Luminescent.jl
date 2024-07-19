@@ -270,7 +270,8 @@ if !isempty(gpu_backend)
     Flux.gpu_backend!(gpu_backend)
     if gpu_backend == "CUDA"
         using CUDA
-        study == "inverse_design" && CUDA.allowscalar(true)
+        # study == "inverse_design" && 
+        CUDA.allowscalar(true)
         @assert CUDA.functional()
     elseif gpu_backend == "AMDGPU"
         using AMDGPU
