@@ -11,6 +11,11 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     println("$points points x $steps steps = $(points*steps) point-steps")
     p = geometry
     _gpu = isa(first(values(p)), AbstractGPUArray)
+    if _gpu
+        ignore() do
+            p = cpu(p)
+        end
+    end
     p = apply(geometry_padding, p)
     # global aaaaaaaaa = p
     if _gpu
