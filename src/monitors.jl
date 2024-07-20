@@ -160,7 +160,7 @@ function MonitorInstance(m::Monitor, dx, field_origin, common_left_pad_amount, s
     end for (k, o) = pairs(field_origin)])
     n = isnothing(n) ? n : F.(n |> normalize)
     _center = round(c / dx) + 1 + common_left_pad_amount
-    MonitorInstance(d, roi, frame, F(dx), F(A), _center, m.label, wavelength_modes)
+    MonitorInstance(d, roi, frame, F(dx), F(A), _center, m.label, wavelength_modes; F)
 end
 
 function MonitorInstance(m::PointCloudMonitor, dx, sz, common_left_pad_amount, flb, fl; F=Float32)

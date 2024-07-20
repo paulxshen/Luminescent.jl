@@ -38,7 +38,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
 
     # if save
     milestones = 0:0.1:1.01 |> collect
-
+    println("simulation started")
     clock = ignore() do
         time()
     end
@@ -128,16 +128,9 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     reverse_mode_powers = [[v[4] for v = v] for v in v]
 
     fields = u
-    if verbose
-        @show forward_mode_powers, reverse_mode_powers, total_powers
+    # @show forward_mode_powers, reverse_mode_powers, total_powers
+    ignore() do
+        println("simulation took: ", time() - clock, "s")
     end
-    if !isnothing(plotpath)
-
-    end
-    # if _time
-    #     ignore() do
-    #         println("simulation took: ", time() - t0)
-    #     end
-    # end
     return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, total_powers)
 end
