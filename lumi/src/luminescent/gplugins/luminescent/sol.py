@@ -26,6 +26,7 @@ def solve(prob, ):
     print(f"""
           using simulation folder {path}
           started julia process
+          compiling julia code...
           """)
     prob_path = os.path.join(path, "prob.bson")
     with open(prob_path, "wb") as f:
@@ -41,7 +42,8 @@ def solve(prob, ):
     # proc.wait()
     with proc:
         for line in proc.stdout:
-            print(line, flush=True)
+
+            print(str(line.decode().strip()), flush=True)
         err_message = proc.stderr.read().decode()
         print(err_message)
 

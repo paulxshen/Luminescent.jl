@@ -1,13 +1,15 @@
 
 using UnPack, LinearAlgebra, Random, StatsBase, Dates, DataStructures, JSON, Images, BSON, ArrayPadding
 using Zygote, Flux, Jello, Porcupine
-using Porcupine: keys, values
+using Porcupine: keys, values, fmap
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer
 using BSON: @save, @load, load
-using AbbreviatedStackTraces
+# using AbbreviatedStackTraces
 using CairoMakie
 using Luminescent
+using Luminescent
+include("gpu.jl")
 global MyMakie = CairoMakie
 # delete!(ENV, "SSL_CERT_FILE")
 # using Jello, Luminescent, LuminescentVisualization
@@ -39,7 +41,8 @@ We load design layout which includes a 2d device of device waveguide geometry as
 @load PROB_PATH name dtype portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
 F = Float32
 if contains(dtype, "16")
-    F = Float16
+    # F = Float16
+    println("Float16 not supported yet, will be in future release.")
 end
 λc = median(load(PROB_PATH)[:wavelengths])
 eps_2D = F(stack(stack.(eps_2D)))'
@@ -104,7 +107,7 @@ if study == "inverse_design"
             end
             lmin = d.lmin / dx
             Blob(szd;
-                init, lmin,# rmin=lmin / 2,
+                init, lmin, rmin=lmin / 2,
                 contrast=10,
                 symmetry_dims, verbose)
         end for (i, d) = enumerate(design_configs)
@@ -114,17 +117,8 @@ if study == "inverse_design"
     # using CairoMakie
     # heatmap(model[1]())
 end
-# error()
-#=
-We set boundary conditions, sources , and monitor. The modal source profile is obtained from external mode solver , in our case VectorModesolver.jl . Please refer to guide section of docs website for details . To get an approximate  line source for use in 2d from the cross section profile , we sum and collapse it along its height axis
-=#
 
 boundaries = [] # unspecified boundaries default to PML
-
-# monitors = [monitors[1]]
-
-# device, guess,  Δ, ϵbase, ϵcore, ϵclad, dx, λc =
-#     F.((device, guess,  Δ, ϵbase, ϵcore, ϵclad, dx, λc))
 
 device = 0
 device, dx, λc =
@@ -283,12 +277,7 @@ if !isempty(gpu_backend)
 end
 g0 = run_probs[1].geometry |> deepcopy
 
-# try
-#     using GLMakie
-#     using GLMakie: volume
-#     global MyMakie = GLMakie
-# catch
-# end
+
 function write_sparams(model=nothing; img=nothing, autodiff=false, verbose=false, kw...)
     geometry = make_geometry(model)
     sol = [
@@ -297,7 +286,7 @@ function write_sparams(model=nothing; img=nothing, autodiff=false, verbose=false
                 prob[:geometry] = geometry
             end
 
-            sol = solve(prob; autodiff, verbose)
+            sol = solve(prob; autodiff, verbose, cpu, gpu)
 
             ignore() do
                 if !isnothing(img)
@@ -305,7 +294,7 @@ function write_sparams(model=nothing; img=nothing, autodiff=false, verbose=false
                         img = "run$i.png"
                     end
                     try
-                        MyMakie.save(joinpath(path, img), quickie(sol |> cpu),)
+                        MyMakie.save(joinpath(path, img), quickie(sol |> Flux.cpu),)
                     catch e
                         println(e)
                     end
@@ -394,6 +383,7 @@ function loss(params,)# targets)
 end
 virgin = true
 # error()
+
 t0 = time()
 if study == "sparams"
     # @info "Computing s-parameters..."

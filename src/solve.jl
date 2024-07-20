@@ -1,5 +1,6 @@
 
-function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, _time=true, kwargs...)
+function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, _time=true,
+    cpu=identity, gpu=identity, kwargs...)
     @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
     ignore() do
@@ -13,18 +14,14 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
 
     p = geometry
     _gpu = isa(first(values(p)), AbstractGPUArray)
-    if _gpu
-        ignore() do
-            p = cpu(p)
-        end
-    end
+    # if _gpu
+    #     p = cpu(p)
+    # end
     p = apply(geometry_padding, p)
     # global aaaaaaaaa = p
-    if _gpu
-        ignore() do
-            p = gpu(p)
-        end
-    end
+    # if _gpu
+    #     p = gpu(p)
+    # end
     p = apply(subpixel_averaging, p)
     global aaaaaaaada = p
 
@@ -90,6 +87,9 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
             tp + dt / Δ[2] * tp_,
         )
     end
+    ignore() do
+        println("simulation took: ", time() - clock, "s")
+    end
 
     v = map(mode_fields, monitor_instances) do mf, m
         map(mf, values(m.wavelength_modes)) do u, wm
@@ -129,8 +129,5 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
 
     fields = u
     # @show forward_mode_powers, reverse_mode_powers, total_powers
-    ignore() do
-        println("simulation took: ", time() - clock, "s")
-    end
     return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, total_powers)
 end
