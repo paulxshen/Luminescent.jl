@@ -14,11 +14,11 @@ targets = {
 
 prob = lumi.inverse_design_problem(
     c, tparam_targets=targets,
-    lmin=0.2, dx=0.05, maxiters=40, eta=10., approx_2D=True)
+    lmin=0.2, dx=0.1, maxiters=40, eta=10., approx_2D=True)
 sol = lumi.solve(prob)
 
 # sol = lumi.load_solution()
-lumi.show_solution(sol)
+lumi.show_solution()
 print("post optim tparams:")
 pprint(sol["tparams"])
 

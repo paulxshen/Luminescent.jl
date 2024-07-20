@@ -1,3 +1,4 @@
+
 using UnPack, LinearAlgebra, Random, StatsBase, Dates, DataStructures, JSON, Images, BSON, ArrayPadding
 using Zygote, Flux, Jello, Porcupine
 using Porcupine: keys, values
@@ -103,7 +104,7 @@ if study == "inverse_design"
             end
             lmin = d.lmin / dx
             Blob(szd;
-                init, lmin, rmin=lmin / 2,
+                init, lmin,# rmin=lmin / 2,
                 contrast=10,
                 symmetry_dims, verbose)
         end for (i, d) = enumerate(design_configs)
@@ -270,8 +271,7 @@ if !isempty(gpu_backend)
     Flux.gpu_backend!(gpu_backend)
     if gpu_backend == "CUDA"
         using CUDA
-        # study == "inverse_design" && 
-        CUDA.allowscalar(true)
+        study == "inverse_design" && CUDA.allowscalar(true)
         @assert CUDA.functional()
     elseif gpu_backend == "AMDGPU"
         using AMDGPU
@@ -289,7 +289,7 @@ g0 = run_probs[1].geometry |> deepcopy
 #     global MyMakie = GLMakie
 # catch
 # end
-function write_sparams(model=nothing; img=nothing, autodiff=false, kw...)
+function write_sparams(model=nothing; img=nothing, autodiff=false, verbose=false, kw...)
     geometry = make_geometry(model)
     sol = [
         begin
@@ -297,14 +297,7 @@ function write_sparams(model=nothing; img=nothing, autodiff=false, kw...)
                 prob[:geometry] = geometry
             end
 
-            if !autodiff
-                sol = ignore() do
-
-                    @time solve(prob; autodiff)
-                end
-            else
-                sol = solve(prob; autodiff)
-            end
+            sol = solve(prob; autodiff, verbose)
 
             ignore() do
                 if !isnothing(img)
@@ -405,7 +398,7 @@ t0 = time()
 if study == "sparams"
     # @info "Computing s-parameters..."
     println("Computing s-parameters...")
-    sparams = write_sparams(img="", autodiff=false)
+    sparams = write_sparams(img="", autodiff=false, verbose=true)
     sol = sparam_family(sparams)
 elseif study == "inverse_design"
     sparams0 = 0
@@ -413,7 +406,7 @@ elseif study == "inverse_design"
     opt = Adam(eta)
     opt_state = Flux.setup(opt, model)
     # @info "starting optimization... first iter will be slow due to compilation."
-    println("starting optimization... first iter will be slow due to compilation.")
+    println("starting optimization... first iter will be slow due to adjoint compilation.")
     stop = false
     img = nothing
     for i = 1:maxiters

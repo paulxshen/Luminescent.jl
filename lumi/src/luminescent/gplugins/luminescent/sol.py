@@ -42,8 +42,8 @@ def solve(prob, ):
     with proc:
         for line in proc.stdout:
             print(line, flush=True)
-    err_message = proc.stderr.read().decode()
-    print(err_message)
+        err_message = proc.stderr.read().decode()
+        print(err_message)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:
     #     if p.stderr is not None:

@@ -1,14 +1,16 @@
 
 function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, _time=true, kwargs...)
-    t0 = ignore() do
-        time()
-    end
     @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
-    sz = size(first(values(geometry)))
-    points = prod(sz)
-    steps = (transient_duration + steady_state_duration) / dt |> round
-    println("$points points x $steps steps = $(points*steps) point-steps")
+    ignore() do
+        sz = size(first(values(geometry)))
+        points = prod(sz)
+        steps = (transient_duration + steady_state_duration) / dt |> round
+        println(F)
+        println("size (includes PML): $sz")
+        println("$(digitsep(points)) points x $(digitsep(steps)) steps = $(digitsep(points*steps)) point-steps")
+    end
+
     p = geometry
     _gpu = isa(first(values(p)), AbstractGPUArray)
     if _gpu
@@ -29,21 +31,38 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
 
     Δ = [transient_duration, steady_state_duration]
     T = cumsum(Δ)
+    N = T[2] / dt |> round
     Enames = keys(u0.E)
     Hnames = keys(u0.H)
     # extrema(abs.(prob.source_instances[1]._g.Jy))
 
     # if save
-    _update = !autodiff ? update! : update
-    h = []
+    milestones = 0:0.1:1.01 |> collect
 
-    # run simulation
+    clock = ignore() do
+        time()
+    end
+    i = 1
     u = reduce(0:dt:T[1], init=deepcopy(u0)) do u, t
-        # save && push!(h, u)
-        _update(u, p, t, dx, dt, field_padding, source_instances;)
+        verbose && ignore() do
+            if !isempty(milestones) && i / N > milestones[1] - 2
+                println("$(milestones[1]*100)% done $(time()-clock)s since start")
+                deleteat!(milestones, 1)
+            end
+            i += 1
+        end
+
+        update(u, p, t, dx, dt, field_padding, source_instances; autodiff)
     end
 
     u, mode_fields, total_powers = reduce(T[1]+dt:dt:T[2], init=(u, 0, 0)) do (u, mode_fields, tp), t
+        verbose && ignore() do
+            if !isempty(milestones) && i / N > milestones[1] - 2
+                println("$(milestones[1]*100)% done $(time()-clock)s since start")
+                deleteat!(milestones, 1)
+            end
+            i += 1
+        end
         # save && push!(h, u)
         mode_fields_ = [
             [
@@ -66,7 +85,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
         end
 
         (
-            _update(u, p, t, dx, dt, field_padding, source_instances),
+            update(u, p, t, dx, dt, field_padding, source_instances; autodiff),
             mode_fields + dt / Δ[2] * mode_fields_,
             tp + dt / Δ[2] * tp_,
         )

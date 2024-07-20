@@ -22,11 +22,11 @@ from luminescent import LAYER, XYMARGIN
 import gdsfactory as gf
 import pprint as pp
 
-c = gf.components.straight(2)
+c = gf.components.straight(.5)
 c = lumi.add_bbox(c, layers=[LAYER.WGCLAD, LAYER.BOX], nonport_margin=XYMARGIN)
 # c.show()
 
-sol = lumi.write_sparams(c, wavelengths=[.85, 1.55], keys=["2,1"],
+sol = lumi.write_sparams(c, wavelengths=[1.55], keys=["2,1"],
                          #  dx=0.025, approx_2D=True, gpu=None,)
                          dx=0.1, approx_2D=False, gpu="CUDA",)  # dtype="float16")
 # sol = lumi.load_solution()
