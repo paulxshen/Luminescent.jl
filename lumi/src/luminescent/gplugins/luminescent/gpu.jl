@@ -1,7 +1,7 @@
 # gpu(F, x) = F(Flux.gpu(x))
 # cpu(F, x) = F(Flux.cpu(x))
 using CUDA
-
+using GPUArraysCore
 gpu(F, x) = cu(F.(x))
 cpu(F, x) = Array(F.(x))
 

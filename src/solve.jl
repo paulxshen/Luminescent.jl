@@ -87,9 +87,10 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
             tp + dt / Δ[2] * tp_,
         )
     end
-    ignore() do
-        println("simulation took: ", time() - clock, "s")
-    end
+    println("simulation ended")
+    # ignore() do
+    #     println("simulation took: ", time() - clock, "s")
+    # end
 
     v = map(mode_fields, monitor_instances) do mf, m
         map(mf, values(m.wavelength_modes)) do u, wm

@@ -8,7 +8,7 @@ using BSON: @save, @load, load
 # using AbbreviatedStackTraces
 using CairoMakie
 using Luminescent
-using Luminescent
+
 include("gpu.jl")
 global MyMakie = CairoMakie
 # delete!(ENV, "SSL_CERT_FILE")
@@ -277,7 +277,6 @@ if !isempty(gpu_backend)
 end
 g0 = run_probs[1].geometry |> deepcopy
 
-
 function write_sparams(model=nothing; img=nothing, autodiff=false, verbose=false, kw...)
     geometry = make_geometry(model)
     sol = [
@@ -294,7 +293,7 @@ function write_sparams(model=nothing; img=nothing, autodiff=false, verbose=false
                         img = "run$i.png"
                     end
                     try
-                        MyMakie.save(joinpath(path, img), quickie(sol |> Flux.cpu),)
+                        MyMakie.save(joinpath(path, img), quickie(sol |> cpu),)
                     catch e
                         println(e)
                     end
