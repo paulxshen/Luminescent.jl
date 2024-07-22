@@ -25,9 +25,9 @@ from .utils import *
 
 
 def setup(c, study,   dx,
-          zmargin, name="",
-          runs=[], wavelengths=[], sources=[], layer_stack=LAYER_STACK, layer_views=LAYER_VIEWS, exclude_layers=[
-              LAYER.DESIGN, GUESS], approx_2D=False,
+          margin,  zmargin, port_source_offset="auto", source_margin="auto", name="",
+          runs=[],  sources=[], layer_stack=LAYER_STACK, layer_views=LAYER_VIEWS, exclude_layers=[
+              LAYER.DESIGN, GUESS], approx_2D=False, Courant=None,
           gpu=None, dtype=np.float32,
           path=PATH, plot=False, **kwargs):
     prob = dict()
@@ -70,14 +70,18 @@ def setup(c, study,   dx,
     eps = material_voxelate(c, dx, center, l, w, h,
                             normal, layers, layer_stack)
     eps_2D = eps[:, :, int(eps.shape[2]/2)]
+
     prob["eps_3D"] = eps.tolist()
     prob["eps_2D"] = eps_2D.tolist()
     prob["zmin"] = -zmargin
     prob["d"] = 2 if approx_2D else 3
 
+    neffmin = 1000000
+    wavelengths = []
     for run in runs:
         for s in list(run["sources"].values())+list(run["monitors"].values()):
             for wl in s["wavelength_mode_numbers"]:
+                wavelengths.append(wl)
                 duplicate = False
                 w = s["width"]
                 mode_numbers = s["wavelength_mode_numbers"][wl]
@@ -92,10 +96,13 @@ def setup(c, study,   dx,
                     center = np.array(center)-.001*np.array(normal)
                     eps = material_slice(
                         c, dx, center, w, h, normal, layers, layer_stack, layer_views=layer_views)
-                    _modes, _modes1 = solve_modes(
+                    _modes, _modes1, neffs, _ = solve_modes(
                         eps, λ=wl, dx=dx, neigs=max(mode_numbers)+1, plot=plot)
-                    # _modes = [0]
-                    # mode = _modes[0]
+
+                    for n in neffs:
+                        if n < neffmin:
+                            neffmin = n
+
                     modes = [{k: [np.real(mode[k].T).tolist(), np.imag(
                         mode[k].T).tolist()] for k in mode} for mode in _modes]
                     modes1 = [{k: [np.real(mode[k]).tolist(), np.imag(
@@ -112,6 +119,18 @@ def setup(c, study,   dx,
                         "width": w,
                         "zcenter": zcenter,
                     })
+    wavelengths = sorted(set(wavelengths))
+    wl = np.median(wavelengths)
+    if port_source_offset == "auto":
+        port_source_offset = 2*wl/neffmin
+    prob["port_source_offset"] = port_source_offset
+    if source_margin == "auto":
+        source_margin = .2*wl/neffmin
+    prob["source_margin"] = source_margin
+    prob["margin"] = margin
+    prob["zmargin"] = zmargin
+    prob["portsides"] = portsides(c)
+
     prob["mode_solutions"] = mode_solutions
     prob["runs"] = runs
     # device_svg = write_img("device", c,
@@ -122,13 +141,12 @@ def setup(c, study,   dx,
             "bbox": c.bbox_np().tolist(),
         }}
     prob["dx"] = dx
+    prob["Courant"] = Courant
     prob["component"] = c
     # λc = (wavelengths[0]+wavelengths[-1])/2
     # prob["wavelengths"] = wavelengths
     prob["mode_solutions"] = mode_solutions
     # prob["path_length"] = 2*(l+r+lwg)
-
-    prob["portsides"] = portsides(c)
     return prob
 
 

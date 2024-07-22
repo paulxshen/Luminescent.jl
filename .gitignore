@@ -9,5 +9,5 @@ docs/build/
 /lumi/dist
 *.lock
 *.pyc
-*.*.pyc
+**/*.pyc
 *.pyo

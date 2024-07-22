@@ -1,5 +1,5 @@
 
-using UnPack, LinearAlgebra, Random, StatsBase, Dates, DataStructures, JSON, Images, BSON, ArrayPadding
+using UnPack, LinearAlgebra, Random, Statistics, Dates, DataStructures, JSON, Images, BSON, ArrayPadding
 using Zygote, Flux, Jello, Porcupine
 using Porcupine: keys, values, fmap
 using Flux: mae, Adam
@@ -38,7 +38,7 @@ verbose = false
 #=
 We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 =#
-@load PROB_PATH name dtype portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
+@load PROB_PATH name dtype margin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
 F = Float32
 if contains(dtype, "16")
     # F = Float16
@@ -54,11 +54,13 @@ eps_3D = F(permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
 ports, = (ports,) .|> SortedDict
 polarization = :TE
 
-_dx = dx / λc
-port_source_offset = whole(PORT_SOURCE_OFFSET, _dx)
-source_margin = whole(SOURCE_MARGIN, _dx)
-n = round((port_source_offset + source_margin) / _dx)
+# _dx = dx / λc
+port_source_offset = whole(port_source_offset, dx)
+margin = whole(margin, dx)
+source_margin = whole(source_margin, dx)
 
+p = round((port_source_offset + source_margin) / dx)
+np = round(margin / dx)
 # p = m + n
 # origin = components.device.bbox[1] - dx * p
 # eps_3D = pad(eps_3D, :replicate, [p, p, 0])
@@ -67,15 +69,14 @@ model = nothing
 
 # [UnPack, BSON, JSON, Dates, DataStructures, ImageTransformations, Meshes, CoordinateTransformations, GPUArraysCore, StatsBase, Zygote, Porcupine, Jello, ArrayPadding, AbbreviatedStackTraces, Flux, FileIO, Images, CairoMakie, Functors, Lazy]
 # nnp=whole(XYMARGIN,_dx)
-# lr = n* portsides+nnp*(1-portsides)
-lr = n * portsides
+lr = p * portsides + np * (1 - portsides)
 eps_2D = pad(eps_2D, :replicate, lr...)
 # nz=whole(ZMARGIN,_dx)
 push!(lr[1], 0)
 push!(lr[2], 0)
 eps_3D = pad(eps_3D, :replicate, lr...)
 # heatmap(eps_2D) |> display
-origin = components.device.bbox[1] - dx * n * portsides[1]
+origin = components.device.bbox[1] - dx * (p * portsides[1] + np * (1 - portsides[1]))
 # using GLMakie
 # volume(eps_3D) |> display
 # heatmap(eps_3D[:, :, 4]) |> display
@@ -257,7 +258,7 @@ run_probs = [
             eps_3D
         end
         sz = size(ϵ)
-        prob = setup(boundaries, sources, monitors, dx / λc, sz; F, ϵ, zpml=0.2, verbose)
+        prob = setup(boundaries, sources, monitors, dx / λc, sz; F, Courant, ϵ, zpml=0.2, verbose)
     end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
 ]
 # error()
@@ -265,7 +266,7 @@ if !isempty(gpu_backend)
     Flux.gpu_backend!(gpu_backend)
     if gpu_backend == "CUDA"
         using CUDA
-        study == "inverse_design" && CUDA.allowscalar(true)
+        # study == "inverse_design" && CUDA.allowscalar(true)
         @assert CUDA.functional()
     elseif gpu_backend == "AMDGPU"
         using AMDGPU

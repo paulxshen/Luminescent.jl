@@ -6,12 +6,6 @@ import subprocess
 from functools import partial
 from math import cos, pi, sin
 import os
-import wave
-import matplotlib.pyplot as plt
-import numpy as np
-
-from gdsfactory.cross_section import Section
-from sortedcontainers import SortedDict, SortedSet
 from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
 import gdsfactory as gf
 import bson
@@ -27,6 +21,7 @@ from .materials import MATERIAL_LIBRARY
 
 def inverse_design_problem(c,  lmin=.1, symmetries=[],
                            tparam_targets={}, sparam_targets={},
+                           margin=XMARGIN,
                            maxiters=25, eta=.1, init="",  # minloss=.01,
                            design_region_layer=LAYER.DESIGN,
                            design_guess_layer=LAYER.GUESS,
@@ -53,7 +48,7 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
     wavelengths = sorted(targets.keys())
 
     prob = sparams_problem(c, layer_stack=layer_stack, wavelengths=wavelengths,
-                           keys=keys, approx_2D=approx_2D, ** kwargs)
+                           keys=keys, margin=margin, approx_2D=approx_2D, ** kwargs)
     prob["targets"] = targets
     prob["wavelengths"] = wavelengths
     prob["target_type"] = target_type

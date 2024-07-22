@@ -139,11 +139,15 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
 
     modes = [{k: m.get_field(k, x, y) for k in [
         "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in solver.modes]
+    neffs = [np.real(m.neff) for m in solver.modes]
+
+    v = sorted(solvera.modes, key=lambda x: -np.abs(x.neff))
     modes1 = [{k: m.get_field(k, x, y1)[:, 0] for k in [
-        "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in sorted(solvera.modes, key=lambda x: -np.abs(x.neff))]
+        "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in v]
+    neffs1 = [np.real(m.neff) for m in v]
     # "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in sorted(solvera.modes+solvers.modes, key=lambda x: -np.abs(x.neff))]
     # print(solver.modes[0].get_field("Ex", x, y).shape)
-    return modes, modes1
+    return modes, modes1, neffs, neffs1
 
 
 def s2svg(area, bbox, dx):
