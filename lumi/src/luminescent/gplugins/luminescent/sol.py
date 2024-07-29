@@ -84,8 +84,19 @@ def load_sparams(sparams):
 
 def load_solution(path=None, study="",):
     if path is None:
-        path = sorted(
-            filter(lambda x: x.startswith(study), os.listdir(PATH)))[-1]
+        l = sorted(os.listdir(PATH), reverse=True)
+        if study:
+            for p in l:
+                try:
+                    s = json.loads(open(os.path.join(PATH, p, "sol.json")).read())[
+                        "study"]
+                    if s == study:
+                        path = p
+                        break
+                except:
+                    pass
+        else:
+            path = l[0]
         path = os.path.join(PATH, path)
     print(f"loading solution from {path}")
     prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())

@@ -88,7 +88,7 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
     d["ϵ"] = MATERIAL_LIBRARY[d["material"]].epsilon
     prob["design_config"]["void"] = d
 
-    prob["design_layer"] = d
+    prob["design_config"]["design_region_layer"] = d
     prob["maxiters"] = maxiters
     return prob
 
@@ -97,9 +97,8 @@ def apply_design(c0,  sol):
     path = sol["path"]
     a = gf.Component()
     a.add_ref(c0)
-    dl = 0
+    dl = sol["design_config"]["design_region_layer"]
     for i, d in enumerate(sol["designs"]):
-        dl = d["layer"]
         x0, y0 = d["bbox"][0]
         x1, y1 = d["bbox"][1]
         b = gf.Component()

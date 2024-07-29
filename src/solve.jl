@@ -3,14 +3,6 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     cpu=identity, gpu=identity, kwargs...)
     @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
-    ignore() do
-        sz = size(first(values(geometry)))
-        points = prod(sz)
-        steps = (transient_duration + steady_state_duration) / dt |> round
-        println(F)
-        println("size (includes PML): $sz")
-        println("$(digitsep(points)) points x $(digitsep(steps)) steps = $(digitsep(points*steps)) point-steps")
-    end
 
     p = geometry
     _gpu = isa(first(values(p)), AbstractGPUArray)
@@ -25,6 +17,14 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     p = apply(subpixel_averaging, p)
     global aaaaaaaada = p
 
+    ignore() do
+        sz = p |> values |> first |> values |> first |> size
+        points = prod(sz)
+        steps = (transient_duration + steady_state_duration) / dt |> round
+        println(F)
+        println("size (includes PML): $sz")
+        println("$(digitsep(points)) points x $(digitsep(steps)) steps = $(digitsep(points*steps)) point-steps")
+    end
 
     Δ = [transient_duration, steady_state_duration]
     T = cumsum(Δ)

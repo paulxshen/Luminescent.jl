@@ -8,4 +8,5 @@ if isempty(ARGS)
 else
     path = ARGS[1]
 end
-gfrun(path; Courant=0.5)
+# gfrun(path; Courant=0.5)
+gfrun(path)

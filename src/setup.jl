@@ -93,7 +93,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     if isa(pml_depths, Number)
         pml_depths = fill(pml_depths, d)
     end
-    pml_depths = max.(pml_depths, 4dx)
+    pml_depths = max.(pml_depths, 2dx)
     if isa(pml_ramp_fracs, Number)
         pml_ramp_fracs = fill(pml_ramp_fracs, d)
     end

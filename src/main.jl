@@ -1,11 +1,10 @@
 using Humanize: digitsep
-using UnPack, LinearAlgebra, Statistics, Random, Jello, ImageTransformations, ImageIO, Functors, DataStructures, GPUArraysCore
+using UnPack, LinearAlgebra, Statistics, Random, Jello, Functors, DataStructures, GPUArraysCore
 # using Meshes: Sphere
 using ArrayPadding: left, right
-using Zygote: bufferfrom, Buffer, ignore_derivatives
 using Zygote
 using CairoMakie
-# Random.seed!(1)
+# Random.seed!(1)ImageIO,ImageTransformations,
 
 using Porcupine: keys, values, fmap
 using Porcupine
@@ -31,7 +30,7 @@ include("snapshot.jl")
 
 using Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, GPUArraysCore
 using Flux: mae, Adam
-using Zygote: withgradient, Buffer
+using Zygote: withgradient, Buffer, ignore_derivatives
 using BSON: @save, @load, load
 # using AbbreviatedStackTraces
 

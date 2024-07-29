@@ -12,12 +12,22 @@ function julia_main2()::Cint
     # gfrun(ARGS[1])
     return 0
 end
-function lastrun(s="", path=joinpath(pwd(), "lumi_runs"))
+using JSON
+function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
     l = filter(isdir, readdir(path, join=true))
-    l = filter(l) do f
-        startswith(basename(f), s)
+    sort!(l)
+    if isnothing(s)
+        return l[end]
     end
-    sort(l, by=x -> x[end-18:end]) |> last
+    for p = reverse(l)
+        try
+            open(joinpath(p, "sol.json")) do f
+                JSON.parse(f)["study"]
+            end == s && return p
+        catch e
+            println(e)
+        end
+    end
 end
 function write_sparams(runs, run_probs, g, path, origin, dx,
     designs=nothing, design_config=nothing, model=nothing;
@@ -175,7 +185,7 @@ function gfrun(path; kw...)
     origin = components.device.bbox[1] - dx * (p * portsides[1] + np * (1 - portsides[1]))
 
     if study == "inverse_design"
-        @load PROB_PATH designs design_layer targets target_type eta maxiters design_config
+        @load PROB_PATH designs targets target_type eta maxiters design_config
         prob = load(PROB_PATH)
         minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
         #=
@@ -456,10 +466,12 @@ function gfrun(path; kw...)
         sol = (;
             before=sparam_family(sparams0),
             after=sparam_family(sparams),
-            design_config, path, dx,
-            designs=[m() .> 0.5 for m in model],
+            optimized_designs=[m() .> 0.5 for m in model],
+            designs,
+            design_config,
         )
     end
+    sol = (; sol..., path, dx, study,)
     # @save "$path/sol.json" sol
     open("$(path)/sol.json", "w") do f
         write(f, json(sol))

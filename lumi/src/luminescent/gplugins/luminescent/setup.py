@@ -65,7 +65,7 @@ def setup(c, study,   dx,
     eps_2D = eps[:, :, int(eps.shape[2]/2)]
     prob["study"] = study
     prob["path"] = os.path.join(
-        path, prob["study"] + "_" + prob["timestamp"])
+        path, prob["timestamp"])
 
     prob["eps_3D"] = eps.tolist()
     prob["eps_2D"] = eps_2D.tolist()
