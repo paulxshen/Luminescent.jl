@@ -46,7 +46,7 @@ function quickie(sol; kw...)
     fig = Figure()
     fields = (; H=(; Hz=fields.H.Hz))
     geometry = (; ϵ=geometry.ϵ)
-    colorrange = (-1, 1) .* maximum(maximum.(a -> abs.(real(a)), flatten(fields)))
+    colorrange = (-1, 1) .* maximum(maximum.(a -> abs.(real(a)), leaves(fields)))
     colormap = :seismic
     algorithm = :absorption
     i = 1

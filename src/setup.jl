@@ -47,7 +47,10 @@ function setup(boundaries, sources, monitors, dx, sz;
     # transient_duration=max_source_dist(sources), steady_state_duration=2,
     transient_duration=0, steady_state_duration=0,
     ϵ=1, μ=1, σ=0, σm=0, F=Float32,
-    xpml=0.4, ypml=0.4, zpml=0.4,
+    pml_depths=0.5, pml_ramp_fracs=0.2,
+    # xpml=0.4, ypml=0.4, zpml=0.4,
+    # xpml_ramp_frac=0.5, ypml_ramp_frac=0.5, zpml_ramp_frac=0.5,
+
     # ϵmin=1,
     # Courant=0.5,
     Courant=nothing,
@@ -64,7 +67,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
     ϵmin, ϵmax = extrema(geometry.ϵ)
     if isnothing(Courant)
-        Courant = F(0.8√(ϵmin / length(sz)))# Courant number)
+        Courant = F(0.7√(ϵmin / length(sz)))# Courant number)
     end
 
     if transient_duration == 0
@@ -87,6 +90,14 @@ function setup(boundaries, sources, monitors, dx, sz;
 
 
     d = length(sz)
+    if isa(pml_depths, Number)
+        pml_depths = fill(pml_depths, d)
+    end
+    pml_depths = max.(pml_depths, 4dx)
+    if isa(pml_ramp_fracs, Number)
+        pml_ramp_fracs = fill(pml_ramp_fracs, d)
+    end
+
     if d == 1
         field_names = (:Ez, :Hy)
         polarization = nothing
@@ -109,8 +120,9 @@ function setup(boundaries, sources, monitors, dx, sz;
     Courant = F(Courant)
 
     nodes = fill(:U, d, 2)
-    pml_depths = [xpml, ypml, zpml]
-    db = Any[PML(j * i, pml_depths[i]) for i = 1:d, j = (-1, 1)]
+    # pml_depths = [xpml, ypml, zpml]
+    # pml_ramp_fracs = [xpml_ramp_frac, ypml_ramp_frac, zpml_ramp_frac]
+    db = Any[PML(j * i, pml_depths[i]; ramp_frac=pml_ramp_fracs[i]) for i = 1:d, j = (-1, 1)]
     field_padding = DefaultDict(() -> InPad[])
     geometry_padding = DefaultDict(() -> OutPad[])
     fl = Dict([k => zeros(Int, d) for k = field_names])
@@ -190,14 +202,20 @@ function setup(boundaries, sources, monitors, dx, sz;
                 push!(geometry_padding[:ϵ], OutPad(:replicate, l, r, sz))
                 push!(geometry_padding[:μ], OutPad(:replicate, l, r, sz))
 
-                l1 = round.(0.2l)
-                r1 = round.(0.2r)
-                push!(geometry_padding[:σ], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
-                push!(geometry_padding[:σm], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
+                l1 = round.(b.ramp_frac * l)
+                r1 = round.(b.ramp_frac * r)
+                if any(l1 .> 0) || any(r1 .> 0)
+                    push!(geometry_padding[:σ], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
+                    push!(geometry_padding[:σm], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
+                end
                 l2 = l - l1
                 r2 = r - r1
-                push!(geometry_padding[:σ], OutPad(F(b.σ), l2, r2, sz))
-                push!(geometry_padding[:σm], OutPad(F(b.σ), l2, r2, sz))
+                if any(l2 .> 0) || any(r2 .> 0)
+
+                    push!(geometry_padding[:σ], OutPad(F(b.σ), l2, r2, sz))
+
+                    push!(geometry_padding[:σm], OutPad(F(b.σ), l2, r2, sz))
+                end
                 if j == 1
                     for k = keys(fl)
                         fl[k][i] += pml_amount

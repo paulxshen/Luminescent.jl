@@ -12,8 +12,9 @@ from .utils import *
 from .setup import *
 
 
-def sparams_problem(c: gf.Component, margin=XMARGIN, zmargin=ZMARGIN, dx=.05, wavelengths=[1.55], center_wavelength=None, keys=None,
+def sparams_problem(c: gf.Component, margin=None, zmargin=None, dx=.05, wavelengths=[1.55], center_wavelength=None, keys=None,
                     approx_2D=False, layer_stack=LAYER_STACK,
+                    study="sparams",
                     **kwargs):
     wavelengths = sorted(wavelengths)
     d = 2 if approx_2D else 3
@@ -33,6 +34,9 @@ def sparams_problem(c: gf.Component, margin=XMARGIN, zmargin=ZMARGIN, dx=.05, wa
         for i in io:
             if i not in io[i]:
                 io[i].add(i)
+
+    if margin is None:
+        margin = trim(1.5*max([p.width/1e3 for p in c.ports]), dx)
     runs = [{
         "d": d,
         "sources": {
@@ -55,9 +59,9 @@ def sparams_problem(c: gf.Component, margin=XMARGIN, zmargin=ZMARGIN, dx=.05, wa
             } for o in io[i]},
     } for i in io]
 
-    prob = setup(c, study="sparams",  dx=dx,
+    prob = setup(c, study=study,  dx=dx,
                  runs=runs, margin=margin,
                  zmargin=zmargin, layer_stack=layer_stack, approx_2D=approx_2D, **kwargs)
     prob["wavelengths"] = wavelengths
-    prob["study"] = "sparams"
+
     return prob

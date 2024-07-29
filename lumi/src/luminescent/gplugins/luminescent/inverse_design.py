@@ -22,7 +22,7 @@ from .materials import MATERIAL_LIBRARY
 def inverse_design_problem(c,  lmin=.1, symmetries=[],
                            tparam_targets={}, sparam_targets={},
                            margin=XMARGIN,
-                           maxiters=25, eta=.1, init="",  # minloss=.01,
+                           maxiters=25, eta=.1, init=None,  # minloss=.01,
                            design_region_layer=LAYER.DESIGN,
                            design_guess_layer=LAYER.GUESS,
                            design_layer=LAYER.WG,
@@ -48,14 +48,14 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
     wavelengths = sorted(targets.keys())
 
     prob = sparams_problem(c, layer_stack=layer_stack, wavelengths=wavelengths,
+                           study="inverse_design",
                            keys=keys, margin=margin, approx_2D=approx_2D, ** kwargs)
     prob["targets"] = targets
     prob["wavelengths"] = wavelengths
     prob["target_type"] = target_type
-    prob["init"] = init
+    # prob["init"] = init
     prob = {**prob, **kwargs}
     prob["eta"] = eta
-    prob["study"] = "inverse_design"
     polys = c.extract([design_region_layer]).get_polygons()
     if not symmetries:
         symmetries = [[]]*len(polys)
@@ -65,12 +65,12 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
 
     def _bbox(b):
         return [[b.left/1e3, b.bottom/1e3], [b.right/1e3, b.top/1e3]]
-    prob["design_configs"] = [
+    prob["designs"] = [
         {
             "layer": design_layer,
             "bbox": _bbox(p.bbox()),
             "symmetries": s,
-            "guess": None,
+            "init": init,
             "lmin": lmin,
         } for p, s in zip(list(polys.values())[0], symmetries)
     ]
@@ -98,7 +98,7 @@ def apply_design(c0,  sol):
     a = gf.Component()
     a.add_ref(c0)
     dl = 0
-    for i, d in enumerate(sol["design_configs"]):
+    for i, d in enumerate(sol["designs"]):
         dl = d["layer"]
         x0, y0 = d["bbox"][0]
         x1, y1 = d["bbox"][1]

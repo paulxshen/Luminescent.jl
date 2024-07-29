@@ -17,9 +17,8 @@ end
 # apply!(p, x::Number) = x
 apply(p, x::Number) = apply(p, x * ones(typeof(x), p.default_size))
 
-function apply(p, kw)
-    dict([k => apply(p[k], kw[k]) for k = keys(kw)])
-    # [apply(p[k], v) for (k, v) = pairs(kw)]
+function apply(d1, d2; kw...)
+    dict([k => apply(d1[k], d2[k]; kw...) for k = keys(d2)])
 end
 function apply(p; kw...)
     apply(p, kw)

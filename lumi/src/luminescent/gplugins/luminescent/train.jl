@@ -51,16 +51,16 @@ for i = 1:maxiters
 end
 # @info "Done in $(time() - t0) ."
 println("Done in $(time() - t0) .")
-for (i, (m, d)) = enumerate(zip(model, design_configs))
+for (i, (m, d)) = enumerate(zip(model, designs))
     Images.save(joinpath(path, "design$i.png"), Gray.(m() .< 0.5))
 end
 sol = (;
     before=sparam_family(sparams0),
     after=sparam_family(sparams),
-    design_configs,path,dx,
-    designs=[m().>.5 for m in model],
+    designs, path, dx,
+    designs=[m() .> 0.5 for m in model],
 )
 # @save "$path/sol.json" sol
 open("$(path)/sol.json", "w") do f
-write(f, json(sol))
+    write(f, json(sol))
 end

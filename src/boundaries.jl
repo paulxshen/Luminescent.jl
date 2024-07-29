@@ -50,8 +50,9 @@ struct PML
     dims
     d::Real
     σ::Real
-    function PML(dims, d=0.5f0, σ=10.0f0)
-        new(dims, d, σ)
+    ramp_frac
+    function PML(dims, d=0.5f0, σ=8.0f0; ramp_frac=0.2f0)
+        new(dims, d, σ, ramp_frac)
     end
 end
 Base.string(m::PML) = "PML of depth $(m.d) on $(dl[m.dims]) side"
@@ -76,7 +77,14 @@ end
 # @functor OutPad
 
 
-function apply!(p::AbstractVector{<:InPad}, a::AbstractArray)
+function apply!(p::AbstractVector{<:InPad}, a::AbstractArray; nonzero_only=false)
+    if nonzero_only
+        p = filter(p) do p
+            p.b != 0
+        end
+    end
+    isempty(p) && return a
+
     for p = p
         @unpack l, r, b, m = p
         if isnothing(m)
@@ -87,7 +95,14 @@ function apply!(p::AbstractVector{<:InPad}, a::AbstractArray)
     end
     a
 end
-function apply(p::AbstractVector{<:InPad}, a::AbstractArray)
+function apply(p::AbstractVector{<:InPad}, a::AbstractArray; nonzero_only=false)
+    if nonzero_only
+        p = filter(p) do p
+            p.b != 0
+        end
+    end
+    isempty(p) && return a
+
     if length(p) == 1 && !isnothing(p[1].m)
         return a .* p[1].m
     end

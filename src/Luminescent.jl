@@ -8,7 +8,7 @@ export setup, apply, apply!, °, update!, update
 export calibrate_mode, collapse_mode
 export port_number, mode_number, shorten_key, simplify_sparams, sparam_family
 export solve, dispersion_compensation, quickie
-export SOURCE_MARGIN, PORT_SOURCE_OFFSET
+export gfrun, lastrun, cpu, gpu
 end
 
 # ]add UnPack,StatsBase, DataStructures, LinearAlgebra, Random,  Interpolations, Flux,Zygote, Optim,ArrayPadding, Jello

@@ -14,7 +14,9 @@ from .constants import *
 from subprocess import Popen, PIPE
 
 
-def solve(prob, ):
+def solve(prob, dev=False):
+    if "dev" in prob:
+        dev = prob["dev"]
     c0 = prob["component"]
     del prob["component"]
     bson_data = bson.dumps(prob)
@@ -35,17 +37,27 @@ def solve(prob, ):
 
     start_time = time.time()
 
-    cmd = [f"julia", os.path.join(os.path.dirname(
-        os.path.abspath(__file__)), "run.jl"), prob_path,]
+    def run(cmd):
 
-    proc = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # proc.wait()
-    with proc:
-        for line in proc.stdout:
+        proc = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # proc.wait()
+        with proc:
+            for line in proc.stdout:
 
-            print(str(line.decode().strip()), flush=True)
-        err_message = proc.stderr.read().decode()
-        print(err_message)
+                print(str(line.decode().strip()), flush=True)
+            err_message = proc.stderr.read().decode()
+            print(err_message)
+    cmd_dev = [f"julia", os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "run.jl"), path,]
+    cmd = ["lumi", path]
+    if dev:
+        run(cmd_dev)
+    else:
+        try:
+            run(cmd)
+        except Exception as e:
+            print(e)
+            run(cmd_dev)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:
     #     if p.stderr is not None:
@@ -70,9 +82,10 @@ def load_sparams(sparams):
                  for k, v in d.items()} for wl, d in sparams.items()}
 
 
-def load_solution(path=None):
+def load_solution(path=None, study="",):
     if path is None:
-        path = sorted(os.listdir(PATH))[-1]
+        path = sorted(
+            filter(lambda x: x.startswith(study), os.listdir(PATH)))[-1]
         path = os.path.join(PATH, path)
     print(f"loading solution from {path}")
     prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())

@@ -21,8 +21,6 @@ from .layers import *
 from .constants import *
 from .utils import *
 
-# include_layers=[LAYER.WG, LAYER.WAFER], ** kwargs):
-
 
 def setup(c, study,   dx,
           margin,  zmargin, port_source_offset="auto", source_margin="auto", name="",
@@ -31,45 +29,43 @@ def setup(c, study,   dx,
           gpu=None, dtype=np.float32,
           path=PATH, plot=False, **kwargs):
     prob = dict()
+    prob = {**prob, **kwargs}
     prob["dtype"] = str(dtype)
-    prob["path"] = os.path.join(
-        path, datetime.datetime.now().isoformat(timespec="seconds").replace(":", "-"))
+    prob["timestamp"] = datetime.datetime.now().isoformat(
+        timespec="seconds").replace(":", "-")
     prob["name"] = name
     prob["gpu_backend"] = gpu if gpu else ""
     ports = {
         p.name: {
             "center": p.center,
-            #  "lb": p.endpoints[0].flatten().tolist(),
-            #  "ub": p.endpoints[1].flatten().tolist(),
             "normal": [cos(p.orientation/180*pi), sin(p.orientation/180*pi)],
-            # "endpoints": p.endpoints.tolist(),
-            # **monitors[k],
         }
         for p in c.get_ports_list(prefix="o")
     }
     prob["ports"] = ports
 
     mode_solutions = []
-    if study == "detailed_sparams":
-        1
-    else:
-        1
-        # prob["sources"] = c.metadata["sources"]
-        # prob["monitors"] = c.metadata["monitors"]
     layers = set(c.layers)-set(exclude_layers)
     layers = sorted(layers, key=lambda layer: -get_layer(
         layer_stack, layer).mesh_order)
 
     hcore = layer_stack.layers["core"].thickness
+    # hcore = round(layer_stack.layers["core"].thickness/dx)*dx
+    if zmargin is None:
+        zmargin = dx*round(1.5*hcore/dx)
     zcenter = layer_stack.layers["core"].zmin+hcore/2
     h = hcore+2*zmargin
     prob["mode_height"] = h
     l, w = c.bbox_np()[1]-c.bbox_np()[0]
+    # l, w = round(l/dx)*dx, round(w/dx)*dx
     center = [c.bbox_np()[0][0], c.bbox_np()[0][1]+w/2, zcenter]
     normal = [1, 0, 0]
     eps = material_voxelate(c, dx, center, l, w, h,
                             normal, layers, layer_stack)
     eps_2D = eps[:, :, int(eps.shape[2]/2)]
+    prob["study"] = study
+    prob["path"] = os.path.join(
+        path, prob["study"] + "_" + prob["timestamp"])
 
     prob["eps_3D"] = eps.tolist()
     prob["eps_2D"] = eps_2D.tolist()
@@ -127,6 +123,7 @@ def setup(c, study,   dx,
     if source_margin == "auto":
         source_margin = .2*wl/neffmin
     prob["source_margin"] = source_margin
+
     prob["margin"] = margin
     prob["zmargin"] = zmargin
     prob["portsides"] = portsides(c)

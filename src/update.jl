@@ -25,7 +25,8 @@ function update(u, p, t, dx, dt, field_padding, source_instances; autodiff=true)
         end
     end
 
-    E = apply(field_padding, E)
+    E = apply(field_padding, E; nonzero_only=true)
+    # E = apply(field_padding, E)
     H = unmark(H)
 
     # then update H
@@ -39,7 +40,8 @@ function update(u, p, t, dx, dt, field_padding, source_instances; autodiff=true)
         end
     end
 
-    H = apply(field_padding, H)
+    # H = apply(field_padding, H)
+    H = apply(field_padding, H; nonzero_only=true)
     E = unmark(E)
 
     # [E, H]

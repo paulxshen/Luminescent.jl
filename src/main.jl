@@ -24,8 +24,16 @@ include("geometry.jl")
 include("setup.jl")
 include("solve.jl")
 include("photonics.jl")
-# include("gpu.jl")
+include("gpu.jl")
 include("format.jl")
 include("dispersion.jl")
 include("snapshot.jl")
-# ]add UnPack, LinearAlgebra, Random, StatsBase, ImageTransformations, Functors, DataStructures,Porcupine,Jello, ArrayPadding,Zygote, GPUArraysCore
+
+using Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, GPUArraysCore
+using Flux: mae, Adam
+using Zygote: withgradient, Buffer
+using BSON: @save, @load, load
+# using AbbreviatedStackTraces
+
+include("gf.jl")
+# include("main.jl")

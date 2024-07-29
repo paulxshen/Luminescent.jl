@@ -42,6 +42,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     i = 0
     u = reduce(0:dt:T[1], init=deepcopy(u0)) do u, t
         verbose && ignore() do
+            hasnan(u) && error("nan detected. instability. aborting")
             if !isempty(milestones) && (i + 1) / N > milestones[1]
                 println("$(milestones[1]*100)% done $(time()-clock)s since start")
                 deleteat!(milestones, 1)
@@ -55,6 +56,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     u, mode_fields, total_powers = reduce(T[1]+dt:dt:T[2], init=(u, 0, 0)) do (u, mode_fields, tp), t
         verbose && ignore() do
             if !isempty(milestones) && (i + 1) / N > milestones[1]
+                hasnan(u) && error("nan detected. instability. aborting")
                 println("$(milestones[1]*100)% done $(time()-clock)s since start")
                 deleteat!(milestones, 1)
             end
