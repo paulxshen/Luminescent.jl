@@ -63,7 +63,7 @@ eps_3D = pad(eps_3D, :replicate, lr...)
 origin = components.device.bbox[1] - dx * (p * portsides[1] + np * (1 - portsides[1]))
 
 if study == "inverse_design"
-    @load PROB_PATH designs design_layer targets target_type eta maxiters design_config
+    @load PROB_PATH designs design_region_layer targets target_type eta maxiters design_config
     prob = load(PROB_PATH)
     minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
     #=

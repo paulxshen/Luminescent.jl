@@ -24,11 +24,12 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
                            margin=XMARGIN,
                            maxiters=25, eta=.1, init=None,  # minloss=.01,
                            design_region_layer=LAYER.DESIGN,
-                           design_guess_layer=LAYER.GUESS,
-                           design_layer=LAYER.WG,
+                           #    design_guess_layer=LAYER.GUESS,
+                           fill_layer=LAYER.WG,
                            void_layer=LAYER.WGCLAD,
                            layer_stack=LAYER_STACK,
                            plot=False, approx_2D=True, **kwargs):
+    design_region_layer = tuple(design_region_layer)
     if not approx_2D:
         raise NotImplementedError(
             "3D inverse design feature must be requested from Luminescent AI info@luminescentai.com")
@@ -67,7 +68,7 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
         return [[b.left/1e3, b.bottom/1e3], [b.right/1e3, b.top/1e3]]
     prob["designs"] = [
         {
-            "layer": design_layer,
+            "layer": design_region_layer,
             "bbox": _bbox(p.bbox()),
             "symmetries": s,
             "init": init,
@@ -76,19 +77,19 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
     ]
 
     prob["design_config"] = dict()
-    # prob[""]
-    l = get_layer(layer_stack, design_layer)
+    l = get_layer(layer_stack, fill_layer)
     d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
-    # d = vars(prob["design_layer"])
-    d["ϵ"] = MATERIAL_LIBRARY[d["material"]].epsilon
+    d["epsilon"] = MATERIAL_LIBRARY[d["material"]].epsilon
+    d["ϵ"] = d["epsilon"]
     prob["design_config"]["fill"] = d
 
     l = get_layer(layer_stack, void_layer)
     d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
-    d["ϵ"] = MATERIAL_LIBRARY[d["material"]].epsilon
+    d["epsilon"] = MATERIAL_LIBRARY[d["material"]].epsilon
+    d["ϵ"] = d["epsilon"]
     prob["design_config"]["void"] = d
 
-    prob["design_config"]["design_region_layer"] = d
+    prob["design_config"]["design_region_layer"] = design_region_layer
     prob["maxiters"] = maxiters
     return prob
 

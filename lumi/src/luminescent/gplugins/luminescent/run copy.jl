@@ -62,7 +62,7 @@ eps_3D = pad(eps_3D, :replicate, (m + n, m + n, 0))
 origin = components.device.bbox[1] - (m + n) * dx
 
 if study == "inverse_design"
-    @load PROB_PATH designs design_layer targets maxiters design_config
+    @load PROB_PATH designs design_region_layer targets maxiters design_config
     #=
     We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
     =#

@@ -67,7 +67,7 @@ def solve(prob, dev=False):
     # subprocess.run()
     # print(f"julia simulation took {time.time()-start_time} seconds")
     print(f"images and results saved in {path}")
-    sol = load_solution(path)
+    sol = load_solution(path=path)
     if prob["study"] == "inverse_design":
         c = apply_design(c0,  sol)
         sol["before"]["component"] = c0
@@ -112,7 +112,8 @@ def load_solution(path=None, study="",):
             sol[k] = sol["after"][k]
     # pic2gds(os.path.join(path, f"design{i+1}.png"), sol["dx"])
 
-        sol["designs"] = [np.array(d) for d in sol["designs"]]
+        sol["optimized_designs"] = [
+            np.array(d) for d in sol["optimized_designs"]]
         pass
     return sol
 
