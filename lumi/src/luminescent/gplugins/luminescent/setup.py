@@ -64,8 +64,12 @@ def setup(c, study,   dx,
                             normal, layers, layer_stack)
     eps_2D = eps[:, :, int(eps.shape[2]/2)]
     prob["study"] = study
+
+    l = [prob["timestamp"], study]
+    if name:
+        l.append(name)
     prob["path"] = os.path.join(
-        path, prob["timestamp"])
+        path, "#".join(l))
 
     prob["eps_3D"] = eps.tolist()
     prob["eps_2D"] = eps_2D.tolist()

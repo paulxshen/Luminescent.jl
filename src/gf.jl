@@ -143,8 +143,9 @@ function gfrun(path; kw...)
     @load PROB_PATH name dtype margin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
     F = Float32
     if contains(dtype, "16")
-        # F = Float16
-        println("Float16 not supported yet, will be in future release.")
+        F = Float16
+        println("Float16 selected. make sure your cpu or GPU supports it. otherwise will be emulated and very slow.")
+        # println("Float16 not supported yet, will be in future release.")
     end
     λc = median(load(PROB_PATH)[:wavelengths])
     eps_2D = F(stack(stack.(eps_2D)))'
@@ -365,6 +366,7 @@ function gfrun(path; kw...)
     ]
     # error()
     if !isempty(gpu_backend)
+        println("using $gpu_backend backend.")
         Flux.gpu_backend!(gpu_backend)
         if gpu_backend == "CUDA"
             # study == "inverse_design" && CUDA.allowscalar(true)
@@ -376,6 +378,8 @@ function gfrun(path; kw...)
         end
         run_probs = gpu.(run_probs)
         model = model |> gpu
+    else
+        println("using CPU backend.")
     end
     g0 = run_probs[1].geometry |> deepcopy
 

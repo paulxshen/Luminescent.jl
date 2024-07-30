@@ -14,7 +14,7 @@ from .constants import *
 from subprocess import Popen, PIPE
 
 
-def solve(prob, dev=False):
+def solve(prob, dev=False, run=True):
     if "dev" in prob:
         dev = prob["dev"]
     c0 = prob["component"]
@@ -35,6 +35,8 @@ def solve(prob, dev=False):
         # Write the BSON data to the file
         f.write(bson_data)
 
+    if not run:
+        return
     start_time = time.time()
 
     def run(cmd):
@@ -119,5 +121,5 @@ def load_solution(path=None, study="",):
     return sol
 
 
-def write_sparams(*args, **kwargs):
-    return solve(sparams_problem(*args, **kwargs))
+def write_sparams(*args, run=True, **kwargs):
+    return solve(sparams_problem(*args, **kwargs), run=run)
