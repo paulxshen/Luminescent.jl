@@ -1,18 +1,11 @@
 function julia_main()::Cint
-    gfrun(ARGS[1])
+    if !isempty(ARGS)
+
+        gfrun(ARGS[1])
+    end
     return 0
 end
 # add Dates, DataStructures, JSON, Images, BSON,Flux,CUDA
-function julia_main1()::Cint
-    # gfrun(ARGS[1])
-    print(pwd())
-    return 0
-end
-function julia_main2()::Cint
-    # gfrun(ARGS[1])
-    return 0
-end
-using JSON
 function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
     l = filter(isdir, readdir(path, join=true))
     sort!(l)
@@ -40,7 +33,7 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
             if !isnothing(model)
                 prob[:geometry] = geometry
             end
-
+            @show typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
             sol = solve(prob; autodiff, verbose, cpu, gpu)
 
             ignore() do

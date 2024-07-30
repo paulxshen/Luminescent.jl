@@ -51,6 +51,7 @@ def solve(prob, dev=False):
         os.path.abspath(__file__)), "run.jl"), path,]
     cmd = ["lumi", path]
     if dev:
+        print(" ".join(cmd_dev))
         run(cmd_dev)
     else:
         try:

@@ -5,10 +5,10 @@
 /*.mp4
 /.vscode
 docs/build/
-# /lumi_runs
+/lumi_runs
 /lumi/dist
 *.lock
 *.pyc
-/*.pyc
+*.*.pyc
 *.pyo
-*.png
+_.png
