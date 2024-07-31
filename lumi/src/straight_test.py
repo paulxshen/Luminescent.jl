@@ -8,13 +8,13 @@ import pprint as pp
 
 c = gf.components.straight(.5)
 c = lumi.add_bbox(c, layers=[LAYER.WGCLAD, LAYER.BOX], nonport_margin=.1)
-# c.show()
 
-# sol = lumi.write_sparams(c, wavelengths=[1.55], keys=["2,1"],
-#                          #  dx=0.025, approx_2D=True, gpu=None,)
-#                          dx=0.1, approx_2D=False, gpu="CUDA", dev=True,)
-# lumi.show_solution()
-# pp.pprint(sol)
+sol = lumi.write_sparams(c, wavelengths=[1.55], keys=["2,1"],
+                         #  dx=0.025, approx_2D=True, gpu=None,)
+                         dx=0.1, approx_2D=True, gpu="CUDA", dtype="16", dev=True,)
+lumi.show_solution()
+pp.pprint(sol)
+raise ValueError("stop here")
 
 sol = lumi.write_sparams(c, wavelengths=[1.55, 1.65], keys=["2,1"],
                          dx=0.1, approx_2D=True, gpu="CUDA", run=False)

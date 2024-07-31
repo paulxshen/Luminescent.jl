@@ -24,7 +24,8 @@ function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
 end
 function write_sparams(runs, run_probs, g, path, origin, dx,
     designs=nothing, design_config=nothing, model=nothing;
-    F=Float32, img=nothing, autodiff=true, verbose=false, kw...)
+    img=nothing, autodiff=true, verbose=false, kw...)
+    F = run_probs[1].F
     if !isnothing(model)
         geometry = make_geometry(model, origin, dx, g, designs, design_config; F)
     end
@@ -181,9 +182,6 @@ function gfrun(path; kw...)
         @load PROB_PATH designs targets target_type eta maxiters design_config
         prob = load(PROB_PATH)
         minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
-        #=
-        We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
-        =#
 
         model = [
             # Symbol("m$i") =>
@@ -364,7 +362,7 @@ function gfrun(path; kw...)
                 verbose, kw...)
         end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
     ]
-    # error()
+
     if !isempty(gpu_backend)
         println("using $gpu_backend backend.")
         Flux.gpu_backend!(gpu_backend)

@@ -5,8 +5,8 @@
 gpu(F, x) = cu(F.(x))
 cpu(F, x) = Array(F.(x))
 
-cpu(x::AbstractArray{<:Number}) = cpu(Float32, x)
-gpu(x::AbstractArray{<:Number}) = gpu(Float32, x)
+cpu(x::AbstractArray{<:Number}) = Array(x)
+gpu(x::AbstractArray{<:Number}) = cu(x)
 gpu(x::AbstractArray) = gpu.(x)
 cpu(x::AbstractArray) = cpu.(x)
 
