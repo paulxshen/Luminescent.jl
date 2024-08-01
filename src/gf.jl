@@ -400,7 +400,7 @@ function gfrun(path; kw...)
         opt = Adam(eta)
         model = models[1]
         opt_state = Flux.setup(opt, model)
-        Flux.freeze!(opt_state.w)
+        # Flux.freeze!(opt_state.w)
         # opt_state=(;a=opt_state.a)
         # @info "starting optimization... first iter will be slow due to compilation."
         println("starting optimization... first iter will be slow due to adjoint compilation.")
