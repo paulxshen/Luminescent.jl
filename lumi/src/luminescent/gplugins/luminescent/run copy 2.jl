@@ -9,10 +9,119 @@ else
     path = ARGS[1]
 end
 # gfrun(path)
+function write_sparams(runs, run_probs, g, path, origin, dx,
+    designs=nothing, design_config=nothing, models=nothing;
+    img=nothing, autodiff=true, verbose=false, kw...)
+    F = run_probs[1].F
+    if !isnothing(models)
+        geometry = make_geometry(models, origin, dx, g, designs, design_config; F)
+    end
+    sol = [
+        begin
+            if !isnothing(models)
+                prob[:geometry] = geometry
+            end
+            @show typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
+            sol = solve(prob; autodiff, verbose, cpu, gpu)
+
+            ignore() do
+                if !isnothing(img)
+                    if img == ""
+                        img = "run$i.png"
+                    end
+                    try
+                        CairoMakie.save(joinpath(path, img), quickie(sol |> cpu),)
+                    catch e
+                        println(e)
+                    end
+                end
+            end
+            sol
+        end for (i, prob) in enumerate(run_probs)
+    ]
+    # return sol
+    coeffs = OrderedDict()
+    for (v, run) in zip(sol, runs)
+        sources = run.sources |> values
+        monitors = run.monitors |> values
+        source_port = first(values(sources)).port
+        source_mn = values(first(values(sources)).wavelength_mode_numbers)[1][1]
+        for (monitor, v) = zip(monitors, v.mode_coeffs)
+            for (λ, v) = zip(monitor.wavelength_mode_numbers |> keys, v)
+                for (monitor_mn, v) = zip(monitor.wavelength_mode_numbers[λ], v)
+                    monitor_port = monitor.port
+                    if !haskey(coeffs, λ)
+                        coeffs[λ] = OrderedDict()
+                    end
+                    coeffs[λ][("o$monitor_port@$monitor_mn,"*"o$source_port@$source_mn")] = v
+                end
+            end
+        end
+    end
+
+    sparams = OrderedDict([λ => OrderedDict([k => begin
+        s = ignore() do
+            split(k, ",")[2]
+        end
+        coeffs[λ][k][1] / coeffs[λ]["$s,$s"][2]
+    end for (k) = keys(coeffs[λ])]) for (λ) = keys(coeffs)])
+    # if source_mn == monitor_mn == 0
+    #     coeffs[λ]["$monitor_port,$source_port"] = v
+    # end
+    sparams
+end
+# targets = SortedDict([F(λ) =>
+#     OrderedDict([
+#         begin
+#             a, b = split(string(k), ",")
+#             (a, b) => F(v)
+#         end
+#         for (k, v) = pairs(d)
+#     ]) for (λ, d) = pairs(targets)])
+# g0 = (; ϵ=eps_2D, μ=ones(F, size(eps_2D)), σ=zeros(F, size(eps_2D)), σm=zeros(F, size(eps_2D)))
+function make_geometry(models, origin, dx, g0, designs, design_config; F=Float32)
+    g = deepcopy(g0)
+    dict([k => begin
+        a = g[k]
+        if haskey(design_config.fill, k)
+            for (m, d) in zip(models, designs)
+                mask = m()
+                f = design_config.fill[k] |> F
+                v = design_config.void[k] |> F
+                # for (f, v) = zip(design_config.fill, design_config.void)
+                T = typeof(a)
+                p = (v .* (1 - mask) + f .* mask) |> F |> T
+                # a = place(a, ((d.bbox[1] - origin) / dx) + 1, p; replace=true) |> F
+                b = Zygote.Buffer(a)
+                copyto!(b, a)
+                place!(b, round((d.bbox[1] - origin) / dx) + 1, p)
+                a = copy(b)
+            end
+        end
+        a
+    end for k = keys(g,)])
+end
+function loss(params, targets)
+    # mean([mae(getindex.((yhat,), string.(keys(y))), values(y)) for (y, yhat) = zip(values(targets), values(params))])
+    mean([
+        sum(zip(getindex.((yhat,), string.(keys(y))), values(y))) do (yhat, y)
+            r = y - yhat
+            if y == 1
+                r
+            else
+                abs(r)
+            end
+        end for (y, yhat) = zip(values(targets), values(params))
+    ])
+    # mean([mae(values(yhat),values(y)) for (yhat,y)=zip(targets,[solve(prob;geometry) for prob=run_probs])])
+end
+
 
 using BSON: @load, @save, load
 using BSON, Statistics, DataStructures, Porcupine, ArrayPadding, UnPack, Jello, JSON, Flux, CUDA, Zygote
 using Luminescent: gpu, cpu
+using Porcupine: values, keys, fmap
+using CUDA: @allowscalar
 println("setting up simulation...")
 # do something based on ARGS?
 PROB_PATH = joinpath(path, "prob.bson")
@@ -28,8 +137,9 @@ We load design layout which includes a 2d device of device waveguide geometry as
 @load PROB_PATH name dtype margin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
 F = Float32
 if contains(dtype, "16")
-    # F = Float16
-    println("Float16 not supported yet, will be in future release.")
+    F = Float16
+    println("Float16 selected. make sure your cpu or GPU supports it. otherwise will be emulated and very slow.")
+    # println("Float16 not supported yet, will be in future release.")
 end
 λc = median(load(PROB_PATH)[:wavelengths])
 eps_2D = F(stack(stack.(eps_2D)))'
@@ -52,7 +162,7 @@ np = round(margin / dx)
 # origin = components.device.bbox[1] - dx * p
 # eps_3D = pad(eps_3D, :replicate, [p, p, 0])
 # eps_2D = pad(eps_2D, :replicate, p)
-model = nothing
+models = nothing
 lr = p * portsides + np * (1 - portsides)
 eps_2D = pad(eps_2D, :replicate, lr...)
 # nz=whole(ZMARGIN,_dx)
@@ -61,16 +171,12 @@ push!(lr[2], 0)
 eps_3D = pad(eps_3D, :replicate, lr...)
 # heatmap(eps_2D) |> display
 origin = components.device.bbox[1] - dx * (p * portsides[1] + np * (1 - portsides[1]))
-
 if study == "inverse_design"
-    @load PROB_PATH designs design_region_layer targets target_type eta maxiters design_config
+    @load PROB_PATH designs targets target_type eta maxiters design_config
     prob = load(PROB_PATH)
     minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
-    #=
-    We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
-    =#
 
-    model = [
+    models = [
         # Symbol("m$i") =>
         begin
             @unpack init, bbox = d
@@ -83,13 +189,13 @@ if study == "inverse_design"
             if isnothing(init)
                 init = eps_2D[o[1]:o[1]+szd[1]-1, o[2]:o[2]+szd[2]-1]
                 # init = init .> (maximum(init) + minimum(init)) / 2
-                init = init .≈ design_config.fill.ϵ |> F
+                init = init .≈ design_config.fill.epsilon |> F
             elseif init == "random"
                 init = nothing
             end
             lmin = d.lmin / dx
             Blob(szd;
-                init, lmin, rmin=lmin / 2,
+                init, lmin, rmin=lmin / 4,
                 contrast=10,
                 symmetry_dims, verbose)
         end for (i, d) = enumerate(designs)
@@ -239,11 +345,19 @@ run_probs = [
             eps_3D
         end
         sz = size(ϵ)
-        prob = setup(boundaries, sources, monitors, dx / λc, sz; F, Courant, ϵ, zpml=0.2, verbose)
+        ϵmax = maximum(ϵ)
+        μ = 1
+        σ = PML(1).σ
+        δ = sqrt(ϵmax / μ) / σ
+        setup(boundaries, sources, monitors, dx / λc, sz; F, Courant, ϵ,
+            pml_depths=[δ, δ, 0.3δ,],
+            pml_ramp_fracs=[0.2, 0.2, 1],
+            verbose,)
     end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
 ]
-# error()
+
 if !isempty(gpu_backend)
+    println("using $gpu_backend backend.")
     Flux.gpu_backend!(gpu_backend)
     if gpu_backend == "CUDA"
         # study == "inverse_design" && CUDA.allowscalar(true)
@@ -254,10 +368,14 @@ if !isempty(gpu_backend)
         #     using Metal
     end
     run_probs = gpu.(run_probs)
-    model = model |> gpu
+    # models = models |> gpu
+else
+    println("using CPU backend.")
 end
 g0 = run_probs[1].geometry |> deepcopy
+
 virgin = true
+# error()
 
 t0 = time()
 if study == "sparams"
@@ -271,25 +389,30 @@ elseif study == "inverse_design"
     sparams0 = 0
     # @show write_sparams(model)
     opt = Adam(eta)
+    model = models[1]
     opt_state = Flux.setup(opt, model)
+    Flux.freeze!(opt_state.w)
+    # opt_state=(;a=opt_state.a)
     # @info "starting optimization... first iter will be slow due to compilation."
     println("starting optimization... first iter will be slow due to adjoint compilation.")
     stop = false
     img = nothing
     best = Inf
-    global virgin = true
     for i = 1:maxiters
+        global virgin, stop, best, best0, sparams0
         img = if virgin
-            global virgin = false
+            virgin = false
             "before.png"
         elseif i == maxiters || stop
             "after.png"
         else
             img
         end
-        @time l, (dldm,) = withgradient(model) do m
+        # a = Params(model)
+        # @time global l, (dldm) = Flux.withgradient(Params(model)) do
+        @time global l, (dldm,) = Flux.withgradient(model) do m
             sparams = write_sparams(runs, run_probs, g0, path, origin, dx,
-                designs, design_config, m, ;
+                designs, design_config, [m];
                 F, img, autodiff=true)
             params = if target_type == "sparams"
                 sparams
@@ -300,20 +423,27 @@ elseif study == "inverse_design"
             # abs(sparams[1].mode_coeffs[2][1][1][1])
 
         end
+        # dldm = getindex.((dldm,), model)
         if stop
             break
         end
         if i == 1
             best0 = best = l
-            sparams0 = deepcopy(sparams)
         end
-        # l < 0 && break
-        Flux.update!(opt_state, model, dldm)
+        # if !isempty(gpu_backend)
+        #     dldm = gpu(dldm)
+        # end
+        # dldm = NamedTuple([k => (k == :a ? v : nothing) for (k, v) in pairs(dldm)])
+        global w0 = deepcopy(Array.(model.w))
+
+ Flux.update!(opt_state, model, dldm)# |> gpu)
+        # w = cu.(w0)
+        # model.w = cu.(w0)
+        # error()
         if l < best
             best = l
         end
         if l < minloss
-            # @info "Loss below threshold, stopping optimization."
             println("Loss below threshold, stopping optimization.")
             stop = true
             img = "after.png"
@@ -330,16 +460,18 @@ elseif study == "inverse_design"
     end
     # @info "Done in $(time() - t0) ."
     println("Done in $(time() - t0) .")
-    for (i, (m, d)) = enumerate(zip(model, designs))
+    for (i, (m, d)) = enumerate(zip(models, designs))
         Images.save(joinpath(path, "design$i.png"), Gray.(m() .< 0.5))
     end
     sol = (;
         before=sparam_family(sparams0),
         after=sparam_family(sparams),
-        design_config, path, dx,
-        designs=[m() .> 0.5 for m in model],
+        optimized_designs=[m() .> 0.5 for m in models],
+        designs,
+        design_config,
     )
 end
+sol = (; sol..., path, dx, study,)
 # @save "$path/sol.json" sol
 open("$(path)/sol.json", "w") do f
     write(f, json(sol))

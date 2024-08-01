@@ -6,16 +6,8 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
 
     p = geometry
     _gpu = isa(first(values(p)), AbstractGPUArray)
-    # if _gpu
-    #     p = cpu(p)
-    # end
     p = apply(geometry_padding, p)
-    # global aaaaaaaaa = p
-    # if _gpu
-    #     p = gpu(p)
-    # end
     p = apply(subpixel_averaging, p)
-    global aaaaaaaada = p
 
     ignore() do
         sz = p |> values |> first |> values |> first |> size

@@ -35,7 +35,7 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
                 prob[:geometry] = geometry
             end
             @show typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
-            sol = solve(prob; autodiff, verbose, cpu, gpu)
+            sol = solve(prob; autodiff, verbose,)
 
             ignore() do
                 if !isnothing(img)
@@ -102,7 +102,9 @@ function make_geometry(model, origin, dx, g0, designs, design_config; F=Float32)
                 f = design_config.fill[k] |> F
                 v = design_config.void[k] |> F
                 # for (f, v) = zip(design_config.fill, design_config.void)
-                p = (v .* (1 - mask) + f .* mask)
+
+                T = typeof(a)
+                p = (v .* (1 - mask) + f .* mask) |> F |> T
                 # a = place(a, ((d.bbox[1] - origin) / dx) + 1, p; replace=true) |> F
                 b = Zygote.Buffer(a)
                 copyto!(b, a)
@@ -169,7 +171,7 @@ function gfrun(path; kw...)
     # origin = components.device.bbox[1] - dx * p
     # eps_3D = pad(eps_3D, :replicate, [p, p, 0])
     # eps_2D = pad(eps_2D, :replicate, p)
-    model = nothing
+    models = nothing
     lr = p * portsides + np * (1 - portsides)
     eps_2D = pad(eps_2D, :replicate, lr...)
     # nz=whole(ZMARGIN,_dx)
@@ -183,7 +185,7 @@ function gfrun(path; kw...)
         prob = load(PROB_PATH)
         minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
 
-        model = [
+        models = [
             # Symbol("m$i") =>
             begin
                 @unpack init, bbox = d
@@ -202,7 +204,7 @@ function gfrun(path; kw...)
                 end
                 lmin = d.lmin / dx
                 Blob(szd;
-                    init, lmin, rmin=lmin / 2,
+                    init, lmin, rmin=lmin / 4,
                     contrast=10,
                     symmetry_dims, verbose)
             end for (i, d) = enumerate(designs)
@@ -359,7 +361,7 @@ function gfrun(path; kw...)
             setup(boundaries, sources, monitors, dx / λc, sz; F, Courant, ϵ,
                 pml_depths=[δ, δ, 0.3δ,],
                 pml_ramp_fracs=[0.2, 0.2, 1],
-                verbose, kw...)
+                verbose,)
         end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
     ]
 
@@ -375,7 +377,7 @@ function gfrun(path; kw...)
             #     using Metal
         end
         run_probs = gpu.(run_probs)
-        model = model |> gpu
+        # models = models |> gpu
     else
         println("using CPU backend.")
     end
@@ -396,13 +398,17 @@ function gfrun(path; kw...)
         sparams0 = 0
         # @show write_sparams(model)
         opt = Adam(eta)
+        model = models[1]
         opt_state = Flux.setup(opt, model)
+        Flux.freeze!(opt_state.w)
+        # opt_state=(;a=opt_state.a)
         # @info "starting optimization... first iter will be slow due to compilation."
         println("starting optimization... first iter will be slow due to adjoint compilation.")
         stop = false
         img = nothing
         best = Inf
         for i = 1:maxiters
+            # global virgin, stop, best, best0, sparams0
             img = if virgin
                 virgin = false
                 "before.png"
@@ -411,9 +417,12 @@ function gfrun(path; kw...)
             else
                 img
             end
-            @time l, (dldm,) = withgradient(model) do m
+            # a = Params(model)
+            # @time global l, (dldm) = Flux.withgradient(Params(model)) do
+            # @time global l, (dldm,) = Flux.withgradient(model) do m
+            @time global l, (dldm,) = Flux.withgradient(model) do m
                 sparams = write_sparams(runs, run_probs, g0, path, origin, dx,
-                    designs, design_config, m, ;
+                    designs, design_config, [m];
                     F, img, autodiff=true)
                 params = if target_type == "sparams"
                     sparams
@@ -424,6 +433,7 @@ function gfrun(path; kw...)
                 # abs(sparams[1].mode_coeffs[2][1][1][1])
 
             end
+            # dldm = getindex.((dldm,), model)
             if stop
                 break
             end
@@ -431,13 +441,12 @@ function gfrun(path; kw...)
                 best0 = best = l
                 sparams0 = deepcopy(sparams)
             end
-            # l < 0 && break
-            Flux.update!(opt_state, model, dldm)
+
+            Flux.update!(opt_state, model, dldm)# |> gpu)
             if l < best
                 best = l
             end
             if l < minloss
-                # @info "Loss below threshold, stopping optimization."
                 println("Loss below threshold, stopping optimization.")
                 stop = true
                 img = "after.png"
@@ -454,13 +463,13 @@ function gfrun(path; kw...)
         end
         # @info "Done in $(time() - t0) ."
         println("Done in $(time() - t0) .")
-        for (i, (m, d)) = enumerate(zip(model, designs))
+        for (i, (m, d)) = enumerate(zip(models, designs))
             Images.save(joinpath(path, "design$i.png"), Gray.(m() .< 0.5))
         end
         sol = (;
             before=sparam_family(sparams0),
             after=sparam_family(sparams),
-            optimized_designs=[m() .> 0.5 for m in model],
+            optimized_designs=[m() .> 0.5 for m in models],
             designs,
             design_config,
         )
