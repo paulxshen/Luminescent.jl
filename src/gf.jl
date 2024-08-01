@@ -406,7 +406,7 @@ function gfrun(path; kw...)
         println("starting optimization... first iter will be slow due to adjoint compilation.")
         stop = false
         img = nothing
-        best = Inf
+        best = best0 = 0
         for i = 1:maxiters
             # global virgin, stop, best, best0, sparams0
             img = if virgin

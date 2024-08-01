@@ -14,7 +14,7 @@ sol = lumi.write_sparams(c, wavelengths=[1.55], keys=["2,1"],
                          dx=0.1, approx_2D=True, gpu="CUDA",)  # dtype="16", dev=True,)
 lumi.show_solution()
 pp.pprint(sol)
-# raise ValueError("stop here")
+raise ValueError("stop here")
 
 sol = lumi.write_sparams(c, wavelengths=[1.55, 1.65], keys=["2,1"],
                          dx=0.1, approx_2D=True, gpu="CUDA", run=False)
