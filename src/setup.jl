@@ -68,6 +68,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     ϵmin, ϵmax = extrema(geometry.ϵ)
     if isnothing(Courant)
         Courant = F(0.7√(ϵmin / length(sz)))# Courant number)
+        # @show Courant
     end
 
     if transient_duration == 0

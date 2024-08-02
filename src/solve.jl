@@ -10,6 +10,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     p = apply(subpixel_averaging, p)
 
     ignore() do
+        @show dx, dt, transient_duration, steady_state_duration
         sz = p |> values |> first |> values |> first |> size
         points = prod(sz)
         steps = (transient_duration + steady_state_duration) / dt |> round
@@ -45,7 +46,8 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
         update(u, p, t, dx, dt, field_padding, source_instances; autodiff)
     end
 
-    u, mode_fields, total_powers = reduce(T[1]+dt:dt:T[2], init=(u, 0, 0)) do (u, mode_fields, tp), t
+    # u, mode_fields, total_powers = reduce(T[1]+dt:dt:T[2], init=(u, 0, 0)) do (u, mode_fields, tp), t
+    u, mode_fields, = reduce(T[1]+dt:dt:T[2], init=(u, 0)) do (u, mode_fields), t
         verbose && ignore() do
             if !isempty(milestones) && (i + 1) / N > milestones[1]
                 hasnan(u) && error("nan detected. instability. aborting")
@@ -54,31 +56,28 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
             end
             i += 1
         end
-        # save && push!(h, u)
         mode_fields_ = [
             [
                 begin
-                    # λ = dispersion_compensation(dx, dt, n, λ)
                     # E = dict([k => u[k, m] for k = Enames])
                     # H = dict([k => u[k, m] for k = Hnames])
                     # (; E, H)
                     E = [u[k, m] |> F for k = Enames]
                     H = [u[k, m] |> F for k = Hnames]
-                    # global aaab, bbbb = E, H
                     [E, H] * cispi(-2t / λ)
                 end for λ = m.wavelength_modes |> keys]
             for m = monitor_instances
         ]
-        tp_ = map(monitor_instances) do m
-            E = [u[k, m] for k = Enames]
-            H = [u[k, m] for k = Hnames]
-            mean(sum((E × H) .* normal(m))) * area(m)
-        end
+        # tp_ = map(monitor_instances) do m
+        #     E = [u[k, m] for k = Enames]
+        #     H = [u[k, m] for k = Hnames]
+        #     mean(sum((E × H) .* normal(m))) * area(m)
+        # end
 
         (
             update(u, p, t, dx, dt, field_padding, source_instances; autodiff),
             mode_fields + dt / Δ[2] * mode_fields_,
-            tp + dt / Δ[2] * tp_,
+            # tp + dt / Δ[2] * tp_,
         )
     end
     println("simulation ended")
@@ -88,16 +87,12 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
 
     v = map(mode_fields, monitor_instances) do mf, m
         map(mf, values(m.wavelength_modes)) do u, wm
-            # E = values(u.E)
-            # H = values(u.H)
             E, H = u
             if d == 2
                 if polarization == :TE
-                    # global E, H
                     Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
                     Ex += 0sum(Ez[1:2])
                     Hy += 0sum(Ez[1:2])
-                    # end
                     _mode = (; Ex, Hy, Ez)
                 else
                     Hx, Ey, Hz = invreframe(frame(m), vcat(H, E))
@@ -124,5 +119,6 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
 
     fields = u
     # @show forward_mode_powers, reverse_mode_powers, total_powers
-    return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, total_powers)
+    # return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, total_powers)
+    return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers,)
 end

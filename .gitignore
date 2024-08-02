@@ -12,3 +12,4 @@ docs/build/
 *.*.pyc
 *.pyo
 _.png
+/_temp

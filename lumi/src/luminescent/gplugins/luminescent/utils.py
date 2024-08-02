@@ -314,7 +314,8 @@ def material_slice(c, dx, center, w, h, normal, layers, layer_stack, layer_views
             if eps < epsmin:
                 epsmin = eps
             eps_array = _mask*eps+(1-_mask)*eps_array
-    eps_array = eps_array+np.where(eps_array == 0, 1, 0)*epsmin
+    holes = np.where(eps_array < epsmin, 1, 0)
+    eps_array = (1-holes)*eps_array+epsmin*holes
     # plt.clf()
     # plt.imshow(eps_array)
     # plt.show()
