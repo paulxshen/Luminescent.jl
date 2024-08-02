@@ -117,7 +117,7 @@ version = "7.15.0"
 deps = ["Functors", "GPUArraysCore", "Lazy", "Statistics"]
 path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\ArrayPadding.jl"
 uuid = "fe5ef43c-4912-423d-9170-4bd5cb6a013a"
-version = "0.1.26"
+version = "0.1.27"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -1637,7 +1637,7 @@ version = "1.4.3"
 deps = ["ArrayPadding", "ChainRulesCore", "DataStructures", "Functors", "LinearAlgebra", "Statistics", "UnPack", "Zygote"]
 path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Porcupine.jl"
 uuid = "3b53a3d7-3f34-4bba-8df2-4717a8b1e972"
-version = "0.1.34"
+version = "0.1.36"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
