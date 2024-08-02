@@ -114,13 +114,13 @@ Args
 function field(u, k, m=nothing)
     if k == "|E|2"
         sum(field.(u, (:Ex, :Ey, :Ez), (m,))) do a
-            a .^ 2
+            a .|> abs2
         end
     elseif k == "|E|"
         sqrt.(field(u, "|E|2", m))
     elseif k == "|H|2"
         sum(field.(u, (:Hx, :Hy, :Hz), (m,))) do a
-            a .^ 2
+            a .|> abs2
         end
     elseif k == "|H|"
         sqrt.(field(u, "|H|2", m))

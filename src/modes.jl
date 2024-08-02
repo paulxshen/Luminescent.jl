@@ -2,7 +2,7 @@ function normalize_mode(m, dx)
     @unpack Ex, Hy, = m
     # @unpack Ex, Hy, Ez = m
     p = real(Ex ⋅ Hy) * dx^ndims(Ex) / 2
-    m / √p
+    sign(p) * m / √abs(p)
     # (; Ex=Ex / √p, Hy=Hy / √p, Ez=Ez / √p)
 end
 
