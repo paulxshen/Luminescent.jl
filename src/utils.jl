@@ -40,7 +40,7 @@ function mark(p; kw...)
     dict([k => mark(p[k], kw[k]) for k = keys(kw)])
 end
 function unmark(kw)
-    dict([k => Array(kw[k]) for k = keys(kw)])
+    dict([k => array(kw[k]) for k = keys(kw)])
 end
 function unmark(; kw...)
     dict([k => Array(kw[k]) for k = keys(kw)])
