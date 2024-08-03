@@ -10,7 +10,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     p = apply(subpixel_averaging, p)
 
     ignore() do
-        @show dx, dt, transient_duration, steady_state_duration
+        verbose && @show dx, dt, transient_duration, steady_state_duration
         sz = p |> values |> first |> values |> first |> size
         points = prod(sz)
         steps = (transient_duration + steady_state_duration) / dt |> round

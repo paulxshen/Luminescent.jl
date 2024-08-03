@@ -263,7 +263,7 @@ def raster_slice(scene, dx, center, w, h, normal):
 
     p = shapely.affinity.translate(p, (xmax-xmin)/2-x, (ymax-ymin)/2-y)
     svg = s2svg(p, [0, 0, w, h], dx)
-    svg2png(bytestring=svg, write_to='_.png', background_color="#00000000",
+    svg2png(bytestring=svg, write_to='temp.png', background_color="#00000000",
             output_width=round(w/dx), output_height=round(h/dx))
     # p.plot()
     # with open('_.svg', 'w') as f:
@@ -271,7 +271,7 @@ def raster_slice(scene, dx, center, w, h, normal):
     # plot_polygon(p,)
     # plt.show()
 
-    img = iio.imread('_.png')
+    img = iio.imread('temp.png')
     img = np.sum(img, 2).T
     img = (img-np.min(img))/(np.max(img)-np.min(img))
     # img = rasterio.features.rasterize(
@@ -284,7 +284,7 @@ def raster_slice(scene, dx, center, w, h, normal):
 
 p = shapely.Polygon([(0, 0), (1, 0), (1, 1), (0, 1)])
 svg = s2svg(p, [0, 0, 2, 2], .2)
-svg2png(bytestring=svg, write_to='_.png', background_color="#00000000",
+svg2png(bytestring=svg, write_to='temp.png', background_color="#00000000",
         output_width=10, output_height=10)
 
 

@@ -11,5 +11,5 @@ docs/build/
 *.pyc
 *.*.pyc
 *.pyo
-_.png
+temp.png
 /_temp
