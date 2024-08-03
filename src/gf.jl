@@ -464,7 +464,7 @@ function gfrun(path; kw...)
         # @info "Done in $(time() - t0) ."
         println("Done in $(time() - t0) .")
         for (i, (m, d)) = enumerate(zip(models, designs))
-            Images.save(joinpath(path, "design$i.png"), Gray.(m() .< 0.5))
+            # Images.save(joinpath(path, "design$i.png"), Gray.(m() .< 0.5))
         end
         sol = (;
             before=sparam_family(sparams0),
