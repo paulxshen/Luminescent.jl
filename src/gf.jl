@@ -233,7 +233,7 @@ function gfrun(path; kw...)
 
             mode = (; [k => complex.(stack.(v)...) |> F for (k, v) in mode |> pairs]...)
             mode1 = (; [k => complex.(v...) |> F for (k, v) in mode1 |> pairs]...)
-            # ϵmode = eps |> stack |> transpose .|> F
+            ϵmode = eps |> stack |> transpose .|> F
 
             # sz = round(sz / dx) |> Tuple
             # # sz = size() - 1
@@ -241,7 +241,7 @@ function gfrun(path; kw...)
             # ϵ = resize(ϵ, sz)
             if d == 2
                 mode = mode1
-                # mode, ϵmode = collapse_mode(mode, ϵmode)
+                mode, ϵmode = collapse_mode(mode, ϵmode)
                 # i = round(Int, size(ϵmode, 1) / 2)
                 # ϵcore_ = ϵmode[i]
                 # ϵmode = maximum(ϵmode, dims=2) |> vec

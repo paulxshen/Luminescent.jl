@@ -9,10 +9,12 @@ import pprint as pp
 c = gf.components.straight(.5)
 c = lumi.add_bbox(c, layers=[LAYER.WGCLAD, LAYER.BOX], nonport_margin=.1)
 
-# sol = lumi.write_sparams(c, wavelengths=[1.55], keys=["2,1"],
-sol = lumi.write_sparams(c, wavelengths=[1.55], keys=["o2@1,o1@1"],
-                         #  dx=0.025, approx_2D=True, gpu=None,)
-                         dx=0.1, approx_2D=True, gpu="CUDA",)  # dtype="16", dev=True,)
+sol = lumi.write_sparams(
+    # c, wavelengths=[1.55], keys=["2,1"],
+    # sol = lumi.write_sparams(
+    c, wavelengths=[1.55], keys=["o2@1,o1@1"],
+    #  dx=0.025, approx_2D=True, gpu=None,)
+    dx=0.05, approx_2D=True, gpu="CUDA",)  # dtype="16", dev=True,)
 lumi.show_solution()
 pp.pprint(sol)
 raise ValueError("stop here")

@@ -56,18 +56,27 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
             end
             i += 1
         end
+
         mode_fields_ = [
             [
                 begin
-                    # E = dict([k => u[k, m] for k = Enames])
-                    # H = dict([k => u[k, m] for k = Hnames])
-                    # (; E, H)
                     E = [u[k, m] |> F for k = Enames]
                     H = [u[k, m] |> F for k = Hnames]
                     [E, H] * cispi(-2t / λ)
                 end for λ = m.wavelength_modes |> keys]
             for m = monitor_instances
         ]
+        if autodiff
+            mode_fields += dt / Δ[2] * mode_fields_
+        else
+            for (a, b) = zip(mode_fields, mode_fields_)
+                for (a, b) = zip(a, b)
+                    for (a, b) = zip(a, b)
+                        a .+= dt / Δ[2] * b
+                    end
+                end
+            end
+        end
         # tp_ = map(monitor_instances) do m
         #     E = [u[k, m] for k = Enames]
         #     H = [u[k, m] for k = Hnames]
@@ -76,7 +85,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
 
         (
             update(u, p, t, dx, dt, field_padding, source_instances; autodiff),
-            mode_fields + dt / Δ[2] * mode_fields_,
+            mode_fields,
             # tp + dt / Δ[2] * tp_,
         )
     end
