@@ -1,8 +1,17 @@
 function normalize_mode(m, dx)
-    @unpack Ex, Hy, = m
-    # @unpack Ex, Hy, Ez = m
-    p = real(Ex ⋅ Hy) * dx^ndims(Ex) / 2
-    (; Ex=sign(p) * Ex, Hy) / √abs(p)
+    p = 0
+    r = SortedDict()
+    if haskey(m, :Ex)
+        p += real(m.Ex ⋅ m.Hy) * dx^ndims(m.Ex) / 2
+        r[:Ex] = m.Ex
+        r[:Hy] = m.Hy
+    end
+    if haskey(m, :Hx)
+        p -= real(m.Hx ⋅ m.Ey) * dx^ndims(m.Hx) / 2
+        r[:Hx] = m.Hx
+        r[:Ey] = m.Ey
+    end
+    r / sqrt(abs(p))
     # (; Ex=Ex / √p, Hy=Hy / √p, Ez=Ez / √p)
 end
 
