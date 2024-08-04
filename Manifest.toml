@@ -1635,7 +1635,7 @@ version = "1.4.3"
 
 [[deps.Porcupine]]
 deps = ["ArrayPadding", "ChainRulesCore", "DataStructures", "Functors", "LinearAlgebra", "Statistics", "UnPack", "Zygote"]
-path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Porcupine.jl"
+git-tree-sha1 = "b9b8b2c656e525936d3c48e4566a25d576bd09d5"
 uuid = "3b53a3d7-3f34-4bba-8df2-4717a8b1e972"
 version = "0.1.37"
 
