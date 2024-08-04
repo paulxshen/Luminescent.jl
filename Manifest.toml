@@ -462,9 +462,9 @@ version = "0.1.2"
 
 [[deps.DelaunayTriangulation]]
 deps = ["AdaptivePredicates", "EnumX", "ExactPredicates", "Random"]
-git-tree-sha1 = "1abb6a8541775a0bf82749ac8373a34e9f2f71e0"
+git-tree-sha1 = "8630ce72d9d2028cfdf6b55ffec1fc7515ef5ce2"
 uuid = "927a84f5-c5f4-47a5-9785-b46e178433df"
-version = "1.1.1"
+version = "1.1.2"
 
 [[deps.DelimitedFiles]]
 deps = ["Mmap"]
@@ -642,19 +642,21 @@ version = "0.8.5"
 
 [[deps.Flux]]
 deps = ["Adapt", "ChainRulesCore", "Compat", "Functors", "LinearAlgebra", "MLUtils", "MacroTools", "NNlib", "OneHotArrays", "Optimisers", "Preferences", "ProgressLogging", "Random", "Reexport", "SparseArrays", "SpecialFunctions", "Statistics", "Zygote"]
-git-tree-sha1 = "edacf029ed6276301e455e34d7ceeba8cc34078a"
+git-tree-sha1 = "3dacce10e977918008944bb223ddec455fab6c16"
 uuid = "587475ba-b771-5e3f-ad9e-33799f191a9c"
-version = "0.14.16"
+version = "0.14.17"
 
     [deps.Flux.extensions]
     FluxAMDGPUExt = "AMDGPU"
     FluxCUDAExt = "CUDA"
     FluxCUDAcuDNNExt = ["CUDA", "cuDNN"]
+    FluxEnzymeExt = "Enzyme"
     FluxMetalExt = "Metal"
 
     [deps.Flux.weakdeps]
     AMDGPU = "21141c5a-9bdb-4563-92ae-f87d6854732e"
     CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+    Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
     Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
     cuDNN = "02a925ec-e4fe-4b08-9a7e-0d78e3d38ccd"
 
@@ -1138,9 +1140,9 @@ version = "3.0.0+1"
 
 [[deps.LLVM]]
 deps = ["CEnum", "LLVMExtra_jll", "Libdl", "Preferences", "Printf", "Requires", "Unicode"]
-git-tree-sha1 = "020abd49586480c1be84f57da0017b5d3db73f7c"
+git-tree-sha1 = "2470e69781ddd70b8878491233cd09bc1bd7fc96"
 uuid = "929cbde3-209d-540e-8aea-75f648917ca0"
-version = "8.0.0"
+version = "8.1.0"
 weakdeps = ["BFloat16s"]
 
     [deps.LLVM.extensions]
@@ -1148,9 +1150,9 @@ weakdeps = ["BFloat16s"]
 
 [[deps.LLVMExtra_jll]]
 deps = ["Artifacts", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
-git-tree-sha1 = "c2636c264861edc6d305e6b4d528f09566d24c5e"
+git-tree-sha1 = "597d1c758c9ae5d985ba4202386a607c675ee700"
 uuid = "dad2f222-ce93-54a1-a47d-0025e8a3acab"
-version = "0.0.30+0"
+version = "0.0.31+0"
 
 [[deps.LLVMLoopInfo]]
 git-tree-sha1 = "2e5c102cfc41f48ae4740c7eca7743cc7e7b75ea"
@@ -1635,7 +1637,7 @@ version = "1.4.3"
 deps = ["ArrayPadding", "ChainRulesCore", "DataStructures", "Functors", "LinearAlgebra", "Statistics", "UnPack", "Zygote"]
 path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Porcupine.jl"
 uuid = "3b53a3d7-3f34-4bba-8df2-4717a8b1e972"
-version = "0.1.36"
+version = "0.1.37"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
