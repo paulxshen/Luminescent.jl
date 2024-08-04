@@ -102,23 +102,23 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
                     Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
                     Ex += 0sum(Ez[1:2])
                     Hy += 0sum(Ez[1:2])
-                    _mode = (; Ex, Hy, Ez)
+                    mode = (; Ex, Hy, Ez)
                 else
                     Hx, Ey, Hz = invreframe(frame(m), vcat(H, E))
                     Hx += 0real(Hz[1])
                     Ey += 0real(Hz[1])
-                    _mode = (; Hx, Ey, Hz)
+                    mode = (; Hx, Ey, Hz)
                 end
             elseif d == 3
                 Ex, Ey, Ez, = invreframe(frame(m), E)
                 Hx, Hy, Hz = invreframe(frame(m), H)
-                _mode = (; Ex, Ey, Ez, Hx, Hy, Hz)
+                mode = (; Ex, Ey, Ez, Hx, Hy, Hz)
             end
-            # _mode = keepxy(_mode)
-            c = mode_decomp.(wm, (_mode,), dx)
+            # mode = keepxy(mode)
+            c = mode_decomp.(wm, (mode,), dx)
             fp = [abs(v[1])^2 for v = c]
             rp = [abs(v[2])^2 for v = c]
-            _mode, c, fp, rp
+            mode, c, fp, rp
         end
     end
     modes = [[v[1] for v = v] for v in v]

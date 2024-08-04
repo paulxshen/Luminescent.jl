@@ -1,19 +1,28 @@
-function normalize_mode(m, dx)
+mirror_mode(m) = dict([k => k in (:Ex, :Hx) ? -reverse(m[k], dims=1) : m[k] for k in keys(m)])
+
+# function normalize_mode(m, dx)
+function inner(u, v; dx=1)
     p = 0
-    r = SortedDict()
-    if haskey(m, :Ex)
-        p += real(m.Ex ⋅ m.Hy) * dx^ndims(m.Ex) / 2
-        r[:Ex] = m.Ex
-        r[:Hy] = m.Hy
+    if haskey(u, :Ex)
+        p += u.Ex ⋅ v.Hy
     end
-    if haskey(m, :Hx)
-        p -= real(m.Hx ⋅ m.Ey) * dx^ndims(m.Hx) / 2
-        r[:Hx] = m.Hx
-        r[:Ey] = m.Ey
+    if haskey(u, :Ey)
+        p -= u.Ey ⋅ v.Hx
     end
-    r / sqrt(abs(p))
-    # (; Ex=Ex / √p, Hy=Hy / √p, Ez=Ez / √p)
+    if haskey(v, :Ex)
+        p += u.Hy ⋅ v.Ex
+    end
+    if haskey(v, :Ey)
+        p -= u.Hx ⋅ v.Ey
+    end
+    p * dx^ndims(first(values(u))) / 2
+    # if p > 0
+    #     return r
+    # else
+    #     return mirror_mode(r)
+    # end
 end
+
 
 function keepxy(mode)
     dict([k => mode[k] for k in keys(mode) if string(k)[2] ∈ ('x', 'y')])
@@ -23,44 +32,33 @@ end
 # function mode_decomp(m, u::AbstractVector, dx)
 #     Ex,Hy,Hz
 function mode_decomp(m, u, dx)
-
-    polarization = get_polarization(u)
-    m = normalize_mode(m, dx)
-    if polarization == :TM
-        ap_TE = am_TE = 0
-    else
-        Ex = m.Ex ⋅ field(u, :Ex) / norm(m.Ex)^2
-        Hy = m.Hy ⋅ field(u, :Hy) / norm(m.Hy)^2
-        ap_TE = Hy + Ex
-        am_TE = Hy - Ex
+    p = real(inner(m, m; dx))
+    m1 = m / sqrt(abs(p))
+    m2 = mirror_mode(m1)
+    if p < 0
+        m2, m1 = m1, m2
     end
-    if polarization == :TE
-        ap_TM = am_TM = 0
-    else
-        Hx = m.Hx ⋅ field(u, :Hx) / norm(m.Hx)^2
-        Ey = m.Ey ⋅ field(u, :Ey) / norm(m.Ey)^2
-        am_TM = Ey + Hx
-        ap_TM = Ey - Hx
-    end
-    # [ap_TE + ap_TM, am_TE + am_TM]
-    if polarization == :TM
-        return [ap_TM, am_TM]
-    end
-    if polarization == :TE
-        return [ap_TE, am_TE]
-    end
-    return [ap_TE, am_TE]
+    # k = ignore() do
+    #     intersect(keys(m1), keys(u)) |> collect |> sort
+    # end
+    # m = [vcat(getindex.((m,), k)...) for m = (m1, m2)]
+    # u = vcat(getindex.((u,), k)...)
+    inner.((m1, m2), (u,); dx)
 end
 
 
-function collapse_mode(m, ϵ)
+function collapse_mode(m, p=:TE)
     @unpack Ex, Ey, Ez, Hx, Hy, Hz = m
-    E = sqrt.(abs2.(Ex) + abs2.(Ey) + abs2.(Ez))
-    Ex, Ez, Hy = map([Ex, Ez, Hy]) do a
+    Ex, Ey, Ez, Hx, Hy, Hz = map([Ex, Ey, Ez, Hx, Hy, Hz]) do a
         mean(a, dims=2) |> vec
     end
     # (; Ex, Hy, Ez), sum(E .* ϵ, dims=2) ./ sum(E, dims=2) |> vec
-    (; Ex, Hy, Ez), maximum.(eachrow(ϵ))
+    if p == :TE
+        (; Ex, Hy, Ez)
+        #, maximum.(eachrow(ϵ))
+    else
+        (; Hx, Ey, Hz)
+    end
 end
 
 function insert(a, i, v)

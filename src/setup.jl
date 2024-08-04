@@ -72,7 +72,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
     if transient_duration == 0
-        transient_duration = sum(sz) * dx * sqrt(ϵmax) + 4
+        transient_duration = sum(sz) * dx * sqrt(ϵmax)
     end
     if steady_state_duration == 0
         if isempty(monitors)

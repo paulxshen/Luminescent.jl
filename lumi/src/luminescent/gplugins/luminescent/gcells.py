@@ -12,49 +12,6 @@ from .constants import *
 # from layers import *
 
 
-def bend(r, wwg=.5, lwg=1, LAYER=LAYER, **kwargs):
-    name = "bend"
-    design = gf.Component()
-    init = gf.Component()
-    test = gf.Component()
-    device = gf.Component()
-    device = gf.Component("bend")
-    prob = dict()
-
-    # if lwg == 0:
-    # lwg = 2*wwg
-    lstub = lwg/2
-    # Extrude the Path and the CrossSection
-    wg1 = device << gf.path.extrude(gf.path.straight(
-        length=lwg), layer=LAYER.WG, width=wwg)
-    wg2 = device << gf.path.extrude(gf.path.straight(
-        length=lwg), layer=LAYER.WG, width=wwg)
-    arc = device << gf.path.extrude(gf.path.arc(
-        r, start_angle=0), layer=LAYER.WG, width=wwg)
-
-    ld = wd = 2*r
-    design.add_polygon([(0, 0), (ld, 0), (ld, wd), (0, wd)],
-                       layer=LAYER.DESIGN)
-    design.add_port(name="o1", center=(0, r), width=wwg,
-                    orientation=180, layer=LAYER.WG)
-    design.add_port(name="o2", center=(r, 0), width=wwg,
-                    orientation=-90, layer=LAYER.WG)
-    design = device << design
-
-    wg1.connect("o2", design.ports["o1"])
-    wg2.connect("o2", design.ports["o2"])
-    arc.connect("o1", wg2.ports["o2"])
-
-    device.add_port("o1", port=wg1.ports["o1"])
-    device.add_port("o2", port=wg2.ports["o1"])
-
-    # utils.write_img("device", device, DESIGN)
-    # utils.write_img("guess", init, DESIGN)
-    c = add_bbox(device, layers=[LAYER.WGCLAD, LAYER.BOX],
-                 nonport_margin=0.1)
-    return c
-
-
 def mimo(west=0, east=0, south=0, north=0,
          l=2.0, w=2.0, wwg=.5,
          wwg_west=None, wwg_east=None, wwg_south=None, wwg_north=None,
@@ -88,7 +45,7 @@ def mimo(west=0, east=0, south=0, north=0,
         lwwg,
         [180, 0, -90, 90]
     ):
-        for wwg, v in zip(wwg, cumsum(d)):
+        for wwg, v in zip(wwg, d):
             center = (x, y+v) if i in [0, 1] else (x+v, y)
             name = "o"+str(n+1)
             design.add_port(name=name, center=center, width=wwg,
