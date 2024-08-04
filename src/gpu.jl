@@ -4,7 +4,8 @@
 # using GPUArraysCore
 gpu(F, x) = cu(F.(x))
 cpu(F, x) = Array(F.(x))
-
+cpu(x::Number) = x
+gpu(x::Number) = x
 cpu(x::AbstractArray{<:Number}) = Array(x)
 gpu(x::AbstractArray{<:Number}) = cu(x)
 gpu(x::AbstractArray) = gpu.(x)

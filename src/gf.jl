@@ -42,11 +42,11 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
                     if img == ""
                         img = "run$i.png"
                     end
-                    try
-                        CairoMakie.save(joinpath(path, img), quickie(sol |> cpu),)
-                    catch e
-                        println(e)
-                    end
+                    # try
+                    CairoMakie.save(joinpath(path, img), quickie(sol |> cpu),)
+                    # catch e
+                    #     println(e)
+                    # end
                 end
             end
             sol
