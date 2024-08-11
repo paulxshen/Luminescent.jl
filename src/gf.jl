@@ -1,6 +1,8 @@
 using Optimisers
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float32,Int32}) = true
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float16,Int32}) = true
+Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float32,Int32}) = true
+Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float16,Int32}) = true
 
 function julia_main()::Cint
     if !isempty(ARGS)
