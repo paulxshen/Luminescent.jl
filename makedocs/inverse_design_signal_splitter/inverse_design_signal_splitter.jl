@@ -42,7 +42,7 @@ sz = size(ϵdummy)
 # "geometry generator model
 # @load "$(@__DIR__)/model.bson" model
 model = Blob((round.(Int, designs[1].L / λ / dx) .+ 1)...;
-    nbasis, contrast, rmin, symmetry_dims=2)
+    nbasis, contrast, rmin, symmetries=2)
 model0 = deepcopy(model)
 
 # "boundaries"

@@ -41,7 +41,7 @@ sz = size(mask)
 # "geometry generator model
 # @load "$(@__DIR__)/model.bson" model
 model = RealBlob((round.(Int, designs[1].L / λ / dx) .+ 1)...;
-    init, nbasis, contrast, rmin, symmetry_dims=2)
+    init, nbasis, contrast, rmin, symmetries=2)
 model0 = deepcopy(model)
 
 # "boundaries"

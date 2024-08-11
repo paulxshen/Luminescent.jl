@@ -182,7 +182,7 @@ if study == "inverse_design"
             @unpack init, bbox = d
             L = bbox[2] - bbox[1]
             szd = Tuple(round.(Int, L / dx)) # design region size
-            symmetry_dims = [length(string(s)) == 1 ? Int(s) + 1 : s for s = d.symmetries]
+            symmetries = [length(string(s)) == 1 ? Int(s) + 1 : s for s = d.symmetries]
             o = round((bbox[1] - origin) / dx) + 1
             # if !isa(init, AbstractArray)
             # if init == ""
@@ -197,7 +197,7 @@ if study == "inverse_design"
             Blob(szd;
                 init, lmin, rmin=lmin / 4,
                 contrast=10,
-                symmetry_dims, verbose)
+                symmetries, verbose)
         end for (i, d) = enumerate(designs)
     ]
 
@@ -436,7 +436,7 @@ elseif study == "inverse_design"
         # dldm = NamedTuple([k => (k == :a ? v : nothing) for (k, v) in pairs(dldm)])
         global w0 = deepcopy(Array.(model.w))
 
- Flux.update!(opt_state, model, dldm)# |> gpu)
+        Flux.update!(opt_state, model, dldm)# |> gpu)
         # w = cu.(w0)
         # model.w = cu.(w0)
         # error()

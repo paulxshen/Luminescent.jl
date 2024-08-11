@@ -1,7 +1,14 @@
+import copy
+from .constants import *
+import gdsfactory as gf
+from gdsfactory.cross_section import Section
+from .constants import PATH
+from .materials import MATERIALS
 try:
     from IPython.display import display
 except ImportError:
     pass
+
 from re import T
 from PIL import Image
 import imageio.v3 as iio
@@ -27,12 +34,8 @@ from math import cos, pi, sin, tan
 import trimesh
 import matplotlib.pyplot as plt
 import numpy as np
-from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
-from .materials import MATERIAL_LIBRARY
-from .constants import PATH
-from gdsfactory.cross_section import Section
-import gdsfactory as gf
-import bson
+from gdsfactory.generic_tech import LAYER_STACK, LAYER
+# from gdsfactory import LAYER_VIEWS
 
 
 def trim(x, dx):
@@ -64,12 +67,25 @@ def portsides(c):
     return res
 
 
-def add_bbox(c, layers, nonport_margin=0):
-    margin = nonport_margin
+def add_bbox(c, layer, nonport_margin=None, dx=None):
     bbox = c.bbox_np()
     xmin0, ymin0 = bbox[0]
     xmax0, ymax0 = bbox[1]
-    xmin, ymin, xmax, ymax = xmin0-margin, ymin0-margin, xmax0+margin, ymax0+margin
+    l = xmax0-xmin0
+    w = ymax0-ymin0
+
+    # l = dx*np.ceil((xmax0-xmin0)/dx)
+    # w = dx*np.ceil((ymax0-ymin0)/dx)
+
+    if dx is not None:
+        if nonport_margin is None:
+            nonport_margin = dx
+    elif nonport_margin is None:
+        nonport_margin = 0
+    margin = nonport_margin
+    xmin, ymin, xmax, ymax = xmin0-margin, ymin0 - \
+        margin, xmin0+l+margin, ymin0+w+margin
+
     for p in c.ports:
         # p = c.ports[k]
         x, y = np.array(p.center)/1e3
@@ -84,7 +100,11 @@ def add_bbox(c, layers, nonport_margin=0):
     p = [(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)]
     _c = gf.Component()
     _c << c
-    for layer in layers:
+
+    if type(layer[0]) is int:
+        layer = [layer]
+    for layer in layer:
+        layer = tuple(layer)
         _c.add_polygon(p, layer=layer)
     for port in c.ports:
         _c.add_port(name=port.name, port=port)
@@ -273,7 +293,15 @@ def raster_slice(scene, dx, center, w, h, normal):
 
     img = iio.imread('temp.png')
     img = np.sum(img, 2).T
-    img = (img-np.min(img))/(np.max(img)-np.min(img))
+    d = np.max(img)-np.min(img)
+    b = np.min(img)
+    if d == 0:
+        if b == 0:
+            d = 1
+        else:
+            d = b
+            b = 0
+    img = (img-b)/(d)
     # img = rasterio.features.rasterize(
     #     [p], transform=(dx, 0, 0, 0, dx, 0, 0, 0, dx), out_shape=(round(h/dx), round(w/dx),)).T
     # plt.imshow(img)
@@ -288,29 +316,44 @@ svg2png(bytestring=svg, write_to='temp.png', background_color="#00000000",
         output_width=10, output_height=10)
 
 
-def material_slice(c, dx, center, w, h, normal, layers, layer_stack, layer_views=LAYER_VIEWS):
-    layer_views = layer_views.copy()
-    layer_views.layer_views["WGCLAD"].visible = True
+def material_slice(c, dx, center, w, h, normal, layers, layer_stack):
+    LAYER_VIEWS["WGCLAD"].visible = True
+    view = LAYER_VIEWS.layer_views["WGCLAD"]
+
+    _layer_views = copy.deepcopy(LAYER_VIEWS)
+    _layer_views.layer_views.clear()
+    for i, layer in enumerate(layers):
+        k = f"l{i}"
+        _layer_views.layer_views[k] = copy.deepcopy(view)
+        _layer_views.layer_views[k].layer = layer
+
+    layers = sum([[[v.mesh_order, v.material, tuple(layer), k]
+                 for k, v in get_layers(layer_stack, layer, withkey=True)] for layer in layers], [])
+
     epsmin = 100
     eps_array = 0
+    layers = sorted(layers, key=lambda x: -x[0])
     for layer in layers:
-        layer_views.layer_views[f"{layer}"] = layer_views.layer_views["WGCLAD"]
-        layer_views.layer_views[f"{layer}"].layer = layer
+        m = layer[1]
+        k = layer[3]
+        eps = MATERIALS[m].epsilon
 
-        # print(tuple(layer))
-        m = get_layer(layer_stack, layer).material
-        if m is not None:
-            eps = MATERIAL_LIBRARY[m].epsilon
-            scene = c.to_3d(
-                layer_stack=layer_stack,
-                layer_views=layer_views,
-                exclude_layers=list(set(c.layers)-set([layer])))
-            # mesh = sum(scene.geometry.values())
-            _mask = raster_slice(scene,
-                                 dx, w=w, h=h,
-                                 center=center,
-                                 normal=normal)
-            # _mask = trimesh.voxel.creation.voxelize(mesh, dx)
+        _layer_stack = copy.deepcopy(layer_stack)
+        _layer_stack.layers.clear()
+        _layer_stack.layers[k] = layer_stack.layers[k]
+        scene = c.to_3d(
+            layer_stack=_layer_stack,
+            layer_views=_layer_views)
+        # mesh = sum(scene.geometry.values())
+        _mask = raster_slice(scene,
+                             dx, w=w, h=h,
+                             center=center,
+                             normal=normal)
+        # print(layer, center)
+        if _mask is None:
+            # print("no mask ")
+            pass
+        else:
             if eps < epsmin:
                 epsmin = eps
             eps_array = _mask*eps+(1-_mask)*eps_array
@@ -322,18 +365,33 @@ def material_slice(c, dx, center, w, h, normal, layers, layer_stack, layer_views
     return eps_array
 
 
-def material_voxelate(c, dx, center, l, w, h,  normal, layers, layer_stack, layer_views=LAYER_VIEWS):
-    return np.stack([material_slice(c, dx, [center[0]+x]+center[1:], w, h, normal,    layers, layer_stack, layer_views) for x in np.arange(dx/2, l-.001, dx)],)
+def material_voxelate(c, dx, center, l, w, h,  normal, layers, layer_stack):
+    return np.stack([material_slice(c, dx, [center[0]+x]+center[1:], w, h, normal,    layers, layer_stack) for x in np.arange(dx/2, l-.001, dx)],)
 
 
-def get_layer(layer_stack, layer):
-    for x in layer_stack.layers.values():
-        if hasattr(x.layer, "layer"):
-            if tuple(x.layer.layer) == tuple(layer):
-                return x
+def get_layers(layer_stack, layer, withkey=False):
+    r = []
+    for k, x in layer_stack.layers.items():
+        l = x.layer
+        if hasattr(l, "layer"):
+            if tuple(l.layer) == tuple(layer):
+                if withkey:
+                    x = k, x
+                r.append(x)
+    if r:
+        return r
 
-        # if hasattr(x.layer, "layer1") and x.layer.layer1.layer == layer:
-        #     return x
+    for k, x in layer_stack.layers.items():
+        l = x.derived_layer
+        if hasattr(l, "layer"):
+            if tuple(l.layer) == tuple(layer):
+                if withkey:
+                    x = k, x
+                r.append(x)
+    return r
+
+    # if hasattr(x.layer, "layer1") and x.layer.layer1.layer == layer:
+    #     return x
 
 
 def show_solution(path=None):

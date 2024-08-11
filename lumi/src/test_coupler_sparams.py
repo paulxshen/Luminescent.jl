@@ -4,7 +4,7 @@ import pprint as pp
 import luminescent as lumi
 
 # import gplugins.luminescent as gl
-# from gplugins.luminescent.generic_tech import LAYER, LAYER_STACK
+# from gplugins.gdsfactory.generic_tech import LAYER, LAYER_STACK
 # from gplugins.luminescent.utils import add_bbox
 # from gplugins.luminescent.constants import XMARGIN
 

@@ -1,22 +1,22 @@
 # import gplugins.luminescent as gl
-from .generic_tech import (
-    LAYER_STACK, LAYER, LAYER_VIEWS
+from . import gcells
+from .utils import *
+from .constants import *
+from .materials import MATERIALS
+from .inverse_design import *
+from .sparams import *
+from .sol import *
+from .setup import *
+from gdsfactory.generic_tech import (
+    LAYER_STACK, LAYER
 
 )
-from .setup import *
-from .sol import *
-from .sparams import *
-from .inverse_design import *
-from .materials import MATERIAL_LIBRARY
-from .constants import *
-from .utils import *
-from . import gcells
 
 __all__ = [
     "LAYER_STACK",
     "LAYER",
     "LAYER_VIEWS",
-    "MATERIAL_LIBRARY",
+    "MATERIALS",
     "write_sparams",
     "inverse_design_problem",
     "sparams_problem",

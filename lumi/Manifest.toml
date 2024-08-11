@@ -115,9 +115,9 @@ version = "7.15.0"
 
 [[deps.ArrayPadding]]
 deps = ["Functors", "GPUArraysCore", "Lazy", "Statistics"]
-git-tree-sha1 = "3689879113efa7018813c4ba1053d1cc80f80120"
+path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\ArrayPadding.jl"
 uuid = "fe5ef43c-4912-423d-9170-4bd5cb6a013a"
-version = "0.1.27"
+version = "0.1.28"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -1073,10 +1073,10 @@ uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.21.4"
 
 [[deps.Jello]]
-deps = ["ArrayPadding", "ChainRulesCore", "FFTW", "Flux", "Functors", "ImageMorphology", "ImageTransformations", "LinearAlgebra", "NNlib", "Porcupine", "Random", "Statistics", "UnPack", "Zygote"]
+deps = ["ArrayPadding", "ChainRulesCore", "FFTW", "Flux", "Functors", "ImageMorphology", "ImageTransformations", "LinearAlgebra", "NNlib", "Porcupine", "Random", "SparseArrays", "Statistics", "UnPack", "Zygote"]
 path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Jello.jl"
 uuid = "6872b481-e419-48a0-81d2-be4ee5684529"
-version = "0.1.13"
+version = "0.1.15"
 
 [[deps.JpegTurbo]]
 deps = ["CEnum", "FileIO", "ImageCore", "JpegTurbo_jll", "TOML"]
@@ -1301,7 +1301,7 @@ weakdeps = ["ChainRulesCore", "ForwardDiff", "SpecialFunctions"]
     SpecialFunctionsExt = "SpecialFunctions"
 
 [[deps.Luminescent]]
-deps = ["ArrayPadding", "BSON", "CUDA", "CairoMakie", "DataStructures", "Dates", "Flux", "Functors", "GPUArraysCore", "Humanize", "Images", "JSON", "Jello", "LinearAlgebra", "Porcupine", "Random", "Statistics", "UnPack", "Zygote"]
+deps = ["ArrayPadding", "BSON", "CUDA", "CairoMakie", "DataStructures", "Dates", "Flux", "Functors", "GPUArraysCore", "Humanize", "Images", "JSON", "Jello", "LinearAlgebra", "Optimisers", "Porcupine", "Random", "Statistics", "UnPack", "Zygote"]
 path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Luminescent.jl"
 uuid = "60a98398-2d19-4130-ae20-63172a4a42f2"
 version = "0.1.0"
@@ -1637,7 +1637,7 @@ version = "1.4.3"
 deps = ["ArrayPadding", "ChainRulesCore", "DataStructures", "Functors", "LinearAlgebra", "Statistics", "UnPack", "Zygote"]
 path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Porcupine.jl"
 uuid = "3b53a3d7-3f34-4bba-8df2-4717a8b1e972"
-version = "0.1.36"
+version = "0.1.37"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]

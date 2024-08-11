@@ -39,16 +39,6 @@ files = [
 ]
 
 [[package]]
-name = "antlr4-python3-runtime"
-version = "4.9.3"
-description = "ANTLR 4.9.3 runtime for Python 3.7"
-optional = false
-python-versions = "*"
-files = [
-    {file = "antlr4-python3-runtime-4.9.3.tar.gz", hash = "sha256:f224469b4168294902bb1efa80a8bf7855f24c99aef99cbefc1bcd3cce77881b"},
-]
-
-[[package]]
 name = "appnope"
 version = "0.1.4"
 description = "Disable App Nap on macOS >= 10.9"
@@ -689,29 +679,29 @@ files = [
 
 [[package]]
 name = "gdsfactory"
-version = "8.4.0"
+version = "8.6.7"
 description = "python library to generate GDS layouts"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "gdsfactory-8.4.0-py3-none-any.whl", hash = "sha256:38b80adea945e06b2a0dcd809dd57cd9eaea12caf9063ee7657ac474ed2a1188"},
-    {file = "gdsfactory-8.4.0.tar.gz", hash = "sha256:bf22e17fbfdc768dcc77e93f3d87282b9adaeebe6b37ef4065e12d6ea4a50fc4"},
+    {file = "gdsfactory-8.6.7-py3-none-any.whl", hash = "sha256:ceba937ed766b3279fca0fe91b31cd97ee1ff764951c54031cbc5f16f6d89eac"},
+    {file = "gdsfactory-8.6.7.tar.gz", hash = "sha256:eb19a8a2583b329464b834282c681c3360045f581f67042d89a957e21ea1fe2a"},
 ]
 
 [package.dependencies]
+attrs = "*"
 freetype-py = "*"
 ipykernel = "*"
 jinja2 = "<4"
-kfactory = {version = "0.17.8", extras = ["git", "ipy"]}
+kfactory = {version = "0.18.4", extras = ["ipy"]}
 loguru = "<1"
 mapbox_earcut = "*"
 matplotlib = "<4"
 networkx = "*"
 numpy = "<2"
-omegaconf = "<3"
 orjson = "<4"
 pandas = "<3"
-pydantic = ">=2,<2.8"
+pydantic = ">=2.6,<2.9"
 pydantic-extra-types = "<3"
 pydantic-settings = "<3"
 pyyaml = "*"
@@ -722,7 +712,7 @@ scikit-image = "*"
 scipy = "<2"
 shapely = "<3"
 toolz = "<1"
-trimesh = ">=4,<4.4"
+trimesh = ">=4.4.1,<4.5"
 typer = "<1"
 types-PyYAML = "*"
 watchdog = "<5"
@@ -730,8 +720,8 @@ watchdog = "<5"
 [package.extras]
 cad = ["kweb (>=1.1.9,<2.1)"]
 dev = ["ipykernel", "jsondiff", "pre-commit", "pylsp-mypy", "pytest", "pytest-cov", "pytest_regressions", "types-PyYAML", "types-cachetools"]
-docs = ["Sphinx (==7.3.7)", "autodoc_pydantic (>=2.0.1,<3)", "jupyter-book (>=0.15.1,<1.1)", "jupytext", "plotly"]
-full = ["gplugins[devsim,femwell,gmsh,meow,sax,schematic,tidy3d,vlsir] (>=1,<2)"]
+docs = ["Sphinx (==7.4.7)", "autodoc_pydantic (>=2.0.1,<3)", "jupyter-book (>=0.15.1,<1.1)", "jupytext", "plotly"]
+full = ["autograd", "gplugins[devsim,femwell,gmsh,meow,sax,schematic,tidy3d,vlsir] (>=1,<2)", "omegaconf", "scikit-rf"]
 maintainer = ["autotyping", "doc8", "mypy", "ruff", "tbump", "towncrier", "xdoctest"]
 
 [[package]]
@@ -1094,13 +1084,13 @@ files = [
 
 [[package]]
 name = "kfactory"
-version = "0.17.8"
+version = "0.18.4"
 description = "KLayout API implementation of gdsfactory"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "kfactory-0.17.8-py3-none-any.whl", hash = "sha256:e882762bfce0870dc2c4732bcbe42afd20b163698143ac430e01ed1a4602ae09"},
-    {file = "kfactory-0.17.8.tar.gz", hash = "sha256:756967cc96b0fafd29b3fcf8bbbefeec22c287bd6327fbbe78fd07ff40372604"},
+    {file = "kfactory-0.18.4-py3-none-any.whl", hash = "sha256:37d5f4e5f70d35fb1589f9435ee92f916d7b5ed317f633a11fac4ecf1dbddc23"},
+    {file = "kfactory-0.18.4.tar.gz", hash = "sha256:dad86fb074e573ad54e4b89a0cb94401c29863b561d9919ee59eed00dd6c52d4"},
 ]
 
 [package.dependencies]
@@ -1111,10 +1101,11 @@ ipyevents = {version = "*", optional = true, markers = "extra == \"ipy\""}
 ipython = {version = "*", optional = true, markers = "extra == \"ipy\""}
 ipytree = {version = "*", optional = true, markers = "extra == \"ipy\""}
 ipywidgets = {version = "*", optional = true, markers = "extra == \"ipy\""}
-klayout = ">=0.29.2"
+klayout = ">=0.29.3"
 loguru = "*"
 pydantic = ">=2.0.2,<3"
 pydantic-settings = ">=2.0.1,<3"
+rectangle-packer = "*"
 requests = "*"
 "ruamel.yaml" = "*"
 scipy = "*"
@@ -1123,10 +1114,9 @@ toolz = "*"
 typer = {version = "*", extras = ["all"]}
 
 [package.extras]
-ci = ["kfactory[git]", "pytest", "pytest-regressions", "types-cachetools", "types-requests"]
-dev = ["kfactory[git]", "mypy", "pre-commit", "pylsp-mypy", "pytest", "python-lsp-server[all]", "ruff", "tbump", "types-Pygments", "types-cachetools", "types-docutils", "types-requests", "types-setuptools"]
+ci = ["kfactory[full]", "pytest", "pytest-regressions", "types-cachetools", "types-requests"]
+dev = ["kfactory[full]", "mypy", "pre-commit", "pylsp-mypy", "pytest", "python-lsp-server[all]", "ruff", "tbump", "types-Pygments", "types-cachetools", "types-docutils", "types-requests", "types-setuptools"]
 docs = ["kfactory[ipy]", "mkdocs", "mkdocs-gen-files", "mkdocs-jupyter (>=0.24)", "mkdocs-literate-nav", "mkdocs-material", "mkdocs-section-index", "mkdocs-video", "mkdocstrings[python]", "pymdown-extensions"]
-git = ["gitpython"]
 ipy = ["ipyevents", "ipython", "ipytree", "ipywidgets"]
 
 [[package]]
@@ -1244,52 +1234,52 @@ files = [
 
 [[package]]
 name = "klayout"
-version = "0.29.2"
+version = "0.29.5"
 description = "KLayout standalone Python package"
 optional = false
 python-versions = "*"
 files = [
-    {file = "klayout-0.29.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:395d8d7a1825b8758cca55bb2a4bed90ba3aad3a856f39ea3c4c165328dfae95"},
-    {file = "klayout-0.29.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:d0ec5303ed559701f5a14feac1e1235d8cd763e416230213a1caf0c0a5d89a61"},
-    {file = "klayout-0.29.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7b22d5d118a4c8b69572bd28cc418e36aa64cba863651356aa02e745440763e9"},
-    {file = "klayout-0.29.2-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:50567bbdee9df2db5b2aa8aabd6427566550fff5593924b938295daa44667a98"},
-    {file = "klayout-0.29.2-cp310-cp310-win32.whl", hash = "sha256:b49fae74c207995d6237d9784ea4581c8ef67aa6dc49e6889118afd7e63b0432"},
-    {file = "klayout-0.29.2-cp310-cp310-win_amd64.whl", hash = "sha256:05465c8f548887148afe23a9b921ece40eca768ae0bd6756d79bd2be3434bc63"},
-    {file = "klayout-0.29.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:b350326c43ed5a03b7193b54338420df9e6e43d2764a57893e16e6cf35634969"},
-    {file = "klayout-0.29.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:82d9903b86fe8c8e30cf534121a7bae61a139e66cc469fef72dde13030eefd32"},
-    {file = "klayout-0.29.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:919d75dd8c6ee959cf72fd04e080daa30512cc88f17bd10176e6a32f04c3f585"},
-    {file = "klayout-0.29.2-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:4b77f8488cb5f4959e4a267d47ae46be312d378792918a8b6ff7b6bf3e46b1e6"},
-    {file = "klayout-0.29.2-cp311-cp311-win32.whl", hash = "sha256:3c4200ba28787de219569143f8b5a01d5fa2fb5620b38267d31cf2aaa38246af"},
-    {file = "klayout-0.29.2-cp311-cp311-win_amd64.whl", hash = "sha256:5727438a07dc28dbff76547bd33b38f1467eeb1f9d29a2f6274e3ac8430124d0"},
-    {file = "klayout-0.29.2-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:66ee7d873f9627636d094b3350a01b48282fc0fd28c089452017103eef351f08"},
-    {file = "klayout-0.29.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:6e741df8717b3dc58efdabb301334f8c48cb774705386e7cdad619cb98841c6c"},
-    {file = "klayout-0.29.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:73df80c976e23245748bc634baba82fb5b344d6e6fc3c82110bcfde74e786b9c"},
-    {file = "klayout-0.29.2-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:00ff6d02839a59c8421abb8b65fef7045a46524148d3ba9eb463277559d03e00"},
-    {file = "klayout-0.29.2-cp312-cp312-win32.whl", hash = "sha256:7c72e3a68e5540880712420fdc2a4b3e8ed3b555530c7631810c34a77db6ccb2"},
-    {file = "klayout-0.29.2-cp312-cp312-win_amd64.whl", hash = "sha256:169ff776f34cd1db59f23e8a738d942a644b46a888763c30785adb0191ade1f2"},
-    {file = "klayout-0.29.2-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:0987017ccf1a68d92a905b5ba827ec368d68dd79a5c2428516b2e2c17d426f48"},
-    {file = "klayout-0.29.2-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:35eac4f282de34f0766b74843b4b571dae5cdc89df918e1805435ba08b74443b"},
-    {file = "klayout-0.29.2-cp36-cp36m-musllinux_1_1_x86_64.whl", hash = "sha256:00a586bcd8793e8fb7a9e25c27b6c4532cb65714a21461cfff47daa1cb26e935"},
-    {file = "klayout-0.29.2-cp36-cp36m-win32.whl", hash = "sha256:090dfa097dafcaf4a04fbdb55b9648a838178481b8a449dd1fe0f28ac6d4fb90"},
-    {file = "klayout-0.29.2-cp36-cp36m-win_amd64.whl", hash = "sha256:9d16b714ea13903ff56b569d2acf79ab1204982da1f91b1da3bc183a62493ddb"},
-    {file = "klayout-0.29.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:540781303424b228d01fbdff82d7c183e6ba915ece2b0b88f5948e0d3a6aee29"},
-    {file = "klayout-0.29.2-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:31ef20e24f9b2698e33762f92dc3f27a009e7cbdd1711ca57aacef64ba52fb58"},
-    {file = "klayout-0.29.2-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:d3788cb802dae33a3adb8c171759d3d477f5713a65b9310f4c0f2a8784da513f"},
-    {file = "klayout-0.29.2-cp37-cp37m-win32.whl", hash = "sha256:4aaf2b830f7f51047c7943c5e49d7688b06b419767afbee3cdcaa5bb406a198b"},
-    {file = "klayout-0.29.2-cp37-cp37m-win_amd64.whl", hash = "sha256:6604aa029c88d18416ab6ba17bec5985335f6dd8476938a9b7fe867d182f488a"},
-    {file = "klayout-0.29.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:fa5dc4e188ef313f6dbf7cd3a2aa498470bdcc5b3a5e66ee595e2e550eee6e79"},
-    {file = "klayout-0.29.2-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:d2eb56af7a37a518d3c8f429c3cfcafd9d45e7cd4a15813855a31781267eaa85"},
-    {file = "klayout-0.29.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6b10d419b37811ea03c5f1d566667c192654424b16ed7307b0906d092d2219e6"},
-    {file = "klayout-0.29.2-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:3ea0dad09b0554d5dd89b5b6d5762725ee54cf92f988570642065d4fa49e604e"},
-    {file = "klayout-0.29.2-cp38-cp38-win32.whl", hash = "sha256:17df80225a77856808c1c52f6fa240aa1020a906a28f80f9e1808cc1398bec70"},
-    {file = "klayout-0.29.2-cp38-cp38-win_amd64.whl", hash = "sha256:b784a941110fad9f1a1849fa0eb1acaabe070d30126aeb23176737fe069c6af5"},
-    {file = "klayout-0.29.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:aeb44d9060bd7333ec9de3eab5aa5a362bd69851fae0e9f9f9ae585328275e55"},
-    {file = "klayout-0.29.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:a2f5560d8e530c4e26bad0800ef1842747fcc0ff807b3f01f7374892c8654851"},
-    {file = "klayout-0.29.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c4c46809449d328b19ec92c5bced98d941cd9642e78e7942ee793743c7487699"},
-    {file = "klayout-0.29.2-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:3228caf64360f689c3e3d1f4317cecf77ea5eb6d903e98e55fa0ac5390fd78b7"},
-    {file = "klayout-0.29.2-cp39-cp39-win32.whl", hash = "sha256:55c6f39e90be8006e72d558d472624987145f5c0d6d0157b3d132e5f7418fe6b"},
-    {file = "klayout-0.29.2-cp39-cp39-win_amd64.whl", hash = "sha256:c60326a2ba4233b7624833ff8b131c495a42dfb7fd469e75f9b8ab626fe84088"},
-    {file = "klayout-0.29.2.tar.gz", hash = "sha256:169b8efa11a349aa5539fd17096a92aa67b25062e8b2a0306c17cfcd7dfa9e45"},
+    {file = "klayout-0.29.5-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:b35f853eb3a6e1f3c7eb0013304e80e3c34fbe20b043d5e601013dd057c29545"},
+    {file = "klayout-0.29.5-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:7112b7639d6a9f1e00022aff57deec18337fa2afbfa1ebbee9349114f5640cb2"},
+    {file = "klayout-0.29.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8ae142daddd33800c3d3e490ca96b5b6407f128b68adfc33f40628d501f5c00e"},
+    {file = "klayout-0.29.5-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:2cce7b2f5bda7c0b98defb3a3c92b5c91e138965e6c78c199ef0bf2946ccbbdd"},
+    {file = "klayout-0.29.5-cp310-cp310-win32.whl", hash = "sha256:511f03aa44323893eb4eddb4f92ab3a69486239850a61c22e35e28c733daa6b4"},
+    {file = "klayout-0.29.5-cp310-cp310-win_amd64.whl", hash = "sha256:7a2e2aab78bf952a2b4aa59e4cf1eaadb54c80758f3461c35bb0df2bbeaabc6d"},
+    {file = "klayout-0.29.5-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:a69e746937b2a2e9e7c7b014b6a58f8f03146488f9edb0d6c20731c7feadcd94"},
+    {file = "klayout-0.29.5-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:62e1e92f4ece8ab1c0b8542c34cae97d26c5152e22135a80a494af411797ed10"},
+    {file = "klayout-0.29.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:75fdd10dd9b29425d30b04cd836c49f219fed26ed96862b97a142a364ef6440d"},
+    {file = "klayout-0.29.5-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:9438fa8b1117126216575fa3dc40baf464e077f795b02ba84f3ea2e2ccab3558"},
+    {file = "klayout-0.29.5-cp311-cp311-win32.whl", hash = "sha256:f676c5b8a3fa5bb4803ed4aa6556837cd67ed16de5c951b7fda04766c080bc8c"},
+    {file = "klayout-0.29.5-cp311-cp311-win_amd64.whl", hash = "sha256:09aa98badc5782929e661a752812dcb92bba8697cd3a65e516d36ac595dce788"},
+    {file = "klayout-0.29.5-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:b5ab9c6342aa4073e40806602e526fbd87c83fd778fbeae3539a8ef544bdf354"},
+    {file = "klayout-0.29.5-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:27e00d724b547156d5a6b4ec5b0f113af1206a889e00262763b56f41eed692f0"},
+    {file = "klayout-0.29.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:da921112dca8e918432ce1e6773f7e1b5482c07944dd5f0cf333266139cab45e"},
+    {file = "klayout-0.29.5-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:dd35f5bac8c2b37c96292b1965783d0cfaa4b53bff986ee2b4b5a3e1d83006c0"},
+    {file = "klayout-0.29.5-cp312-cp312-win32.whl", hash = "sha256:0a6f48840d3f979397a312840d848ccfb961bb536a3f4ff3cd725db5a7c509b6"},
+    {file = "klayout-0.29.5-cp312-cp312-win_amd64.whl", hash = "sha256:0697e4f26acc96d5447316bdbc934f33cf542ac0731fdb95f1bf5d8150302f5a"},
+    {file = "klayout-0.29.5-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:2abfa0ef8efca92abf30e62abe6a89271946a4a04338b66cdcb3f152fe54590f"},
+    {file = "klayout-0.29.5-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:13225815942820d60ed478815783fbd01eeca33b45d26b1d42debe4be22252da"},
+    {file = "klayout-0.29.5-cp36-cp36m-musllinux_1_2_x86_64.whl", hash = "sha256:275efe399ca30767e6bdce6b8feb244369ef06cb7fb63e3b2aea8e574af5a5f6"},
+    {file = "klayout-0.29.5-cp36-cp36m-win32.whl", hash = "sha256:33a21bcc11da606d9a3df691f9a825fa024f7cc7b8ad650a4b95aea0817481c2"},
+    {file = "klayout-0.29.5-cp36-cp36m-win_amd64.whl", hash = "sha256:ea7bfd73e9b0207767b9382071d9956bb7d6001a1222431ce80e8764a0880dd8"},
+    {file = "klayout-0.29.5-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:c99b8ee715c9a268cfb9a5965b5f84fbc6a77a813a7b991bdb143f0666906c9c"},
+    {file = "klayout-0.29.5-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cbdfcd7935dbe496cd6c2cc0e21d68c217d4d516d010846be8842aa5f9cd1f3c"},
+    {file = "klayout-0.29.5-cp37-cp37m-musllinux_1_2_x86_64.whl", hash = "sha256:04fa38865bce206b451ecebc8f0a58d28fcabbaa3eb9e8ed17a1dfceeb8d9b56"},
+    {file = "klayout-0.29.5-cp37-cp37m-win32.whl", hash = "sha256:2e7600afd4ac09b2268fd8df26e38e937b109b1486625631d1b269461aa008a8"},
+    {file = "klayout-0.29.5-cp37-cp37m-win_amd64.whl", hash = "sha256:9dcb1776ccd6a3dc9bd72435a23c35986208be5f797fb2541b78de953b063735"},
+    {file = "klayout-0.29.5-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:dd75e9f6bf02c67d600759fb4c613e73a57c67c92adb7d10578fd09cd2afe2b4"},
+    {file = "klayout-0.29.5-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:edbf97cf356d3413190a67d0762d6df9fc002c91368051763f85f734724bb476"},
+    {file = "klayout-0.29.5-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0de5e1f8936e61235f1b3e8d46fd29618639a858bc3f006332b5472aed46bc08"},
+    {file = "klayout-0.29.5-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:d74b866a1dcf1489094a681b4629ec3de0d4725d06c0f48bc803564561d45a68"},
+    {file = "klayout-0.29.5-cp38-cp38-win32.whl", hash = "sha256:5059aa27cc72637dfff92f7a227611f17f156a0a6af70e1b7ad97dda38f64a2e"},
+    {file = "klayout-0.29.5-cp38-cp38-win_amd64.whl", hash = "sha256:f2373c95a1313629310e24a8a461d962f65474ab5ad54da2e1de706331c911df"},
+    {file = "klayout-0.29.5-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:8a8f763aeca5aa200fcf40e81de4a30ef7c8a76a113fc86e367e22d6891b005a"},
+    {file = "klayout-0.29.5-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:47e940c2fdb5cf2a0d532820eb15ae52cc8ab481212ec6dc7bfa9998524ba720"},
+    {file = "klayout-0.29.5-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:59b60db88a6b681486d068850d8a47081c7e5523072168fd770cb3504110d117"},
+    {file = "klayout-0.29.5-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:66a3684e743c18aaefa0d3fe0f3ee70763cb5dcae930a35a559c87a9b31eb3e4"},
+    {file = "klayout-0.29.5-cp39-cp39-win32.whl", hash = "sha256:363102e1156aa4bc02203a94ed4cff50578b06bf4132ef2c6d2a3533275af5f2"},
+    {file = "klayout-0.29.5-cp39-cp39-win_amd64.whl", hash = "sha256:bd722358ed8452acf4bcca98708d2707f4ddf19812388fd7dcde4f3ad38ac9c4"},
+    {file = "klayout-0.29.5.tar.gz", hash = "sha256:b584fe19684319e0a375fa63131cf0283b61681d069db29b78725f7257445521"},
 ]
 
 [[package]]
@@ -1654,21 +1644,6 @@ files = [
     {file = "numpy-1.26.4-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:7e50d0a0cc3189f9cb0aeb3a6a6af18c16f59f004b866cd2be1c14b36134a4a0"},
     {file = "numpy-1.26.4.tar.gz", hash = "sha256:2a02aba9ed12e4ac4eb3ea9421c420301a0c6460d9830d74a9df87efa4912010"},
 ]
-
-[[package]]
-name = "omegaconf"
-version = "2.3.0"
-description = "A flexible configuration library"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "omegaconf-2.3.0-py3-none-any.whl", hash = "sha256:7b4df175cdb08ba400f45cae3bdcae7ba8365db4d165fc65fd04b050ab63b46b"},
-    {file = "omegaconf-2.3.0.tar.gz", hash = "sha256:d5d4b6d29955cc50ad50c46dc269bcd92c6e00f5f90d23ab5fee7bfca4ba4cc7"},
-]
-
-[package.dependencies]
-antlr4-python3-runtime = "==4.9.*"
-PyYAML = ">=5.1.0"
 
 [[package]]
 name = "orjson"
@@ -2514,6 +2489,44 @@ s3 = ["boto3 (>=1.2.4)"]
 test = ["boto3 (>=1.2.4)", "hypothesis", "packaging", "pytest (>=2.8.2)", "pytest-cov (>=2.2.0)", "shapely"]
 
 [[package]]
+name = "rectangle-packer"
+version = "2.0.2"
+description = "Pack a set of rectangles into a bounding box with minimum area"
+optional = false
+python-versions = "*"
+files = [
+    {file = "rectangle-packer-2.0.2.tar.gz", hash = "sha256:34e450029255f726c4a8e6e939a18cad5879f0d9fe588c1878fe85c872dcbe41"},
+    {file = "rectangle_packer-2.0.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:41fcb471bea91950beaaccb6672197c6e1f63bba25b4b933dfd02aa470c2fcbe"},
+    {file = "rectangle_packer-2.0.2-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f630d690859f41ef860420defc889a610367e69956b87164ef66feb814281478"},
+    {file = "rectangle_packer-2.0.2-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:386c95cf1255555bd9b16b759332e8139aaf5e3e3bd4ed9b7117802703b4192d"},
+    {file = "rectangle_packer-2.0.2-cp310-cp310-musllinux_1_1_i686.whl", hash = "sha256:26ca5e23e9980a25aa2641c55ee863c5c15e99659604b085e0dcbb7b4ebcaa19"},
+    {file = "rectangle_packer-2.0.2-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:d7d2b7df8d0a3cc8d3e85643018d23737a29cca968553c9a7cb57c63f3be2f78"},
+    {file = "rectangle_packer-2.0.2-cp310-cp310-win32.whl", hash = "sha256:0b0327373fc0a0e71dc510e7d8178718427141adfae2790a456c2a8d9251d1c3"},
+    {file = "rectangle_packer-2.0.2-cp310-cp310-win_amd64.whl", hash = "sha256:e4515ce755c1afa49e4cce3612ddd7a0d92770cbbd54a692948d634bbe0d8d90"},
+    {file = "rectangle_packer-2.0.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:9af27dfb75b964ff7d40f57812ee6e6ffbeff4c50e8c8021a50c1720ce184846"},
+    {file = "rectangle_packer-2.0.2-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:c060aed842e072a16b853d9260cff3d0a147f66d84f675e64505e193d0087438"},
+    {file = "rectangle_packer-2.0.2-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d036f45576589b54aa133e6fd0e47cc3f45598cb3d6562b5215271ef42f59775"},
+    {file = "rectangle_packer-2.0.2-cp311-cp311-musllinux_1_1_i686.whl", hash = "sha256:f9672b5d8b685405c98de71b00b3ce0e963c6195ea479325ebab219dbb98d328"},
+    {file = "rectangle_packer-2.0.2-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:ed01302499bba7cfd9b8aaf91b8d964344f1f6d74cd966e53f9616fae399fd33"},
+    {file = "rectangle_packer-2.0.2-cp311-cp311-win32.whl", hash = "sha256:10deaf700cc71f95e7e7bce701a8cc5392ea2ec11dd02b1c2288990f4b613d30"},
+    {file = "rectangle_packer-2.0.2-cp311-cp311-win_amd64.whl", hash = "sha256:83993b093fed7bac0bfb678a4bb0d31cad7042a8601a462d3bbe519b94980180"},
+    {file = "rectangle_packer-2.0.2-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:6e834844eb25b91af02f2f166f2dadb4a7920d82c06f3e52b6e6a19c8f04e704"},
+    {file = "rectangle_packer-2.0.2-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e7b983f687db7eef1c4280fb8a9010cbc766459697ec5e689456a55133971573"},
+    {file = "rectangle_packer-2.0.2-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ac5bb2cb181d77d85246bbf52da885dc33cc58de03b66e73791d64912814b333"},
+    {file = "rectangle_packer-2.0.2-cp312-cp312-musllinux_1_1_i686.whl", hash = "sha256:6547557d48b385f272533b7c62f4de49f9f6884e9c496d6d26ea28d799f9a1a6"},
+    {file = "rectangle_packer-2.0.2-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:340cc9002aa1d4df795f24ef5f516535256bd40dc9568d5bcce94861277bfec6"},
+    {file = "rectangle_packer-2.0.2-cp312-cp312-win32.whl", hash = "sha256:7d239749aea7bace64a5052caa6cca84ee558799e0e47348d1ff4e992426a4a1"},
+    {file = "rectangle_packer-2.0.2-cp312-cp312-win_amd64.whl", hash = "sha256:e282a38fae460107806991539905ffe8d6719595f791a049e3622a03b41acbb8"},
+    {file = "rectangle_packer-2.0.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:d41730069bed5bc7f5da8566282112d20a3f24e6e723e2fad4ca7a3eb61d2f2f"},
+    {file = "rectangle_packer-2.0.2-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:9ead71062ae26306573479ac38c599dfae6d60c67f25c39987e4c4fb25aa8510"},
+    {file = "rectangle_packer-2.0.2-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bfa6b9d24925dc54f07b966ae8c17b76e6870924bf5e9597ab4ab4cbccc0fc1f"},
+    {file = "rectangle_packer-2.0.2-cp39-cp39-musllinux_1_1_i686.whl", hash = "sha256:233f22e39ba185ffce0b91503ae7133312adefef32a23736d21065067c49262a"},
+    {file = "rectangle_packer-2.0.2-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:796b7a62be8efd1b114eb26301f57e4270807745025d1eae9d956f3b96bc988d"},
+    {file = "rectangle_packer-2.0.2-cp39-cp39-win32.whl", hash = "sha256:197195574c1c163df2b76e3803148a97d9f46949f048a0a40e8c2d049c194bee"},
+    {file = "rectangle_packer-2.0.2-cp39-cp39-win_amd64.whl", hash = "sha256:13f89cf33ac9f3d11d67a59c8be6755c5926f552cd823cabece23a8caad2bc22"},
+]
+
+[[package]]
 name = "rectpack"
 version = "0.2.2"
 description = "2D Rectangle packing library"
@@ -2984,23 +2997,24 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "trimesh"
-version = "4.3.2"
+version = "4.4.3"
 description = "Import, export, process, analyze and view triangular meshes."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "trimesh-4.3.2-py3-none-any.whl", hash = "sha256:7563182a9379485b88a44e87156fe54b41fb6f8f030001b9b6de39abdef05c22"},
-    {file = "trimesh-4.3.2.tar.gz", hash = "sha256:1450dbd1aae8dd825eddd56c5a7d7d1b35cad7efc2c63d535e19569577c25916"},
+    {file = "trimesh-4.4.3-py3-none-any.whl", hash = "sha256:77dc3963ec3e4f560b37a66f8dd9132eee9f333d04837d2b0688ea12f05c099a"},
+    {file = "trimesh-4.4.3.tar.gz", hash = "sha256:a4110ad6832d23ccf4df32872a3804eeea216421352913d1514ed9dad2001d5e"},
 ]
 
 [package.dependencies]
 numpy = ">=1.20"
 
 [package.extras]
-all = ["trimesh[easy,recommend,test]"]
-easy = ["chardet", "colorlog", "embreex", "httpx", "jsonschema", "lxml", "mapbox-earcut", "networkx", "pillow", "pycollada", "rtree", "scipy", "setuptools", "shapely", "svg.path", "vhacdx", "xatlas", "xxhash"]
-recommend = ["cascadio", "glooey", "manifold3d (>=2.3.0)", "meshio", "openctm", "psutil", "pyglet (<2)", "python-fcl", "scikit-image", "sympy"]
-test = ["coveralls", "ezdxf", "gmsh (>=4.12.1)", "matplotlib", "pyinstrument", "pymeshlab", "pyright", "pytest", "pytest-beartype", "pytest-cov", "ruff"]
+all = ["trimesh[deprecated,easy,recommend,test]"]
+deprecated = ["gmsh (==4.12.2)"]
+easy = ["chardet", "colorlog", "embreex", "httpx", "jsonschema", "lxml", "manifold3d (>=2.3.0)", "networkx", "pillow", "pycollada", "rtree", "scipy", "setuptools", "shapely", "svg.path", "vhacdx", "xatlas", "xxhash"]
+recommend = ["cascadio", "glooey", "mapbox-earcut", "meshio", "openctm", "psutil", "pyglet (<2)", "python-fcl", "scikit-image", "sympy"]
+test = ["coveralls", "ezdxf", "matplotlib", "pyinstrument", "pyright", "pytest", "pytest-beartype", "pytest-cov", "ruff"]
 
 [[package]]
 name = "typer"

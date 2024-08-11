@@ -2,18 +2,19 @@
 import itertools
 from time import sleep
 import luminescent as lumi
-from luminescent import LAYER
+from gdsfactory.generic_tech import LAYER
 import gdsfactory as gf
 import pprint as pp
 
 c = gf.components.straight(.5)
-c = lumi.add_bbox(c, layers=[LAYER.WGCLAD, LAYER.BOX], nonport_margin=.1)
 
 sol = lumi.write_sparams(
     c, wavelengths=[1.55], keys=["2,1"],
+    # bbox_layer=LAYER.WAFER,
+    bbox_layer=[LAYER.WAFER, LAYER.SLAB90],
     # c, wavelengths=[1.55], keys=["o2@1,o1@1"],
     #  dx=0.025, approx_2D=True, gpu=None,)
-    dx=0.1, approx_2D=True, gpu="CUDA",)  # dtype="16", dev=True,)
+    dx=0.1, approx_2D=False, gpu="CUDA",)  # dtype="16", dev=True,)
 lumi.show_solution()
 pp.pprint(sol)
 raise ValueError("stop here")

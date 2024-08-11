@@ -85,7 +85,7 @@ if study == "inverse_design"
                 lmin=d.lmin / dx,
                 contrast=10,
                 rmin=nothing,
-                symmetry_dims=isempty(s) ? s : s + 1)
+                symmetries=isempty(s) ? s : s + 1)
         end for (i, d) = enumerate(designs)
     ])
     model = model.m1

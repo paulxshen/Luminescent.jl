@@ -1,3 +1,4 @@
+from PIL import Image
 import os
 import subprocess
 import time
@@ -71,8 +72,9 @@ def solve(prob, dev=False, run=True):
     # print(f"julia simulation took {time.time()-start_time} seconds")
     print(f"images and results saved in {path}")
     sol = load_solution(path=path)
-    # if prob["study"] == "inverse_design":
-    #     c = apply_design(c0,  sol)
+    if prob["study"] == "inverse_design":
+        c = apply_design(c0,  sol)
+        sol["optimized_component"] = c
     #     sol["before"]["component"] = c0
     #     sol["after"]["component"] = c
     return sol
@@ -113,10 +115,13 @@ def load_solution(path=None, study="",):
             sol[k]["sparams"] = load_sparams(sol[k]["sparams"])
         for k in sol["after"]:
             sol[k] = sol["after"][k]
-    # pic2gds(os.path.join(path, f"design{i+1}.png"), sol["dx"])
 
-        sol["optimized_designs"] = [
-            np.array(d) for d in sol["optimized_designs"]]
+        l = [np.array(d) for d in sol["optimized_designs"]]
+        sol["optimized_designs"] = l
+        for i, a in enumerate(l):
+            Image.fromarray(np.uint8(a * 255),
+                            'L').save(os.path.join(path, f"design{i+1}.png"))
+            pic2gds(os.path.join(path, f"design{i+1}.png"), sol["dx"])
         pass
     return sol
 

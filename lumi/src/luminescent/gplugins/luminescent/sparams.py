@@ -1,18 +1,19 @@
+from .setup import *
+from .constants import *
+from .layers import *
+from .utils import *
+import gdsfactory as gf
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 
 from gdsfactory.cross_section import Section
-from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
-import gdsfactory as gf
-from .utils import *
-from .layers import *
-from .constants import *
-from .utils import *
-from .setup import *
+from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
-def sparams_problem(c: gf.Component, margin=None, zmargin=None, dx=.05, wavelengths=[1.55], center_wavelength=None, keys=None,
+def sparams_problem(c: gf.Component,
+                    margin=None,  # zmargin=None,zlims=None,
+                    dx=.05, wavelengths=[1.55], center_wavelength=None, keys=None,
                     approx_2D=False, layer_stack=LAYER_STACK,
                     study="sparams",
                     **kwargs):
@@ -61,7 +62,7 @@ def sparams_problem(c: gf.Component, margin=None, zmargin=None, dx=.05, waveleng
 
     prob = setup(c, study=study,  dx=dx,
                  runs=runs, margin=margin,
-                 zmargin=zmargin, layer_stack=layer_stack, approx_2D=approx_2D, **kwargs)
+                 layer_stack=layer_stack, approx_2D=approx_2D, **kwargs)
     prob["wavelengths"] = wavelengths
 
     return prob

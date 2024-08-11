@@ -1,29 +1,31 @@
 
+from .constants import *
+from .utils import *
+import bson
+import gdsfactory as gf
 from gdsfactory.cross_section import Section
 from networkx import center
 from numpy import cumsum
-from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
+from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
-import gdsfactory as gf
-import bson
 # import .utils as utils
-from .utils import *
-from .constants import *
 # from layers import *
 
 
 def mimo(west=0, east=0, south=0, north=0,
-         l=2.0, w=2.0, wwg=.5,
+         l=2.0, w=2.0, wwg=.5, lwg=None,
          wwg_west=None, wwg_east=None, wwg_south=None, wwg_north=None,
-         layer_wg=LAYER.WG, layer_wgclad=LAYER.WGCLAD, layer_box=LAYER.BOX, layer_design=LAYER.DESIGN,
+         wwg_layer=LAYER.WG,  # bbox_layer=LAYER.WAFER,
+         design_layer=DESIGN_LAYER,
          **kwargs):
     design = gf.Component()
 
     c = gf.Component()
-    lwg = 4*wwg
+    if lwg is None:
+        lwg = 2*wwg
     p = [(0, 0), (l, 0), (l, w), (0, w)]
-    design.add_polygon(p,                       layer=layer_design)
-    c.add_polygon(p,                       layer=layer_wg)
+    design.add_polygon(p,                       layer=design_layer)
+    c.add_polygon(p,                       layer=wwg_layer)
 
     ld = [west,  east, south, north]
     for i, v, d in zip(range(4), ld, [w, w, l, l]):
@@ -49,16 +51,14 @@ def mimo(west=0, east=0, south=0, north=0,
             center = (x, y+v) if i in [0, 1] else (x+v, y)
             name = "o"+str(n+1)
             design.add_port(name=name, center=center, width=wwg,
-                            orientation=a, layer=layer_wg)
+                            orientation=a, layer=wwg_layer)
             wg = c << gf.components.straight(
-                length=lwg, width=wwg, layer=layer_wg)
+                length=lwg, width=wwg, layer=wwg_layer)
             wg.connect("o2", design.ports[name])
             c.add_port(name=name, port=wg.ports["o1"])
             n += 1
 
     design = c << design
-    c = add_bbox(c, layers=[layer_wgclad, layer_box],
-                 nonport_margin=.1)
     return c
 
 

@@ -5,7 +5,7 @@ __all__ = [
     "LAYER_STACK",
     "LAYER",
     "LAYER_VIEWS",
-    "MATERIAL_LIBRARY",
+    "MATERIALS",
     "write_sparams",
     "inverse_design_problem",
     "sparams_problem",

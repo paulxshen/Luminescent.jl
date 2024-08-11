@@ -46,7 +46,7 @@ if isnothing(model_name)
     rmin = nothing
     # init = nothing # random 
     init = 1 # uniform slab
-    model = Blob(szd...; init, nbasis, contrast, rmin, symmetry_dims=2)
+    model = Blob(szd...; init, nbasis, contrast, rmin, symmetries=2)
 else
     @load "$(@__DIR__)/$model_name" model
 end

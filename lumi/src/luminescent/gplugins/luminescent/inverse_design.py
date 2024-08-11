@@ -1,3 +1,12 @@
+from .materials import MATERIALS
+from .sparams import *
+from .setup import *
+from .constants import *
+from .layers import *
+from .utils import *
+import scipy as sp
+import bson
+import gdsfactory as gf
 from copy import deepcopy
 # from time import time
 import datetime
@@ -6,27 +15,16 @@ import subprocess
 from functools import partial
 from math import cos, pi, sin
 import os
-from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
-import gdsfactory as gf
-import bson
-import scipy as sp
-from .utils import *
-from .layers import *
-from .constants import *
-from .utils import *
-from .setup import *
-from .sparams import *
-from .materials import MATERIAL_LIBRARY
+from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
 def inverse_design_problem(c,  lmin=.1, symmetries=[],
                            tparam_targets={}, sparam_targets={},
-                           margin=XMARGIN,
                            maxiters=25, eta=.1, init=None,  # minloss=.01,
-                           design_region_layer=LAYER.DESIGN,
+                           design_region_layer=DESIGN_LAYER,
                            #    design_guess_layer=LAYER.GUESS,
                            fill_layer=LAYER.WG,
-                           void_layer=LAYER.WGCLAD,
+                           void_layer=None,
                            layer_stack=LAYER_STACK,
                            plot=False, approx_2D=True, **kwargs):
     design_region_layer = tuple(design_region_layer)
@@ -50,7 +48,8 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
 
     prob = sparams_problem(c, layer_stack=layer_stack, wavelengths=wavelengths,
                            study="inverse_design",
-                           keys=keys, margin=margin, approx_2D=approx_2D, ** kwargs)
+                           keys=keys,
+                           approx_2D=approx_2D, ** kwargs)
     prob["targets"] = targets
     prob["wavelengths"] = wavelengths
     prob["target_type"] = target_type
@@ -75,18 +74,24 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
             "lmin": lmin,
         } for p, s in zip(list(polys.values())[0], symmetries)
     ]
+    epsmin = np.min(prob["eps_2D"])
 
     prob["design_config"] = dict()
-    l = get_layer(layer_stack, fill_layer)
+    l = get_layers(layer_stack, fill_layer)[0]
     d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
-    d["epsilon"] = MATERIAL_LIBRARY[d["material"]].epsilon
+    d["epsilon"] = MATERIALS[d["material"]].epsilon
     d["ϵ"] = d["epsilon"]
     prob["design_config"]["fill"] = d
 
-    l = get_layer(layer_stack, void_layer)
-    d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
-    d["epsilon"] = MATERIAL_LIBRARY[d["material"]].epsilon
-    d["ϵ"] = d["epsilon"]
+    if void_layer is not None:
+        l = get_layers(layer_stack, void_layer)[0]
+        d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
+        d["epsilon"] = MATERIALS[d["material"]].epsilon
+        d["ϵ"] = d["epsilon"]
+    else:
+        d = copy.deepcopy(d)
+        d["epsilon"] = epsmin
+        d["ϵ"] = d["epsilon"]
     prob["design_config"]["void"] = d
 
     prob["design_config"]["design_region_layer"] = design_region_layer

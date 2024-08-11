@@ -42,7 +42,7 @@ thickness_clad = 0.5
 layer_core = LogicalLayer(layer=LAYER.WG)
 layer_clad = LogicalLayer(layer=LAYER.WGCLAD)
 layer_box = LogicalLayer(layer=LAYER.BOX)
-layer_design = LogicalLayer(layer=LAYER.DESIGN)
+design_layer = LogicalLayer(layer=DESIGN_LAYER)
 
 LAYER_STACK.layers.update(dict(
     core=LayerLevel(
@@ -67,7 +67,7 @@ LAYER_STACK.layers.update(dict(
         mesh_order=10,
     ),
     design=LayerLevel(
-        layer=layer_design,
+        layer=design_layer,
         zmin=0.0,
         material=None,
         thickness=.0001,

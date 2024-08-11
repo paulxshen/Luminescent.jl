@@ -1,3 +1,7 @@
+using Optimisers
+Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float32,Int32}) = true
+Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float16,Int32}) = true
+
 function julia_main()::Cint
     if !isempty(ARGS)
 
@@ -143,7 +147,7 @@ function gfrun(path; kw...)
     #=
     We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
     =#
-    @load PROB_PATH name dtype margin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
+    @load PROB_PATH name dtype margin zmargin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
     F = Float32
     if contains(dtype, "16")
         F = Float16
@@ -163,6 +167,7 @@ function gfrun(path; kw...)
     # _dx = dx / λc
     port_source_offset = whole(port_source_offset, dx)
     margin = whole(margin, dx)
+    zmargin = whole(zmargin, dx)
     source_margin = whole(source_margin, dx)
 
     p = round((port_source_offset + source_margin) / dx)
@@ -174,12 +179,14 @@ function gfrun(path; kw...)
     models = nothing
     lr = p * portsides + np * (1 - portsides)
     eps_2D = pad(eps_2D, :replicate, lr...)
-    # nz=whole(ZMARGIN,_dx)
-    push!(lr[1], 0)
-    push!(lr[2], 0)
+
+    nz = round(zmargin / dx)
+    push!(lr[1], nz)
+    push!(lr[2], nz)
     eps_3D = pad(eps_3D, :replicate, lr...)
     # heatmap(eps_2D) |> display
     origin = components.device.bbox[1] - dx * (p * portsides[1] + np * (1 - portsides[1]))
+    zmin -= zmargin
     if study == "inverse_design"
         @load PROB_PATH designs targets target_type eta maxiters design_config
         prob = load(PROB_PATH)
@@ -191,22 +198,23 @@ function gfrun(path; kw...)
                 @unpack init, bbox = d
                 L = bbox[2] - bbox[1]
                 szd = Tuple(round.(Int, L / dx)) # design region size
-                symmetry_dims = [length(string(s)) == 1 ? Int(s) + 1 : s for s = d.symmetries]
+                symmetries = [length(string(s)) == 1 ? Int(s) + 1 : s for s = d.symmetries]
                 o = round((bbox[1] - origin) / dx) + 1
                 # if !isa(init, AbstractArray)
                 # if init == ""
-                if isnothing(init)
-                    init = eps_2D[o[1]:o[1]+szd[1]-1, o[2]:o[2]+szd[2]-1]
-                    # init = init .> (maximum(init) + minimum(init)) / 2
-                    init = init .≈ design_config.fill.epsilon |> F
-                elseif init == "random"
-                    init = nothing
-                end
+                # if isnothing(init)
+                #     init = eps_2D[o[1]:o[1]+szd[1]-1, o[2]:o[2]+szd[2]-1]
+                #     # init = init .> (maximum(init) + minimum(init)) / 2
+                #     init = init .≈ design_config.fill.epsilon |> F
+                # elseif init == "random"
+                #     init = nothing
+                # end
                 lmin = d.lmin / dx
                 Blob(szd;
-                    init, lmin, rmin=lmin / 4,
-                    contrast=10,
-                    symmetry_dims, verbose)
+                    # init,
+                    lmin, rmin=lmin / 2,
+                    contrast=20, T=F,
+                    symmetries, verbose)
             end for (i, d) = enumerate(designs)
         ]
 
@@ -377,7 +385,7 @@ function gfrun(path; kw...)
             #     using Metal
         end
         run_probs = gpu.(run_probs)
-        # models = models |> gpu
+        models = models |> gpu
     else
         println("using CPU backend.")
     end
@@ -395,6 +403,7 @@ function gfrun(path; kw...)
             F, img="", autodiff=true, verbose=true)
         sol = sparam_family(sparams)
     elseif study == "inverse_design"
+
         sparams0 = 0
         # @show write_sparams(model)
         opt = Adam(eta)
@@ -436,6 +445,7 @@ function gfrun(path; kw...)
                 # abs(sparams[1].mode_coeffs[2][1][1][1])
 
             end
+            @show dldm
             # dldm = getindex.((dldm,), model)
             if stop
                 break
@@ -477,7 +487,7 @@ function gfrun(path; kw...)
             design_config,
         )
     end
-    sol = (; sol..., path, dx, study,)
+    sol = (; sol..., path, dx, study,) |> cpu
     # @save "$path/sol.json" sol
     open("$(path)/sol.json", "w") do f
         write(f, json(sol))

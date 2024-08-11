@@ -8,7 +8,7 @@ class SiO2():
     epsilon = 1.444**2
 
 
-MATERIAL_LIBRARY = {
+MATERIALS = {
     "si": Si,
     "sio2": SiO2,
     "Si": Si,

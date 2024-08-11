@@ -1,3 +1,8 @@
+from .constants import *
+from .layers import *
+from .utils import *
+import bson
+import gdsfactory as gf
 from copy import deepcopy
 # from time import time
 import datetime
@@ -13,21 +18,18 @@ import numpy as np
 from gdsfactory.cross_section import Section
 from sortedcontainers import SortedDict, SortedSet
 from sympy import N
-from .generic_tech import LAYER_STACK, LAYER, LAYER_VIEWS
-import gdsfactory as gf
-import bson
-from .utils import *
-from .layers import *
-from .constants import *
-from .utils import *
+from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
-def setup(c, study,   dx,
-          margin,  zmargin, port_source_offset="auto", source_margin="auto", name="",
-          runs=[],  sources=[], layer_stack=LAYER_STACK, layer_views=LAYER_VIEWS, exclude_layers=[
-              LAYER.DESIGN, GUESS], approx_2D=False, Courant=None,
+def setup(c, study,   dx, margin,
+          bbox_layer=LAYER.WAFER,
+          zmargin=None, zlims=None, core_layer=LAYER.WG,
+          port_source_offset="auto", source_margin="auto", name="",
+          runs=[],  sources=[], layer_stack=LAYER_STACK, exclude_layers=[
+              DESIGN_LAYER, GUESS], approx_2D=False, Courant=None,
           gpu=None, dtype=np.float32,
           path=PATH, plot=False, **kwargs):
+    c = add_bbox(c, layer=bbox_layer, dx=dx)
     prob = dict()
     prob = {**prob, **kwargs}
     prob["dtype"] = str(dtype)
@@ -46,20 +48,30 @@ def setup(c, study,   dx,
 
     mode_solutions = []
     layers = set(c.layers)-set(exclude_layers)
-    layers = sorted(layers, key=lambda layer: -get_layer(
-        layer_stack, layer).mesh_order)
 
-    hcore = layer_stack.layers["core"].thickness
-    # hcore = round(layer_stack.layers["core"].thickness/dx)*dx
+    if zlims is None:
+        # if core not in layer_stack.layers:
+        #     raise ValueError("please set core=\"core_layer_name\"")
+        # "\"core\" not found in layer_stack so `zlims` must be provided")
+        d = get_layers(layer_stack, core_layer)[0]
+        hcore = d.thickness
+        zmin = d.zmin
+        # hcore = round(d.thickness/dx)*dx
+        zlims = [zmin, zmin+hcore]
+    zcenter = zlims[0]+(zlims[1]-zlims[0])/2
+    thickness = zlims[1]-zlims[0]
+
     if zmargin is None:
-        zmargin = dx*round(1.5*hcore/dx)
-    zcenter = layer_stack.layers["core"].zmin+hcore/2
-    h = hcore+2*zmargin
-    prob["mode_height"] = h
+        zmargin = dx*round(1.5*thickness/dx)
+    _zlims = [zlims[0]-dx, zlims[0]+np.ceil(thickness/dx)*dx+dx]
+    h = _zlims[1]-_zlims[0]
+    zmin = _zlims[0]
+
     l, w = c.bbox_np()[1]-c.bbox_np()[0]
     # l, w = round(l/dx)*dx, round(w/dx)*dx
     center = [c.bbox_np()[0][0], c.bbox_np()[0][1]+w/2, zcenter]
     normal = [1, 0, 0]
+
     eps = material_voxelate(c, dx, center, l, w, h,
                             normal, layers, layer_stack)
     eps_2D = eps[:, :, int(eps.shape[2]/2)]
@@ -72,10 +84,13 @@ def setup(c, study,   dx,
         path, "#".join(l))
 
     prob["eps_3D"] = eps.tolist()
+    prob["eps"] = prob["eps_3D"]
     prob["eps_2D"] = eps_2D.tolist()
-    prob["zmin"] = -zmargin
+    prob["zmin"] = zmin
     prob["d"] = 2 if approx_2D else 3
 
+    h += +2*zmargin
+    prob["mode_height"] = h
     neffmin = 1000000
     wavelengths = []
     for run in runs:
@@ -95,7 +110,7 @@ def setup(c, study,   dx,
 
                     center = np.array(center)-.001*np.array(normal)
                     eps = material_slice(
-                        c, dx, center, w, h, normal, layers, layer_stack, layer_views=layer_views)
+                        c, dx, center, w, h, normal, layers, layer_stack)
                     _modes, _modes1, neffs, _ = solve_modes(
                         eps, λ=wl, dx=dx, neigs=max(mode_numbers)+1, plot=plot)
 
@@ -122,10 +137,10 @@ def setup(c, study,   dx,
     wavelengths = sorted(set(wavelengths))
     wl = np.median(wavelengths)
     if port_source_offset == "auto":
-        port_source_offset = 2*wl/neffmin
+        port_source_offset = trim(2*wl/neffmin, dx)
     prob["port_source_offset"] = port_source_offset
     if source_margin == "auto":
-        source_margin = .2*wl/neffmin
+        source_margin = 2*dx
     prob["source_margin"] = source_margin
 
     prob["margin"] = margin
