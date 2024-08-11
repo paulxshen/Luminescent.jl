@@ -25,13 +25,13 @@ for (approx_2D, gpu, dtype, ) in itertools.product(
     [True,],
     [None, "CUDA"],
     # [None, ],
-    #  ["f32"]
-    ["f32", "f16"],
+    ["f32"],
+    # ["f32", "f16"],
 ):
     prob = lumi.inverse_design_problem(
         c, tparam_targets=targets,
         bbox_layer=LAYER.WAFER,
-        lmin=0.2, dx=0.1, maxiters=2, eta=10., approx_2D=approx_2D, dev=True, gpu=gpu, dtype=dtype, run=False)
+        lmin=0.2, dx=0.1, maxiters=2, eta=1., approx_2D=approx_2D, dev=True, gpu=gpu, dtype=dtype, run=False)
     sol = lumi.solve(prob, run=False)
     sleep(1)
 # path="precompile_execution")
