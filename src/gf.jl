@@ -1,4 +1,5 @@
 using Optimisers
+using SparseArrays
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float32,Int32}) = true
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float16,Int32}) = true
 Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float32,Int32}) = true

@@ -2,7 +2,7 @@
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "7ef3aefb6a243a8fd3ab513a7f2c94c674132c13"
+project_hash = "7d5c113ebcfdd9585ba6dfbf84cd6e7876e64889"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1934,7 +1934,7 @@ uuid = "aedffcd0-7271-4cad-89d0-dc628f76c6d3"
 version = "1.1.1"
 
 [[deps.StaticArrayInterface]]
-deps = ["ArrayInterface", "Compat", "IfElse", "LinearAlgebra", "PrecompileTools", "Requires", "Static"]
+deps = ["ArrayInterface", "Compat", "IfElse", "LinearAlgebra", "PrecompileTools", "Static"]
 git-tree-sha1 = "5675c74f8223ca6b5ddd2885b7b596b2235033fc"
 uuid = "0d7ed370-da01-4f52-bd93-41d350b8b718"
 version = "1.7.0"
