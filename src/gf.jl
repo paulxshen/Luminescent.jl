@@ -180,18 +180,17 @@ function gfrun(path; kw...)
     # eps_3D = pad(eps_3D, :replicate, [p, p, 0])
     # eps_2D = pad(eps_2D, :replicate, p)
     models = nothing
-    lr = p * portsides + np * (1 - portsides)
+    lr = p * portsides
     eps_2D = pad(eps_2D, :replicate, lr...)
 
     nz = round(zmargin / dx)
-    push!(lr[1], nz)
-    push!(lr[2], nz)
+    push!(lr[1], 0)
+    push!(lr[2], 0)
     eps_3D = pad(eps_3D, :replicate, lr...)
-    # heatmap(eps_2D) |> display
-    origin = components.device.bbox[1] - dx * (p * portsides[1] + np * (1 - portsides[1]))
-    zmin -= zmargin
+    # heatmap(eps_3D[round(size(eps_3D, 1) / 2), :, :]) |> display
+    origin = components.device.bbox[1] - dx * (p * portsides[1])
     if study == "inverse_design"
-        @load PROB_PATH designs targets target_type eta maxiters design_config
+        @load PROB_PATH designs targets target_type eta maxiters design_config contrast
         prob = load(PROB_PATH)
         minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
 
@@ -214,9 +213,9 @@ function gfrun(path; kw...)
                 # end
                 lmin = d.lmin / dx
                 Blob(szd;
-                    # init,
+                    init=1,
                     lmin, rmin=lmin / 2,
-                    contrast=20, T=F,
+                    contrast, T=F,
                     symmetries, verbose)
             end for (i, d) = enumerate(designs)
         ]
@@ -443,13 +442,8 @@ function gfrun(path; kw...)
                 end
 
                 l = loss(params, targets)
-                println("loss $l\n")
-                l
-                # abs(sparams[1].mode_coeffs[2][1][1][1])
-
             end
-            @show dldm
-            # dldm = getindex.((dldm,), model)
+            # @show dldm
             if stop
                 break
             end
@@ -483,8 +477,8 @@ function gfrun(path; kw...)
             # Images.save(joinpath(path, "design$i.png"), Gray.(m() .< 0.5))
         end
         sol = (;
-            before=sparam_family(sparams0),
-            after=sparam_family(sparams),
+            # before=sparam_family(sparams0),
+            sparam_family(sparams)...,
             optimized_designs=[m() .> 0.5 for m in models],
             designs,
             design_config,

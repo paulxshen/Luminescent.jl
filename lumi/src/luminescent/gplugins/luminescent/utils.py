@@ -142,7 +142,6 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
     solvers = EMpy.modesolvers.FD.VFDModeSolver(
         λ, x, y1, ϵfunc1, "SS00").solve(neigs, tol)
 
-    # if plot:
     # fig = pylab.figure()
     # fig.add_subplot(2, 3, 1)
     # Hy = numpy.transpose(solver.modes[0].get_field("Hy", x, y))
@@ -377,6 +376,7 @@ def get_layers(layer_stack, layer, withkey=False):
             if tuple(l.layer) == tuple(layer):
                 if withkey:
                     x = k, x
+                # print(layer, k, x)
                 r.append(x)
     if r:
         return r
@@ -387,6 +387,7 @@ def get_layers(layer_stack, layer, withkey=False):
             if tuple(l.layer) == tuple(layer):
                 if withkey:
                     x = k, x
+                # print(layer, k, x)
                 r.append(x)
     return r
 

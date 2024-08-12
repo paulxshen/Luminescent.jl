@@ -10,7 +10,7 @@ else
 end
 # gfrun(path; Courant=0.5)
 sol = gfrun(path)
-@show sol.tparams
+# @show sol.tparams
 # using Pkg
 # Pkg.resolve()
 # pkg"dev C:\Users\pxshe\OneDrive\Desktop\Porcupine.jl"

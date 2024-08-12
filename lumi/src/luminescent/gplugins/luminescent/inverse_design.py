@@ -25,7 +25,7 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
                            #    design_guess_layer=LAYER.GUESS,
                            fill_layer=LAYER.WG,
                            void_layer=None,
-                           layer_stack=LAYER_STACK,
+                           layer_stack=LAYER_STACK, contrast=10,
                            plot=False, approx_2D=True, **kwargs):
     design_region_layer = tuple(design_region_layer)
     if not approx_2D:
@@ -53,6 +53,7 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
     prob["targets"] = targets
     prob["wavelengths"] = wavelengths
     prob["target_type"] = target_type
+    prob["contrast"] = contrast
     # prob["init"] = init
     prob = {**prob, **kwargs}
     prob["eta"] = eta

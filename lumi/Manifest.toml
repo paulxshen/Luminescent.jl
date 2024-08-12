@@ -1301,7 +1301,7 @@ weakdeps = ["ChainRulesCore", "ForwardDiff", "SpecialFunctions"]
     SpecialFunctionsExt = "SpecialFunctions"
 
 [[deps.Luminescent]]
-deps = ["ArrayPadding", "BSON", "CUDA", "CairoMakie", "DataStructures", "Dates", "Flux", "Functors", "GPUArraysCore", "Humanize", "Images", "JSON", "Jello", "LinearAlgebra", "Optimisers", "Porcupine", "Random", "Statistics", "UnPack", "Zygote"]
+deps = ["ArrayPadding", "BSON", "CUDA", "CairoMakie", "DataStructures", "Dates", "Flux", "Functors", "GPUArraysCore", "Humanize", "Images", "JSON", "Jello", "LinearAlgebra", "Optimisers", "Porcupine", "Random", "SparseArrays", "Statistics", "UnPack", "Zygote"]
 path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Luminescent.jl"
 uuid = "60a98398-2d19-4130-ae20-63172a4a42f2"
 version = "0.1.0"
@@ -1637,7 +1637,7 @@ version = "1.4.3"
 deps = ["ArrayPadding", "ChainRulesCore", "DataStructures", "Functors", "LinearAlgebra", "Statistics", "UnPack", "Zygote"]
 path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Porcupine.jl"
 uuid = "3b53a3d7-3f34-4bba-8df2-4717a8b1e972"
-version = "0.1.37"
+version = "0.1.38"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]

@@ -13,7 +13,7 @@ function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorit
     d = ndims(a)
     if d == 2 || !gl
         if isnothing(colorrange)
-            colorrange = 2extrema(a)
+            colorrange = extrema(a)
         end
         aspect = size(a, 1) / size(a, 2)
         if d == 3

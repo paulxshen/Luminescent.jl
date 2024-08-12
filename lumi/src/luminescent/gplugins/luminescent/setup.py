@@ -29,7 +29,7 @@ def setup(c, study,   dx, margin,
               DESIGN_LAYER, GUESS], approx_2D=False, Courant=None,
           gpu=None, dtype=np.float32,
           path=PATH, plot=False, **kwargs):
-    c = add_bbox(c, layer=bbox_layer, dx=dx)
+    c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
     prob = dict()
     prob = {**prob, **kwargs}
     prob["dtype"] = str(dtype)
@@ -58,14 +58,15 @@ def setup(c, study,   dx, margin,
         zmin = d.zmin
         # hcore = round(d.thickness/dx)*dx
         zlims = [zmin, zmin+hcore]
-    zcenter = zlims[0]+(zlims[1]-zlims[0])/2
     thickness = zlims[1]-zlims[0]
 
     if zmargin is None:
-        zmargin = dx*round(1.5*thickness/dx)
-    _zlims = [zlims[0]-dx, zlims[0]+np.ceil(thickness/dx)*dx+dx]
-    h = _zlims[1]-_zlims[0]
-    zmin = _zlims[0]
+        zmargin = dx*round(2*thickness/dx)
+    # zlims = [zlims[0]-dx, zlims[0]+np.ceil(thickness/dx)*dx+dx]
+    zlims = [zlims[0]-zmargin, zlims[1]+zmargin]
+    h = zlims[1]-zlims[0]
+    zcenter = zlims[0]+(zlims[1]-zlims[0])/2
+    zmin = zlims[0]
 
     l, w = c.bbox_np()[1]-c.bbox_np()[0]
     # l, w = round(l/dx)*dx, round(w/dx)*dx
@@ -89,10 +90,10 @@ def setup(c, study,   dx, margin,
     prob["zmin"] = zmin
     prob["d"] = 2 if approx_2D else 3
 
-    h += +2*zmargin
     prob["mode_height"] = h
     neffmin = 1000000
     wavelengths = []
+    # _c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
     for run in runs:
         for s in list(run["sources"].values())+list(run["monitors"].values()):
             for wl in s["wavelength_mode_numbers"]:
@@ -137,7 +138,7 @@ def setup(c, study,   dx, margin,
     wavelengths = sorted(set(wavelengths))
     wl = np.median(wavelengths)
     if port_source_offset == "auto":
-        port_source_offset = trim(2*wl/neffmin, dx)
+        port_source_offset = trim(3*wl/neffmin, dx)
     prob["port_source_offset"] = port_source_offset
     if source_margin == "auto":
         source_margin = 2*dx

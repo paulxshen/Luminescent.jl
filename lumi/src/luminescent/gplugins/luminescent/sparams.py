@@ -37,7 +37,7 @@ def sparams_problem(c: gf.Component,
                 io[i].add(i)
 
     if margin is None:
-        margin = trim(1.5*max([p.width/1e3 for p in c.ports]), dx)
+        margin = trim(2*max([p.width/1e3 for p in c.ports]), dx)
     runs = [{
         "d": d,
         "sources": {
