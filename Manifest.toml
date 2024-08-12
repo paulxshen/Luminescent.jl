@@ -1080,9 +1080,9 @@ version = "0.21.4"
 
 [[deps.Jello]]
 deps = ["ArrayPadding", "ChainRulesCore", "FFTW", "Flux", "Functors", "ImageMorphology", "ImageTransformations", "LinearAlgebra", "NNlib", "Porcupine", "Random", "SparseArrays", "Statistics", "UnPack", "Zygote"]
-git-tree-sha1 = "140a7ce92a114cf28d584649721aa465a07ce13e"
+git-tree-sha1 = "c53ba6795ab376d08c5832a76a868846c2d1b412"
 uuid = "6872b481-e419-48a0-81d2-be4ee5684529"
-version = "0.1.15"
+version = "0.1.16"
 
 [[deps.JpegTurbo]]
 deps = ["CEnum", "FileIO", "ImageCore", "JpegTurbo_jll", "TOML"]

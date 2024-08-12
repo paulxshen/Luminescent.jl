@@ -13,13 +13,13 @@ targets = {
     }}
 # c.show()
 
-# prob = lumi.inverse_design_problem(
-#     c, tparam_targets=targets,
-#     # bbox_layer=LAYER.WAFER,
-#     # lmin=0.2, dx=0.1, maxiters=2, eta=10., approx_2D=True, dev=True)  # gpu="CUDA", dev=True)
-#     lmin=0.2, dx=0.1, maxiters=2, eta=10., approx_2D=True, gpu="CUDA", dev=True)
-# sol = lumi.solve(prob, )
-# raise ValueError("stop here")
+prob = lumi.inverse_design_problem(
+    c, tparam_targets=targets,
+    # bbox_layer=LAYER.WAFER,
+    # lmin=0.2, dx=0.1, maxiters=2, eta=10., approx_2D=True, dev=True)  # gpu="CUDA", dev=True)
+    lmin=0.2, dx=0.1, maxiters=2, eta=10., approx_2D=True, gpu="CUDA", dev=True)
+sol = lumi.solve(prob, )
+raise ValueError("stop here")
 
 for (approx_2D, gpu, dtype, ) in itertools.product(
     [True,],
