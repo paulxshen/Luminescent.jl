@@ -107,6 +107,7 @@ def apply_design(c0,  sol):
     path = sol["path"]
     a = gf.Component()
     a.add_ref(c0)
+    fill = sol["design_config"]["fill_layer"]
     dl = sol["design_config"]["design_region_layer"]
     for i, d in enumerate(sol["designs"]):
         x0, y0 = d["bbox"][0]
@@ -124,8 +125,12 @@ def apply_design(c0,  sol):
     pic2gds(os.path.join(path, f"design{i+1}.png"), sol["dx"])
     g = gf.import_gds(os.path.join(path, f"design{i+1}.gds"), "TOP",
                       read_metadata=True)
-    g = c << g
+    polygons = g.get_polygons(merge=True)
+    p = polygons[1][0]
+    g = gf.Component()
+    g.add_polygon(p, layer=fill)
     g.drotate(90)
+    g = c << g
     g.xmin = x0
     g.ymin = y0
     return c

@@ -106,7 +106,7 @@ def get_path(path=None, study=""):
 
 
 def load_component(path=None, study=None):
-    return dill.load(os.path.join(get_path(path), "comp.pk"))
+    return dill.load(os.path.join(get_path(path), "comp.bson"))
 
 
 def finetune(iters, path=None,):

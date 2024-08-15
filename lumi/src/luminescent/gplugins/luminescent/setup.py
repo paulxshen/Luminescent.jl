@@ -178,7 +178,10 @@ def setup(c, study,   dx, margin,
     prob["dx"] = dx
     prob["Courant"] = Courant
     # prob["component"] = c
-    dill.dump(c, os.path.join(path, "comp.pk"))
+    if not os.path.exists(path):
+        os.makedirs(path)
+    # with open(os.path.join(path, "comp.bson"), "ab") as f:
+    #     dill.dump(c, f)
     # λc = (wavelengths[0]+wavelengths[-1])/2
     # prob["wavelengths"] = wavelengths
     prob["mode_solutions"] = mode_solutions
