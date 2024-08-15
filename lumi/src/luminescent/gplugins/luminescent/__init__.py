@@ -21,6 +21,7 @@ __all__ = [
     "inverse_design_problem",
     "sparams_problem",
     "solve",
+    "finetune",
     "apply_design",
     "add_bbox",
     "XYMARGIN",
@@ -28,6 +29,7 @@ __all__ = [
     "YMARGIN",
     "ZMARGIN",
     "load_solution",
+    "load_component",
     "show_solution",
     "gcells",
 ]

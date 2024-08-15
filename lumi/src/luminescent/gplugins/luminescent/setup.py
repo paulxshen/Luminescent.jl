@@ -1,3 +1,5 @@
+import dill
+import math
 from .constants import *
 from .layers import *
 from .utils import *
@@ -25,11 +27,14 @@ def setup(c, study,   dx, margin,
           bbox_layer=LAYER.WAFER,
           zmargin=None, zlims=None, core_layer=LAYER.WG,
           port_source_offset="auto", source_margin="auto", name="",
-          runs=[],  sources=[], layer_stack=LAYER_STACK, exclude_layers=[
+          runs=[],  sources=[],
+          layer_stack=LAYER_STACK, materials=MATERIALS,
+          exclude_layers=[
               DESIGN_LAYER, GUESS], approx_2D=False, Courant=None,
           gpu=None, dtype=np.float32,
-          path=PATH, plot=False, **kwargs):
-    c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
+          path=RUNS_PATH, plot=False, **kwargs):
+    if type(bbox_layer[0]) is int:
+        bbox_layer = (bbox_layer,)
     prob = dict()
     prob = {**prob, **kwargs}
     prob["dtype"] = str(dtype)
@@ -47,7 +52,6 @@ def setup(c, study,   dx, margin,
     prob["ports"] = ports
 
     mode_solutions = []
-    layers = set(c.layers)-set(exclude_layers)
 
     if zlims is None:
         # if core not in layer_stack.layers:
@@ -60,8 +64,20 @@ def setup(c, study,   dx, margin,
         zlims = [zmin, zmin+hcore]
     thickness = zlims[1]-zlims[0]
 
+    a = min([min([materials[d.material].epsilon for d in get_layers(
+        layer_stack, l)]) for l in bbox_layer])
+    b = max([materials[d.material].epsilon for d in get_layers(
+        layer_stack, core_layer)])
+    C = 5*math.sqrt(a/b)
     if zmargin is None:
-        zmargin = dx*round(2*thickness/dx)
+        zmargin = dx*round(C*thickness/dx)
+    port_width = max([p.width/1e3 for p in c.ports])
+    if margin is None:
+        margin = trim(C*port_width, dx)
+
+    c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
+    layers = set(c.layers)-set(exclude_layers)
+
     # zlims = [zlims[0]-dx, zlims[0]+np.ceil(thickness/dx)*dx+dx]
     zlims = [zlims[0]-zmargin, zlims[1]+zmargin]
     h = zlims[1]-zlims[0]
@@ -74,15 +90,15 @@ def setup(c, study,   dx, margin,
     normal = [1, 0, 0]
 
     eps = material_voxelate(c, dx, center, l, w, h,
-                            normal, layers, layer_stack)
+                            normal, layers, layer_stack, materials)
     eps_2D = eps[:, :, int(eps.shape[2]/2)]
     prob["study"] = study
 
     l = [prob["timestamp"], study]
     if name:
         l.append(name)
-    prob["path"] = os.path.join(
-        path, "#".join(l))
+    path = os.path.join(path, "#".join(l))
+    prob["path"] = path
 
     prob["eps_3D"] = eps.tolist()
     prob["eps"] = prob["eps_3D"]
@@ -91,15 +107,16 @@ def setup(c, study,   dx, margin,
     prob["d"] = 2 if approx_2D else 3
 
     prob["mode_height"] = h
+    w = port_width+2*margin
     neffmin = 1000000
     wavelengths = []
     # _c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
     for run in runs:
         for s in list(run["sources"].values())+list(run["monitors"].values()):
+            s["mode_width"] = w
             for wl in s["wavelength_mode_numbers"]:
                 wavelengths.append(wl)
                 duplicate = False
-                w = s["width"]
                 mode_numbers = s["wavelength_mode_numbers"][wl]
                 for m in mode_solutions:
                     if m["wavelength"] == wl and max(mode_numbers) < len(m["modes"]) and m["width"] == s["width"]:
@@ -111,7 +128,7 @@ def setup(c, study,   dx, margin,
 
                     center = np.array(center)-.001*np.array(normal)
                     eps = material_slice(
-                        c, dx, center, w, h, normal, layers, layer_stack)
+                        c, dx, center, w, h, normal, layers, layer_stack, materials)
                     _modes, _modes1, neffs, _ = solve_modes(
                         eps, λ=wl, dx=dx, neigs=max(mode_numbers)+1, plot=plot)
 
@@ -132,13 +149,14 @@ def setup(c, study,   dx, margin,
                         "ports": [s["port"]],
                         "size": [w, h],
                         "eps": eps.tolist(),
-                        "width": w,
+                        "width": s["width"],
+                        "mode_width": w,
                         "zcenter": zcenter,
                     })
     wavelengths = sorted(set(wavelengths))
     wl = np.median(wavelengths)
     if port_source_offset == "auto":
-        port_source_offset = trim(3*wl/neffmin, dx)
+        port_source_offset = trim(2*wl/neffmin, dx)
     prob["port_source_offset"] = port_source_offset
     if source_margin == "auto":
         source_margin = 2*dx
@@ -159,7 +177,8 @@ def setup(c, study,   dx, margin,
         }}
     prob["dx"] = dx
     prob["Courant"] = Courant
-    prob["component"] = c
+    # prob["component"] = c
+    dill.dump(c, os.path.join(path, "comp.pk"))
     # λc = (wavelengths[0]+wavelengths[-1])/2
     # prob["wavelengths"] = wavelengths
     prob["mode_solutions"] = mode_solutions

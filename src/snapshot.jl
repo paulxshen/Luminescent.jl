@@ -7,7 +7,7 @@
 global gl = false
 
 ° = π / 180
-function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorithm=nothing,
+function _plot!(g, a, ; colorrange=nothing, title="", labels=[], colormap=:seismic, algorithm=nothing,
     azimuth=75°, elevation=75°,
     kw...)
     d = ndims(a)
@@ -29,6 +29,10 @@ function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorit
             title *= " (2D array)"
             ax, pl = heatmap(g[1, 1], real(a); axis=(; kw..., title, aspect), colormap, colorrange=colorrange)
         end
+        for (pos, text) in labels
+            text!(g[1, 1], pos..., ; text, align=(:center, :center))
+            # annotate!(g[1, 1], pos, text; fontsize=10, color=:black)
+        end
     else
         if isnothing(colorrange)
             colorrange = extrema(a) * 0.1
@@ -41,21 +45,32 @@ function _plot!(g, a, ; colorrange=nothing, title="", colormap=:seismic, algorit
         Colorbar(g[1, d], pl)
     end
 end
-function quickie(sol; kw...)
-    @unpack fields, geometry = sol
+function quickie(sol, prob; kw...)
+    @unpack fields, geometry = sol |> cpu
+    @unpack monitor_instances, source_instances = prob |> cpu
     fig = Figure()
     fields = (; H=(; Hz=fields.H.Hz))
     geometry = (; ϵ=geometry.ϵ)
     colorrange = (-1, 1) .* maximum(maximum.(a -> abs.(real(a)), leaves(fields)))
     colormap = :seismic
     algorithm = :absorption
+    labels = []
+    for (i, m) = enumerate(monitor_instances)
+        text = isempty(m.label) ? "o$i" : m.label
+        push!(labels, (m.center, text))
+    end
+    for (i, s) = enumerate(source_instances)
+        text = isempty(s.label) ? "s$i" : s.label
+        push!(labels, (s.center, text))
+    end
+
     i = 1
     for k1 = keys(fields)
         j = 1
         for (k2, a) = pairs(fields[k1])
             g = fig[i, j]
             title = string(k2)
-            _plot!(g, a, ; title, colormap, colorrange, algorithm, kw...)
+            _plot!(g, a, ; title, colormap, colorrange, algorithm, labels, kw...)
 
             j += 1
         end

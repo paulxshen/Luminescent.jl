@@ -2,7 +2,7 @@ import copy
 from .constants import *
 import gdsfactory as gf
 from gdsfactory.cross_section import Section
-from .constants import PATH
+from .constants import RUNS_PATH
 from .materials import MATERIALS
 try:
     from IPython.display import display
@@ -37,6 +37,8 @@ import numpy as np
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 # from gdsfactory import LAYER_VIEWS
 
+tol = .001
+
 
 def trim(x, dx):
     return round(x/dx)*dx
@@ -56,18 +58,19 @@ def portsides(c):
     xmax0, ymax0 = bbox[1]
     for p in c.ports:
         x, y = np.array(p.center)/1e3
-        if x == xmin0:
+        if abs(x - xmin0) < tol:
             res[0][0] = True
-        if x == xmax0:
+        if abs(x - xmax0) < tol:
             res[1][0] = True
-        if y == ymin0:
+        if abs(y - ymin0) < tol:
             res[0][1] = True
-        if y == ymax0:
+        if abs(y - ymax0) < tol:
             res[1][1] = True
+    print(res)
     return res
 
 
-def add_bbox(c, layer, nonport_margin=None, dx=None):
+def add_bbox(c, layer, nonport_margin=0):  # , dx=None):
     bbox = c.bbox_np()
     xmin0, ymin0 = bbox[0]
     xmax0, ymax0 = bbox[1]
@@ -77,11 +80,11 @@ def add_bbox(c, layer, nonport_margin=None, dx=None):
     # l = dx*np.ceil((xmax0-xmin0)/dx)
     # w = dx*np.ceil((ymax0-ymin0)/dx)
 
-    if dx is not None:
-        if nonport_margin is None:
-            nonport_margin = dx
-    elif nonport_margin is None:
-        nonport_margin = 0
+    # if dx is not None:
+    #     if nonport_margin is None:
+    #         nonport_margin = dx
+    # if nonport_margin is None:
+    #     nonport_margin = 0
     margin = nonport_margin
     xmin, ymin, xmax, ymax = xmin0-margin, ymin0 - \
         margin, xmin0+l+margin, ymin0+w+margin
@@ -89,13 +92,13 @@ def add_bbox(c, layer, nonport_margin=None, dx=None):
     for p in c.ports:
         # p = c.ports[k]
         x, y = np.array(p.center)/1e3
-        if x == xmin0:
+        if abs(x - xmin0) < tol:
             xmin = x
-        if x == xmax0:
+        if abs(x - xmax0) < tol:
             xmax = x
-        if y == ymin0:
+        if abs(y - ymin0) < tol:
             ymin = y
-        if y == ymax0:
+        if abs(y - ymax0) < tol:
             ymax = y
     p = [(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)]
     _c = gf.Component()
@@ -138,19 +141,19 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
     solver = EMpy.modesolvers.FD.VFDModeSolver(
         λ, x, y, ϵfunc,  "0000").solve(neigs, tol)
     solvera = EMpy.modesolvers.FD.VFDModeSolver(
-        λ, x, y1, ϵfunc1,  "AA00").solve(neigs, tol)
-    solvers = EMpy.modesolvers.FD.VFDModeSolver(
-        λ, x, y1, ϵfunc1, "SS00").solve(neigs, tol)
+        λ, x, y1, ϵfunc1,  "AA00").solve(2*neigs, tol)
+    # solvers = EMpy.modesolvers.FD.VFDModeSolver(
+    #     λ, x, y1, ϵfunc1, "SS00").solve(neigs, tol)
 
     # fig = pylab.figure()
     # fig.add_subplot(2, 3, 1)
-    # Hy = numpy.transpose(solver.modes[0].get_field("Hy", x, y))
+    # Hy = numpy.transpose(solver.modes[-1].get_field("Hy", x, y))
     # pylab.imshow(abs(Hy))
     # fig.add_subplot(2, 3, 2)
-    # Hy = numpy.transpose(solvera.modes[0].get_field("Hy", x, y1))
+    # Hy = numpy.transpose(solvera.modes[-1].get_field("Hy", x, y1))
     # pylab.imshow(abs(Hy))
     # fig.add_subplot(2, 3, 3)
-    # Hy = numpy.transpose(solvers.modes[0].get_field("Hy", x, y1))
+    # Hy = numpy.transpose(solvers.modes[-1].get_field("Hy", x, y1))
     # pylab.imshow(abs(Hy))
     # fig.add_subplot(2, 3, 4)
     # e = numpy.transpose(ϵfunc(x, y))
@@ -165,6 +168,12 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
     neffs = [np.real(m.neff) for m in solver.modes]
 
     v = sorted(solvera.modes, key=lambda x: -np.abs(x.neff))
+
+    def f(m):
+        a = m.get_field("Hy", x, y1)
+        a = abs(a)
+        return (max(np.std(a, 1)) / np.max(a)) < .1
+    v = filter(f, v)
     modes1 = [{k: m.get_field(k, x, y1)[:, 0] for k in [
         "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in v]
     neffs1 = [np.real(m.neff) for m in v]
@@ -315,7 +324,7 @@ svg2png(bytestring=svg, write_to='temp.png', background_color="#00000000",
         output_width=10, output_height=10)
 
 
-def material_slice(c, dx, center, w, h, normal, layers, layer_stack):
+def material_slice(c, dx, center, w, h, normal, layers, layer_stack, materials=MATERIALS):
     LAYER_VIEWS["WGCLAD"].visible = True
     view = LAYER_VIEWS.layer_views["WGCLAD"]
 
@@ -335,7 +344,7 @@ def material_slice(c, dx, center, w, h, normal, layers, layer_stack):
     for layer in layers:
         m = layer[1]
         k = layer[3]
-        eps = MATERIALS[m].epsilon
+        eps = materials[m].epsilon
 
         _layer_stack = copy.deepcopy(layer_stack)
         _layer_stack.layers.clear()
@@ -364,8 +373,9 @@ def material_slice(c, dx, center, w, h, normal, layers, layer_stack):
     return eps_array
 
 
-def material_voxelate(c, dx, center, l, w, h,  normal, layers, layer_stack):
-    return np.stack([material_slice(c, dx, [center[0]+x]+center[1:], w, h, normal,    layers, layer_stack) for x in np.arange(dx/2, l-.001, dx)],)
+def material_voxelate(c, dx, center, l, w, h,  normal, layers, layer_stack, materials):
+    # print(l)
+    return np.stack([material_slice(c, dx, [center[0]+x]+center[1:], w, h, normal,    layers, layer_stack, materials) for x in np.arange(dx/2, l-.001, dx)],)
 
 
 def get_layers(layer_stack, layer, withkey=False):
@@ -398,8 +408,8 @@ def get_layers(layer_stack, layer, withkey=False):
 def show_solution(path=None):
 
     if path is None:
-        path = sorted(os.listdir(PATH))[-1]
-        path = os.path.join(PATH, path)
+        path = sorted(os.listdir(RUNS_PATH))[-1]
+        path = os.path.join(RUNS_PATH, path)
     print(f"showing solution from {path}")
     # Load an image
     for s in ["after.png", "run1.png"]:

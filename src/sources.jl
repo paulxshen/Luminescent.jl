@@ -116,7 +116,7 @@ struct SourceInstance
     g
     _g
     o
-    c
+    center
     label
     meta
 end

@@ -15,5 +15,5 @@ targets = {
 
 prob = lumi.inverse_design_problem(
     c, tparam_targets=targets,
-    lmin=0.2, dx=0.05, maxiters=60, eta=4., approx_2D=True, gpu="CUDA", dev=True)
+    lmin=0.2, dx=0.05, iters=60, eta=4., approx_2D=True, gpu="CUDA", dev=True)
 sol = lumi.solve(prob, )

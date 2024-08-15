@@ -62,13 +62,13 @@ eps_3D = pad(eps_3D, :replicate, (m + n, m + n, 0))
 origin = components.device.bbox[1] - (m + n) * dx
 
 if study == "inverse_design"
-    @load PROB_PATH designs design_region_layer targets maxiters design_config
+    @load PROB_PATH designs design_region_layer targets iters design_config
     #=
     We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
     =#
 
     model = NamedTuple([
-        Symbol("m$i") => begin
+        Symbol("o$i") => begin
             bbox = d.bbox
             L = bbox[2] - bbox[1]
             szd = Tuple(round.(Int, L / dx)) # design region size
@@ -384,7 +384,7 @@ elseif study == "inverse_design"
     # @show loss(model, targets)
     opt = Adam(1)
     opt_state = Flux.setup(opt, model)
-    # for i = 1:maxiters
+    # for i = 1:iters
     for i = 1:5
         println("$i")
         @time global l, (dldm,) = withgradient(model) do m

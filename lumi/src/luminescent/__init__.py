@@ -10,6 +10,7 @@ __all__ = [
     "inverse_design_problem",
     "sparams_problem",
     "solve",
+    "finetune",
     "apply_design",
     "add_bbox",
     "XMARGIN",
@@ -17,6 +18,7 @@ __all__ = [
     "ZMARGIN",
     "XYMARGIN",
     "load_solution",
+    "load_component",
     "show_solution",
     "gcells",
 ]

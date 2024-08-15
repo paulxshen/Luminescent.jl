@@ -1,7 +1,7 @@
 from gdsfactory.generic_tech import get_generic_pdk
 ZMARGIN = .3
 XYMARGIN = XMARGIN = YMARGIN = .6
-PATH = "lumi_runs"
+RUNS_PATH = "lumi_runs"
 
 pdk = get_generic_pdk()
 pdk.activate()

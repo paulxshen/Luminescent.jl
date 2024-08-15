@@ -1,3 +1,4 @@
+import dill
 from PIL import Image
 import os
 import subprocess
@@ -18,10 +19,10 @@ from subprocess import Popen, PIPE
 def solve(prob, dev=False, run=True):
     if "dev" in prob:
         dev = prob["dev"]
-    c0 = prob["component"]
-    del prob["component"]
+    # c0 = prob["component"]
+    # del prob["component"]
     bson_data = bson.dumps(prob)
-    prob["component"] = c0
+    # prob["component"] = c0
 
     path = prob["path"]
     if not os.path.exists(path):
@@ -80,6 +81,45 @@ def solve(prob, dev=False, run=True):
     return sol
 
 
+def get_path(path=None, study=""):
+    if path is None:
+        l = sorted(os.listdir(RUNS_PATH), reverse=True)
+        if study:
+            for p in l:
+                try:
+                    s = json.loads(open(os.path.join(RUNS_PATH, p, "sol.json")).read())[
+                        "study"]
+                    if s == study:
+                        path = p
+                        break
+                except:
+                    pass
+        else:
+            path = l[0]
+        path = os.path.join(RUNS_PATH, path)
+        return path
+    if os.path.isdir(path):
+        return path
+
+    if os.path.isdir(os.path.join(RUNS_PATH, path)):
+        return path
+
+
+def load_component(path=None, study=None):
+    return dill.load(os.path.join(get_path(path), "comp.pk"))
+
+
+def finetune(iters, path=None,):
+    if path is None:
+        path = get_path(study="inverse_design")
+
+    prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())
+    prob["iters"] = iters
+    # with open(path, "wb") as f:
+    #     f.write(bson.dumps(prob))
+    solve(prob)
+
+
 def load_sparams(sparams):
     if "re" in list(sparams.values())[0]:
         return {k: v["re"]+1j*v["im"] for k, v in sparams.items()}
@@ -89,32 +129,20 @@ def load_sparams(sparams):
 
 def load_solution(path=None, study="",):
     if path is None:
-        l = sorted(os.listdir(PATH), reverse=True)
-        if study:
-            for p in l:
-                try:
-                    s = json.loads(open(os.path.join(PATH, p, "sol.json")).read())[
-                        "study"]
-                    if s == study:
-                        path = p
-                        break
-                except:
-                    pass
-        else:
-            path = l[0]
-        path = os.path.join(PATH, path)
+        path = get_path(study=study)
     print(f"loading solution from {path}")
     prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())
     p = os.path.join(path, "sol.json")
     # sol = bson.loads(p, "rb").read())["sol"]
     sol = json.loads(open(p).read())
+    sol["sparams"] = load_sparams(sol["sparams"])
     if prob["study"] == "sparams":
-        sol["sparams"] = load_sparams(sol["sparams"])
+        pass
     elif prob["study"] == "inverse_design":
-        for k in ["before", "after"]:
-            sol[k]["sparams"] = load_sparams(sol[k]["sparams"])
-        for k in sol["after"]:
-            sol[k] = sol["after"][k]
+        # for k in ["before", "after"]:
+        #     sol[k]["sparams"] = load_sparams(sol[k]["sparams"])
+        # for k in sol["after"]:
+        #     sol[k] = sol["after"][k]
 
         l = [np.array(d) for d in sol["optimized_designs"]]
         sol["optimized_designs"] = l

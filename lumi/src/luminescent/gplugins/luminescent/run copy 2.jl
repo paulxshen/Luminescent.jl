@@ -172,12 +172,12 @@ eps_3D = pad(eps_3D, :replicate, lr...)
 # heatmap(eps_2D) |> display
 origin = components.device.bbox[1] - dx * (p * portsides[1] + np * (1 - portsides[1]))
 if study == "inverse_design"
-    @load PROB_PATH designs targets target_type eta maxiters design_config
+    @load PROB_PATH designs targets target_type eta iters design_config
     prob = load(PROB_PATH)
     minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
 
     models = [
-        # Symbol("m$i") =>
+        # Symbol("o$i") =>
         begin
             @unpack init, bbox = d
             L = bbox[2] - bbox[1]
@@ -398,12 +398,12 @@ elseif study == "inverse_design"
     stop = false
     img = nothing
     best = Inf
-    for i = 1:maxiters
+    for i = 1:iters
         global virgin, stop, best, best0, sparams0
         img = if virgin
             virgin = false
             "before.png"
-        elseif i == maxiters || stop
+        elseif i == iters || stop
             "after.png"
         else
             img

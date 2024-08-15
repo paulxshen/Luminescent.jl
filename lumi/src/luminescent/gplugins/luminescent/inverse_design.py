@@ -20,12 +20,13 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 def inverse_design_problem(c,  lmin=.1, symmetries=[],
                            tparam_targets={}, sparam_targets={},
-                           maxiters=25, eta=.1, init=None,  # minloss=.01,
+                           iters=25, eta=.1, init=None,  # minloss=.01,
                            design_region_layer=DESIGN_LAYER,
                            #    design_guess_layer=LAYER.GUESS,
                            fill_layer=LAYER.WG,
                            void_layer=None,
-                           layer_stack=LAYER_STACK, contrast=10,
+                           layer_stack=LAYER_STACK, materials=MATERIALS,
+                           contrast=10,
                            plot=False, approx_2D=True, **kwargs):
     design_region_layer = tuple(design_region_layer)
     if not approx_2D:
@@ -46,7 +47,9 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
     keys = sorted(set(sum([list(d.keys()) for d in targets.values()], [])))
     wavelengths = sorted(targets.keys())
 
-    prob = sparams_problem(c, layer_stack=layer_stack, wavelengths=wavelengths,
+    prob = sparams_problem(c,
+                           layer_stack=layer_stack, materials=materials,
+                           wavelengths=wavelengths,
                            study="inverse_design",
                            keys=keys,
                            approx_2D=approx_2D, ** kwargs)
@@ -80,14 +83,14 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
     prob["design_config"] = dict()
     l = get_layers(layer_stack, fill_layer)[0]
     d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
-    d["epsilon"] = MATERIALS[d["material"]].epsilon
+    d["epsilon"] = materials[d["material"]].epsilon
     d["ϵ"] = d["epsilon"]
     prob["design_config"]["fill"] = d
 
     if void_layer is not None:
         l = get_layers(layer_stack, void_layer)[0]
         d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
-        d["epsilon"] = MATERIALS[d["material"]].epsilon
+        d["epsilon"] = materials[d["material"]].epsilon
         d["ϵ"] = d["epsilon"]
     else:
         d = copy.deepcopy(d)
@@ -96,7 +99,7 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
     prob["design_config"]["void"] = d
 
     prob["design_config"]["design_region_layer"] = design_region_layer
-    prob["maxiters"] = maxiters
+    prob["iters"] = iters
     return prob
 
 

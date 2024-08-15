@@ -30,15 +30,15 @@ function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
     end
 end
 function write_sparams(runs, run_probs, g, path, origin, dx,
-    designs=nothing, design_config=nothing, model=nothing;
+    designs=nothing, design_config=nothing, models=nothing;
     img=nothing, autodiff=true, verbose=false, kw...)
     F = run_probs[1].F
-    if !isnothing(model)
-        geometry = make_geometry(model, origin, dx, g, designs, design_config; F)
+    if !isnothing(models)
+        geometry = make_geometry(models, origin, dx, g, designs, design_config; F)
     end
     sol = [
         begin
-            if !isnothing(model)
+            if !isnothing(models)
                 prob[:geometry] = geometry
             end
             @show typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
@@ -50,7 +50,7 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
                         img = "run$i.png"
                     end
                     # try
-                    CairoMakie.save(joinpath(path, img), quickie(sol |> cpu),)
+                    CairoMakie.save(joinpath(path, img), quickie(sol |> cpu, cpu(prob)),)
                     # catch e
                     #     println(e)
                     # end
@@ -99,12 +99,12 @@ end
 #         for (k, v) = pairs(d)
 #     ]) for (λ, d) = pairs(targets)])
 # g0 = (; ϵ=eps_2D, μ=ones(F, size(eps_2D)), σ=zeros(F, size(eps_2D)), σm=zeros(F, size(eps_2D)))
-function make_geometry(model, origin, dx, g0, designs, design_config; F=Float32)
+function make_geometry(models, origin, dx, g0, designs, design_config; F=Float32)
     g = deepcopy(g0)
     dict([k => begin
         a = g[k]
         if haskey(design_config.fill, k)
-            for (m, d) in zip(model, designs)
+            for (m, d) in zip(models, designs)
                 mask = m()
                 f = design_config.fill[k] |> F
                 v = design_config.void[k] |> F
@@ -141,6 +141,7 @@ function gfrun(path; kw...)
     println("setting up simulation...")
     # do something based on ARGS?
     PROB_PATH = joinpath(path, "prob.bson")
+    SOL_PATH = joinpath(path, "sol.json")
 
     calibrate = true
     model_name = nothing # if load saved model
@@ -190,12 +191,18 @@ function gfrun(path; kw...)
     # heatmap(eps_3D[round(size(eps_3D, 1) / 2), :, :]) |> display
     origin = components.device.bbox[1] - dx * (p * portsides[1])
     if study == "inverse_design"
-        @load PROB_PATH designs targets target_type eta maxiters design_config contrast
+        @load PROB_PATH designs targets target_type eta iters design_config contrast
         prob = load(PROB_PATH)
         minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
-
+        if isfile(SOL_PATH)
+            sol = open(SOL_PATH, "r") do f
+                JSON.parse(f)
+            end
+        else
+            sol = nothing
+        end
         models = [
-            # Symbol("m$i") =>
+            # Symbol("o$i") =>
             begin
                 @unpack init, bbox = d
                 L = bbox[2] - bbox[1]
@@ -212,11 +219,15 @@ function gfrun(path; kw...)
                 #     init = nothing
                 # end
                 lmin = d.lmin / dx
-                Blob(szd;
+                b = Blob(szd;
                     init=1,
                     lmin, rmin=lmin / 2,
                     contrast, T=F,
                     symmetries, verbose)
+                if !isnothing(sol)
+                    b.a .= sol.params[i] |> typeof(b.a)
+                end
+                b
             end for (i, d) = enumerate(designs)
         ]
 
@@ -251,7 +262,7 @@ function gfrun(path; kw...)
             # ϵ = resize(ϵ, sz)
             if d == 2
                 mode = mode1
-                mode = collapse_mode(mode,)
+                # mode = collapse_mode(mode,)
                 # i = round(Int, size(ϵmode, 1) / 2)
                 # ϵcore_ = ϵmode[i]
                 # ϵmode = maximum(ϵmode, dims=2) |> vec
@@ -299,7 +310,7 @@ function gfrun(path; kw...)
                         n = -sig.normal
                         tangent = [-n[2], n[1]]
                         c = (sig.center - origin + port_source_offset * sig.normal) / λc
-                        L = [sig.width] / λc
+                        L = [sig.mode_width] / λc
                         if d == 3
                             L = [L..., mode_height / λc]
                             n, tangent, = vcat.((n, tangent,), ([0],))
@@ -322,7 +333,7 @@ function gfrun(path; kw...)
             c = (m.center - origin) / λc
             n = m.normal
             tangent = [-n[2], n[1]]
-            L = [m.width] / λc
+            L = [m.mode_width] / λc
 
             if d == 3
                 L = [L..., mode_height / λc]
@@ -409,8 +420,8 @@ function gfrun(path; kw...)
         sparams0 = 0
         # @show write_sparams(model)
         opt = Adam(eta)
-        model = models[1]
-        opt_state = Flux.setup(opt, model)
+        # model = models[1]
+        opt_state = Flux.setup(opt, models)
         # Flux.freeze!(opt_state.w)
         # opt_state=(;a=opt_state.a)
         # @info "starting optimization... first iter will be slow due to compilation."
@@ -418,12 +429,12 @@ function gfrun(path; kw...)
         stop = false
         img = nothing
         best = best0 = 0
-        for i = 1:maxiters
+        for i = 1:iters
             # global virgin, stop, best, best0, sparams0
             img = if virgin
                 virgin = false
                 "before.png"
-            elseif i == maxiters || stop
+            elseif i == iters || stop
                 "after.png"
             else
                 img
@@ -431,9 +442,9 @@ function gfrun(path; kw...)
             # a = Params(model)
             # @time global l, (dldm) = Flux.withgradient(Params(model)) do
             # @time global l, (dldm,) = Flux.withgradient(model) do m
-            @time global l, (dldm,) = Flux.withgradient(model) do m
+            @time global l, (dldm,) = Flux.withgradient(models) do m
                 sparams = write_sparams(runs, run_probs, g0, path, origin, dx,
-                    designs, design_config, [m];
+                    designs, design_config, m;
                     F, img, autodiff=true)
                 params = if target_type == "sparams"
                     sparams
@@ -452,7 +463,7 @@ function gfrun(path; kw...)
                 sparams0 = deepcopy(sparams)
             end
 
-            Flux.update!(opt_state, model, dldm)# |> gpu)
+            Flux.update!(opt_state, models, dldm)# |> gpu)
             if l < best
                 best = l
             end
@@ -480,13 +491,14 @@ function gfrun(path; kw...)
             # before=sparam_family(sparams0),
             sparam_family(sparams)...,
             optimized_designs=[m() .> 0.5 for m in models],
+            params=getfield.(models, :a),
             designs,
             design_config,
         )
     end
     sol = (; sol..., path, dx, study,) |> cpu
     # @save "$path/sol.json" sol
-    open("$(path)/sol.json", "w") do f
+    open(SOL_PATH, "w") do f
         write(f, json(sol))
     end
     sol

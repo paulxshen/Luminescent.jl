@@ -11,7 +11,7 @@ targets = {
 
 prob = lumi.inverse_design_problem(
     c, tparam_targets=targets, symmetries=[0, 1, "diag"], lmin=0.2, dx=0.1,
-    minloss=.03, maxiters=50, eta=10., approx_2D=True)
+    minloss=.03, iters=50, eta=10., approx_2D=True)
 sol = lumi.solve(prob)
 
 # sol = lumi.load_solution()

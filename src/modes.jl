@@ -3,16 +3,16 @@ mirror_mode(m) = dict([k => k in (:Ex, :Hx) ? -reverse(m[k], dims=1) : m[k] for 
 # function normalize_mode(m, dx)
 function inner(u, v; dx=1)
     p = 0
-    if haskey(u, :Ex)
+    if haskey(u, :Ex) && haskey(v, :Hy)
         p += u.Ex ⋅ v.Hy
     end
-    if haskey(u, :Ey)
+    if haskey(u, :Ey) && haskey(v, :Hx)
         p -= u.Ey ⋅ v.Hx
     end
-    if haskey(v, :Ex)
+    if haskey(v, :Ex) && haskey(u, :Hy)
         p += u.Hy ⋅ v.Ex
     end
-    if haskey(v, :Ey)
+    if haskey(v, :Ey) && haskey(u, :Hx)
         p -= u.Hx ⋅ v.Ey
     end
     p * dx^ndims(first(values(u))) / 2

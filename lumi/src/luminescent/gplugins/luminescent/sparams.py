@@ -36,14 +36,12 @@ def sparams_problem(c: gf.Component,
             if i not in io[i]:
                 io[i].add(i)
 
-    if margin is None:
-        margin = trim(2*max([p.width/1e3 for p in c.ports]), dx)
     runs = [{
         "d": d,
         "sources": {
             port_number(i): {
                 "center": (np.array(c.ports[f"o{port_number(i)}"].center)/1e3).tolist(),
-                "width": (np.array(c.ports[f"o{port_number(i)}"].width)/1e3+2*margin).tolist(),
+                "width": (np.array(c.ports[f"o{port_number(i)}"].width)/1e3).tolist(),
                 "normal": normal_from_orientation(c.ports[f"o{port_number(i)}"].orientation),
                 # "endpoints": extend(c.ports[f"o{port_number(i)}"]., margin),
                 "wavelength_mode_numbers": {w: [mode_number(i)] for w in wavelengths},
@@ -54,7 +52,7 @@ def sparams_problem(c: gf.Component,
                 "port": port_number(o),
                 "normal": normal_from_orientation(c.ports[f"o{port_number(o)}"].orientation),
                 "center": (np.array(c.ports[f"o{port_number(o)}"].center)/1e3).tolist(),
-                "width": (np.array(c.ports[f"o{port_number(o)}"].width)/1e3+2*margin).tolist(),
+                "width": (np.array(c.ports[f"o{port_number(o)}"].width)/1e3).tolist(),
                 # "endpoints": extend(c.ports[f"o{port_number(o)}"].endpoints, margin),
                 "wavelength_mode_numbers": {w: [mode_number(o)] for w in wavelengths},
             } for o in io[i]},
