@@ -441,27 +441,7 @@ function gfrun(path; kw...)
             # a = Params(model)
             # @time global l, (dldm) = Flux.withgradient(Params(model)) do
             # @time global l, (dldm,) = Flux.withgradient(model) do m
-            if "phase_shifter" == preset.name
-                @time l, (dldm,) = Flux.withgradient(models) do m
-                    S = write_sparams(runs, run_probs, g0, path, origin, dx,
-                        designs, design_config, m;
-                        F, img, autodiff=true)#(1)(1)
-                    k = keys(S) |> first
-                    s = S[k]["o2@0,o1@0"]
-
-                    S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
-                        designs, design_config, m;
-                        F, img, autodiff=true, perturb=:ϵ)#(1)(1)
-                    s_ = S_[k]["o2@0,o1@0"]
-
-                    T = abs2(s)
-                    dϕ = angle(s_ / s)
-                    println("T: $T, dϕ: $dϕ")
-                    # ignore_derivatives() do
-                    global sparams = S
-                    (T * dϕ)
-                end
-            else
+            if isnothing(preset)
                 target_type = keys(targets)
                 @time l, (dldm,) = Flux.withgradient(models) do m
                     S = write_sparams(runs, run_probs, g0, path, origin, dx,
@@ -480,6 +460,26 @@ function gfrun(path; kw...)
                     global sparams = S
                     # end
                     l
+                end
+            elseif "phase_shifter" == preset.name
+                @time l, (dldm,) = Flux.withgradient(models) do m
+                    S = write_sparams(runs, run_probs, g0, path, origin, dx,
+                        designs, design_config, m;
+                        F, img, autodiff=true)#(1)(1)
+                    k = keys(S) |> first
+                    s = S[k]["o2@0,o1@0"]
+
+                    S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
+                        designs, design_config, m;
+                        F, img, autodiff=true, perturb=:ϵ)#(1)(1)
+                    s_ = S_[k]["o2@0,o1@0"]
+
+                    T = abs2(s)
+                    dϕ = angle(s_ / s)
+                    println("T: $T, dϕ: $dϕ")
+                    # ignore_derivatives() do
+                    global sparams = S
+                    (T * dϕ)
                 end
             end
             # @show dldm
