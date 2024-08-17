@@ -1,4 +1,4 @@
-import dill
+# import dill
 import math
 from .constants import *
 from .layers import *
@@ -156,7 +156,7 @@ def setup(c, study,   dx, margin,
     wavelengths = sorted(set(wavelengths))
     wl = np.median(wavelengths)
     if port_source_offset == "auto":
-        port_source_offset = trim(2*wl/neffmin, dx)
+        port_source_offset = trim(3*wl/neffmin, dx)
     prob["port_source_offset"] = port_source_offset
     if source_margin == "auto":
         source_margin = 2*dx

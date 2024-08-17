@@ -22,7 +22,7 @@ def mimo(west=0, east=0, south=0, north=0,
 
     c = gf.Component()
     if lwg is None:
-        lwg = 3*wwg
+        lwg = 4*wwg
     p = [(0, 0), (l, 0), (l, w), (0, w)]
     design.add_polygon(p,                       layer=design_layer)
     c.add_polygon(p,                       layer=wwg_layer)

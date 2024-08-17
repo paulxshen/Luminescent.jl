@@ -31,17 +31,17 @@ function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
 end
 function write_sparams(runs, run_probs, g, path, origin, dx,
     designs=nothing, design_config=nothing, models=nothing;
-    img=nothing, autodiff=true, verbose=false, kw...)
+    img=nothing, autodiff=true, verbose=false, perturb=nothing, kw...)
     F = run_probs[1].F
     if !isnothing(models)
-        geometry = make_geometry(models, origin, dx, g, designs, design_config; F)
+        geometry = make_geometry(models, origin, dx, g, designs, design_config; F, perturb)
     end
     sol = [
         begin
             if !isnothing(models)
                 prob[:geometry] = geometry
             end
-            @show typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
+            #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
             sol = solve(prob; autodiff, verbose,)
 
             ignore() do
@@ -99,7 +99,7 @@ end
 #         for (k, v) = pairs(d)
 #     ]) for (λ, d) = pairs(targets)])
 # g0 = (; ϵ=eps_2D, μ=ones(F, size(eps_2D)), σ=zeros(F, size(eps_2D)), σm=zeros(F, size(eps_2D)))
-function make_geometry(models, origin, dx, g0, designs, design_config; F=Float32)
+function make_geometry(models, origin, dx, g0, designs, design_config; F=Float32, perturb=nothing)
     g = deepcopy(g0)
     dict([k => begin
         a = g[k]
@@ -108,8 +108,9 @@ function make_geometry(models, origin, dx, g0, designs, design_config; F=Float32
                 mask = m()
                 f = design_config.fill[k] |> F
                 v = design_config.void[k] |> F
-                # for (f, v) = zip(design_config.fill, design_config.void)
-
+                if perturb == k
+                    f *= 1.001
+                end
                 T = typeof(a)
                 p = (v .* (1 - mask) + f .* mask) |> F |> T
                 # a = place(a, ((d.bbox[1] - origin) / dx) + 1, p; replace=true) |> F
@@ -191,7 +192,7 @@ function gfrun(path; kw...)
     # heatmap(eps_3D[round(size(eps_3D, 1) / 2), :, :]) |> display
     origin = components.device.bbox[1] - dx * (p * portsides[1])
     if study == "inverse_design"
-        @load PROB_PATH designs targets target_type eta iters design_config contrast
+        @load PROB_PATH designs targets preset eta iters design_config contrast
         prob = load(PROB_PATH)
         minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
         if isfile(SOL_PATH)
@@ -417,14 +418,12 @@ function gfrun(path; kw...)
         sol = sparam_family(sparams)
     elseif study == "inverse_design"
 
-        sparams0 = 0
+        global sparams = sparams0 = 0
         # @show write_sparams(model)
         opt = Adam(eta)
         # model = models[1]
         opt_state = Flux.setup(opt, models)
         # Flux.freeze!(opt_state.w)
-        # opt_state=(;a=opt_state.a)
-        # @info "starting optimization... first iter will be slow due to compilation."
         println("starting optimization... first iter will be slow due to adjoint compilation.")
         stop = false
         img = nothing
@@ -442,17 +441,46 @@ function gfrun(path; kw...)
             # a = Params(model)
             # @time global l, (dldm) = Flux.withgradient(Params(model)) do
             # @time global l, (dldm,) = Flux.withgradient(model) do m
-            @time global l, (dldm,) = Flux.withgradient(models) do m
-                sparams = write_sparams(runs, run_probs, g0, path, origin, dx,
-                    designs, design_config, m;
-                    F, img, autodiff=true)
-                params = if target_type == "sparams"
-                    sparams
-                else
-                    Porcupine.apply(abs2, sparams)
-                end
+            if "phase_shifter" == preset.name
+                @time l, (dldm,) = Flux.withgradient(models) do m
+                    S = write_sparams(runs, run_probs, g0, path, origin, dx,
+                        designs, design_config, m;
+                        F, img, autodiff=true)#(1)(1)
+                    k = keys(S) |> first
+                    s = S[k]["o2@0,o1@0"]
 
-                l = loss(params, targets)
+                    S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
+                        designs, design_config, m;
+                        F, img, autodiff=true, perturb=:ϵ)#(1)(1)
+                    s_ = S_[k]["o2@0,o1@0"]
+
+                    T = abs2(s)
+                    dϕ = angle(s_ / s)
+                    println("T: $T, dϕ: $dϕ")
+                    # ignore_derivatives() do
+                    global sparams = S
+                    (T * dϕ)
+                end
+            else
+                target_type = keys(targets)
+                @time l, (dldm,) = Flux.withgradient(models) do m
+                    S = write_sparams(runs, run_probs, g0, path, origin, dx,
+                        designs, design_config, m;
+                        F, img, autodiff=true)
+                    l = 0
+                    if :sparams in target_type
+                        l += loss(S, targets[:sparams])
+                    end
+                    if :tparams in target_type
+                        T = Porcupine.apply(abs2, S)
+                        l += loss(T, targets[:tparams])
+                    end
+
+                    # ignore_derivatives() do
+                    global sparams = S
+                    # end
+                    l
+                end
             end
             # @show dldm
             if stop
@@ -460,7 +488,7 @@ function gfrun(path; kw...)
             end
             if i == 1
                 best0 = best = l
-                sparams0 = deepcopy(sparams)
+                # sparams0 = deepcopy(sparams)
             end
 
             Flux.update!(opt_state, models, dldm)# |> gpu)

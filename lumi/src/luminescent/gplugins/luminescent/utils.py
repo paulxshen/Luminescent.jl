@@ -66,7 +66,6 @@ def portsides(c):
             res[0][1] = True
         if abs(y - ymax0) < tol:
             res[1][1] = True
-    print(res)
     return res
 
 

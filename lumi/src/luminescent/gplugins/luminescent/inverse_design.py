@@ -18,34 +18,42 @@ import os
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
-def inverse_design_problem(c,  lmin=.1, symmetries=[],
-                           tparam_targets={}, sparam_targets={},
-                           iters=25, eta=.1, init=None,  # minloss=.01,
+def inverse_design_problem(c,  lmin=.1, symmetries=[], preset=None,
+                           targets=None,
+                           iters=25, eta=2., init=None,  # minloss=.01,
                            design_region_layer=DESIGN_LAYER,
                            #    design_guess_layer=LAYER.GUESS,
                            fill_layer=LAYER.WG,
                            void_layer=None,
                            layer_stack=LAYER_STACK, materials=MATERIALS,
-                           contrast=10,
+                           contrast=20,
                            plot=False, approx_2D=True, **kwargs):
     design_region_layer = tuple(design_region_layer)
     if not approx_2D:
         raise NotImplementedError(
             "3D inverse design feature must be requested from Luminescent AI info@luminescentai.com")
 
-    if tparam_targets:
-        target_type = "tparams"
-        targets = tparam_targets
-    elif sparam_targets:
-        target_type = "sparams"
-        targets = sparam_targets
-
-    targets = {
-        wl: {
-            longname(k): v for k, v in d.items()
-        } for wl, d in targets.items()}
-    keys = sorted(set(sum([list(d.keys()) for d in targets.values()], [])))
-    wavelengths = sorted(targets.keys())
+    if preset is not None:
+        if preset["name"] == "phase_shifter":
+            keys = ["o2@0,o1@0"]
+            wavelengths = [preset["wavelength"]]
+    else:
+        targets1 = {}
+        keys = SortedSet()
+        wavelengths = SortedSet()
+        for k, d in targets.items():
+            d = {
+                wl: {
+                    longname(k): v for k, v in d.items()
+                } for wl, d in d.items()}
+            targets1[k] = d
+            for s in sum([list(d.keys()) for d in d.values()], []):
+                keys.add(s)
+            for wl in d:
+                wavelengths.add(wl)
+        targets = targets1
+        keys = list(keys)
+        wavelengths = list(wavelengths)
 
     prob = sparams_problem(c,
                            layer_stack=layer_stack, materials=materials,
@@ -53,9 +61,9 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[],
                            study="inverse_design",
                            keys=keys,
                            approx_2D=approx_2D, ** kwargs)
+    prob["preset"] = preset
     prob["targets"] = targets
     prob["wavelengths"] = wavelengths
-    prob["target_type"] = target_type
     prob["contrast"] = contrast
     # prob["init"] = init
     prob = {**prob, **kwargs}

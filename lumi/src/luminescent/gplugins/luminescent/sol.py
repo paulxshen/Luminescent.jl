@@ -1,4 +1,4 @@
-import dill
+# import dill
 from PIL import Image
 import os
 import subprocess
@@ -73,9 +73,9 @@ def solve(prob, dev=False, run=True):
     # print(f"julia simulation took {time.time()-start_time} seconds")
     print(f"images and results saved in {path}")
     sol = load_solution(path=path)
-    if prob["study"] == "inverse_design":
-        c = apply_design(c0,  sol)
-        sol["optimized_component"] = c
+    # if prob["study"] == "inverse_design":
+    # c = apply_design(c0,  sol)
+    # sol["optimized_component"] = c
     #     sol["before"]["component"] = c0
     #     sol["after"]["component"] = c
     return sol

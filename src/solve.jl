@@ -14,9 +14,9 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
         sz = p |> values |> first |> values |> first |> size
         points = prod(sz)
         steps = (transient_duration + steady_state_duration) / dt |> round
-        println(F)
-        println("size (includes PML): $sz")
-        println("$(digitsep(points)) points x $(digitsep(steps)) steps = $(digitsep(points*steps)) point-steps")
+        #@debug "" F
+        #@debug "size (includes PML): $sz"
+        #@debug "$(digitsep(points)) points x $(digitsep(steps)) steps = $(digitsep(points*steps)) point-steps"
     end
 
     Δ = [transient_duration, steady_state_duration]
@@ -28,7 +28,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
 
     # if save
     milestones = 0:0.1:1.01 |> collect
-    println("simulation started")
+    #@debug "simulation started"
     clock = ignore() do
         time()
     end
@@ -89,7 +89,7 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
             # tp + dt / Δ[2] * tp_,
         )
     end
-    println("simulation ended")
+    #@debug "simulation ended"
     # ignore() do
     #     println("simulation took: ", time() - clock, "s")
     # end
