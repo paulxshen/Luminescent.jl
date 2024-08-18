@@ -59,9 +59,9 @@ def setup(c, study,   dx, margin,
         # "\"core\" not found in layer_stack so `zlims` must be provided")
         d = get_layers(layer_stack, core_layer)[0]
         hcore = d.thickness
-        zmin = d.zmin
+        zcore = d.zmin
         # hcore = round(d.thickness/dx)*dx
-        zlims = [zmin, zmin+hcore]
+        zlims = [zcore, zcore+hcore]
     thickness = zlims[1]-zlims[0]
 
     a = min([min([materials[d.material].epsilon for d in get_layers(
@@ -104,6 +104,7 @@ def setup(c, study,   dx, margin,
     prob["eps"] = prob["eps_3D"]
     prob["eps_2D"] = eps_2D.tolist()
     prob["zmin"] = zmin
+    prob["zcore"] = zcore
     prob["d"] = 2 if approx_2D else 3
 
     prob["mode_height"] = h

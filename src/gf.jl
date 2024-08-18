@@ -31,7 +31,7 @@ function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
 end
 function write_sparams(runs, run_probs, g, path, origin, dx,
     designs=nothing, design_config=nothing, models=nothing;
-    img=nothing, autodiff=true, verbose=false, perturb=nothing, kw...)
+    img=nothing, autodiff=false, verbose=false, perturb=nothing, with=false, kw...)
     F = run_probs[1].F
     if !isnothing(models)
         geometry = make_geometry(models, origin, dx, g, designs, design_config; F, perturb)
@@ -59,6 +59,8 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
             sol
         end for (i, prob) in enumerate(run_probs)
     ]
+
+    lss = sol[1].lss
     # return sol
     coeffs = OrderedDict()
     for (v, run) in zip(sol, runs)
@@ -88,6 +90,9 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
     # if source_mn == monitor_mn == 0
     #     coeffs[λ]["$monitor_port,$source_port"] = v
     # end
+    if with
+        return sparams, lss
+    end
     sparams
 end
 # targets = SortedDict([F(λ) =>
@@ -116,7 +121,13 @@ function make_geometry(models, origin, dx, g0, designs, design_config; F=Float32
                 # a = place(a, ((d.bbox[1] - origin) / dx) + 1, p; replace=true) |> F
                 b = Zygote.Buffer(a)
                 copyto!(b, a)
-                place!(b, round((d.bbox[1] - origin) / dx) + 1, p |> F)
+                xy = round((d.bbox[1] - origin) / dx) + 1
+                if ndims(a) == 2
+                    o = xy
+                else
+                    o = [xy..., 1 + round((zcore - zmin) / dx)]
+                end
+                place!(b, o, p |> F)
                 a = copy(b)
             end
         end
@@ -152,7 +163,7 @@ function gfrun(path; kw...)
     #=
     We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
     =#
-    @load PROB_PATH name dtype margin zmargin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
+    @load PROB_PATH name dtype margin zmargin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin zcore gpu_backend d
     F = Float32
     if contains(dtype, "16")
         F = Float16
@@ -414,10 +425,10 @@ function gfrun(path; kw...)
         println("Computing s-parameters...")
         # sparams = write_sparams(img="", autodiff=false, verbose=true)
         sparams = write_sparams(runs, run_probs, g0, path, origin, dx;
-            F, img="", autodiff=true, verbose=true)
+            F, img="", verbose=true)
         sol = sparam_family(sparams)
     elseif study == "inverse_design"
-
+        compression = autodiff = true
         global sparams = sparams0 = 0
         # @show write_sparams(model)
         opt = Adam(eta)
@@ -428,6 +439,10 @@ function gfrun(path; kw...)
         stop = false
         img = nothing
         best = best0 = 0
+        S, lss = write_sparams(runs, run_probs, g0, path, origin, dx,
+            designs, design_config, m;
+            F, img, autodiff, compression, with=true)
+
         for i = 1:iters
             # global virgin, stop, best, best0, sparams0
             img = if virgin
@@ -438,21 +453,21 @@ function gfrun(path; kw...)
             else
                 img
             end
-            # a = Params(model)
-            # @time global l, (dldm) = Flux.withgradient(Params(model)) do
-            # @time global l, (dldm,) = Flux.withgradient(model) do m
             if isnothing(preset)
-                target_type = keys(targets)
                 @time l, (dldm,) = Flux.withgradient(models) do m
                     S = write_sparams(runs, run_probs, g0, path, origin, dx,
                         designs, design_config, m;
-                        F, img, autodiff=true)
+                        F, img, autodiff, compression, lss)
                     l = 0
-                    if :sparams in target_type
-                        l += loss(S, targets[:sparams])
-                    end
-                    if :tparams in target_type
-                        T = Porcupine.apply(abs2, S)
+                    for k = keys(targets)
+
+                        if :sparams == k
+                            y = S
+                        elseif :tparams == k
+                            y = Porcupine.apply(abs2, S)
+                        elseif :phasediff == k
+                            y = Porcupine.apply(angle, S)
+                        end
                         l += loss(T, targets[:tparams])
                     end
 
@@ -465,13 +480,13 @@ function gfrun(path; kw...)
                 @time l, (dldm,) = Flux.withgradient(models) do m
                     S = write_sparams(runs, run_probs, g0, path, origin, dx,
                         designs, design_config, m;
-                        F, img, autodiff=true)#(1)(1)
+                        F, img, autodiff, compression, lss)#(1)(1)
                     k = keys(S) |> first
                     s = S[k]["o2@0,o1@0"]
 
                     S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
                         designs, design_config, m;
-                        F, img, autodiff=true, perturb=:ϵ)#(1)(1)
+                        F, img, autodiff, compression, perturb=:ϵ, lss)#(1)(1)
                     s_ = S_[k]["o2@0,o1@0"]
 
                     T = abs2(s)
@@ -483,9 +498,9 @@ function gfrun(path; kw...)
                 end
             end
             # @show dldm
-            if stop
-                break
-            end
+            # if stop
+            #     break
+            # end
             if i == 1
                 best0 = best = l
                 # sparams0 = deepcopy(sparams)

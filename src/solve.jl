@@ -1,5 +1,5 @@
 
-function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, _time=true,
+function solve(prob; autodiff=false, compression=false, lims=nothing, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, _time=true,
     cpu=identity, gpu=identity, kwargs...)
     @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
@@ -32,8 +32,10 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     clock = ignore() do
         time()
     end
+
+    _reduce = (autodiff && compression) ? adjoint_reduce : reduce
     i = 0
-    u = reduce(0:dt:T[1], init=deepcopy(u0)) do u, t
+    u = _reduce(0:dt:T[1], (deepcopy(u0),), lims) do (u,), t
         verbose && ignore() do
             hasnan(u) && error("nan detected. instability. aborting")
             if !isempty(milestones) && (i + 1) / N > milestones[1]
@@ -42,12 +44,11 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
             end
             i += 1
         end
-
-        update(u, p, t, dx, dt, field_padding, source_instances; autodiff)
+        (update(u, p, t, dx, dt, field_padding, source_instances; autodiff),)
     end
 
     # u, mode_fields, total_powers = reduce(T[1]+dt:dt:T[2], init=(u, 0, 0)) do (u, mode_fields, tp), t
-    u, mode_fields, = reduce(T[1]+dt:dt:T[2], init=(u, 0)) do (u, mode_fields), t
+    u, mode_fields, = _reduce(T[1]+dt:dt:T[2], (u, 0), lims) do (u, mode_fields), t
         verbose && ignore() do
             if !isempty(milestones) && (i + 1) / N > milestones[1]
                 hasnan(u) && error("nan detected. instability. aborting")
@@ -94,6 +95,15 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     #     println("simulation took: ", time() - clock, "s")
     # end
 
+    lss = ignore_derivatives() do
+        extrema.(leaves(u)), [
+            begin
+                c = maximum(abs.(a))
+                (-c, c)
+            end for a = leaves(mode_fields)
+        ]
+    end
+
     v = map(mode_fields, monitor_instances) do mf, m
         map(mf, values(m.wavelength_modes)) do u, wm
             E, H = u
@@ -129,5 +139,5 @@ function solve(prob; autodiff=true, history=nothing, comprehensive=true, verbose
     fields = u
     # @show forward_mode_powers, reverse_mode_powers, total_powers
     # return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, total_powers)
-    return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers,)
+    return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, lss)
 end
