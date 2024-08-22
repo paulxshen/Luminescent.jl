@@ -13,7 +13,7 @@ function solve(prob, model=nothing; autodiff=true, history=nothing, comprehensiv
     ϵ = place(p[:ϵ], ((designs[1].bbox[1] - origin) / dx) + 1, a; replace=true) |> F
 
     # p = cpu(p)
-    p = apply(geometry_padding, (; ϵ, μ=p.μ, σ=p.σ, σm=p.σm))
+    p = apply(geometry_padding, (; ϵ, μ=p.μ, σ=p.σ, m=p.m))
     p = apply(subpixel_averaging, p)
     geometry = p
     # p = gpu(p)

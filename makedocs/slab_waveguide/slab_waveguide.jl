@@ -32,7 +32,7 @@ sz = size(mask)
 ϵ = mask * ϵcore + (1 .- mask) * ϵclad
 μ = 1
 σ = zeros(F, sz)
-σm = zeros(F, sz)
+m = zeros(F, sz)
 T = 2 + l * sqrt(ϵcore) # simulation duration in [periods]
 
 # plot(abs.(source_instances[1]._g[:Jx]))
@@ -61,7 +61,7 @@ boundaries = []# unspecified boundaries default to PML
 prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
 @unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
-p = apply(geometry_padding; ϵ, μ, σ, σm)
+p = apply(geometry_padding; ϵ, μ, σ, m)
 p = apply(subpixel_averaging, p)
 
 # move to gpu
@@ -106,7 +106,7 @@ recordsim("$dir/2d_$(name).mp4", Ey, v;
 sz = size(ϵ)
 μ = 1
 σ = zeros(F, sz)
-σm = zeros(F, sz)
+m = zeros(F, sz)
 
 # modal source
 @unpack Ex, Ey, Ez, = modes[1]
@@ -134,7 +134,7 @@ boundaries = []# unspecified boundaries default to PML
 prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
 @unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
-p = apply(geometry_padding; ϵ, μ, σ, σm)
+p = apply(geometry_padding; ϵ, μ, σ, m)
 p = apply(subpixel_averaging, p)
 
 # move to gpu

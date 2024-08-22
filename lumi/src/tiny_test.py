@@ -13,30 +13,31 @@ targets = {"tparams": {
     }}}
 # c.show()
 
-# prob = lumi.inverse_design_problem(
-#     c, targets=targets,
-#     # bbox_layer=LAYER.WAFER,
-#     # lmin=0.2, dx=0.1, iters=2, eta=10., approx_2D=True, dev=True)  # gpu="CUDA", dev=True)
-#     lmin=0.2, dx=0.1, iters=2, eta=10., approx_2D=True, gpu="CUDA", dev=True)
-# sol = lumi.solve(prob, )
-# sol = lumi.finetune(2)
-# c = lumi.apply_design(c, sol)
+prob = lumi.inverse_design_problem(
+    c, targets=targets,
+    # bbox_layer=LAYER.WAFER,
+    # lmin=0.2, dx=0.1, iters=2, eta=10., approx_2D=True, compression=True)  # gpu="CUDA", dev=True)
+    lmin=0.2, dx=0.1, iters=2, eta=10., approx_2D=True, compression=False)  # gpu="CUDA", dev=True)
+# lmin=0.2, dx=0.1, iters=2, eta=10., approx_2D=True, gpu="CUDA", dev=True)
+sol = lumi.solve(prob, )
+sol = lumi.finetune(2)
+c = lumi.apply_design(c, sol)
 
 # raise ValueError("stop here")
 
-for (approx_2D, gpu, dtype, ) in itertools.product(
-    [True,],
-    [None, "CUDA"],
-    # [None, ],
-    ["f32"],
-    # ["f32", "f16"],
-):
-    prob = lumi.inverse_design_problem(
-        c, targets=targets,
-        bbox_layer=LAYER.WAFER,
-        lmin=0.2, dx=0.1, iters=2, eta=1., approx_2D=approx_2D, gpu=gpu, dtype=dtype, run=False)
-    sol = lumi.solve(prob, run=False)
-    sleep(1)
+# for (approx_2D, gpu, dtype, ) in itertools.product(
+#     [True,],
+#     [None, "CUDA"],
+#     # [None, ],
+#     ["f32"],
+#     # ["f32", "f16"],
+# ):
+#     prob = lumi.inverse_design_problem(
+#         c, targets=targets,
+#         bbox_layer=LAYER.WAFER,
+#         lmin=0.2, dx=0.1, iters=2, eta=1., approx_2D=approx_2D, gpu=gpu, dtype=dtype, run=False)
+#     sol = lumi.solve(prob, run=False)
+#     sleep(1)
 # path="precompile_execution")
 # lmin=0.2, dx=0.1, iters=2, eta=10., approx_2D=True, gpu="CUDA")
 

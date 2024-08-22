@@ -5,7 +5,6 @@ Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float32,Int32}) = true
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float16,Int32}) = true
 Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float32,Int32}) = true
 Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float16,Int32}) = true
-# using Porcupine: keys, values, first
 
 function julia_main()::Cint
     if !isempty(ARGS)
@@ -31,22 +30,20 @@ function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
         end
     end
 end
-
 function write_sparams(runs, run_probs, g, path, origin, dx,
     designs=nothing, design_config=nothing, models=nothing;
     img=nothing, autodiff=false, compression=false, verbose=false, perturb=nothing, with=false, ls=nothing, kw...)
     F = run_probs[1].F
-    geometry = make_geometry(models, origin, dx, g, designs, design_config; F, perturb)
-
-    i = 1
-
-
-    global sols = [
+    if !isnothing(models)
+        geometry = make_geometry(models, origin, dx, g, designs, design_config; F, perturb)
+    end
+    sol = [
         begin
-            # prob[:geometry] = geometry
-            # prob = merge(prob, (; geometry,))
+            if !isnothing(models)
+                prob[:geometry] = geometry
+            end
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
-            sol = solve(prob, geometry; autodiff, ls, compression, verbose)
+            sol = solve(prob; autodiff, ls, compression, verbose,)
 
             ignore() do
                 if !isnothing(img)
@@ -61,20 +58,17 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
                 end
             end
             sol
-        end #for prob in run_probs
-        # end for (i, prob) in enumerate(run_probs)
+        end for (i, prob) in enumerate(run_probs)
     ]
 
-    ls = sols[1].ls
+    ls = sol[1].ls
     # return sol
     coeffs = OrderedDict()
-    for (v, run) in zip(sols, runs)
-        sources = run.sources |> Base.values
-        monitors = run.monitors |> Base.values
-        global aaaaaaa = v
-        source_port = first(sources).port
-        # source_mn = first(sources).wavelength_mode_numbers(1)[1]
-        source_mn = first(sources).wavelength_mode_numbers |> Porcupine.first |> Porcupine.first
+    for (v, run) in zip(sol, runs)
+        sources = run.sources |> values
+        monitors = run.monitors |> values
+        source_port = first(values(sources)).port
+        source_mn = values(first(values(sources)).wavelength_mode_numbers)[1][1]
         for (monitor, v) = zip(monitors, v.mode_coeffs)
             for (λ, v) = zip(monitor.wavelength_mode_numbers |> keys, v)
                 for (monitor_mn, v) = zip(monitor.wavelength_mode_numbers[λ], v)
@@ -82,7 +76,7 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
                     if !haskey(coeffs, λ)
                         coeffs[λ] = OrderedDict()
                     end
-                    coeffs[λ][(Symbol("o$monitor_port@$monitor_mn," * "o$source_port@$source_mn"))] = v
+                    coeffs[λ][("o$monitor_port@$monitor_mn,"*"o$source_port@$source_mn")] = v
                 end
             end
         end
@@ -90,12 +84,12 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
 
     sparams = OrderedDict([λ => OrderedDict([k => begin
         s = ignore() do
-            split(string(k), ",")[2]
+            split(k, ",")[2]
         end
-        coeffs[λ][k][1] / coeffs[λ][Symbol("$s,$s")][2]
+        coeffs[λ][k][1] / coeffs[λ]["$s,$s"][2]
     end for (k) = keys(coeffs[λ])]) for (λ) = keys(coeffs)])
     # if source_mn == monitor_mn == 0
-    #     coeffs[λ]["$monitor_port,$source_port")] = v
+    #     coeffs[λ]["$monitor_port,$source_port"] = v
     # end
     if with
         @show ls
@@ -103,47 +97,18 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
     end
     sparams
 end
-
-function make_geometry(models, origin, dx, g, designs, design_config; F=Float32, perturb=nothing)
-    isnothing(models) && return g
-    # g = deepcopy(g)
-    # r = OrderedDict()
-    # for k = keys(g)
-    #     if haskey(design_config.fill, k)
-    #         a = g[k]
-    #         for (m, d) in zip(models, designs)
-    #             # a = g[k]
-    #             mask = m()
-    #             f = design_config.fill[k] |> F
-    #             v = design_config.void[k] |> F
-    #             if perturb == k
-    #                 f *= 1.001
-    #             end
-    #             T = typeof(a)
-    #             p = (v .* (1 - mask) + f .* mask) |> F |> T
-    #             b = Zygote.Buffer(a)
-    #             copyto!(b, a)
-    #             xy = round((d.bbox[1] - origin) / dx) + 1
-    #             if ndims(a) == 2
-    #                 o = xy
-    #             else
-    #                 o = [xy..., 1 + round((zcore - zmin) / dx)]
-    #             end
-    #             o = Tuple(o)
-    #             b = place!(b, o, p)
-    #             a = copy(b)
-    #             # g[k] = a
-    #         end
-    #         r[k] = a
-    #     else
-    #         r[k] = g[k]
-    #     end
-    # end
-    # r
-
-
-    # namedtuple(g)
-    namedtuple([k => begin
+# targets = SortedDict([F(λ) =>
+#     OrderedDict([
+#         begin
+#             a, b = split(string(k), ",")
+#             (a, b) => F(v)
+#         end
+#         for (k, v) = pairs(d)
+#     ]) for (λ, d) = pairs(targets)])
+# g0 = (; ϵ=eps_2D, μ=ones(F, size(eps_2D)), σ=zeros(F, size(eps_2D)), m=zeros(F, size(eps_2D)))
+function make_geometry(models, origin, dx, g0, designs, design_config; F=Float32, perturb=nothing)
+    g = deepcopy(g0)
+    dict([k => begin
         a = g[k]
         if haskey(design_config.fill, k)
             for (m, d) in zip(models, designs)
@@ -164,8 +129,7 @@ function make_geometry(models, origin, dx, g, designs, design_config; F=Float32,
                 else
                     o = [xy..., 1 + round((zcore - zmin) / dx)]
                 end
-                o = Tuple(o)
-                b = place!(b, o, p)
+                place!(b, o, p |> F)
                 a = copy(b)
             end
         end
@@ -174,7 +138,7 @@ function make_geometry(models, origin, dx, g, designs, design_config; F=Float32,
 end
 function loss(params, targets, type=nothing)
     mean([
-        sum(zip(getindex.((yhat,), Symbol.(keys(y))), values(y))) do (yhat, y)
+        sum(zip(getindex.((yhat,), string.(keys(y))), values(y))) do (yhat, y)
             r = y - yhat
             if type == :tparams && y == 1
                 return r
@@ -254,7 +218,7 @@ if study == "inverse_design"
         sol = nothing
     end
     models = [
-        # Symbol(Symbol("o$i") =>
+        # Symbol("o$i") =>
         begin
             @unpack init, bbox = d
             L = bbox[2] - bbox[1]
@@ -418,27 +382,25 @@ runs_monitors = [[
     end
     for (port, m) = run.monitors |> pairs] for run in runs]
 
-run_probs =
-    [
-        begin
-            ϵ = if run.d == 2
-                eps_2D
-                # heatmap(eps_2D) |> display
-            else
-                eps_3D
-            end
-            sz = size(ϵ)
-            ϵmax = maximum(ϵ)
-            μ = 1
-            σ = PML(1).σ
-            δ = sqrt(ϵmax / μ) / σ
-            setup(boundaries, sources, monitors, dx / λc, sz; F, Courant, ϵ,
-                pml_depths=[δ, δ, 0.3δ,],
-                pml_ramp_fracs=[0.2, 0.2, 1],
-                verbose,)
-        end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
-    ]
-const g0 = run_probs[1].geometry
+run_probs = [
+    begin
+        ϵ = if run.d == 2
+            eps_2D
+            # heatmap(eps_2D) |> display
+        else
+            eps_3D
+        end
+        sz = size(ϵ)
+        ϵmax = maximum(ϵ)
+        μ = 1
+        σ = PML(1).σ
+        δ = sqrt(ϵmax / μ) / σ
+        setup(boundaries, sources, monitors, dx / λc, sz; F, Courant, ϵ,
+            pml_depths=[δ, δ, 0.3δ,],
+            pml_ramp_fracs=[0.2, 0.2, 1],
+            verbose,)
+    end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
+]
 
 if !isempty(gpu_backend)
     println("using $gpu_backend backend.")
@@ -456,6 +418,7 @@ if !isempty(gpu_backend)
 else
     println("using CPU backend.")
 end
+g0 = run_probs[1].geometry |> deepcopy
 
 virgin = true
 # error()
@@ -471,22 +434,18 @@ if study == "sparams"
 elseif study == "inverse_design"
     autodiff = true
     global sparams = sparams0 = 0
+    # @show write_sparams(model)
     opt = Adam(eta)
+    # model = models[1]
     opt_state = Flux.setup(opt, models)
+    # Flux.freeze!(opt_state.w)
     println("starting optimization... first iter will be slow due to adjoint compilation.")
     stop = false
     img = nothing
     best = best0 = 0
-    # S, ls = write_sparams(runs, run_probs, g0, path, origin, dx,
-    # designs, design_config, models;
-    # F, img, autodiff, compression, with=true)
-
-    prob = run_probs[1]
-    global aaaaa = gradient(g0) do geometry
-        # solve(prob, geometry; autodiff, compression, verbose).forward_mode_powers[1][1][1]
-        solve(prob, geometry; autodiff, compression, verbose)
-    end
-    error()
+    S, ls = write_sparams(runs, run_probs, g0, path, origin, dx,
+        designs, design_config, models;
+        F, img, autodiff, compression, with=true)
 
     for i = 1:iters
         global virgin, stop, best, best0, sparams0
@@ -505,6 +464,7 @@ elseif study == "inverse_design"
                     F, img, autodiff, compression, ls)
                 l = 0
                 for k = keys(targets)
+
                     if :sparams == k
                         y = S
                     elseif :tparams == k
@@ -526,12 +486,12 @@ elseif study == "inverse_design"
                     designs, design_config, m;
                     F, img, autodiff, compression, ls)#(1)(1)
                 k = keys(S) |> first
-                s = S[k][Symbol("o2@0,o1@0")]
+                s = S[k]["o2@0,o1@0"]
 
                 S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
                     designs, design_config, m;
                     F, img, autodiff, compression, perturb=:ϵ, ls)#(1)(1)
-                s_ = S_[k][Symbol("o2@0,o1@0")]
+                s_ = S_[k]["o2@0,o1@0"]
 
                 T = abs2(s)
                 dϕ = angle(s_ / s)

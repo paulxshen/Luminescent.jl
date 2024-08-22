@@ -115,6 +115,7 @@ def finetune(iters, path=None,):
 
     prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())
     prob["iters"] = iters
+    prob["restart"] = False
     # with open(path, "wb") as f:
     #     f.write(bson.dumps(prob))
     solve(prob)

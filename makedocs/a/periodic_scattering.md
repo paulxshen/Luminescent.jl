@@ -33,7 +33,7 @@ b = F.([norm(v .- sz ./ 2) < 0.5 / dx for v = Base.product(Base.oneto.(sz)...)])
 # μ = 1
 μ = ones(F, sz)
 σ = zeros(F, sz)
-σm = zeros(F, sz)
+m = zeros(F, sz)
 ```
 We setup boundary conditions, source and monitor surfaces
 ```julia
@@ -54,7 +54,7 @@ We do `setup` to instantiate at the given discretisation. We adopt `u, p, t` nam
 prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
 @unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
-p = apply(geometry_padding; ϵ, μ, σ, σm)
+p = apply(geometry_padding; ϵ, μ, σ, m)
 p = apply(subpixel_averaging; p...)
 
 # move to gpu

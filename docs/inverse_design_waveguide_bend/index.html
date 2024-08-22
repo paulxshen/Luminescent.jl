@@ -189,8 +189,8 @@ if ongpu
     using Flux
     # using CUDA
     # @assert CUDA.functional()
-    u0, model, static_mask, μ, σ, σm, field_padding, source_instances =
-        gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))
+    u0, model, static_mask, μ, σ, m, field_padding, source_instances =
+        gpu.((u0, model, static_mask, μ, σ, m, field_padding, source_instances))
     merge!(prob, (; u0, field_padding, source_instances))
 end</code></pre>
                 <p>We define a geometry update function that&#39;ll be called each adjoint iteration. It calls geometry
@@ -199,9 +199,9 @@ end</code></pre>
     @unpack sz, geometry_padding, subpixel_averaging = prob
     μ = ones(F, sz)
     σ = zeros(F, sz)
-    σm = zeros(F, sz)
+    m = zeros(F, sz)
     # μ = 1
-    # σ = σm = 0
+    # σ = m = 0
 
     mask_ = Zygote.Buffer(static_mask)
     mask_[:, :] = static_mask
@@ -214,7 +214,7 @@ end</code></pre>
         ϵ = sandwich(ϵ, round.(Int, [hbase, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
     end
 
-    p = apply(geometry_padding; ϵ, μ, σ, σm)
+    p = apply(geometry_padding; ϵ, μ, σ, m)
     p = apply(subpixel_averaging, p)
 end</code></pre>
                 <p>Optimal design will maximize powers into port 1 and out of port 2. Monitor normals were set so both
@@ -256,7 +256,7 @@ function score(v)
     sum(-v)
 end
 
-# p0 = make_geometry(model0, static_mask, μ, σ, σm)
+# p0 = make_geometry(model0, static_mask, μ, σ, m)
 history = []
 loss = model -&gt; score(metrics(model, prob; history))</code></pre>
                 <p>We now do adjoint optimization. The first few iterations may show very little change but will pick up
@@ -339,8 +339,8 @@ sources = [Source(t -&gt; cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 
 prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin, Courant=0.3)
 if ongpu
-    u0, model, static_mask, μ, σ, σm, field_padding, source_instances =
-        gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))
+    u0, model, static_mask, μ, σ, m, field_padding, source_instances =
+        gpu.((u0, model, static_mask, μ, σ, m, field_padding, source_instances))
     merge!(prob, (; u0, field_padding, source_instances))
 end
 

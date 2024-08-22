@@ -351,7 +351,7 @@ function make_geometry(model)
     # for (f, v) = zip(design_config.fill, design_config.void)
     p = (v .* (1 - mask) + f .* mask)
     a = place(g0.ϵ, ((designs[1].bbox[1] - origin) / dx) + 1, p; replace=true) |> F
-    (; ϵ=a, μ=ones(F, size(a)), σ=ones(F, size(a)), σm=ones(F, size(a)))
+    (; ϵ=a, μ=ones(F, size(a)), σ=ones(F, size(a)), m=ones(F, size(a)))
 end
 # g = make_geometry(model)
 # f, a, pl = heatmap(g[:ϵ])

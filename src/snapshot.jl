@@ -49,7 +49,7 @@ function quickie(sol, prob; kw...)
     @unpack fields, geometry = sol |> cpu
     @unpack monitor_instances, source_instances = prob |> cpu
     fig = Figure()
-    fields = (; H=(; Hz=fields.H.Hz))
+    fields = (; Hz=fields.Hz)
     geometry = (; ϵ=geometry.ϵ)
     colorrange = (-1, 1) .* maximum(maximum.(a -> abs.(real(a)), leaves(fields)))
     colormap = :seismic
@@ -65,15 +65,15 @@ function quickie(sol, prob; kw...)
     end
 
     i = 1
-    for k1 = keys(fields)
+    for k = keys(fields)
         j = 1
-        for (k2, a) = pairs(fields[k1])
-            g = fig[i, j]
-            title = string(k2)
-            _plot!(g, a, ; title, colormap, colorrange, algorithm, labels, kw...)
+        # for (k2, a) = pairs(fields[k1])
+        a = fields[k]
+        g = fig[i, j]
+        title = string(k)
+        _plot!(g, a, ; title, colormap, colorrange, algorithm, labels, kw...)
 
-            j += 1
-        end
+        # j += 1
         i += 1
     end
     if !isnothing(geometry)

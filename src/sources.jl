@@ -125,9 +125,13 @@ end
 function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
     @unpack f, center, lb, ub, normal, tangent, meta = s
     C = complex(F)
-    J = dict([:Jx => [C(0)], :Jy => [C(0)], :Jz => [C(0)]])
-    for k = keys(s.mode)
-        J[k] = s.mode[k]
+    J = OrderedDict()
+    for k = (:Jx, :Jy, :Jz)
+        if k in keys(s.mode)
+            J[k] = C.(s.mode[k])
+        else
+            J[k] = zeros(C, size(s.mode(1)))
+        end
     end
     J = values(J)
 
@@ -228,38 +232,41 @@ end
 # Complex
 apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...) = apply(v, t, kw)
 function apply(v::AbstractVector{<:SourceInstance}, t::Real, kw)
-    dict([
-        # sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k])
+    Porcupine.dict(Symbol, typeof(kw(1)), [
+        # k => sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k])
         k => begin
-
-            a = kw[k]
-            # gpu = isa(first(v).g, CuArray)
-            # if gpu
-            #     ignore() do
-            #         a = cpu(a)
-            #     end
-            # end
-            for s = v
-                if k in s.k
-                    mode = s._g[k]
-                    # if gpu
-                    #     ignore() do
-                    #         mode = cpu(mode)
-                    #     end
-                    # end
-                    a += real(s.f(t) .* mode)
-                end
-            end
-            # if gpu
-            #     ignore() do
-            #         a = gpu(a)
-            #     end
-            # end
-            a
+            as = [real(s.f(t) .* s._g[k]) for s = v if k in s.k]
+            isempty(as) ? kw[k] : kw[k] + sum(as)
         end
-        for k = keys(kw)
-        # end for (k, a) = pairs(kw)
-    ])
+        for k = keys(kw)])
+    # k => begin
+
+    #     a = kw[k]
+    #     # gpu = isa(first(v).g, CuArray)
+    #     # if gpu
+    #     #     ignore() do
+    #     #         a = cpu(a)
+    #     #     end
+    #     # end
+    #     for s = v
+    #         if k in s.k
+    #             mode = s._g[k]
+    #             # if gpu
+    #             #     ignore() do
+    #             #         mode = cpu(mode)
+    #             #     end
+    #             # end
+    #             a += real(s.f(t) .* mode)
+    #         end
+    #     end
+    #     # if gpu
+    #     #     ignore() do
+    #     #         a = gpu(a)
+    #     #     end
+    #     # end
+    #     a
+    # end
+    # # end for (k, a) = pairs(kw)
 end
 
 # function apply(d,t; kw...)

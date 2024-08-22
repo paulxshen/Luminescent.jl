@@ -1,4 +1,3 @@
-using Porcupine: keys, values
 function get_polarization(u)
     # u=flatten(u)
     if haskey(u, :E)
@@ -17,7 +16,8 @@ function get_polarization(u)
     nothing
 end
 function add_current_keys(d)
-    d = OrderedDict(pairs(d))
+    # d=OrderedDict
+    d = dict(pairs(d))
     add_current_keys!(d)
 end
 function add_current_keys!(d::AbstractDict)
@@ -29,8 +29,9 @@ function add_current_keys!(d::AbstractDict)
         if startswith(String(k), "H")
             d[Symbol("M" * String(k)[2:end])] = d[k]
         end
+
     end
-    NamedTuple(d)
+    d
 end
 """
     function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
@@ -42,6 +43,7 @@ Args
 """
 function setup(boundaries, sources, monitors, dx, sz;
     polarization=:TE,
+    geometry=OrderedDict(),
     # transient_duration=max_source_dist(sources), steady_state_duration=2,
     transient_duration=0, steady_state_duration=0,
     ϵ=1, μ=1, σ=0, m=0, F=Float32,
@@ -57,7 +59,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     dx, = F.((dx,))
 
     a = ones(F, Tuple(sz))
-    geometry = OrderedDict(pairs((; ϵ, μ, σ, m)))
+    geometry = dict((; ϵ, μ, σ, m) |> pairs)
     for (k, v) = pairs(geometry)
         if isa(v, Number)
             geometry[k] = a * geometry[k] |> F
@@ -76,8 +78,7 @@ function setup(boundaries, sources, monitors, dx, sz;
         if isempty(monitors)
             steady_state_duration = 4
         else
-            v = reduce(vcat, wavelengths.(monitors))
-            v = v |> Set |> collect |> sort |> reverse
+            v = reduce(vcat, wavelengths.(monitors)) |> Set |> collect |> sort |> reverse
             if length(v) == 1
                 steady_state_duration = 4
 
@@ -205,10 +206,8 @@ function setup(boundaries, sources, monitors, dx, sz;
                 l1 = round.(b.ramp_frac * l)
                 r1 = round.(b.ramp_frac * r)
                 if any(l1 .> 0) || any(r1 .> 0)
-                    # rr=ReplicateRamp(F(b.σ))
-                    rr = F(b.σ)
-                    push!(geometry_padding[:σ], OutPad(rr, l1, r1, sz))
-                    push!(geometry_padding[:m], OutPad(rr, l1, r1, sz))
+                    push!(geometry_padding[:σ], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
+                    push!(geometry_padding[:m], OutPad(ReplicateRamp(F(b.σ)), l1, r1, sz))
                 end
                 l2 = l - l1
                 r2 = r - r1
@@ -264,20 +263,30 @@ function setup(boundaries, sources, monitors, dx, sz;
     field_sizes = NamedTuple([k => Tuple(field_sizes[k]) for (k) = keys(field_sizes)])
     fields = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for (k) = field_names])
     if d == 1
+        pf = u -> [u[1] .* u[2]]
     elseif d == 3
-        u0 = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz, :Jx, :Jy, :Jz)])
+        u0 = NamedTuple([
+            :E => dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Ez)]),
+            :H => dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Hx, :Hy, :Hz)]),
+            :J => dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Jx, :Jy, :Jz)]),
+        ])
+        # u0 = [u[1:3], u[4:6]]
     else
         if polarization == :TM
-            u0 = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ez, :Hx, :Hy, :Jz)])
+            u -> [-u[1] .* u[3], u[2] .* u[1]]
         else
-            u0 = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Hz, :Jx, :Jy)])
+            u0 = NamedTuple([
+                :E => dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey)]),
+                :H => dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Hz,)]),
+                :J => dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Jx, :Jy)]),
+            ])
         end
     end
 
     geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padding[k]) do p
         p.l + p.r
     end for k = keys(geometry_padding)])
-    # subpixel_averaging = NamedTuple(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
+    # subpixel_averaging = dict(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
     subpixel_averaging = Dict{Symbol,Any}()
     field_grids = Dict{Symbol,Any}()
     for k = keys(geometry_sizes)
@@ -286,7 +295,7 @@ function setup(boundaries, sources, monitors, dx, sz;
         elseif k in (:ϵ, :σ)
             names = Enames
         end
-        v = NamedTuple([
+        v = dict([
             begin
                 xyz = f[2]
                 terminations = zip(is_field_on_lb[f], is_field_on_ub[f])
@@ -313,7 +322,6 @@ function setup(boundaries, sources, monitors, dx, sz;
         ])
         subpixel_averaging[k] = v
     end
-    subpixel_averaging = merge(values(subpixel_averaging)...)
 
     field_origin = NamedTuple([k => (1 - v) * dx / 2 - common_left_pad_amount * dx for (k, v) = pairs(is_field_on_lb)])
     field_origin = add_current_keys(field_origin)
@@ -346,10 +354,8 @@ function setup(boundaries, sources, monitors, dx, sz;
             ]
         end
     end
-
     geometry_padding = NamedTuple(geometry_padding)
     field_padding = NamedTuple(field_padding)
-
     if verbose
         @info """
      ====
@@ -380,14 +386,15 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
     transient_duration, steady_state_duration = F.((transient_duration, steady_state_duration))
-    (;
+    OrderedDict((;
         geometry_padding, field_padding, subpixel_averaging, field_grids,
         source_instances, monitor_instances, field_names,
         polarization, F, Courant,
         transient_duration, steady_state_duration,
         geometry, n=sqrt(ϵmax),
         # roi,
-        u0, fields, d, dx, dt, sz, kw...) |> pairs |> OrderedDict
+        u0, fields, d, dx, dt, sz, kw...) |> pairs)
 end
+
 update = update
 setup = setup

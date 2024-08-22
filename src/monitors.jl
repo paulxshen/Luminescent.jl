@@ -11,7 +11,7 @@ struct Monitor <: AbstractMonitor
     meta
 end
 
-wavelengths(m::Monitor) = keys(m.wavelength_modes)
+wavelengths(m::Monitor) = Porcupine.keys(m.wavelength_modes)
 
 """
     function Monitor(c, L; normal=nothing, label="")
@@ -56,8 +56,10 @@ mutable struct MonitorInstance <: AbstractMonitorInstance
 end
 @functor MonitorInstance (wavelength_modes,)
 Base.ndims(m::MonitorInstance) = m.d
-Base.size(m::MonitorInstance) = length.(m.i)
+# Base.size(m::MonitorInstance) = length.(m.i) |> Tuple
 area(m::MonitorInstance) = m.v
+wavelengths(m::MonitorInstance) = Porcupine.keys(m.wavelength_modes)
+
 
 Base.length(m::MonitorInstance) = 1
 
@@ -111,32 +113,41 @@ Args
 - `k`: symbol or str of Ex, Ey, Ez, Hx, Hy, Hz, |E|, |E|2, |H|, |H|2
 - `m`
 """
-function field(u, k, m=nothing)
-    if k == "|E|2"
-        sum(field.(u, (:Ex, :Ey, :Ez), (m,))) do a
-            a .|> abs2
-        end
-    elseif k == "|E|"
-        sqrt.(field(u, "|E|2", m))
-    elseif k == "|H|2"
-        sum(field.(u, (:Hx, :Hy, :Hz), (m,))) do a
-            a .|> abs2
-        end
-    elseif k == "|H|"
-        sqrt.(field(u, "|H|2", m))
-    else
-        a = u(k)
-        if isnothing(m)
-            return a
-        elseif isa(m, MonitorInstance)
-            return sum([w * a[i...] for (w, i) = m.roi[k]])
-        elseif isa(m, PointCloudMonitorInstance)
-            return [a[v...] for v = eachcol(m.roi[k])]
-        end
-    end
+function field(a::AbstractArray, k, m)
+    sum([w * a[i...] for (w, i) = m.roi[k]])
 end
 
-Base.getindex(a, k, m::MonitorInstance) = field(a, k, m)
+function field(u::Dictlike, k, m)
+    field(u(k), k, m)
+end
+
+#     if k == "|E|2"
+#         sum(field.(u, (:Ex, :Ey, :Ez), (m,))) do a
+#             a .|> abs2
+#         end
+#     elseif k == "|E|"
+#         sqrt.(field(u, "|E|2", m))
+#     elseif k == "|H|2"
+#         sum(field.(u, (:Hx, :Hy, :Hz), (m,))) do a
+#             a .|> abs2
+#         end
+#     elseif k == "|H|"
+#         sqrt.(field(u, "|H|2", m))
+#     else
+#         # a =field( u(k),k,m)
+#         # a = u[k[1]][k]
+#         # if isnothing(m)
+#         #     return a
+#         # elseif isa(m, MonitorInstance)
+#         #     return sum([w * a[i...] for (w, i) = m.roi[k]])
+#         # elseif isa(m, PointCloudMonitorInstance)
+#         #     return [a[v...] for v = eachcol(m.roi[k])]
+#         # end
+#     end
+# end
+
+Base.getindex(a::AbstractDict, k, m::MonitorInstance) = field(a, k, m)
+Base.getindex(a::NamedTuple, k, m::MonitorInstance) = field(a, k, m)
 
 """
     function flux(m::MonitorInstance, u)

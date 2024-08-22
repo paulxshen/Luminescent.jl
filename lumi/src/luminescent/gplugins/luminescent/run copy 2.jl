@@ -78,7 +78,7 @@ end
 #         end
 #         for (k, v) = pairs(d)
 #     ]) for (λ, d) = pairs(targets)])
-# g0 = (; ϵ=eps_2D, μ=ones(F, size(eps_2D)), σ=zeros(F, size(eps_2D)), σm=zeros(F, size(eps_2D)))
+# g0 = (; ϵ=eps_2D, μ=ones(F, size(eps_2D)), σ=zeros(F, size(eps_2D)), m=zeros(F, size(eps_2D)))
 function make_geometry(models, origin, dx, g0, designs, design_config; F=Float32)
     g = deepcopy(g0)
     dict([k => begin

@@ -53,19 +53,19 @@ sources = [GaussianBeam(t -> cos(F(2π) * t), 0.05f0, (0.0f0, common_left_pad_am
 @unpack geometry_padding, field_padding, source_instances, monitor_configs, save_idxs, fields =
     setup(boundaries, sources, monitors, L, dx, polarization; F)
 
-static_geometry = (; μ=ones(Int, dims), σ=zeros(Int, dims), σm=zeros(Int, dims))
+static_geometry = (; μ=ones(Int, dims), σ=zeros(Int, dims), m=zeros(Int, dims))
 geometry = (; ϵ, static_geometry...)
 geometry = apply(geometry_padding, geometry)
-@unpack ϵ, μ, σ, σm = geometry
+@unpack ϵ, μ, σ, m = geometry
 _dims = size(ϵ)
 
-p = comp_vec((:ϵ, :μ, :σ, :σm), Array.((ϵ, μ, σ, σm))...,)
+p = comp_vec((:ϵ, :μ, :σ, :m), Array.((ϵ, μ, σ, m))...,)
 
 ∇ = Del([dx, dx])
 function dudt(u, p, t)
-    ϵ, μ, σ, σm = eachslice(reshape(p, _dims..., 4), dims=3)
-    # @unpack ϵ, μ, σ, σm=m.p
-    ϵ, μ, σ, σm = [ϵ], [μ], [σ], [σm]
+    ϵ, μ, σ, m = eachslice(reshape(p, _dims..., 4), dims=3)
+    # @unpack ϵ, μ, σ, m=m.p
+    ϵ, μ, σ, m = [ϵ], [μ], [σ], [m]
 
     u = apply(source_instances, u, u.t)
     E, H, J = group.((u,), [:E, :H, :J])
@@ -76,7 +76,7 @@ function dudt(u, p, t)
     E += [dEzdt * dt]
 
     E_ = apply(field_padding, (; Ez=E[1]);)
-    dHxdt, dHydt = -(∇ × E_ + σm * H) / μ
+    dHxdt, dHydt = -(∇ × E_ + m * H) / μ
     dJzdt = zeros(Int, size(dEzdt))
     # ComponentArray((; Ez, Hx, Hy, Jz,))
     comp_vec((:Ez, :Hx, :Hy, :Jz, :t), dEzdt, dHxdt, dHydt, dJzdt, 1.0f0,)
@@ -92,9 +92,9 @@ function loss(model; withsol=false)
     ϵ = ϵ2 * b + ϵ1 * (1 .- b)
     geometry = (; ϵ, static_geometry...)
     geometry = apply(geometry_padding, geometry)
-    # @unpack ϵ, μ, σ, σm = geometry
+    # @unpack ϵ, μ, σ, m = geometry
 
-    # p = comp_vec((:ϵ, :μ, :σ, :σm), Array(ϵ), Array(μ), Array(σ), Array(σm),)
+    # p = comp_vec((:ϵ, :μ, :σ, :m), Array(ϵ), Array(μ), Array(σ), Array(m),)
     p = reduce(vcat, vec.(values(geometry)))
     # global sol = Array(solve(prob_neuralode, solver; dt, p,
     sol = solve(

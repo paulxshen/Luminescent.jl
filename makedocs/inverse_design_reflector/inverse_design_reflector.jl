@@ -100,8 +100,8 @@ if ongpu
     using Flux
     # using CUDA
     # @assert CUDA.functional()
-    u0, model, static_mask, μ, σ, σm, field_padding, source_instances =
-        gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))
+    u0, model, static_mask, μ, σ, m, field_padding, source_instances =
+        gpu.((u0, model, static_mask, μ, σ, m, field_padding, source_instances))
     merge!(prob, (; u0, field_padding, source_instances))
 end
 
@@ -113,9 +113,9 @@ function make_geometry(model, prob, dϵ=0)#; make3d=false)
     @unpack sz, geometry_padding, subpixel_averaging = prob
     μ = ones(F, sz)
     σ = zeros(F, sz)
-    σm = zeros(F, sz)
+    m = zeros(F, sz)
     # μ = 1
-    # σ = σm = 0
+    # σ = m = 0
 
 
     ϵ = static_mask * (ϵcore) + (1 .- static_mask) * ϵclad
@@ -130,7 +130,7 @@ function make_geometry(model, prob, dϵ=0)#; make3d=false)
         ϵ = sandwich(ϵ, round.(Int, [hbase, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
     end
 
-    p = apply(geometry_padding; ϵ, μ, σ, σm)
+    p = apply(geometry_padding; ϵ, μ, σ, m)
     p = apply(subpixel_averaging, p)
 end
 
@@ -280,8 +280,8 @@ sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 
 prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin, Courant=0.3)
 if ongpu
-    u0, model, static_mask, μ, σ, σm, field_padding, source_instances =
-        gpu.((u0, model, static_mask, μ, σ, σm, field_padding, source_instances))
+    u0, model, static_mask, μ, σ, m, field_padding, source_instances =
+        gpu.((u0, model, static_mask, μ, σ, m, field_padding, source_instances))
     merge!(prob, (; u0, field_padding, source_instances))
 end
 

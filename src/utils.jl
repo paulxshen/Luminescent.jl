@@ -31,31 +31,7 @@ end
 function apply(i::AbstractVector{<:AbstractRange}, a::AbstractArray)
     getindex(a, i...)
 end
-function mark(p, kw)
-    dict([k => mark(p[k], kw[k]) for k = keys(kw)])
-end
-function mark(p; kw...)
-    # [k => mark(p[k], kw[k]) for k = keys(kw)]
-    # [mark(p[k], kw[k]) for k = keys(kw)]
-    dict([k => mark(p[k], kw[k]) for k = keys(kw)])
-end
-function unmark(kw)
-    dict([k => array(kw[k]) for k = keys(kw)])
-end
-function unmark(; kw...)
-    dict([k => Array(kw[k]) for k = keys(kw)])
-    # [Array(kw[k]) for k = keys(kw)]
-    # [k => Array(kw[k]) for k = keys(kw)]
-end
-function mark(v::AbstractVector, a)
-    l = sum(v) do p
-        p.l
-    end
-    r = sum(v) do p
-        p.r
-    end
-    PaddedArray(a, l, r)
-end
+
 
 # Flux.gpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.gpu(d[k]) for k = keys(d)])
 # Flux.cpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.cpu(d[k]) for k = keys(d)])

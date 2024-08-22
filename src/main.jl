@@ -26,6 +26,7 @@ include("photonics.jl")
 include("gpu.jl")
 include("format.jl")
 include("dispersion.jl")
+include("c.jl")
 include("snapshot.jl")
 
 using Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, GPUArraysCore
@@ -34,5 +35,5 @@ using Zygote: withgradient, Buffer, ignore_derivatives
 using BSON: @save, @load, load
 # using AbbreviatedStackTraces
 
-include("gf.jl")
+# include("gf.jl")
 # include("main.jl")

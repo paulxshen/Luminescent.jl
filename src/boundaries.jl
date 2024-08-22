@@ -77,73 +77,21 @@ end
 # @functor OutPad
 
 
-function apply!(p::AbstractVector{<:InPad}, a::AbstractArray; nonzero_only=false)
-    if nonzero_only
-        p = filter(p) do p
-            p.b != 0
-        end
-    end
-    isempty(p) && return a
+# function apply!(p::AbstractVector{<:InPad}, a::AbstractArray; nonzero_only=false)
+#     if nonzero_only
+#         p = filter(p) do p
+#             p.b != 0
+#         end
+#     end
+#     isempty(p) && return a
 
-    for p = p
-        @unpack l, r, b, m = p
-        if isnothing(m)
-            pad!(a, b, l, r;)
-        else
-            a .= a .* m
-        end
-    end
-    a
-end
-function apply(p::AbstractVector{<:InPad}, a::AbstractArray; nonzero_only=false)
-    if nonzero_only
-        p = filter(p) do p
-            p.b != 0
-        end
-    end
-    isempty(p) && return a
-
-    if length(p) == 1 && !isnothing(p[1].m)
-        return a .* p[1].m
-    end
-
-    a_ = Buffer(a)
-    # a_ .= a
-    a_[axes(a)...] = a
-    for p = p
-        @unpack l, r, b, m = p
-        if isnothing(m)
-            pad!(a_, b, l, r;)
-        else
-            a_[axes(a)...] = a .* m
-        end
-    end
-
-    copy(a_)
-end
-
-function apply(v::AbstractVector{<:OutPad}, x::Real)
-    # for p = v
-    #     p.b != a && p.b != :replicate && error("cannot pad a constant with different values. it needs to be an array")
-    # end
-    # a
-    # apply(p,)
-    apply(v, x * ones(typeof(x), first(v).default_size))
-end
-function apply(p::AbstractVector{<:OutPad}, a)
-    # l = sum(getproperty.(p, :l))
-    # r = sum(getproperty.(p, :r))
-    # y = Buffer(a, Tuple(l .+ r .+ size(a)))
-    # y = place!(y, l .+ 1, a)
-    # for p = p
-    #     l -= p.l
-    #     r -= p.r
-    #     y = pad!(y, p.b, p.l, p.r, l, r)
-    # end
-    # copy(y)
-    for p = p
-        @unpack l, r, b = p
-        a = pad(a, b, l, r)
-    end
-    a
-end
+#     for p = p
+#         @unpack l, r, b, m = p
+#         if isnothing(m)
+#             pad!(a, b, l, r;)
+#         else
+#             a .= a .* m
+#         end
+#     end
+#     a
+# end

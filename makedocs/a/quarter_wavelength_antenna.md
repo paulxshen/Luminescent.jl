@@ -26,7 +26,7 @@ sz = nx .* (l, l, l)
 ϵ = ones(F, sz)
 μ = ones(F, sz)
 σ = zeros(F, sz)
-σm = zeros(F, sz)
+m = zeros(F, sz)
 ```
 Set Spherical monitor centered on ground. Portions outside domain eg bottom hemisphere are automatically discarded
 ```julia
@@ -43,7 +43,7 @@ sources = [
 prob = setup(boundaries, sources, monitors, dx, sz; F,)
 @unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
 
-p = apply(geometry_padding; ϵ, μ, σ, σm)
+p = apply(geometry_padding; ϵ, μ, σ, m)
 p = apply(subpixel_averaging, p)
 
 # move to gpu

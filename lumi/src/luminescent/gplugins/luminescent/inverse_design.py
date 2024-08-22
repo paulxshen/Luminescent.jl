@@ -27,7 +27,8 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[], preset=None,
                            void_layer=None,
                            layer_stack=LAYER_STACK, materials=MATERIALS,
                            contrast=20,
-                           plot=False, approx_2D=True, **kwargs):
+                           plot=False, approx_2D=True,
+                           restart=True, compression=False, **kwargs):
     design_region_layer = tuple(design_region_layer)
     if not approx_2D:
         raise NotImplementedError(
@@ -61,6 +62,8 @@ def inverse_design_problem(c,  lmin=.1, symmetries=[], preset=None,
                            study="inverse_design",
                            keys=keys,
                            approx_2D=approx_2D, ** kwargs)
+    prob["restart"] = restart
+    prob["compression"] = compression
     prob["preset"] = preset
     prob["targets"] = targets
     prob["wavelengths"] = wavelengths
