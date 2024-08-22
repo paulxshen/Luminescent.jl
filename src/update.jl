@@ -8,7 +8,6 @@ function update(u, p, t, dx, dt, field_padding, source_instances; autodiff=false
     ϵ, μ, σ, m = group.((p,), (:ϵ, :μ, :σ, :m))
     E, H, J = group.((u,), (:E, :H, :J))
     J0 = J
-    H0 = H
 
     J = apply(source_instances, t, J0)
     d = ndims(E(1))
@@ -26,35 +25,35 @@ function update(u, p, t, dx, dt, field_padding, source_instances; autodiff=false
         end
     end
 
-    # # E = apply_field_padding(field_padding, E; nonzero_only=true)
-    # H = unmark(H)
+    # E = apply_field_padding(field_padding, E; nonzero_only=true)
+    H = unmark(H)
 
-    # # then update H
-    # E = mark(field_padding, E)
-    # dHdt = -(∇ × E + m * H) / μ
-    # if autodiff
-    #     H = H + dHdt * dt
-    # else
-    #     for (a, b) = zip(values(H), values(dHdt))
-    #         a .= a + b * dt
-    #     end
-    # end
+    # then update H
+    E = mark(field_padding, E)
+    dHdt = -(∇ × E + m * H) / μ
+    if autodiff
+        H = H + dHdt * dt
+    else
+        for (a, b) = zip(Porcupine.values(H), Porcupine.values(dHdt))
+            a .= a + b * dt
+        end
+    end
 
-    # # H = apply(field_padding, H)
-    # # H = apply_field_padding(field_padding, H; nonzero_only=true)
-    # # global asdffsd1=H
-    # E = unmark(E)
+    # H = apply(field_padding, H)
+    # H = apply_field_padding(field_padding, H; nonzero_only=true)
+    # global asdffsd1=H
+    E = unmark(E)
 
-    # # [E, H]
-    # if compression
-    #     # return namedtuple([:E => E, :H => H, :J => J0]) 
-    #     # return namedtuple([:E => E, :H => H, :J => J0])
-    #     # return namedtuple([(:E, E), (:H, H), (:J, J0)])
-    #     # return namedtuple([[:E, E], [:H, H], [:J, J0]])
-    #     return (E, H, J)
-    # end
+    # [E, H]
+    if compression
+        # return namedtuple([:E => E, :H => H, :J => J0]) 
+        # return namedtuple([:E => E, :H => H, :J => J0])
+        # return namedtuple([(:E, E), (:H, H), (:J, J0)])
+        # return namedtuple([[:E, E], [:H, H], [:J, J0]])
+        return (E, H, J)
+    end
 
     # (E, H, J0)
-    merge(E, H0, J0)
+    merge(E, H, J0)
     # merge(E + σ, H + μ, J0)
 end

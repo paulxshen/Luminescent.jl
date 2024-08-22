@@ -24,9 +24,9 @@ end
 
 
 function apply_subpixel_averaging(sas, gs)
-    # sas = ignore_derivatives() do
-    #     sas
-    # end
+    sas = ignore_derivatives() do
+        sas
+    end
     if length(sas) == 6
         return (;
             ϵxx=_apply_subpixel_averaging(sas.ϵxx, gs.ϵ),

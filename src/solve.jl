@@ -1,5 +1,6 @@
 
 function solve(prob, geometry; autodiff=false, compression=false, ls=nothing, verbose=false, kwargs...)
+    # global _prob = prob
     @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
     p = apply_geometry_padding(geometry_padding, geometry)
@@ -34,11 +35,12 @@ function solve(prob, geometry; autodiff=false, compression=false, ls=nothing, ve
     if compression
         u, = adjoint_reduce(_f, 0:dt:T[1], (deepcopy(values(u0)),), p, ls)
     else
-        u = reduce(0:dt:T[1], init=u0) do u, t
-            update(u, p, t, dx, dt, field_padding, source_instances; autodiff, compression)
+        u, = reduce(0:dt:T[1], init=(u0, p)) do (u, p), t
+            u = update(u, p, t, dx, dt, field_padding, source_instances; autodiff, compression)
+            (u, p)
         end
     end
-    return sum.(u) |> sum
+    # return sum.(u) |> sum
     # mf0 = [[
     #     begin
     #         # E = zeros(complex(F), size(m))
@@ -80,7 +82,7 @@ function solve(prob, geometry; autodiff=false, compression=false, ls=nothing, ve
     if compression
         u, mf, = adjoint_reduce(_f, ts, (u, mf0), p, ls)
     else
-        u, mf = reduce(ts, init=(u, 0)) do (u, mf), t
+        u, mf = reduce(ts, init=(u, 0, p)) do (u, mf, p), t
             u = update(u, p, t, dx, dt, field_padding, source_instances; autodiff, compression)
             mf += dt / Δ[2] * [[
                 begin
@@ -91,7 +93,7 @@ function solve(prob, geometry; autodiff=false, compression=false, ls=nothing, ve
                     [E, H] * cispi(-2t / λ)
                 end for λ = wavelengths(m)
             ] for m = monitor_instances]
-            (u, mf)
+            (u, mf, p)
         end
     end
 
@@ -136,5 +138,6 @@ function solve(prob, geometry; autodiff=false, compression=false, ls=nothing, ve
     forward_mode_powers = [[v[3] for v = v] for v in v]
     reverse_mode_powers = [[v[4] for v = v] for v in v]
 
+    # return forward_mode_powers[1][1][1]
     return (; fields=u, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, ls)
 end

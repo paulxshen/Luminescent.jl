@@ -53,24 +53,27 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
                     if img == ""
                         img = "run$i.png"
                     end
-                    # try
-                    CairoMakie.save(joinpath(path, img), quickie(sol |> cpu, cpu(prob)),)
-                    # catch e
-                    #     println(e)
-                    # end
+                    try
+                        CairoMakie.save(joinpath(path, img), quickie(sol |> cpu, cpu(prob)),)
+                    catch e
+                        println("plot failed")
+                        println(e)
+                    end
                 end
             end
             sol
-        end #for prob in run_probs
+        end for prob in run_probs
         # end for (i, prob) in enumerate(run_probs)
     ]
+    # return sols[1].forward_mode_powers[1][1][1]
+    # return sols[1].mode_coeffs[1][1][1][1] |> abs2
 
     ls = sols[1].ls
     # return sol
     coeffs = OrderedDict()
     for (v, run) in zip(sols, runs)
-        sources = run.sources |> Base.values
-        monitors = run.monitors |> Base.values
+        sources = run.sources |> Porcupine.values
+        monitors = run.monitors |> Porcupine.values
         global aaaaaaa = v
         source_port = first(sources).port
         # source_mn = first(sources).wavelength_mode_numbers(1)[1]
@@ -79,19 +82,24 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
             for (λ, v) = zip(monitor.wavelength_mode_numbers |> keys, v)
                 for (monitor_mn, v) = zip(monitor.wavelength_mode_numbers[λ], v)
                     monitor_port = monitor.port
+                    λ = Symbol(λ)
                     if !haskey(coeffs, λ)
                         coeffs[λ] = OrderedDict()
                     end
-                    coeffs[λ][(Symbol("o$monitor_port@$monitor_mn," * "o$source_port@$source_mn"))] = v
+                    s = "o$monitor_port@$monitor_mn," * "o$source_port@$source_mn"
+                    s = Symbol(s)
+                    coeffs[λ][s] = v
                 end
             end
         end
     end
+    # return coeffs(1)(1)[1] |> abs2
 
-    sparams = OrderedDict([λ => OrderedDict([k => begin
+    global sparams = OrderedDict([λ => OrderedDict([k => begin
         s = ignore() do
             split(string(k), ",")[2]
         end
+        # Symbol(
         coeffs[λ][k][1] / coeffs[λ][Symbol("$s,$s")][2]
     end for (k) = keys(coeffs[λ])]) for (λ) = keys(coeffs)])
     # if source_mn == monitor_mn == 0
@@ -101,6 +109,7 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
         @show ls
         return sparams, ls
     end
+    # return sparams(1)(1) |> abs2
     sparams
 end
 
@@ -174,7 +183,7 @@ function make_geometry(models, origin, dx, g, designs, design_config; F=Float32,
 end
 function loss(params, targets, type=nothing)
     mean([
-        sum(zip(getindex.((yhat,), Symbol.(keys(y))), values(y))) do (yhat, y)
+        sum(zip(getindex.((yhat,), keys(y)), values(y))) do (yhat, y)
             r = y - yhat
             if type == :tparams && y == 1
                 return r
@@ -477,16 +486,22 @@ elseif study == "inverse_design"
     stop = false
     img = nothing
     best = best0 = 0
-    # S, ls = write_sparams(runs, run_probs, g0, path, origin, dx,
-    # designs, design_config, models;
-    # F, img, autodiff, compression, with=true)
+    S, ls = write_sparams(runs, run_probs, g0, path, origin, dx,
+        designs, design_config, models;
+        F, img, autodiff, compression, with=true)
+    # global ass = gradient(models) do models
+    #     write_sparams(runs, run_probs, g0, path, origin, dx,
+    #         designs, design_config, models;
+    #         F, img, autodiff, compression)
+    # end
+    # error()
 
-    prob = run_probs[1]
-    global aaaaa = gradient(g0) do geometry
-        # solve(prob, geometry; autodiff, compression, verbose).forward_mode_powers[1][1][1]
-        solve(prob, geometry; autodiff, compression, verbose)
-    end
-    error()
+    # prob = run_probs[1]
+    # global aaaaa = gradient(g0) do geometry
+    #     # solve(prob, geometry; autodiff, compression, verbose).forward_mode_powers[1][1][1]
+    #     solve(prob, geometry; autodiff, compression, verbose)
+    # end
+    # error()
 
     for i = 1:iters
         global virgin, stop, best, best0, sparams0
