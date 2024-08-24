@@ -1,4 +1,4 @@
-mirror_mode(m) = dict([k => k in (:Ex, :Hx) ? -reverse(m[k], dims=1) : m[k] for k in keys(m)])
+mirror_mode(m) = namedtuple([k => k in (:Ex, :Hx) ? -reverse(m[k], dims=1) : m[k] for k in keys(m)])
 
 # function normalize_mode(m, dx)
 function inner(u, v; dx=1)
@@ -25,7 +25,7 @@ end
 
 
 function keepxy(mode)
-    dict([k => mode[k] for k in keys(mode) if string(k)[2] ∈ ('x', 'y')])
+    namedtuple([k => mode[k] for k in keys(mode) if string(k)[2] ∈ ('x', 'y')])
 end
 
 

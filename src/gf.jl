@@ -194,6 +194,7 @@ function loss(params, targets, type=nothing)
     # mean([mae(values(yhat),values(y)) for (yhat,y)=zip(targets,[solve(prob;geometry) for prob=run_probs])])
 end
 
+using AbbreviatedStackTraces
 include("main.jl")
 path = lastrun()
 global virgin, stop, best, best0, sparams0
@@ -253,6 +254,7 @@ eps_3D = pad(eps_3D, :replicate, lr...)
 origin = components.device.bbox[1] - dx * (p * portsides[1])
 if study == "inverse_design"
     @load PROB_PATH designs targets preset eta iters restart compression design_config contrast
+    targets = fmap(F, targets)
     prob = load(PROB_PATH)
     minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
     if isfile(SOL_PATH)
@@ -468,6 +470,7 @@ end
 
 virgin = true
 # error()
+# Base.iterate(s::Symbol) = println(s)
 
 t0 = time()
 if study == "sparams"
@@ -479,6 +482,7 @@ if study == "sparams"
     sol = sparam_family(sparams)
 elseif study == "inverse_design"
     autodiff = true
+    # compression = true
     global sparams = sparams0 = 0
     opt = Adam(eta)
     opt_state = Flux.setup(opt, models)
@@ -488,7 +492,7 @@ elseif study == "inverse_design"
     best = best0 = 0
     S, ls = write_sparams(runs, run_probs, g0, path, origin, dx,
         designs, design_config, models;
-        F, img, autodiff, compression, with=true)
+        F, img, autodiff, with=true)
     # global ass = gradient(models) do models
     #     write_sparams(runs, run_probs, g0, path, origin, dx,
     #         designs, design_config, models;

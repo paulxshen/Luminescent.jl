@@ -1,3 +1,21 @@
+function f1(((u,), p, (dx, dt, field_padding, source_instances, autodiff)), t)
+    u = update(u, p, t, dx, dt, field_padding, source_instances; autodiff)
+    ((u,), p, (dx, dt, field_padding, source_instances, autodiff))
+end
+
+function f2(((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T, monitor_instances)), t)
+    u = update(u, p, t, dx, dt, field_padding, source_instances; autodiff)
+    mf += dt / T * [[
+        begin
+            E = group(u, :E)
+            E = field.((E,), keys(E), (m,))
+            H = group(u, :H)
+            H = field.((H,), keys(H), (m,))
+            [E, H] * cispi(-2t / λ)
+        end for λ = wavelengths(m)
+    ] for m = monitor_instances]
+    ((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T, monitor_instances))
+end
 
 function solve(prob, geometry; autodiff=false, compression=false, ls=nothing, verbose=false, kwargs...)
     # global _prob = prob
@@ -32,25 +50,14 @@ function solve(prob, geometry; autodiff=false, compression=false, ls=nothing, ve
     #     (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, compression),)
     # end
     # f = (u, t) -> _f(u, p, t)
+    init = ((u0,), p, (dx, dt, field_padding, source_instances, autodiff))
     if compression
-        u, = adjoint_reduce(_f, 0:dt:T[1], (deepcopy(values(u0)),), p, ls)
+        (u,), = adjoint_reduce(f1, 0:dt:T[1], init, ls)
     else
-        u, = reduce(0:dt:T[1], init=(u0, p)) do (u, p), t
-            u = update(u, p, t, dx, dt, field_padding, source_instances; autodiff, compression)
-            (u, p)
-        end
+        (u,), = reduce(f1, 0:dt:T[1]; init)
     end
     # return sum.(u) |> sum
-    # mf0 = [[
-    #     begin
-    #         # E = zeros(complex(F), size(m))
-    #         # H = zeros(complex(F), size(m))
-    #         E = [u[k, m] |> F for k = Enames]
-    #         H = [u[k, m] |> F for k = Hnames]
-    #         [E, H] * zero(complex(F))
-    #     end for λ = m.wavelength_modes |> keys]
-    #        for m = monitor_instances
-    # ]
+
     # _f = ((u, mf), p, t) ->
     #     begin
     #         dmf = [[
@@ -78,23 +85,24 @@ function solve(prob, geometry; autodiff=false, compression=false, ls=nothing, ve
     #         (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, compression), mf,)
     #     end
     # f = (u, t) -> _f(u, p, t)
+    mf0 = ignore_derivatives() do
+        [[
+            begin
+                E = group(u, :E)
+                E = field.((E,), keys(E), (m,))
+                H = group(u, :H)
+                H = field.((H,), keys(H), (m,))
+                [E, H] * zero(complex(F))
+            end for λ = wavelengths(m)
+        ] for m = monitor_instances]
+    end
     ts = T[1]+dt:dt:T[2]
+    init = ((u, mf0), p, (dx, dt, field_padding, source_instances, autodiff), (Δ[2], monitor_instances))
+
     if compression
-        u, mf, = adjoint_reduce(_f, ts, (u, mf0), p, ls)
+        (u, mf), = adjoint_reduce(f2, ts, init, ls)
     else
-        u, mf = reduce(ts, init=(u, 0, p)) do (u, mf, p), t
-            u = update(u, p, t, dx, dt, field_padding, source_instances; autodiff, compression)
-            mf += dt / Δ[2] * [[
-                begin
-                    E = group(u, :E)
-                    E = field.((E,), keys(E), (m,))
-                    H = group(u, :H)
-                    H = field.((H,), keys(H), (m,))
-                    [E, H] * cispi(-2t / λ)
-                end for λ = wavelengths(m)
-            ] for m = monitor_instances]
-            (u, mf, p)
-        end
+        (u, mf), = reduce(f2, ts; init)
     end
 
     ls = ignore_derivatives() do

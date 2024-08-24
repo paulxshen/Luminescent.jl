@@ -27,26 +27,26 @@ function apply_subpixel_averaging(sas, gs)
     sas = ignore_derivatives() do
         sas
     end
-    if length(sas) == 6
-        return (;
-            ϵxx=_apply_subpixel_averaging(sas.ϵxx, gs.ϵ),
-            ϵyy=_apply_subpixel_averaging(sas.ϵyy, gs.ϵ),
-            μzz=_apply_subpixel_averaging(sas.μzz, gs.μ),
-            σxx=_apply_subpixel_averaging(sas.σxx, gs.σ),
-            σyy=_apply_subpixel_averaging(sas.σyy, gs.σ),
-            mzz=_apply_subpixel_averaging(sas.mzz, gs.m),)
-    end
-    (; ϵxx=_apply_subpixel_averaging(sas.ϵxx, gs.ϵ),
-        ϵyy=_apply_subpixel_averaging(sas.ϵyy, gs.ϵ),
-        ϵzz=_apply_subpixel_averaging(sas.ϵzz, gs.ϵ),
-        μxx=_apply_subpixel_averaging(sas.μxx, gs.μ),
-        μyy=_apply_subpixel_averaging(sas.μyy, gs.μ),
-        μzz=_apply_subpixel_averaging(sas.μzz, gs.μ),
-        σxx=_apply_subpixel_averaging(sas.σxx, gs.σ),
-        σyy=_apply_subpixel_averaging(sas.σyy, gs.σ),
-        σzz=_apply_subpixel_averaging(sas.σzz, gs.σ), mxx=_apply_subpixel_averaging(sas.mxx, gs.m),
-        myy=_apply_subpixel_averaging(sas.myy, gs.m),
-        mzz=_apply_subpixel_averaging(sas.mzz, gs.m),)
+    # if length(sas) == 6
+    #     return (;
+    #         ϵxx=_apply_subpixel_averaging(sas.ϵxx, gs.ϵ),
+    #         ϵyy=_apply_subpixel_averaging(sas.ϵyy, gs.ϵ),
+    #         μzz=_apply_subpixel_averaging(sas.μzz, gs.μ),
+    #         σxx=_apply_subpixel_averaging(sas.σxx, gs.σ),
+    #         σyy=_apply_subpixel_averaging(sas.σyy, gs.σ),
+    #         mzz=_apply_subpixel_averaging(sas.mzz, gs.m),)
+    # end
+    # (; ϵxx=_apply_subpixel_averaging(sas.ϵxx, gs.ϵ),
+    #     ϵyy=_apply_subpixel_averaging(sas.ϵyy, gs.ϵ),
+    #     ϵzz=_apply_subpixel_averaging(sas.ϵzz, gs.ϵ),
+    #     μxx=_apply_subpixel_averaging(sas.μxx, gs.μ),
+    #     μyy=_apply_subpixel_averaging(sas.μyy, gs.μ),
+    #     μzz=_apply_subpixel_averaging(sas.μzz, gs.μ),
+    #     σxx=_apply_subpixel_averaging(sas.σxx, gs.σ),
+    #     σyy=_apply_subpixel_averaging(sas.σyy, gs.σ),
+    #     σzz=_apply_subpixel_averaging(sas.σzz, gs.σ), mxx=_apply_subpixel_averaging(sas.mxx, gs.m),
+    #     myy=_apply_subpixel_averaging(sas.myy, gs.m),
+    #     mzz=_apply_subpixel_averaging(sas.mzz, gs.m),)
 
     # gks = ignore_derivatives() do
     #     getindex.(keys(sas), 1)
@@ -72,9 +72,9 @@ function apply_subpixel_averaging(sas, gs)
     #     end
     # end for ((k, sa), a) = zip(pairs(sas), getindex.((gs,), gks))])
     # end for k = keys(sas)])
-    # namedtuple([k => apply(sas[k], Porcupine.values(gs)[findfirst(keys(gs)) do gk
-    #     startswith(string(k), string(gk))
-    # end]) for k = keys(sas)])
+    namedtuple([k => _apply_subpixel_averaging(sas[k], values(gs)[findfirst(keys(gs)) do gk
+        startswith(string(k), string(gk))
+    end]) for k = keys(sas)])
 end
 
 
@@ -87,15 +87,15 @@ function _apply_geometry_padding(p::AbstractVector{<:OutPad}, a)
 end
 
 function apply_geometry_padding(gps, gs)
-    (;
-        ϵ=_apply_geometry_padding(gps.ϵ, gs.ϵ),
-        μ=_apply_geometry_padding(gps.μ, gs.μ),
-        σ=_apply_geometry_padding(gps.σ, gs.σ),
-        m=_apply_geometry_padding(gps.m, gs.m),)
+    # (;
+    #     ϵ=_apply_geometry_padding(gps.ϵ, gs.ϵ),
+    #     μ=_apply_geometry_padding(gps.μ, gs.μ),
+    #     σ=_apply_geometry_padding(gps.σ, gs.σ),
+    #     m=_apply_geometry_padding(gps.m, gs.m),)
     # global _gps = gps
     # global _gs = gs
     # dict([(k, apply(gps[k], gs[k])) for k = Porcupine.keys(gs)])
-    # namedtuple([k => _apply_geometry_padding(gps[k], gs[k]) for k = keys(gs)])
+    namedtuple([k => _apply_geometry_padding(gps[k], gs[k]) for k = keys(gs)])
     # dict([k => _apply_geometry_padding(gps[k], gs[k]) for k = keys(gs)])
     # namedtuple(r)
     # v = Porcupine.values(gs)

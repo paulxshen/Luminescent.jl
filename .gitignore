@@ -1,4 +1,5 @@
 /temp
+/_temp
 /recycle
 /.venv
 /*.gif
@@ -12,7 +13,8 @@ docs/build/
 *.*.pyc
 *.pyo
 temp.png
-/_temp
+_.png
+/*.mp4
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -4,7 +4,10 @@
 
 Updates fields. mutating if autodiff is false
 """
-function update(u, p, t, dx, dt, field_padding, source_instances; autodiff=false, compression=false)
+function update(u, p, t, dx, dt, field_padding, source_instances; autodiff=false)
+    # t, dx, dt, field_padding, source_instances, autodiff, compression = ignore_derivatives() do
+    #     t, dx, dt, field_padding, source_instances, autodiff, compression
+    # end
     ϵ, μ, σ, m = group.((p,), (:ϵ, :μ, :σ, :m))
     E, H, J = group.((u,), (:E, :H, :J))
     J0 = J
@@ -44,16 +47,6 @@ function update(u, p, t, dx, dt, field_padding, source_instances; autodiff=false
     # global asdffsd1=H
     E = unmark(E)
 
-    # [E, H]
-    if compression
-        # return namedtuple([:E => E, :H => H, :J => J0]) 
-        # return namedtuple([:E => E, :H => H, :J => J0])
-        # return namedtuple([(:E, E), (:H, H), (:J, J0)])
-        # return namedtuple([[:E, E], [:H, H], [:J, J0]])
-        return (E, H, J)
-    end
-
-    # (E, H, J0)
     merge(E, H, J0)
     # merge(E + σ, H + μ, J0)
 end
