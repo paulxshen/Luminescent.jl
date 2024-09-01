@@ -1639,9 +1639,9 @@ version = "1.4.3"
 
 [[deps.Porcupine]]
 deps = ["ArrayPadding", "ChainRulesCore", "DataStructures", "Functors", "LinearAlgebra", "Statistics", "UnPack", "Zygote"]
-git-tree-sha1 = "b320a0c5ee2dbc55154b67efe0e26bfe1be8ec73"
+git-tree-sha1 = "f0f3e16ba0952a2115a2cf074e3161f7673a8b59"
 uuid = "3b53a3d7-3f34-4bba-8df2-4717a8b1e972"
-version = "0.1.41"
+version = "0.1.42"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
