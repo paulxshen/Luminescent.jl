@@ -1,6 +1,4 @@
-
 using Luminescent, Random
-names(Luminescent)
 Random.seed!(1)
 if isempty(ARGS)
     path = lastrun()
@@ -8,13 +6,10 @@ if isempty(ARGS)
 else
     path = ARGS[1]
 end
-# gfrun(path; Courant=0.5)
 sol = gfrun(path)
-# @show sol.tparams
-# # Pkg.resolve()
+@show sol.tparams
 
 # using Pkg
-# pkg"dev https://github.com/paulxshen/Luminescent.jl"
 # pkg"add Porcupine,Jello,ArrayPadding;up"
 
 # using Pkg
