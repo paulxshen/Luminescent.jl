@@ -12,6 +12,7 @@ docs/build/
 *.pyc
 *.*.pyc
 *.pyo
+_*.py
 temp.png
 _.png
 /*.mp4

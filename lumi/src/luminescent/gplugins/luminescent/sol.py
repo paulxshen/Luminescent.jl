@@ -148,7 +148,7 @@ def load_solution(path=None, study="",):
         l = [np.array(d) for d in sol["optimized_designs"]]
         sol["optimized_designs"] = l
         for i, a in enumerate(l):
-            Image.fromarray(np.uint8(a * 255),
+            Image.fromarray(np.uint8((1-a) * 255),
                             'L').save(os.path.join(path, f"design{i+1}.png"))
             pic2gds(os.path.join(path, f"design{i+1}.png"), sol["dx"])
         pass

@@ -115,7 +115,7 @@ version = "7.15.0"
 
 [[deps.ArrayPadding]]
 deps = ["Functors", "GPUArraysCore", "Lazy", "Statistics"]
-git-tree-sha1 = "83d963e89b7918b47b2241d08eadc338fc50d8a6"
+path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\ArrayPadding.jl"
 uuid = "fe5ef43c-4912-423d-9170-4bd5cb6a013a"
 version = "0.1.28"
 
@@ -1075,7 +1075,7 @@ version = "0.21.4"
 
 [[deps.Jello]]
 deps = ["ArrayPadding", "ChainRulesCore", "FFTW", "Flux", "Functors", "ImageMorphology", "ImageTransformations", "LinearAlgebra", "NNlib", "Porcupine", "Random", "SparseArrays", "Statistics", "UnPack", "Zygote"]
-git-tree-sha1 = "c53ba6795ab376d08c5832a76a868846c2d1b412"
+path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Jello.jl"
 uuid = "6872b481-e419-48a0-81d2-be4ee5684529"
 version = "0.1.16"
 
@@ -1630,9 +1630,9 @@ version = "1.4.3"
 
 [[deps.Porcupine]]
 deps = ["ArrayPadding", "ChainRulesCore", "DataStructures", "Functors", "LinearAlgebra", "Statistics", "UnPack", "Zygote"]
-git-tree-sha1 = "a9f8458d719d05afe6d1719b464e8ef3cd73f8bd"
+path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Porcupine.jl"
 uuid = "3b53a3d7-3f34-4bba-8df2-4717a8b1e972"
-version = "0.1.38"
+version = "0.1.40"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]

@@ -106,12 +106,14 @@ function solve(prob, geometry; autodiff=false, compression=false, ls=nothing, ve
     end
 
     ls = ignore_derivatives() do
-        vcat(extrema.(leaves(u)), [
+        map(vcat(extrema.(leaves(u)), [
             begin
                 c = maximum(abs.(a))
                 (-c, c)
             end for a = leaves(mf)
-        ])
+        ])) do l
+            l[1] == l[2] ? (-1, 1) : l
+        end
     end
 
     v = map(mf, monitor_instances) do mf, m

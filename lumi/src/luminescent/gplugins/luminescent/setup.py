@@ -32,7 +32,7 @@ def setup(c, study,   dx, margin,
           exclude_layers=[
               DESIGN_LAYER, GUESS], approx_2D=False, Courant=None,
           gpu=None, dtype=np.float32,
-          path=RUNS_PATH, plot=False, **kwargs):
+          path=RUNS_PATH, plot=False, magic="", **kwargs):
     if type(bbox_layer[0]) is int:
         bbox_layer = (bbox_layer,)
     prob = dict()
@@ -41,6 +41,7 @@ def setup(c, study,   dx, margin,
     prob["timestamp"] = datetime.datetime.now().isoformat(
         timespec="seconds").replace(":", "-")
     prob["name"] = name
+    prob["magic"] = magic
     prob["gpu_backend"] = gpu if gpu else ""
     ports = {
         p.name: {
@@ -63,6 +64,7 @@ def setup(c, study,   dx, margin,
         # hcore = round(d.thickness/dx)*dx
         zlims = [zcore, zcore+hcore]
     thickness = zlims[1]-zlims[0]
+    prob["thickness"] = thickness
 
     a = min([min([materials[d.material].epsilon for d in get_layers(
         layer_stack, l)]) for l in bbox_layer])
