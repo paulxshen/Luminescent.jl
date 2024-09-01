@@ -4,7 +4,7 @@ using ArrayPadding: left, right
 using Zygote
 using CairoMakie
 
-using Porcupine: keys, values, fmap
+using Porcupine: keys, values, fmap, first
 using Porcupine
 using ArrayPadding
 include("constants.jl")
