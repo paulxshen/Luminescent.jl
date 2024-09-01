@@ -14,7 +14,8 @@ sol = gfrun(path)
 # # Pkg.resolve()
 
 # using Pkg
-# pkg"add https://github.com/paulxshen/Luminescent.jl,Porcupine,Jello,ArrayPadding;up"
+# pkg"dev https://github.com/paulxshen/Luminescent.jl"
+# pkg"add Porcupine,Jello,ArrayPadding;up"
 
 # using Pkg
 # pkg"dev C:\Users\pxshe\OneDrive\Desktop\Porcupine.jl;dev C:\Users\pxshe\OneDrive\Desktop\ArrayPadding.jl; dev C:\Users\pxshe\OneDrive\Desktop\Jello.jl;dev C:\Users\pxshe\OneDrive\Desktop\Luminescent.jl;up"
