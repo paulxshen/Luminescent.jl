@@ -17,12 +17,11 @@ function f2(((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T
     ((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T, monitor_instances))
 end
 
-function solve(prob, geometry; autodiff=false, compression=false, ls=nothing, verbose=false, kwargs...)
+function solve(prob, ; autodiff=false, compression=false, ls=nothing, verbose=false, kwargs...)
     # global _prob = prob
-    @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
+    @unpack dx, dt, u0, geometry, field_padding, geometry_padding, subpixel_averaging, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
     p = apply_geometry_padding(geometry_padding, geometry)
-    # global asdffsd = p
     p = apply_subpixel_averaging(subpixel_averaging, p)
     # return p.ϵxx |> sum
 

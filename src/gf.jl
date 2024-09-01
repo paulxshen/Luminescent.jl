@@ -5,7 +5,6 @@ Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float32,Int32}) = true
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float16,Int32}) = true
 Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float32,Int32}) = true
 Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float16,Int32}) = true
-# using Porcupine: keys, values, first
 
 function julia_main()::Cint
     if !isempty(ARGS)
@@ -14,7 +13,6 @@ function julia_main()::Cint
     end
     return 0
 end
-# add Dates, DataStructures, JSON, Images, BSON,Flux,CUDA
 function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
     l = filter(isdir, readdir(path, join=true))
     sort!(l)
@@ -32,21 +30,17 @@ function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
     end
 end
 
-function write_sparams(runs, run_probs, g, path, origin, dx,
+function write_sparams(runs, run_probs, geometry, path, origin, dx,
     designs=nothing, design_config=nothing, models=nothing;
     img=nothing, autodiff=false, compression=false, verbose=false, perturb=nothing, with=false, ls=nothing, kw...)
     F = run_probs[1].F
-    geometry = make_geometry(models, origin, dx, g, designs, design_config; F, perturb)
+    geometry = make_geometry(models, origin, dx, geometry, designs, design_config; F, perturb)
 
-    i = 1
-
-
-    global sols = [
+    sols = [
         begin
-            # prob[:geometry] = geometry
-            # prob = merge(prob, (; geometry,))
+            prob[:geometry] = geometry
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
-            sol = solve(prob, geometry; autodiff, ls, compression, verbose)
+            sol = solve(prob; autodiff, ls, compression, verbose)
 
             ignore() do
                 if !isnothing(img)
@@ -62,7 +56,7 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
                 end
             end
             sol
-        end for prob in run_probs
+        end for (i, prob) in enumerate(run_probs)
         # end for (i, prob) in enumerate(run_probs)
     ]
     # return sols[1].forward_mode_powers[1][1][1]
@@ -190,7 +184,6 @@ end
 # global virgin, stop, best, best0, sparams0
 function gfrun(path; kw...)
     println("setting up simulation...")
-    # do something based on ARGS?
     PROB_PATH = joinpath(path, "prob.bson")
     SOL_PATH = joinpath(path, "sol.json")
 
@@ -199,9 +192,7 @@ function gfrun(path; kw...)
     tol = 1e-3
     dosave = false
     verbose = false
-    #=
-    We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
-    =#
+
     @load PROB_PATH name dtype margin zmargin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin thickness zcore gpu_backend d magic
     F = Float32
     if contains(dtype, "16")
@@ -438,7 +429,6 @@ function gfrun(path; kw...)
                     verbose,)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]
-    const g0 = run_probs[1].geometry
 
     if !isempty(gpu_backend)
         println("using $gpu_backend backend.")
@@ -456,6 +446,7 @@ function gfrun(path; kw...)
     else
         println("using CPU backend.")
     end
+    g0 = run_probs[1].geometry
 
     virgin = true
     # error()
@@ -504,7 +495,7 @@ function gfrun(path; kw...)
 
         for i = 1:iters
             # for i = 1:20
-            global virgin, stop, best, best0, sparams0
+            # global virgin, stop, best, best0, sparams0
             global img = if virgin
                 virgin = false
                 "before.png"
@@ -519,6 +510,7 @@ function gfrun(path; kw...)
                         F, img, autodiff, compression, ls)
                     l = 0
                     for k = keys(targets)
+                        print("losses ")
                         y = targets[k]
                         err = -
                         if :phasediff == k
@@ -551,7 +543,7 @@ function gfrun(path; kw...)
                         print("$(k): $_l ")
                         l += _l
                     end
-                    println("\n$i loss $l\n")
+                    println("\n($i) weighted total loss $l\n")
                     l
                 end
             elseif "phase_shifter" == preset.name

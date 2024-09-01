@@ -1,17 +1,12 @@
 using Humanize: digitsep
 using UnPack, LinearAlgebra, Statistics, Random, Jello, Functors, DataStructures, GPUArraysCore
-# using Meshes: Sphere
 using ArrayPadding: left, right
 using Zygote
 using CairoMakie
-# Random.seed!(1)ImageIO,ImageTransformations,
 
 using Porcupine: keys, values, fmap
 using Porcupine
 using ArrayPadding
-# include("../../Porcupine.jl/src/main.jl")
-# include("../../ArrayPadding.jl/src/main.jl")
-# include("../../Jello.jl/src/main.jl")
 include("constants.jl")
 include("utils.jl")
 include("modes.jl")
@@ -33,7 +28,7 @@ using Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, GPUArraysCore
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer, ignore_derivatives
 using BSON: @save, @load, load
+include("gf.jl")
 # using AbbreviatedStackTraces
 
-# include("gf.jl")
 # include("main.jl")
