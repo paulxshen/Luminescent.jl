@@ -111,12 +111,12 @@ function solve(prob, ; autodiff=false, compression=false, ls=nothing, verbose=fa
                 (-c, c)
             end for a = leaves(mf)
         ])) do l
-            l[1] == l[2] ? (-1, 1) : l
+            l[1] == l[2] ? F.((-1, 1)) : l
         end
     end
 
     v = map(mf, monitor_instances) do mf, m
-        map(mf, values(m.wavelength_modes)) do u, wm
+        map(mf, wavelengths(m)) do u, λ
             E, H = u
             if d == 2
                 if polarization == :TE
@@ -136,17 +136,24 @@ function solve(prob, ; autodiff=false, compression=false, ls=nothing, verbose=fa
                 mode = (; Ex, Ey, Ez, Hx, Hy, Hz)
             end
             # mode = keepxy(mode)
-            c = mode_decomp.(wm, (mode,), dx)
-            fp = [abs(v[1])^2 for v = c]
-            rp = [abs(v[2])^2 for v = c]
-            mode, c, fp, rp
+            fp = rp = c = nothing
+            if !isnothing(m.wavelength_modes)
+                wm = m.wavelength_modes[λ]
+                c = mode_decomp.(wm, (mode,), dx)
+                fp = [abs(v[1])^2 for v = c]
+                rp = [abs(v[2])^2 for v = c]
+            end
+
+            p = flux(mode, m)
+            mode, c, fp, rp, p
         end
     end
     modes = [[v[1] for v = v] for v in v]
     mode_coeffs = [[v[2] for v = v] for v in v]
     forward_mode_powers = [[v[3] for v = v] for v in v]
     reverse_mode_powers = [[v[4] for v = v] for v in v]
+    power_fluxes = [[v[5] for v = v] for v in v]
 
     # return forward_mode_powers[1][1][1]
-    return (; fields=u, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, ls)
+    return (; fields=u, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, power_fluxes, ls)
 end

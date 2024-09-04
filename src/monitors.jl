@@ -54,7 +54,7 @@ mutable struct MonitorInstance <: AbstractMonitorInstance
 
     wavelength_modes
 end
-@functor MonitorInstance (wavelength_modes,)
+@functor MonitorInstance (wavelength_modes, normal)
 Base.ndims(m::MonitorInstance) = m.d
 # Base.size(m::MonitorInstance) = length.(m.i) |> Tuple
 area(m::MonitorInstance) = m.v
@@ -155,12 +155,11 @@ Base.getindex(a::NamedTuple, k, m::MonitorInstance) = field(a, k, m)
  Poynting flux profile passing thru monitor 
 """
 function flux(u, m::MonitorInstance)
-    d = ndims(m)
-    E = [u[k, m] for k = keys(u[:E])]
-    H = [u[k, m] for k = keys(u[:H])]
+    E = group(u, :E)
+    H = group(u, :H)
 
     # (E × H) ⋅ normal(m)
-    sum((E × H) .* normal(m))
+    sum((E × conj.(H)) .* normal(m))
 end
 
 """

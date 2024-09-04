@@ -26,16 +26,19 @@ targets = {"tparams": {
 # c.show()
 # # raise ValueError("stop here")
 
-for (approx_2D, gpu, dtype, ) in itertools.product(
+for (approx_2D, gpu, dtype, compression) in itertools.product(
     [True,],
     # [None, "CUDA"],
     [None, ],
     ["f32"],
     # ["f32", "f16"],
+    [True, False],
 ):
     prob = lumi.inverse_design_problem(
         c, targets,
         bbox_layer=LAYER.WAFER,
-        lmin=0.2, dx=0.1, iters=2, approx_2D=approx_2D, gpu=gpu, dtype=dtype, run=False)
+        lmin=0.2, dx=0.1, iters=3,
+        approx_2D=approx_2D, gpu=gpu, dtype=dtype, compression=compression,
+        run=False)
     sol = lumi.solve(prob, run=False)
     sleep(1)

@@ -543,7 +543,7 @@ function gfrun(path; kw...)
                         print("$(k): $_l ")
                         l += _l
                     end
-                    println("\n($i) weighted total loss $l\n")
+                    println("\n($i) weighted total loss $l")
                     l
                 end
             elseif "phase_shifter" == preset.name
@@ -588,6 +588,7 @@ function gfrun(path; kw...)
                     best0 = best
                 end
             end
+            println("")
         end
         println("Done in $(time() - t0) .")
         for (i, (m, d)) = enumerate(zip(models, designs))

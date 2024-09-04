@@ -118,7 +118,7 @@ function ChainRulesCore.rrule(config::RuleConfig{>:HasReverseMode}, ::typeof(adj
 
             # global _szs, _file = szs, file
             as = map(unstuff(A, szs, origins), ls) do a, (α, β)
-                α + (β - α) / 255 * a
+                α + (β - α) / 255 * a |> T
             end
             # as = _ass[i]
 

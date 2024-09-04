@@ -7,7 +7,7 @@ else
     path = ARGS[1]
 end
 sol = gfrun(path)
-@show sol.tparams
+# @show sol.tparams
 
 # using Pkg
 # pkg"add Porcupine,Jello,ArrayPadding;up"
