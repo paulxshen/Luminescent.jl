@@ -85,9 +85,9 @@ version = "0.4.0"
 
 [[deps.ArrayInterface]]
 deps = ["Adapt", "LinearAlgebra"]
-git-tree-sha1 = "f54c23a5d304fb87110de62bace7777d59088c34"
+git-tree-sha1 = "3640d077b6dafd64ceb8fd5c1ec76f7ca53bcf76"
 uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
-version = "7.15.0"
+version = "7.16.0"
 
     [deps.ArrayInterface.extensions]
     ArrayInterfaceBandedMatricesExt = "BandedMatrices"
@@ -115,9 +115,9 @@ version = "7.15.0"
 
 [[deps.ArrayPadding]]
 deps = ["Functors", "GPUArraysCore", "Lazy", "Statistics"]
-path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\ArrayPadding.jl"
+git-tree-sha1 = "4e70ea8f6463e8ef108b451cd7ab454a732f894c"
 uuid = "fe5ef43c-4912-423d-9170-4bd5cb6a013a"
-version = "0.1.28"
+version = "0.1.29"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -376,14 +376,14 @@ uuid = "ed09eef8-17a6-5b46-8889-db040fac31e3"
 version = "0.3.2"
 
 [[deps.ConstructionBase]]
-deps = ["LinearAlgebra"]
-git-tree-sha1 = "a33b7ced222c6165f624a3f2b55945fac5a598d9"
+git-tree-sha1 = "76219f1ed5771adbb096743bff43fb5fdd4c1157"
 uuid = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
-version = "1.5.7"
-weakdeps = ["IntervalSets", "StaticArrays"]
+version = "1.5.8"
+weakdeps = ["IntervalSets", "LinearAlgebra", "StaticArrays"]
 
     [deps.ConstructionBase.extensions]
     ConstructionBaseIntervalSetsExt = "IntervalSets"
+    ConstructionBaseLinearAlgebraExt = "LinearAlgebra"
     ConstructionBaseStaticArraysExt = "StaticArrays"
 
 [[deps.ContextVariablesX]]
@@ -452,9 +452,9 @@ version = "0.1.2"
 
 [[deps.DelaunayTriangulation]]
 deps = ["AdaptivePredicates", "EnumX", "ExactPredicates", "Random"]
-git-tree-sha1 = "b5f1c6532d2ea71e99b74231b0a3d53fba846ced"
+git-tree-sha1 = "46f12daa85e5acc0ea5d5f9f8c3f1fc679e0f7e5"
 uuid = "927a84f5-c5f4-47a5-9785-b46e178433df"
-version = "1.1.3"
+version = "1.2.0"
 
 [[deps.DelimitedFiles]]
 deps = ["Mmap"]
@@ -728,11 +728,16 @@ git-tree-sha1 = "ab29216184312f99ff957b32cd63c2fe9c928b91"
 uuid = "61eb1bfa-7361-4325-ad38-22787b887f55"
 version = "0.26.7"
 
+[[deps.GeoFormatTypes]]
+git-tree-sha1 = "59107c179a586f0fe667024c5eb7033e81333271"
+uuid = "68eda718-8dee-11e9-39e7-89f7f65f511f"
+version = "0.4.2"
+
 [[deps.GeoInterface]]
-deps = ["Extents"]
-git-tree-sha1 = "9fff8990361d5127b770e3454488360443019bb3"
+deps = ["Extents", "GeoFormatTypes"]
+git-tree-sha1 = "5921fc0704e40c024571eca551800c699f86ceb4"
 uuid = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
-version = "1.3.5"
+version = "1.3.6"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "Extents", "GeoInterface", "IterTools", "LinearAlgebra", "StaticArrays", "StructArrays", "Tables"]
@@ -1003,15 +1008,16 @@ weakdeps = ["Unitful"]
 
 [[deps.IntervalArithmetic]]
 deps = ["CRlibm_jll", "MacroTools", "RoundingEmulator"]
-git-tree-sha1 = "433b0bb201cd76cb087b017e49244f10394ebe9c"
+git-tree-sha1 = "01fa84a20be8c7c867edf3b9ef33ac15f4089c1a"
 uuid = "d1acc4aa-44c8-5952-acd4-ba5d80a2a253"
-version = "0.22.14"
-weakdeps = ["DiffRules", "ForwardDiff", "RecipesBase"]
+version = "0.22.15"
+weakdeps = ["DiffRules", "ForwardDiff", "IntervalSets", "RecipesBase"]
 
     [deps.IntervalArithmetic.extensions]
     IntervalArithmeticDiffRulesExt = "DiffRules"
     IntervalArithmeticForwardDiffExt = "ForwardDiff"
     IntervalArithmeticRecipesBaseExt = "RecipesBase"
+    IntervalArithmeticsIntervalSetsExt = "IntervalSets"
 
 [[deps.IntervalSets]]
 git-tree-sha1 = "dba9ddf07f77f60450fe5d2e2beb9854d9a49bd0"
@@ -1062,9 +1068,9 @@ version = "1.0.0"
 
 [[deps.JLD2]]
 deps = ["FileIO", "MacroTools", "Mmap", "OrderedCollections", "PrecompileTools", "Requires", "TranscodingStreams"]
-git-tree-sha1 = "049950edff105ff73918d29dbf109220ff364157"
+git-tree-sha1 = "a0746c21bdc986d0dc293efa6b1faee112c37c28"
 uuid = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
-version = "0.4.52"
+version = "0.4.53"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]
@@ -1080,7 +1086,7 @@ version = "0.21.4"
 
 [[deps.Jello]]
 deps = ["ArrayPadding", "ChainRulesCore", "FFTW", "Flux", "Functors", "ImageMorphology", "ImageTransformations", "LinearAlgebra", "NNlib", "Porcupine", "Random", "SparseArrays", "Statistics", "UnPack", "Zygote"]
-path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Jello.jl"
+git-tree-sha1 = "c53ba6795ab376d08c5832a76a868846c2d1b412"
 uuid = "6872b481-e419-48a0-81d2-be4ee5684529"
 version = "0.1.16"
 
@@ -1408,10 +1414,10 @@ uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 version = "2023.1.10"
 
 [[deps.NNlib]]
-deps = ["Adapt", "Atomix", "ChainRulesCore", "GPUArraysCore", "KernelAbstractions", "LinearAlgebra", "Pkg", "Random", "Requires", "Statistics"]
-git-tree-sha1 = "ae52c156a63bb647f80c26319b104e99e5977e51"
+deps = ["Adapt", "Atomix", "ChainRulesCore", "GPUArraysCore", "KernelAbstractions", "LinearAlgebra", "Random", "Statistics"]
+git-tree-sha1 = "4a83c2e01027a0bfcea28589222f2df60b2e20cb"
 uuid = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
-version = "0.9.22"
+version = "0.9.23"
 
     [deps.NNlib.extensions]
     NNlibAMDGPUExt = "AMDGPU"
@@ -1419,12 +1425,14 @@ version = "0.9.22"
     NNlibCUDAExt = "CUDA"
     NNlibEnzymeCoreExt = "EnzymeCore"
     NNlibFFTWExt = "FFTW"
+    NNlibForwardDiffExt = "ForwardDiff"
 
     [deps.NNlib.weakdeps]
     AMDGPU = "21141c5a-9bdb-4563-92ae-f87d6854732e"
     CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
     EnzymeCore = "f151be2c-9106-41f4-ab19-57ee4f262869"
     FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+    ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
     cuDNN = "02a925ec-e4fe-4b08-9a7e-0d78e3d38ccd"
 
 [[deps.NVTX]]
@@ -1523,9 +1531,9 @@ version = "0.8.1+2"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "a028ee3cb5641cccc4c24e90c36b0a4f7707bdf5"
+git-tree-sha1 = "1b35263570443fdd9e76c76b7062116e2f374ab8"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
-version = "3.0.14+0"
+version = "3.0.15+0"
 
 [[deps.OpenSpecFun_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
@@ -1645,9 +1653,9 @@ version = "1.4.3"
 
 [[deps.Porcupine]]
 deps = ["ArrayPadding", "ChainRulesCore", "DataStructures", "Functors", "LinearAlgebra", "Statistics", "UnPack", "Zygote"]
-path = "C:\\Users\\pxshe\\OneDrive\\Desktop\\Porcupine.jl"
+git-tree-sha1 = "1784031faf9e37b6d5081498fb54bbb411b786fd"
 uuid = "3b53a3d7-3f34-4bba-8df2-4717a8b1e972"
-version = "0.1.40"
+version = "0.1.43"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
