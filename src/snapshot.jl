@@ -46,11 +46,11 @@ function _plot!(g, a, ; colorrange=nothing, title="", labels=[], colormap=:seism
     end
 end
 function quickie(sol, prob; kw...)
-    @unpack fields, geometry = sol |> cpu
+    @unpack u, p = sol |> cpu
     @unpack monitor_instances, source_instances = prob |> cpu
     fig = Figure()
-    fields = (; Hz=fields.Hz)
-    geometry = (; ϵ=geometry.ϵ)
+    fields = (; Hz=u.Hz)
+    geometry = (; ϵ=p.ϵxx)
     colorrange = (-1, 1) .* maximum(maximum.(a -> abs.(real(a)), leaves(fields)))
     colormap = :seismic
     algorithm = :absorption

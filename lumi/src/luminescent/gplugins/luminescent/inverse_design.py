@@ -29,7 +29,7 @@ def inverse_design_problem(c,  targets=dict(), preset=None,
                            layer_stack=LAYER_STACK, materials=MATERIALS,
                            contrast=20,
                            plot=False, approx_2D=True,
-                           restart=True, lowmem=True, **kwargs):
+                           restart=True, lowmem=False, **kwargs):
     design_region_layer = tuple(design_region_layer)
     # if not approx_2D:
     #     raise NotImplementedError(

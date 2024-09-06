@@ -150,16 +150,18 @@ function solve(prob, ; autodiff=false, lowmem=false, ulims=nothing, verbose=fals
     um = [[v[1] for v = v] for v in v]
     ap = [[getindex.(v[2], 1) for v = v] for v in v]
     am = [[getindex.(v[2], 2) for v = v] for v in v]
-    return Solution(u, ulims, um, ap, am)
+    return Solution(u, p, ulims, um, ap, am)
 end
 
 struct Solution
     u
+    p
     ulims
     um
     ap
     am
 end
+@functor Solution
 
 function (s::Solution)(k, m, w=1, mn=0)
     @unpack u, ulims, um, ap, am = s
