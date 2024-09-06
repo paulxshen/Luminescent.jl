@@ -32,7 +32,7 @@ end
 
 function write_sparams(runs, run_probs, geometry, path, origin, dx,
     designs=nothing, design_config=nothing, models=nothing;
-    img=nothing, autodiff=false, compression=false, verbose=false, perturb=nothing, with=false, ls=nothing, kw...)
+    img=nothing, autodiff=false, lowmem=false, verbose=false, perturb=nothing, with=false, ulims=nothing, kw...)
     F = run_probs[1].F
     geometry = make_geometry(models, origin, dx, geometry, designs, design_config; F, perturb)
 
@@ -40,7 +40,7 @@ function write_sparams(runs, run_probs, geometry, path, origin, dx,
         begin
             prob[:geometry] = geometry
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
-            sol = solve(prob; autodiff, ls, compression, verbose)
+            sol = solve(prob; autodiff, ulims, lowmem, verbose)
 
             ignore() do
                 if !isnothing(img)
@@ -62,27 +62,26 @@ function write_sparams(runs, run_probs, geometry, path, origin, dx,
     # return sols[1].forward_mode_powers[1][1][1]
     # return sols[1].mode_coeffs[1][1][1][1] |> abs2
 
-    ls = sols[1].ls
+    ulims = sols[1].ulims
     # return sol
     coeffs = OrderedDict()
-    for (v, run) in zip(sols, runs)
+    for (sol, run) in zip(sols, runs)
         sources = run.sources |> Porcupine.values
         monitors = run.monitors |> Porcupine.values
-        global aaaaaaa = v
         source_port = first(sources).port
         # source_mn = first(sources).wavelength_mode_numbers(1)[1]
         source_mn = first(sources).wavelength_mode_numbers |> Porcupine.first |> Porcupine.first
-        for (monitor, v) = zip(monitors, v.mode_coeffs)
-            for (λ, v) = zip(monitor.wavelength_mode_numbers |> keys, v)
-                for (monitor_mn, v) = zip(monitor.wavelength_mode_numbers[λ], v)
+        for (m, monitor) = enumerate(monitors)
+            for (w, λ) = enumerate(keys(monitor.wavelength_mode_numbers))
+                for mn = monitor.wavelength_mode_numbers[λ]
                     monitor_port = monitor.port
                     λ = Symbol(λ)
                     if !haskey(coeffs, λ)
                         coeffs[λ] = OrderedDict()
                     end
-                    s = "o$monitor_port@$monitor_mn," * "o$source_port@$source_mn"
+                    s = "o$monitor_port@$mn," * "o$source_port@$source_mn"
                     s = Symbol(s)
-                    coeffs[λ][s] = v
+                    coeffs[λ][s] = (sol("a+", m, w, mn), sol("a-", m, w, mn))
                 end
             end
         end
@@ -96,12 +95,12 @@ function write_sparams(runs, run_probs, geometry, path, origin, dx,
         # Symbol(
         coeffs[λ][k][1] / coeffs[λ][Symbol("$s,$s")][2]
     end for (k) = keys(coeffs[λ])]) for (λ) = keys(coeffs)])
-    # if source_mn == monitor_mn == 0
+    # if source_mn == mn == 0
     #     coeffs[λ]["$monitor_port,$source_port")] = v
     # end
     if with
-        @show ls
-        return sparams, ls
+        @show ulims
+        return sparams, ulims
     end
     # return sparams(1)(1) |> abs2
     sparams
@@ -233,7 +232,7 @@ function gfrun(path; kw...)
     # heatmap(eps_3D[round(size(eps_3D, 1) / 2), :, :]) |> display
     origin = components.device.bbox[1] - dx * (p * portsides[1])
     if study == "inverse_design"
-        @load PROB_PATH designs targets weights preset eta iters restart compression design_config contrast
+        @load PROB_PATH designs targets weights preset eta iters restart lowmem design_config contrast
         targets = fmap(F, targets)
         prob = load(PROB_PATH)
         minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
@@ -467,7 +466,7 @@ function gfrun(path; kw...)
             end
         end
         autodiff = true
-        # compression = true
+        # lowmem = true
         global sparams = sparams0 = 0
         opt = Adam(eta)
         opt_state = Flux.setup(opt, models)
@@ -475,24 +474,24 @@ function gfrun(path; kw...)
         stop = false
         global img = nothing
         best = best0 = 0
-        S, ls = write_sparams(runs, run_probs, g0, path, origin, dx,
+        S, ulims = write_sparams(runs, run_probs, g0, path, origin, dx,
             designs, design_config, models;
             F, img, autodiff, with=true)
         # heatmap(_as[3])
         # global ass = gradient(models) do models
         #     write_sparams(runs, run_probs, g0, path, origin, dx,
         #         designs, design_config, models;
-        #         F, img, autodiff, compression)
+        #         F, img, autodiff, lowmem)
         # end
         # error()
 
         # prob = run_probs[1]
         # global aaaaa = gradient(g0) do geometry
-        #     # solve(prob, geometry; autodiff, compression, verbose).forward_mode_powers[1][1][1]
-        #     solve(prob, geometry; autodiff, compression, verbose)
+        #     # solve(prob, geometry; autodiff, lowmem, verbose).forward_mode_powers[1][1][1]
+        #     solve(prob, geometry; autodiff, lowmem, verbose)
         # end
         # error()
-
+        println("")
         for i = 1:iters
             # for i = 1:20
             # global virgin, stop, best, best0, sparams0
@@ -507,10 +506,10 @@ function gfrun(path; kw...)
                     # sols = get_sols(runs, run_probs, g0, path, origin, dx,
                     S = write_sparams(runs, run_probs, g0, path, origin, dx,
                         designs, design_config, models;
-                        F, img, autodiff, compression, ls)
+                        F, img, autodiff, lowmem, ulims)
                     l = 0
                     for k = keys(targets)
-                        print("losses ")
+                        print("($i) losses ")
                         y = targets[k]
                         err = -
                         if :phasediff == k
@@ -543,20 +542,20 @@ function gfrun(path; kw...)
                         print("$(k): $_l ")
                         l += _l
                     end
-                    println("\n($i) weighted total loss $l")
+                    println("\n weighted total loss $l")
                     l
                 end
             elseif "phase_shifter" == preset.name
                 @time l, (dldm,) = Flux.withgradient(models) do m
                     S = write_sparams(runs, run_probs, g0, path, origin, dx,
                         designs, design_config, m;
-                        F, img, autodiff, compression, ls)#(1)(1)
+                        F, img, autodiff, lowmem, ulims)#(1)(1)
                     k = keys(S) |> first
                     s = S[k][Symbol("o2@0,o1@0")]
 
                     S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
                         designs, design_config, m;
-                        F, img, autodiff, compression, perturb=:ϵ, ls)#(1)(1)
+                        F, img, autodiff, lowmem, perturb=:ϵ, ulims)#(1)(1)
                     s_ = S_[k][Symbol("o2@0,o1@0")]
 
                     T = abs2(s)

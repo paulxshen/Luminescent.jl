@@ -16,8 +16,8 @@ targets = {"tparams": {
 # prob = lumi.inverse_design_problem(
 #     c, targets,
 #     # bbox_layer=LAYER.WAFER,
-#     # lmin=0.2, dx=0.1, iters=2, eta=10., approx_2D=False, compression=True)  # gpu="CUDA", dev=True)
-#     lmin=0.2, dx=0.1, iters=2, approx_2D=True, compression=False)  # gpu="CUDA", dev=True)
+#     # lmin=0.2, dx=0.1, iters=2, eta=10., approx_2D=False, lowmem=True)  # gpu="CUDA", dev=True)
+#     lmin=0.2, dx=0.1, iters=2, approx_2D=True, lowmem=False)  # gpu="CUDA", dev=True)
 # # lmin=0.2, dx=0.1, iters=2, eta=10., approx_2D=True, gpu="CUDA", dev=True)
 # sol = lumi.solve(prob, )
 # # sol = lumi.finetune(2)
@@ -26,7 +26,7 @@ targets = {"tparams": {
 # c.show()
 # # raise ValueError("stop here")
 
-for (approx_2D, gpu, dtype, compression) in itertools.product(
+for (approx_2D, gpu, dtype, lowmem) in itertools.product(
     [True,],
     # [None, "CUDA"],
     [None, ],
@@ -38,7 +38,7 @@ for (approx_2D, gpu, dtype, compression) in itertools.product(
         c, targets,
         bbox_layer=LAYER.WAFER,
         lmin=0.2, dx=0.1, iters=3,
-        approx_2D=approx_2D, gpu=gpu, dtype=dtype, compression=compression,
+        approx_2D=approx_2D, gpu=gpu, dtype=dtype, lowmem=lowmem,
         run=False)
     sol = lumi.solve(prob, run=False)
     sleep(1)

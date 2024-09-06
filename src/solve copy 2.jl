@@ -1,5 +1,5 @@
 
-function solve(prob; autodiff=false, compression=false, ls=nothing, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, _time=true,
+function solve(prob; autodiff=false, lowmem=false, ulims=nothing, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, _time=true,
     cpu=identity, gpu=identity, kwargs...)
     @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
@@ -43,11 +43,11 @@ function solve(prob; autodiff=false, compression=false, ls=nothing, history=noth
             end
             i += 1
         end
-        (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, compression),)
+        (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, lowmem),)
     end
     f = (u, t) -> _f(u, p, t)
-    if compression
-        u, = adjoint_reduce(_f, 0:dt:T[1], (deepcopy(values(u0)),), p, ls)
+    if lowmem
+        u, = adjoint_reduce(_f, 0:dt:T[1], (deepcopy(values(u0)),), p, ulims)
     else
         u, = reduce(f, 0:dt:T[1], init=(deepcopy(u0),))
     end
@@ -77,7 +77,7 @@ function solve(prob; autodiff=false, compression=false, ls=nothing, history=noth
             mode_fields_ = [
                 [
                     begin
-                        if compression
+                        if lowmem
                             E = [field(u[1][k], k, m) for k = Enames]
                             H = [field(u[2][k], k, m) for k = Hnames]
                         else
@@ -106,15 +106,15 @@ function solve(prob; autodiff=false, compression=false, ls=nothing, history=noth
             # end
 
             (
-                update(u, p, t, dx, dt, field_padding, source_instances; autodiff, compression),
+                update(u, p, t, dx, dt, field_padding, source_instances; autodiff, lowmem),
                 mode_fields,
                 # tp + dt / Δ[2] * tp_,
             )
         end
     f = (u, t) -> _f(u, p, t)
     ts = T[1]+dt:dt:T[2]
-    if compression
-        u, mode_fields, = adjoint_reduce(_f, ts, (u, mf0), p, ls)
+    if lowmem
+        u, mode_fields, = adjoint_reduce(_f, ts, (u, mf0), p, ulims)
     else
         u, mode_fields, = reduce(f, ts, init=(u, 0))
     end
@@ -124,7 +124,7 @@ function solve(prob; autodiff=false, compression=false, ls=nothing, history=noth
     #     println("simulation took: ", time() - clock, "s")
     # end
 
-    ls = ignore_derivatives() do
+    ulims = ignore_derivatives() do
         vcat(extrema.(leaves(u)), [
             begin
                 c = maximum(abs.(a))
@@ -168,5 +168,5 @@ function solve(prob; autodiff=false, compression=false, ls=nothing, history=noth
     fields = u
     # @show forward_mode_powers, reverse_mode_powers, total_powers
     # return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, total_powers)
-    return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, ls)
+    return (; fields, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, ulims)
 end

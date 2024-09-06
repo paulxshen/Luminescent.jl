@@ -4,7 +4,7 @@
 
 Updates fields. mutating if autodiff is false
 """
-function update(u, p, t, dx, dt, field_padding, source_instances; autodiff=false, compression=false)
+function update(u, p, t, dx, dt, field_padding, source_instances; autodiff=false, lowmem=false)
     @unpack ϵ, μ, σ, m = p
     # ϵ, μ, σ, m = Ref.([ϵ, μ, σ, m])
     E, H, J0 = unroll(u, :E, :H, :J)
@@ -45,7 +45,7 @@ function update(u, p, t, dx, dt, field_padding, source_instances; autodiff=false
     E = unmark(E)
 
     # [E, H]
-    if compression
+    if lowmem
         # return NamedTuple([:E => E, :H => H, :J => J0]) 
         # return namedtuple([:E => E, :H => H, :J => J0])
         # return namedtuple([(:E, E), (:H, H), (:J, J0)])

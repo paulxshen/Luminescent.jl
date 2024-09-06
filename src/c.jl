@@ -53,7 +53,7 @@ end
 really(a::AbstractArray{<:Complex}) = vcat(real(a), imag(a))
 really(a) = a
 
-function _adjoint_reduce(f, ts, y, ls)
+function _adjoint_reduce(f, ts, y, ulims)
     # encoder_options = (crf=23, preset="medium")
     encoder_options = (;)
     framerate = 24
@@ -79,7 +79,7 @@ function _adjoint_reduce(f, ts, y, ls)
             end)
             # push!(_ass, reduce(vcat, leaves.(us)))
 
-            A, = stuff(map(as, ls) do a, (α, β)
+            A, = stuff(map(as, ulims) do a, (α, β)
                 a = round.((a - α) / (β - α) * 255)
                 a = max.(0, a)
                 a = min.(255, a)
@@ -97,11 +97,11 @@ function _adjoint_reduce(f, ts, y, ls)
 end
 adjoint_reduce(a...) = _adjoint_reduce(a...)[1]
 
-function ChainRulesCore.rrule(config::RuleConfig{>:HasReverseMode}, ::typeof(adjoint_reduce), f, ts, y, ls,)
+function ChainRulesCore.rrule(config::RuleConfig{>:HasReverseMode}, ::typeof(adjoint_reduce), f, ts, y, ulims,)
     args = y[3:end]
     T = eltype(ts)
     us, p = y
-    y, szs, origins, depth, file, sz0 = _adjoint_reduce(f, ts, y, ls,)
+    y, szs, origins, depth, file, sz0 = _adjoint_reduce(f, ts, y, ulims,)
 
     function adjoint_reduce_pullback(ūs)
         t̄s = zeros(T, length(ts))
@@ -117,7 +117,7 @@ function ChainRulesCore.rrule(config::RuleConfig{>:HasReverseMode}, ::typeof(adj
             A = stack([reinterpret(UInt8, read(vr)) for (_,) = zip(1:depth,)])
 
             # global _szs, _file = szs, file
-            as = map(unstuff(A, szs, origins), ls) do a, (α, β)
+            as = map(unstuff(A, szs, origins), ulims) do a, (α, β)
                 α + (β - α) / 255 * a |> T
             end
             # as = _ass[i]

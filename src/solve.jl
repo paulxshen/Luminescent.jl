@@ -17,7 +17,7 @@ function f2(((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T
     ((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T, monitor_instances))
 end
 
-function solve(prob, ; autodiff=false, compression=false, ls=nothing, verbose=false, kwargs...)
+function solve(prob, ; autodiff=false, lowmem=false, ulims=nothing, verbose=false, kwargs...)
     # global _prob = prob
     @unpack dx, dt, u0, geometry, field_padding, geometry_padding, subpixel_averaging, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
@@ -46,12 +46,12 @@ function solve(prob, ; autodiff=false, compression=false, ls=nothing, verbose=fa
 
     # i = 0
     # _f = ((u,), p, t) -> begin
-    #     (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, compression),)
+    #     (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, lowmem),)
     # end
     # f = (u, t) -> _f(u, p, t)
     init = ((u0,), p, (dx, dt, field_padding, source_instances, autodiff))
-    if compression
-        (u,), = adjoint_reduce(f1, 0:dt:T[1], init, ls)
+    if lowmem
+        (u,), = adjoint_reduce(f1, 0:dt:T[1], init, ulims)
     else
         (u,), = reduce(f1, 0:dt:T[1]; init)
     end
@@ -81,7 +81,7 @@ function solve(prob, ; autodiff=false, compression=false, ls=nothing, verbose=fa
     #         #         end
     #         #     end
     #         # end
-    #         (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, compression), mf,)
+    #         (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, lowmem), mf,)
     #     end
     # f = (u, t) -> _f(u, p, t)
     mf0 = ignore_derivatives() do
@@ -98,13 +98,13 @@ function solve(prob, ; autodiff=false, compression=false, ls=nothing, verbose=fa
     ts = T[1]+dt:dt:T[2]
     init = ((u, mf0), p, (dx, dt, field_padding, source_instances, autodiff), (Δ[2], monitor_instances))
 
-    if compression
-        (u, mf), = adjoint_reduce(f2, ts, init, ls)
+    if lowmem
+        (u, mf), = adjoint_reduce(f2, ts, init, ulims)
     else
         (u, mf), = reduce(f2, ts; init)
     end
 
-    ls = ignore_derivatives() do
+    ulims = ignore_derivatives() do
         map(vcat(extrema.(leaves(u)), [
             begin
                 c = maximum(abs.(a))
@@ -144,16 +144,36 @@ function solve(prob, ; autodiff=false, compression=false, ls=nothing, verbose=fa
                 rp = [abs(v[2])^2 for v = c]
             end
 
-            p = flux(mode, m)
-            mode, c, fp, rp, p
+            mode, c
         end
     end
-    modes = [[v[1] for v = v] for v in v]
-    mode_coeffs = [[v[2] for v = v] for v in v]
-    forward_mode_powers = [[v[3] for v = v] for v in v]
-    reverse_mode_powers = [[v[4] for v = v] for v in v]
-    power_fluxes = [[v[5] for v = v] for v in v]
+    um = [[v[1] for v = v] for v in v]
+    ap = [[getindex.(v[2], 1) for v = v] for v in v]
+    am = [[getindex.(v[2], 2) for v = v] for v in v]
+    return Solution(u, ulims, um, ap, am)
+end
 
-    # return forward_mode_powers[1][1][1]
-    return (; fields=u, geometry, modes, mode_coeffs, forward_mode_powers, reverse_mode_powers, power_fluxes, ls)
+struct Solution
+    u
+    ulims
+    um
+    ap
+    am
+end
+
+function (s::Solution)(k, m, w=1, mn=0)
+    @unpack u, ulims, um, ap, am = s
+    if k == "a+"
+        return s.ap[m][w][mn+1]
+    elseif k == "a-"
+        return s.am[m][w][mn+1]
+    elseif k == "P_TE"
+        return flux(um[m][w], :TE)
+    elseif k == "P_TM"
+        return flux(um[m][w], :TM)
+    elseif k == "P"
+        return flux(um[m][w])
+    elseif k == "um"
+        return um[m][w]
+    end
 end
