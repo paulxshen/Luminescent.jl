@@ -29,7 +29,7 @@ def inverse_design_problem(c,  targets=dict(), preset=None,
                            layer_stack=LAYER_STACK, materials=MATERIALS,
                            contrast=20,
                            plot=False, approx_2D=True,
-                           restart=True, lowmem=False, **kwargs):
+                           restart=True, save_memory=False, **kwargs):
     design_region_layer = tuple(design_region_layer)
     # if not approx_2D:
     #     raise NotImplementedError(
@@ -70,7 +70,7 @@ def inverse_design_problem(c,  targets=dict(), preset=None,
         "sparams": 1,
         "phasediff": 1,
     }, **weights}
-    prob["lowmem"] = lowmem
+    prob["save_memory"] = save_memory
     prob["preset"] = preset
     prob["targets"] = targets
     prob["wavelengths"] = wavelengths

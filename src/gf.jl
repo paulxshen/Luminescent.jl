@@ -32,7 +32,7 @@ end
 
 function write_sparams(runs, run_probs, geometry, path, origin, dx,
     designs=nothing, design_config=nothing, models=nothing;
-    img=nothing, autodiff=false, lowmem=false, verbose=false, perturb=nothing, with=false, ulims=nothing, kw...)
+    img=nothing, autodiff=false, save_memory=false, verbose=false, perturb=nothing, with=false, ulims=nothing, kw...)
     F = run_probs[1].F
     geometry = make_geometry(models, origin, dx, geometry, designs, design_config; F, perturb)
 
@@ -40,7 +40,7 @@ function write_sparams(runs, run_probs, geometry, path, origin, dx,
         begin
             prob[:geometry] = geometry
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
-            sol = solve(prob; autodiff, ulims, lowmem, verbose)
+            sol = solve(prob; autodiff, ulims, save_memory, verbose)
 
             ignore() do
                 if !isnothing(img)
@@ -232,7 +232,7 @@ function gfrun(path; kw...)
     # heatmap(eps_3D[round(size(eps_3D, 1) / 2), :, :]) |> display
     origin = components.device.bbox[1] - dx * (p * portsides[1])
     if study == "inverse_design"
-        @load PROB_PATH designs targets weights preset eta iters restart lowmem design_config contrast
+        @load PROB_PATH designs targets weights preset eta iters restart save_memory design_config contrast
         targets = fmap(F, targets)
         prob = load(PROB_PATH)
         minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
@@ -466,7 +466,7 @@ function gfrun(path; kw...)
             end
         end
         autodiff = true
-        # lowmem = true
+        # save_memory = true
         global sparams = sparams0 = 0
         opt = Adam(eta)
         opt_state = Flux.setup(opt, models)
@@ -481,14 +481,14 @@ function gfrun(path; kw...)
         # global ass = gradient(models) do models
         #     write_sparams(runs, run_probs, g0, path, origin, dx,
         #         designs, design_config, models;
-        #         F, img, autodiff, lowmem)
+        #         F, img, autodiff, save_memory)
         # end
         # error()
 
         # prob = run_probs[1]
         # global aaaaa = gradient(g0) do geometry
-        #     # solve(prob, geometry; autodiff, lowmem, verbose).forward_mode_powers[1][1][1]
-        #     solve(prob, geometry; autodiff, lowmem, verbose)
+        #     # solve(prob, geometry; autodiff, save_memory, verbose).forward_mode_powers[1][1][1]
+        #     solve(prob, geometry; autodiff, save_memory, verbose)
         # end
         # error()
         println("")
@@ -506,7 +506,7 @@ function gfrun(path; kw...)
                     # sols = get_sols(runs, run_probs, g0, path, origin, dx,
                     S = write_sparams(runs, run_probs, g0, path, origin, dx,
                         designs, design_config, models;
-                        F, img, autodiff, lowmem, ulims)
+                        F, img, autodiff, save_memory, ulims)
                     l = 0
                     for k = keys(targets)
                         print("($i) losses ")
@@ -549,13 +549,13 @@ function gfrun(path; kw...)
                 @time l, (dldm,) = Flux.withgradient(models) do m
                     S = write_sparams(runs, run_probs, g0, path, origin, dx,
                         designs, design_config, m;
-                        F, img, autodiff, lowmem, ulims)#(1)(1)
+                        F, img, autodiff, save_memory, ulims)#(1)(1)
                     k = keys(S) |> first
                     s = S[k][Symbol("o2@0,o1@0")]
 
                     S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
                         designs, design_config, m;
-                        F, img, autodiff, lowmem, perturb=:ϵ, ulims)#(1)(1)
+                        F, img, autodiff, save_memory, perturb=:ϵ, ulims)#(1)(1)
                     s_ = S_[k][Symbol("o2@0,o1@0")]
 
                     T = abs2(s)

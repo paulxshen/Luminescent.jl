@@ -17,7 +17,7 @@ function f2(((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T
     ((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T, monitor_instances))
 end
 
-function solve(prob, ; autodiff=false, lowmem=false, ulims=nothing, verbose=false, kwargs...)
+function solve(prob, ; autodiff=false, save_memory=false, ulims=nothing, verbose=false, kwargs...)
     # global _prob = prob
     @unpack dx, dt, u0, geometry, field_padding, geometry_padding, subpixel_averaging, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
@@ -46,11 +46,11 @@ function solve(prob, ; autodiff=false, lowmem=false, ulims=nothing, verbose=fals
 
     # i = 0
     # _f = ((u,), p, t) -> begin
-    #     (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, lowmem),)
+    #     (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, save_memory),)
     # end
     # f = (u, t) -> _f(u, p, t)
     init = ((u0,), p, (dx, dt, field_padding, source_instances, autodiff))
-    if lowmem
+    if save_memory
         (u,), = adjoint_reduce(f1, 0:dt:T[1], init, ulims)
     else
         (u,), = reduce(f1, 0:dt:T[1]; init)
@@ -81,7 +81,7 @@ function solve(prob, ; autodiff=false, lowmem=false, ulims=nothing, verbose=fals
     #         #         end
     #         #     end
     #         # end
-    #         (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, lowmem), mf,)
+    #         (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, save_memory), mf,)
     #     end
     # f = (u, t) -> _f(u, p, t)
     mf0 = ignore_derivatives() do
@@ -98,7 +98,7 @@ function solve(prob, ; autodiff=false, lowmem=false, ulims=nothing, verbose=fals
     ts = T[1]+dt:dt:T[2]
     init = ((u, mf0), p, (dx, dt, field_padding, source_instances, autodiff), (Δ[2], monitor_instances))
 
-    if lowmem
+    if save_memory
         (u, mf), = adjoint_reduce(f2, ts, init, ulims)
     else
         (u, mf), = reduce(f2, ts; init)

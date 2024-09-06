@@ -32,7 +32,7 @@ function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
 end
 function write_sparams(runs, run_probs, g, path, origin, dx,
     designs=nothing, design_config=nothing, models=nothing;
-    img=nothing, autodiff=false, lowmem=false, verbose=false, perturb=nothing, with=false, ulims=nothing, kw...)
+    img=nothing, autodiff=false, save_memory=false, verbose=false, perturb=nothing, with=false, ulims=nothing, kw...)
     F = run_probs[1].F
     if !isnothing(models)
         geometry = make_geometry(models, origin, dx, g, designs, design_config; F, perturb)
@@ -43,7 +43,7 @@ function write_sparams(runs, run_probs, g, path, origin, dx,
                 prob[:geometry] = geometry
             end
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
-            sol = solve(prob; autodiff, ulims, lowmem, verbose,)
+            sol = solve(prob; autodiff, ulims, save_memory, verbose,)
 
             ignore() do
                 if !isnothing(img)
@@ -207,7 +207,7 @@ eps_3D = pad(eps_3D, :replicate, lr...)
 # heatmap(eps_3D[round(size(eps_3D, 1) / 2), :, :]) |> display
 origin = components.device.bbox[1] - dx * (p * portsides[1])
 if study == "inverse_design"
-    @load PROB_PATH designs targets preset eta iters restart lowmem design_config contrast
+    @load PROB_PATH designs targets preset eta iters restart save_memory design_config contrast
     prob = load(PROB_PATH)
     minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
     if isfile(SOL_PATH)
@@ -445,7 +445,7 @@ elseif study == "inverse_design"
     best = best0 = 0
     S, ulims = write_sparams(runs, run_probs, g0, path, origin, dx,
         designs, design_config, models;
-        F, img, autodiff, lowmem, with=true)
+        F, img, autodiff, save_memory, with=true)
 
     for i = 1:iters
         global virgin, stop, best, best0, sparams0
@@ -461,7 +461,7 @@ elseif study == "inverse_design"
             @time l, (dldm,) = Flux.withgradient(models) do m
                 S = write_sparams(runs, run_probs, g0, path, origin, dx,
                     designs, design_config, m;
-                    F, img, autodiff, lowmem, ulims)
+                    F, img, autodiff, save_memory, ulims)
                 l = 0
                 for k = keys(targets)
 
@@ -484,13 +484,13 @@ elseif study == "inverse_design"
             @time l, (dldm,) = Flux.withgradient(models) do m
                 S = write_sparams(runs, run_probs, g0, path, origin, dx,
                     designs, design_config, m;
-                    F, img, autodiff, lowmem, ulims)#(1)(1)
+                    F, img, autodiff, save_memory, ulims)#(1)(1)
                 k = keys(S) |> first
                 s = S[k]["o2@0,o1@0"]
 
                 S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
                     designs, design_config, m;
-                    F, img, autodiff, lowmem, perturb=:ϵ, ulims)#(1)(1)
+                    F, img, autodiff, save_memory, perturb=:ϵ, ulims)#(1)(1)
                 s_ = S_[k]["o2@0,o1@0"]
 
                 T = abs2(s)

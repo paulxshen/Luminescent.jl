@@ -5,8 +5,8 @@
 Updates fields. mutating if autodiff is false
 """
 function update(u, p, t, dx, dt, field_padding, source_instances; autodiff=false)
-    # t, dx, dt, field_padding, source_instances, autodiff, lowmem = ignore_derivatives() do
-    #     t, dx, dt, field_padding, source_instances, autodiff, lowmem
+    # t, dx, dt, field_padding, source_instances, autodiff, save_memory = ignore_derivatives() do
+    #     t, dx, dt, field_padding, source_instances, autodiff, save_memory
     # end
     ϵ, μ, σ, m = group.((p,), (:ϵ, :μ, :σ, :m))
     E, H, J = group.((u,), (:E, :H, :J))

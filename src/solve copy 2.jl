@@ -1,5 +1,5 @@
 
-function solve(prob; autodiff=false, lowmem=false, ulims=nothing, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, _time=true,
+function solve(prob; autodiff=false, save_memory=false, ulims=nothing, history=nothing, comprehensive=true, verbose=false, plotpath=nothing, _time=true,
     cpu=identity, gpu=identity, kwargs...)
     @unpack dx, dt, u0, field_padding, geometry_padding, subpixel_averaging, source_instances, geometry, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
@@ -43,10 +43,10 @@ function solve(prob; autodiff=false, lowmem=false, ulims=nothing, history=nothin
             end
             i += 1
         end
-        (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, lowmem),)
+        (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, save_memory),)
     end
     f = (u, t) -> _f(u, p, t)
-    if lowmem
+    if save_memory
         u, = adjoint_reduce(_f, 0:dt:T[1], (deepcopy(values(u0)),), p, ulims)
     else
         u, = reduce(f, 0:dt:T[1], init=(deepcopy(u0),))
@@ -77,7 +77,7 @@ function solve(prob; autodiff=false, lowmem=false, ulims=nothing, history=nothin
             mode_fields_ = [
                 [
                     begin
-                        if lowmem
+                        if save_memory
                             E = [field(u[1][k], k, m) for k = Enames]
                             H = [field(u[2][k], k, m) for k = Hnames]
                         else
@@ -106,14 +106,14 @@ function solve(prob; autodiff=false, lowmem=false, ulims=nothing, history=nothin
             # end
 
             (
-                update(u, p, t, dx, dt, field_padding, source_instances; autodiff, lowmem),
+                update(u, p, t, dx, dt, field_padding, source_instances; autodiff, save_memory),
                 mode_fields,
                 # tp + dt / Δ[2] * tp_,
             )
         end
     f = (u, t) -> _f(u, p, t)
     ts = T[1]+dt:dt:T[2]
-    if lowmem
+    if save_memory
         u, mode_fields, = adjoint_reduce(_f, ts, (u, mf0), p, ulims)
     else
         u, mode_fields, = reduce(f, ts, init=(u, 0))
