@@ -458,7 +458,11 @@ function gfrun(path; kw...)
         # sparams = write_sparams(img="", autodiff=false, verbose=true)
         sparams = write_sparams(runs, run_probs, g0, path, origin, dx;
             F, img="", verbose=true)
-        sol = sparam_family(sparams)
+        global sol = (; sparam_family(sparams)...,
+            path, dx, study)
+        open(SOL_PATH, "w") do f
+            write(f, json(cpu(sol)))
+        end
     elseif study == "inverse_design"
         if length(origin) == 3
             if magic != "summersale"
@@ -587,23 +591,36 @@ function gfrun(path; kw...)
                     best0 = best
                 end
             end
+            if i % 10 == 0 || i == iters || stop
+                println("saving checkpoint...")
+                ckptpath = joinpath(path, "checkpoints", now())
+                for (i, (m, d)) = enumerate(zip(models, designs))
+                    a = Gray.(m() .< 0.5)
+
+                    Images.save(joinpath(ckptpath, "optimized_design_region_$i.png"), a)
+                    Images.save(joinpath(path, "optimized_design_region_$i.png"), a)
+                end
+                global sol = (;
+                    sparam_family(sparams)...,
+                    optimized_designs=[m() .> 0.5 for m in models],
+                    params=getfield.(models, :a),
+                    designs,
+                    design_config, path,
+                    dx,
+                    study,
+                )
+
+                open(joinpath(ckptpath, "sol.json"), "w") do f
+                    write(f, json(cpu(sol)))
+                end
+                open(joinpath(path, "sol.json"), "w") do f
+                    write(f, json(cpu(sol)))
+                end
+            end
             println("")
         end
         println("Done in $(time() - t0) .")
-        for (i, (m, d)) = enumerate(zip(models, designs))
-            # Images.save(joinpath(path, "design$i.png"), Gray.(m() .< 0.5))
-        end
-        sol = (;
-            sparam_family(sparams)...,
-            optimized_designs=[m() .> 0.5 for m in models],
-            params=getfield.(models, :a),
-            designs,
-            design_config,
-        )
+
     end
-    sol = (; sol..., path, dx, study,) |> cpu
-    open(SOL_PATH, "w") do f
-        write(f, json(sol))
-    end
-    sol
+    global sol
 end

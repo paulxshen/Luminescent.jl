@@ -73,11 +73,10 @@ def solve(prob, dev=False, run=True):
     # print(f"julia simulation took {time.time()-start_time} seconds")
     print(f"images and results saved in {path}")
     sol = load_solution(path=path)
-    # if prob["study"] == "inverse_design":
-    # c = apply_design(c0,  sol)
-    # sol["optimized_component"] = c
-    #     sol["before"]["component"] = c0
-    #     sol["after"]["component"] = c
+    if prob["study"] == "inverse_design":
+        c = apply_design(sol["component"],  sol)
+        c.write_gds(os.path.join(path, "optimized_component.gds"))
+        sol["optimized_component"] = c
     return sol
 
 
@@ -103,10 +102,6 @@ def get_path(path=None, study=""):
 
     if os.path.isdir(os.path.join(RUNS_PATH, path)):
         return path
-
-
-def load_component(path=None, study=None):
-    return dill.load(os.path.join(get_path(path), "comp.bson"))
 
 
 def finetune(iters, path=None,):
@@ -137,21 +132,17 @@ def load_solution(path=None, study="",):
     # sol = bson.loads(p, "rb").read())["sol"]
     sol = json.loads(open(p).read())
     sol["sparams"] = load_sparams(sol["sparams"])
+    sol["component"] = gf.import_gds(os.path.join(path, "component.gds"))
     if prob["study"] == "sparams":
         pass
     elif prob["study"] == "inverse_design":
-        # for k in ["before", "after"]:
-        #     sol[k]["sparams"] = load_sparams(sol[k]["sparams"])
-        # for k in sol["after"]:
-        #     sol[k] = sol["after"][k]
-
         l = [np.array(d) for d in sol["optimized_designs"]]
         sol["optimized_designs"] = l
         for i, a in enumerate(l):
             Image.fromarray(np.uint8((1-a) * 255),
-                            'L').save(os.path.join(path, f"design{i+1}.png"))
-            pic2gds(os.path.join(path, f"design{i+1}.png"), sol["dx"])
-        pass
+                            'L').save(os.path.join(path, "temp", f"design{i+1}.png"))
+            pic2gds(os.path.join(
+                path, f"optimized_design_region_{i+1}.png"), sol["dx"])
     return sol
 
 

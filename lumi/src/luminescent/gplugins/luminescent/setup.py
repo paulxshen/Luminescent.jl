@@ -171,22 +171,16 @@ def setup(c, study,   dx, margin,
 
     prob["mode_solutions"] = mode_solutions
     prob["runs"] = runs
-    # device_svg = write_img("device", c,
-    #                        hidden_layer=(DESIGN, GUESS))
     prob["components"] = {
         "device": {
-            # "svg": device_svg,
             "bbox": c.bbox_np().tolist(),
         }}
     prob["dx"] = dx
     prob["Courant"] = Courant
-    # prob["component"] = c
     if not os.path.exists(path):
         os.makedirs(path)
-    # with open(os.path.join(path, "comp.bson"), "ab") as f:
-    #     dill.dump(c, f)
-    # λc = (wavelengths[0]+wavelengths[-1])/2
     # prob["wavelengths"] = wavelengths
+    c.write_gds(os.path.join(path, "component.gds"))
     prob["mode_solutions"] = mode_solutions
     # prob["path_length"] = 2*(l+r+lwg)
     return prob

@@ -143,9 +143,7 @@ def apply_design(c0,  sol):
     #         c.add_ref(c0.extract([layer]))
     # c.show()
     # raise ValueError()
-    pic2gds(os.path.join(path, f"design{i+1}.png"), sol["dx"])
-    g = gf.import_gds(os.path.join(path, f"design{i+1}.gds"), "TOP",
-                      read_metadata=True)
+    g = gf.import_gds(os.path.join(path, f"optimized_design_region_{i+1}.gds"))
     polygons = g.get_polygons(merge=True)
     g = gf.Component()
     for p in polygons[1]:

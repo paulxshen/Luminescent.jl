@@ -3,7 +3,7 @@ from pprint import pprint
 from time import sleep
 import luminescent as lumi
 from gdsfactory.generic_tech import LAYER
-
+import gdsfactory as gf
 
 name = "demux"
 c = lumi.gcells.mimo(west=1, east=1, l=1, w=1,  wwg=.5)
@@ -11,6 +11,7 @@ targets = {"tparams": {
     1.55: {
         "2,1": 1.0
     }}}
+raise ValueError("stop here")
 # c.show()
 
 # prob = lumi.inverse_design_problem(
