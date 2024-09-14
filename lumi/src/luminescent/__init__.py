@@ -18,7 +18,6 @@ __all__ = [
     "ZMARGIN",
     "XYMARGIN",
     "load_solution",
-    "load_component",
     "show_solution",
     "gcells",
 ]

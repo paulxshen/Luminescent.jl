@@ -13,26 +13,29 @@ function julia_main()::Cint
     end
     return 0
 end
-function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
+
+function lastrun(name=nothing, study=nothing)
+    path = joinpath(pwd(), "lumi_runs")
     l = filter(isdir, readdir(path, join=true))
-    sort!(l)
-    if isnothing(s)
-        return l[end]
-    end
-    for p = reverse(l)
-        try
-            open(joinpath(p, "sol.json")) do f
-                JSON.parse(f)["study"]
-            end == s && return p
-        catch e
-            println(e)
+    sort!(l, by=p -> Dates.unix2datetime(mtime(p)), rev=true)
+
+    if !isnothing(study)
+        for p = l
+            try
+                open(joinpath(p, "sol.json")) do f
+                    JSON.parse(f)["study"]
+                end == study && return p
+            catch e
+                println(e)
+            end
         end
     end
+    return l[1]
 end
 
-function write_sparams(runs, run_probs, geometry, path, origin, dx,
+function write_sparams(runs, run_probs, geometry, origin, dx,
     designs=nothing, design_config=nothing, models=nothing;
-    img=nothing, autodiff=false, save_memory=false, verbose=false, perturb=nothing, with=false, ulims=nothing, kw...)
+    autodiff=false, save_memory=false, verbose=false, perturb=nothing, ulims=nothing, kw...)
     F = run_probs[1].F
     geometry = make_geometry(models, origin, dx, geometry, designs, design_config; F, perturb)
 
@@ -41,21 +44,6 @@ function write_sparams(runs, run_probs, geometry, path, origin, dx,
             prob[:geometry] = geometry
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
             sol = solve(prob; autodiff, ulims, save_memory, verbose)
-
-            ignore() do
-                if !isnothing(img)
-                    if img == ""
-                        img = "run$i.png"
-                    end
-                    try
-                        CairoMakie.save(joinpath(path, img), quickie(sol |> cpu, cpu(prob)),)
-                    catch e
-                        println("plot failed")
-                        println(e)
-                    end
-                end
-            end
-            sol
         end for (i, prob) in enumerate(run_probs)
         # end for (i, prob) in enumerate(run_probs)
     ]
@@ -98,12 +86,7 @@ function write_sparams(runs, run_probs, geometry, path, origin, dx,
     # if source_mn == mn == 0
     #     coeffs[λ]["$monitor_port,$source_port")] = v
     # end
-    if with
-        @show ulims
-        return sparams, ulims
-    end
-    # return sparams(1)(1) |> abs2
-    sparams
+    return (; sparams, ulims, sols)
 end
 
 function make_geometry(models, origin, dx, g, designs, design_config; F=Float32, perturb=nothing)
@@ -175,11 +158,18 @@ function make_geometry(models, origin, dx, g, designs, design_config; F=Float32,
     end for k = keys(g,)])
 end
 
+function plotsols(sols, probs, path)
+    for (i, (prob, sol)) in enumerate(zip(probs, sols))
+        try
+            CairoMakie.save(joinpath(path, "run_$i.png"), quickie(sol |> cpu, cpu(prob)),)
+        catch e
+            println("plot failed")
+            println(e)
+        end
+    end
+end
+
 # using AbbreviatedStackTraces
-# using Random
-# Random.seed!(0)
-# include("main.jl")
-# path = lastrun()
 # global virgin, stop, best, best0, sparams0
 function gfrun(path; kw...)
     println("setting up simulation...")
@@ -192,6 +182,7 @@ function gfrun(path; kw...)
     dosave = false
     verbose = false
 
+    prob = load(PROB_PATH)
     @load PROB_PATH name dtype margin zmargin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin thickness zcore gpu_backend d magic
     F = Float32
     if contains(dtype, "16")
@@ -232,7 +223,7 @@ function gfrun(path; kw...)
     # heatmap(eps_3D[round(size(eps_3D, 1) / 2), :, :]) |> display
     origin = components.device.bbox[1] - dx * (p * portsides[1])
     if study == "inverse_design"
-        @load PROB_PATH designs targets weights preset eta iters restart save_memory design_config contrast
+        @load PROB_PATH designs targets weights preset eta iters restart save_memory design_config
         targets = fmap(F, targets)
         prob = load(PROB_PATH)
         minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
@@ -260,22 +251,18 @@ function gfrun(path; kw...)
                 # elseif init == "random"
                 #     init = nothing
                 # end
-                lmin = d.lmin / dx
+
+                lmin = round(d.lmin / dx)
                 b = Blob(szd;
-                    init=1,
-                    lmin, rmin=lmin / 2,
-                    contrast, T=F,
-                    symmetries, verbose)
+                    init, lmin, symmetries, F)
+
                 if !isnothing(sol) && !restart
+                    println("loading saved design...")
                     b.a .= sol.params[i] |> typeof(b.a)
                 end
                 b
             end for (i, d) = enumerate(designs)
         ]
-
-        # model0 = deepcopy(model)
-        # using CairoMakie
-        # heatmap(model[1]())
     end
 
     boundaries = [] # unspecified boundaries default to PML
@@ -456,8 +443,9 @@ function gfrun(path; kw...)
         # @info "Computing s-parameters..."
         println("Computing s-parameters...")
         # sparams = write_sparams(img="", autodiff=false, verbose=true)
-        sparams = write_sparams(runs, run_probs, g0, path, origin, dx;
-            F, img="", verbose=true)
+        @unpack sparams, sols = write_sparams(runs, run_probs, g0, origin, dx;
+            F, verbose=true)
+        plotsols(sols, run_probs, path)
         global sol = (; sparam_family(sparams)...,
             path, dx, study)
         open(SOL_PATH, "w") do f
@@ -478,7 +466,7 @@ function gfrun(path; kw...)
         stop = false
         global img = nothing
         best = best0 = 0
-        S, ulims = write_sparams(runs, run_probs, g0, path, origin, dx,
+        S, ulims = write_sparams(runs, run_probs, g0, origin, dx,
             designs, design_config, models;
             F, img, autodiff, with=true)
         # heatmap(_as[3])
@@ -508,9 +496,10 @@ function gfrun(path; kw...)
             if isnothing(preset)
                 @time l, (dldm,) = Flux.withgradient(models) do models
                     # sols = get_sols(runs, run_probs, g0, path, origin, dx,
-                    S = write_sparams(runs, run_probs, g0, path, origin, dx,
+                    @unpack sparams, sols = write_sparams(runs, run_probs, g0, origin, dx,
                         designs, design_config, models;
                         F, img, autodiff, save_memory, ulims)
+                    S = sparams
                     l = 0
                     for k = keys(targets)
                         print("($i) losses ")
@@ -565,7 +554,7 @@ function gfrun(path; kw...)
                     T = abs2(s)
                     dϕ = angle(s_ / s)
                     println("T: $T, dϕ: $dϕ")
-                    global sparams = S
+                    sparams = S
                     (T * dϕ)
                 end
             end
@@ -593,13 +582,16 @@ function gfrun(path; kw...)
             end
             if i % 10 == 0 || i == iters || stop
                 println("saving checkpoint...")
-                ckptpath = joinpath(path, "checkpoints", now())
+                ckptpath = joinpath(path, "checkpoints", replace(string(now()), ':' => '_', '.' => '_'))
                 for (i, (m, d)) = enumerate(zip(models, designs))
                     a = Gray.(m() .< 0.5)
 
                     Images.save(joinpath(ckptpath, "optimized_design_region_$i.png"), a)
                     Images.save(joinpath(path, "optimized_design_region_$i.png"), a)
                 end
+                plotsols(sols, run_probs, path)
+                plotsols(sols, run_probs, ckptpath)
+
                 global sol = (;
                     sparam_family(sparams)...,
                     optimized_designs=[m() .> 0.5 for m in models],
@@ -622,5 +614,5 @@ function gfrun(path; kw...)
         println("Done in $(time() - t0) .")
 
     end
-    global sol
+    sol
 end

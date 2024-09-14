@@ -32,7 +32,7 @@ def setup(c, study,   dx, margin,
           exclude_layers=[
               DESIGN_LAYER, GUESS], approx_2D=False, Courant=None,
           gpu=None, dtype=np.float32,
-          path=RUNS_PATH, plot=False, magic="", **kwargs):
+          plot=False, magic="", **kwargs):
     if type(bbox_layer[0]) is int:
         bbox_layer = (bbox_layer,)
     prob = dict()
@@ -96,10 +96,10 @@ def setup(c, study,   dx, margin,
     eps_2D = eps[:, :, int(eps.shape[2]/2)]
     prob["study"] = study
 
-    l = [prob["timestamp"], study]
-    if name:
-        l.append(name)
-    path = os.path.join(path, "#".join(l))
+    if not name:
+        l = [prob["timestamp"], study]
+        name = "#".join(l)
+    path = os.path.join(RUNS_PATH, name)
     prob["path"] = path
 
     prob["eps_3D"] = eps.tolist()

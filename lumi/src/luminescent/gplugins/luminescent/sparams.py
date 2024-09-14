@@ -13,10 +13,15 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 def sparams_problem(c: gf.Component,
                     margin=None,  # zmargin=None,zlims=None,
-                    dx=.05, wavelengths=[1.55], center_wavelength=None, keys=None,
+                    dx=.05, wavelength=1.55, center_wavelength=None, keys=None,
                     approx_2D=False, layer_stack=LAYER_STACK,
                     study="sparams",
                     **kwargs):
+    if type(wavelength) not in [list, tuple]:
+        wavelengths = [wavelength]
+    else:
+        wavelengths = wavelength
+
     wavelengths = sorted(wavelengths)
     d = 2 if approx_2D else 3
     prob = dict()

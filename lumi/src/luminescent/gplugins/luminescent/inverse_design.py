@@ -4,14 +4,9 @@ from .setup import *
 from .constants import *
 from .layers import *
 from .utils import *
-import scipy as sp
 import bson
 import gdsfactory as gf
 from copy import deepcopy
-# from time import time
-import datetime
-import json
-import subprocess
 from functools import partial
 from math import cos, pi, sin
 import os
@@ -21,13 +16,12 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 def inverse_design_problem(c,  targets=dict(), preset=None,
                            lmin=.1, symmetries=[],
                            weights=dict(),
-                           iters=25, eta=2., init=None,  # minloss=.01,
+                           iters=25, eta=2., init=1,  # minloss=.01,
                            design_region_layer=DESIGN_LAYER,
                            #    design_guess_layer=LAYER.GUESS,
                            fill_layer=LAYER.WG,
                            void_layer=None,
                            layer_stack=LAYER_STACK, materials=MATERIALS,
-                           contrast=20,
                            plot=False, approx_2D=True,
                            restart=True, save_memory=False, **kwargs):
     design_region_layer = tuple(design_region_layer)
@@ -60,7 +54,7 @@ def inverse_design_problem(c,  targets=dict(), preset=None,
 
     prob = sparams_problem(c,
                            layer_stack=layer_stack, materials=materials,
-                           wavelengths=wavelengths,
+                           wavelength=wavelengths,
                            study="inverse_design",
                            keys=keys,
                            approx_2D=approx_2D, ** kwargs)
@@ -74,7 +68,6 @@ def inverse_design_problem(c,  targets=dict(), preset=None,
     prob["preset"] = preset
     prob["targets"] = targets
     prob["wavelengths"] = wavelengths
-    prob["contrast"] = contrast
     # prob["init"] = init
     prob = {**prob, **kwargs}
     prob["eta"] = eta

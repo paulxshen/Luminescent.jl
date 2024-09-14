@@ -2,7 +2,7 @@ import copy
 from .constants import *
 import gdsfactory as gf
 from gdsfactory.cross_section import Section
-from .constants import RUNS_PATH
+from .constants import *
 from .materials import MATERIALS
 try:
     from IPython.display import display
@@ -399,28 +399,3 @@ def get_layers(layer_stack, layer, withkey=False):
                 # print(layer, k, x)
                 r.append(x)
     return r
-
-    # if hasattr(x.layer, "layer1") and x.layer.layer1.layer == layer:
-    #     return x
-
-
-def show_solution(path=None):
-
-    if path is None:
-        path = sorted(os.listdir(RUNS_PATH))[-1]
-        path = os.path.join(RUNS_PATH, path)
-    print(f"showing solution from {path}")
-    # Load an image
-    for s in ["after.png", "run1.png"]:
-        try:
-            img = Image.open(os.path.join(path, s))
-        except:
-            pass
-        else:
-            img.show()
-            try:
-                display(img)
-            except:
-                pass
-            return
-    print("no plot image found")

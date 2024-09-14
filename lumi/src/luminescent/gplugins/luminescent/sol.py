@@ -1,4 +1,5 @@
 # import dill
+from pprint import pprint
 from PIL import Image
 import os
 import subprocess
@@ -80,37 +81,30 @@ def solve(prob, dev=False, run=True):
     return sol
 
 
-def get_path(path=None, study=""):
-    if path is None:
-        l = sorted(os.listdir(RUNS_PATH), reverse=True)
-        if study:
-            for p in l:
-                try:
-                    s = json.loads(open(os.path.join(RUNS_PATH, p, "sol.json")).read())[
-                        "study"]
-                    if s == study:
-                        path = p
-                        break
-                except:
-                    pass
-        else:
-            path = l[0]
-        path = os.path.join(RUNS_PATH, path)
+def lastrun(path="", name="", study=""):
+    if path:
         return path
-    if os.path.isdir(path):
-        return path
-
-    if os.path.isdir(os.path.join(RUNS_PATH, path)):
-        return path
+    if name:
+        return os.path.join(RUNS_PATH, name)
+    l = [os.path.join(RUNS_PATH, x) for x in os.listdir(RUNS_PATH)]
+    l = sorted(l, key=lambda x: os.path.getmtime(x), reverse=True)
+    if study:
+        for x in l:
+            try:
+                if bson.loads(open(os.path.join(x, "prob.bson"), "rb").read())["study"] == study:
+                    return x
+            except:
+                pass
+    return l[0]
 
 
-def finetune(iters, path=None,):
-    if path is None:
-        path = get_path(study="inverse_design")
+def finetune(iters, name="", **kwargs):
+    path = lastrun(name=name, study="inverse_design")
 
     prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())
     prob["iters"] = iters
     prob["restart"] = False
+    prob = {**prob, **kwargs}
     # with open(path, "wb") as f:
     #     f.write(bson.dumps(prob))
     solve(prob)
@@ -123,9 +117,8 @@ def load_sparams(sparams):
                  for k, v in d.items()} for wl, d in sparams.items()}
 
 
-def load_solution(path=None, study="",):
-    if path is None:
-        path = get_path(study=study)
+def load_solution(*args):
+    path = lastrun(*args)
     print(f"loading solution from {path}")
     prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())
     p = os.path.join(path, "sol.json")
@@ -139,11 +132,33 @@ def load_solution(path=None, study="",):
         l = [np.array(d) for d in sol["optimized_designs"]]
         sol["optimized_designs"] = l
         for i, a in enumerate(l):
+            name = f"optimized_design_region_{i+1}.png"
             Image.fromarray(np.uint8((1-a) * 255),
-                            'L').save(os.path.join(path, "temp", f"design{i+1}.png"))
+                            'L').save(os.path.join(path, name))
             pic2gds(os.path.join(
-                path, f"optimized_design_region_{i+1}.png"), sol["dx"])
+                path, name), sol["dx"])
     return sol
+
+
+def show_solution(*args):
+    path = lastrun(*args)
+    print(f"showing solution from {path}")
+    sol = load_solution(*args)
+    pprint(sol)
+
+    i = 1
+    while True:
+        p = os.path.join(path, f"run_{i}.png")
+        if os.path.exists(p):
+            img = Image.open(p)
+            img.show()
+            try:
+                display(img)
+            except:
+                pass
+            i += 1
+        else:
+            break
 
 
 def write_sparams(*args, run=True, **kwargs):
