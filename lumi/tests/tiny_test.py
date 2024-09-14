@@ -13,7 +13,7 @@ targets = {"tparams": {
     }}}
 # c.show()
 
-# prob = lumi.inverse_design_problem(
+# prob = lumi.gcell_problem(
 #     c, targets,
 #     # bbox_layer=LAYER.WAFER,
 #     # lmin=0.2, dx=0.1, iters=2, eta=10., approx_2D=False, save_memory=True)  # gpu="CUDA", dev=True)
@@ -34,7 +34,7 @@ for (approx_2D, gpu, dtype, save_memory) in itertools.product(
     # ["f32", "f16"],
     [True, False],
 ):
-    prob = lumi.inverse_design_problem(
+    prob = lumi.gcell_problem(
         c, targets,
         bbox_layer=LAYER.WAFER,
         lmin=0.2, dx=0.1, iters=3,

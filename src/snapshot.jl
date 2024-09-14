@@ -17,7 +17,7 @@ function _plot!(g, a, ; colorrange=nothing, title="", labels=[], colormap=:seism
         end
         aspect = size(a, 1) / size(a, 2)
         if d == 3
-            println("3D array: plotting middle slice")
+            # println("3D array: plotting middle slice")
             title *= " (middle slice of 3D array)"
 
             a1 = a[:, :, round(Int, size(a, 3) / 2)]

@@ -21,7 +21,7 @@ lmin = 0.1
 c, sources, monitors, design = ubend_template(
     r,  l, wwg, dx=dx, wavelength=1.55, LAYER=LAYER)
 c = add_bbox(c, layers=[LAYER.BOX, LAYER.WGCLAD], margin=.2)
-prob = inverse_design_problem(
+prob = gcell_problem(
     c, lmin=lmin, dx=dx, sources=sources, monitors=monitors, design=design, layer_stack=LAYER_STACK)
 solve(prob)
 raise Exception("Not implemented")

@@ -81,12 +81,12 @@ def solve(prob, dev=False, run=True):
     return sol
 
 
-def lastrun(path="", name="", study=""):
+def lastrun(path="", name="", study="", wd=os.getcwd(), **kwargs):
     if path:
         return path
     if name:
-        return os.path.join(RUNS_PATH, name)
-    l = [os.path.join(RUNS_PATH, x) for x in os.listdir(RUNS_PATH)]
+        return os.path.join(wd, name)
+    l = [os.path.join(wd, x) for x in os.listdir(wd)]
     l = sorted(l, key=lambda x: os.path.getmtime(x), reverse=True)
     if study:
         for x in l:
@@ -99,7 +99,7 @@ def lastrun(path="", name="", study=""):
 
 
 def finetune(iters, name="", **kwargs):
-    path = lastrun(name=name, study="inverse_design")
+    path = lastrun(name=name, study="inverse_design", **kwargs)
 
     prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())
     prob["iters"] = iters
@@ -144,6 +144,7 @@ def show_solution(*args):
     path = lastrun(*args)
     print(f"showing solution from {path}")
     sol = load_solution(*args)
+    sol = {k: sol[k] for k in ["path", "sparams", "tparams", ]}
     pprint(sol)
 
     i = 1

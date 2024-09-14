@@ -418,7 +418,7 @@ function gfrun(path; kw...)
 
     if !isempty(gpu_backend)
         println("using $gpu_backend backend.")
-        Flux.gpu_backend!(gpu_backend)
+        # Flux.gpu_backend!(gpu_backend)
         if gpu_backend == "CUDA"
             # study == "inverse_design" && CUDA.allowscalar(true)
             @assert CUDA.functional()
@@ -451,6 +451,7 @@ function gfrun(path; kw...)
         open(SOL_PATH, "w") do f
             write(f, json(cpu(sol)))
         end
+        println("Done in $(time() - t0) s")
     elseif study == "inverse_design"
         if length(origin) == 3
             if magic != "summersale"
@@ -580,6 +581,8 @@ function gfrun(path; kw...)
                     best0 = best
                 end
             end
+            println("")
+
             if i % 10 == 0 || i == iters || stop
                 println("saving checkpoint...")
                 ckptpath = joinpath(path, "checkpoints", replace(string(now()), ':' => '_', '.' => '_'))
@@ -609,7 +612,6 @@ function gfrun(path; kw...)
                     write(f, json(cpu(sol)))
                 end
             end
-            println("")
         end
         println("Done in $(time() - t0) .")
 

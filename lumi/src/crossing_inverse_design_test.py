@@ -9,7 +9,7 @@ targets = {
         "3,1": 1.0
     }}
 
-prob = lumi.inverse_design_problem(
+prob = lumi.gcell_problem(
     c, tparam_targets=targets, symmetries=[0, 1, "diag"], lmin=0.2, dx=0.1,
     minloss=.03, iters=50, eta=10., approx_2D=True)
 sol = lumi.solve(prob)

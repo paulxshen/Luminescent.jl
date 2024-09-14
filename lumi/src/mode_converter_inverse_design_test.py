@@ -8,7 +8,7 @@ targets = {
         "o2@1,o1@0": 1.0
     }}
 
-prob = lumi.inverse_design_problem(
+prob = lumi.gcell_problem(
     c, tparam_targets=targets, symmetries=[], lmin=0.2, dx=0.05,
     iters=100, eta=4.0, approx_2D=True)
 sol = lumi.solve(prob)

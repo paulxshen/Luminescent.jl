@@ -23,16 +23,19 @@ from sympy import N
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
-def setup(c, study,   dx, margin,
+def setup(c, study, dx, margin,
           bbox_layer=LAYER.WAFER,
           zmargin=None, zlims=None, core_layer=LAYER.WG,
-          port_source_offset="auto", source_margin="auto", name="",
+          port_source_offset="auto", source_margin="auto",
           runs=[],  sources=[],
           layer_stack=LAYER_STACK, materials=MATERIALS,
           exclude_layers=[
               DESIGN_LAYER, GUESS], approx_2D=False, Courant=None,
           gpu=None, dtype=np.float32,
-          plot=False, magic="", **kwargs):
+          plot=False, magic="", wd=os.getcwd(), **kwargs):
+    name = c.name
+    if name.startswith("Unnamed"):
+        name = ""
     if type(bbox_layer[0]) is int:
         bbox_layer = (bbox_layer,)
     prob = dict()
@@ -99,7 +102,7 @@ def setup(c, study,   dx, margin,
     if not name:
         l = [prob["timestamp"], study]
         name = "#".join(l)
-    path = os.path.join(RUNS_PATH, name)
+    path = os.path.join(wd, name)
     prob["path"] = path
 
     prob["eps_3D"] = eps.tolist()

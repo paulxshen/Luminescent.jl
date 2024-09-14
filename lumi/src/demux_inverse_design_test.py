@@ -12,7 +12,7 @@ targets = {
     }}
 # c.show()
 
-prob = lumi.inverse_design_problem(
+prob = lumi.gcell_problem(
     c, tparam_targets=targets,
     lmin=0.2, dx=0.1, iters=40, eta=10., approx_2D=True)
 sol = lumi.solve(prob)
