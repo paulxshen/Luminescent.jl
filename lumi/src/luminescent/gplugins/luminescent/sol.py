@@ -59,11 +59,7 @@ def solve(prob, dev=False, run=True):
         print(" ".join(cmd_dev))
         run(cmd_dev)
     else:
-        try:
-            run(cmd)
-        except Exception as e:
-            print(e)
-            run(cmd_dev)
+        run(cmd)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:
     #     if p.stderr is not None:

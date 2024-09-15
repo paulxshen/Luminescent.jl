@@ -532,7 +532,7 @@ function gfrun(path; kw...)
                             end
                             ŷ = [[ŷ(λ)(k) for k = keys(y[λ])] for λ = keys(y)]
                         end
-                        _l = mean(abs, err.(flatten(ŷ), flatten(y)),) * weights(k)
+                        _l = sum(abs, err.(flatten(ŷ), flatten(y)),) * weights(k) / sum(abs, flatten(y))
                         print("$(k): $_l ")
                         l += _l
                     end
@@ -589,8 +589,8 @@ function gfrun(path; kw...)
                 for (i, (m, d)) = enumerate(zip(models, designs))
                     a = Gray.(m() .< 0.5)
 
-                    Images.save(joinpath(ckptpath, "optimized_design_region_$i.png"), a)
-                    Images.save(joinpath(path, "optimized_design_region_$i.png"), a)
+                    # Images.save(joinpath(ckptpath, "optimized_design_region_$i.png"), a)
+                    # Images.save(joinpath(path, "optimized_design_region_$i.png"), a)
                 end
                 plotsols(sols, run_probs, path)
                 plotsols(sols, run_probs, ckptpath)

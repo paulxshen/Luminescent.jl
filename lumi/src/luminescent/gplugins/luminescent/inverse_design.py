@@ -16,7 +16,7 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 def gcell_problem(c,  targets=dict(), preset=None,
                   lmin=.1, symmetries=[],
                   weights=dict(),
-                  iters=25, eta=2., init=1,  # minloss=.01,
+                  iters=25, eta=1., init=1,  # minloss=.01,
                   design_region_layer=DESIGN_LAYER,
                   #    design_guess_layer=LAYER.GUESS,
                   fill_layer=LAYER.WG,
