@@ -70,19 +70,14 @@ def solve(prob, dev=False, run=True):
     # print(f"julia simulation took {time.time()-start_time} seconds")
     print(f"images and results saved in {path}")
     sol = load_solution(path=path)
-    if prob["study"] == "inverse_design":
-        c = apply_design(sol["component"],  sol)
-        c.write_gds(os.path.join(path, "optimized_component.gds"))
-        sol["optimized_component"] = c
     return sol
 
 
-def lastrun(path="", name="", study="", wd=os.getcwd(), **kwargs):
-    if path:
-        return path
+def lastrun(wd="runs", name="", study="",  **kwargs):
     if name:
         return os.path.join(wd, name)
     l = [os.path.join(wd, x) for x in os.listdir(wd)]
+    l = [x for x in l if os.path.isfile(os.path.join(x, "prob.bson"))]
     l = sorted(l, key=lambda x: os.path.getmtime(x), reverse=True)
     if study:
         for x in l:
@@ -94,8 +89,8 @@ def lastrun(path="", name="", study="", wd=os.getcwd(), **kwargs):
     return l[0]
 
 
-def finetune(iters, name="", **kwargs):
-    path = lastrun(name=name, study="inverse_design", **kwargs)
+def finetune(iters, **kwargs):
+    path = lastrun(study="inverse_design", **kwargs)
 
     prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())
     prob["iters"] = iters
@@ -113,8 +108,8 @@ def load_sparams(sparams):
                  for k, v in d.items()} for wl, d in sparams.items()}
 
 
-def load_solution(*args):
-    path = lastrun(*args)
+def load_solution(**kwargs):
+    path = lastrun(**kwargs)
     print(f"loading solution from {path}")
     prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())
     p = os.path.join(path, "sol.json")
@@ -133,13 +128,17 @@ def load_solution(*args):
                             'L').save(os.path.join(path, name))
             pic2gds(os.path.join(
                 path, name), sol["dx"])
+        c = apply_design(sol["component"],  sol)
+        # sol["optimized_component"] = copy.deepcopy(c)
+        sol["optimized_component"] = c
+        c.write_gds(os.path.join(path, "optimized_component.gds"))
     return sol
 
 
-def show_solution(*args):
-    path = lastrun(*args)
+def show_solution(**kwargs):
+    path = lastrun(**kwargs)
     print(f"showing solution from {path}")
-    sol = load_solution(*args)
+    sol = load_solution(**kwargs)
     sol = {k: sol[k] for k in ["path", "sparams", "tparams", ]}
     pprint(sol)
 

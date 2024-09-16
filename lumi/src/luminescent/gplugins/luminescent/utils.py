@@ -343,7 +343,7 @@ def material_slice(c, dx, center, w, h, normal, layers, layer_stack, materials=M
     for layer in layers:
         m = layer[1]
         k = layer[3]
-        eps = materials[m].epsilon
+        eps = materials[m]["epsilon"]
 
         _layer_stack = copy.deepcopy(layer_stack)
         _layer_stack.layers.clear()

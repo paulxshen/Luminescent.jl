@@ -15,13 +15,13 @@ for filename in os.listdir(BUILD_RUNS):
     elif os.path.isdir(file_path):
         shutil.rmtree(file_path)
 
-c = gf.components.straight(.5)
+c = gf.components.straight(.5,)
 for (approx_2D, gpu, dtype, wavelengths) in itertools.product(
     [True, False],
     [None, "CUDA"],
     ["f32"],
         [[1.55], ]):
-    lumi.write_sparams(c,
+    lumi.write_sparams(c, name="",
                        wavelength=wavelengths, keys=["2,1"], dx=0.1,
                        approx_2D=approx_2D, gpu=gpu, dtype=dtype,
                        run=False, wd=BUILD_RUNS)

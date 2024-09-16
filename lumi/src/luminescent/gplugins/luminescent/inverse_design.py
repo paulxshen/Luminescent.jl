@@ -16,7 +16,7 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 def gcell_problem(c,  targets=dict(), preset=None,
                   lmin=.1, symmetries=[],
                   weights=dict(),
-                  iters=25, eta=1., init=1,  # minloss=.01,
+                  iters=25, eta=0.2, init=1,   minloss=.01,
                   design_region_layer=DESIGN_LAYER,
                   #    design_guess_layer=LAYER.GUESS,
                   fill_layer=LAYER.WG,
@@ -90,11 +90,11 @@ def gcell_problem(c,  targets=dict(), preset=None,
         } for p, s in zip(list(polys.values())[0], symmetries)
     ]
     epsmin = np.min(prob["eps_2D"])
-
+    prob["minloss"] = minloss
     prob["design_config"] = dict()
     l = get_layers(layer_stack, fill_layer)[0]
     d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
-    d["epsilon"] = materials[d["material"]].epsilon
+    d["epsilon"] = materials[d["material"]]["epsilon"]
     d["ϵ"] = d["epsilon"]
     d["layer"] = fill_layer
     prob["design_config"]["fill"] = d
@@ -103,7 +103,7 @@ def gcell_problem(c,  targets=dict(), preset=None,
         l = get_layers(layer_stack, void_layer)[0]
         d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
         d["layer"] = void_layer
-        d["epsilon"] = materials[d["material"]].epsilon
+        d["epsilon"] = materials[d["material"]]["epsilon"]
         d["ϵ"] = d["epsilon"]
     else:
         d = copy.deepcopy(d)
@@ -142,7 +142,6 @@ def apply_design(c0,  sol):
     for p in polygons[1]:
         g.add_polygon(p, layer=fill)
     g = c << g
-    g.drotate(90)
     g.xmin = x0
     g.ymin = y0
     return c

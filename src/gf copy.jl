@@ -14,7 +14,7 @@ function julia_main()::Cint
     return 0
 end
 # add Dates, DataStructures, JSON, Images, BSON,Flux,CUDA
-function lastrun(s=nothing, path=joinpath(pwd(), "lumi_runs"))
+function lastrun(s=nothing, path=joinpath(pwd(), "runs"))
     l = filter(isdir, readdir(path, join=true))
     sort!(l)
     if isnothing(s)

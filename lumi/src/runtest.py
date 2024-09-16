@@ -9,7 +9,7 @@ import gdsfactory as gf
 
 # c = gf.components.straight(.5)
 # sol = lumi.write_sparams(
-# c,wd="lumi_runs", name="straight_waveguide",
+# c,wd="runs", name="straight_waveguide",
 #     wavelength=1.55, keys=["2,1"],
 #     # c, wavelengths=[1.55], keys=["o2@1,o1@1"],
 #     bbox_layer=LAYER.WAFER,
@@ -24,7 +24,7 @@ import gdsfactory as gf
 #         "2,1": 1.0
 #     }}}
 # prob = lumi.gcell_problem(
-#     c, targets, wd="lumi_runs",name="tiny_mimo",
+#     c, targets, wd="runs",name="tiny_mimo",
 #     lmin=0.2, dx=0.1, iters=2, approx_2D=True, save_memory=False)  # gpu="CUDA", dev=True)
 # # lmin=0.2, dx=0.1, iters=2,  approx_2D=True, gpu="CUDA", dev=True)
 # sol = lumi.solve(prob)

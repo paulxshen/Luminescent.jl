@@ -8,14 +8,13 @@ Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float16,Int32}) = true
 
 function julia_main()::Cint
     if !isempty(ARGS)
-
         gfrun(ARGS[1])
     end
     return 0
 end
 
-function lastrun(name=nothing, study=nothing)
-    path = joinpath(pwd(), "lumi_runs")
+function lastrun(; name=nothing, study=nothing, wd="runs")
+    path = joinpath(pwd(), wd)
     l = filter(isdir, readdir(path, join=true))
     sort!(l, by=p -> Dates.unix2datetime(mtime(p)), rev=true)
 
@@ -172,6 +171,7 @@ end
 # using AbbreviatedStackTraces
 # global virgin, stop, best, best0, sparams0
 function gfrun(path; kw...)
+    Random.seed!(1)
     println("setting up simulation...")
     PROB_PATH = joinpath(path, "prob.bson")
     SOL_PATH = joinpath(path, "sol.json")
@@ -223,10 +223,9 @@ function gfrun(path; kw...)
     # heatmap(eps_3D[round(size(eps_3D, 1) / 2), :, :]) |> display
     origin = components.device.bbox[1] - dx * (p * portsides[1])
     if study == "inverse_design"
-        @load PROB_PATH designs targets weights preset eta iters restart save_memory design_config
+        @load PROB_PATH designs targets weights preset eta iters restart save_memory design_config minloss
         targets = fmap(F, targets)
         prob = load(PROB_PATH)
-        minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
         if isfile(SOL_PATH)
             sol = open(SOL_PATH, "r") do f
                 JSON.parse(f)
@@ -488,12 +487,6 @@ function gfrun(path; kw...)
         for i = 1:iters
             # for i = 1:20
             # global virgin, stop, best, best0, sparams0
-            global img = if virgin
-                virgin = false
-                "before.png"
-            elseif i == iters || stop
-                "after.png"
-            end
             if isnothing(preset)
                 @time l, (dldm,) = Flux.withgradient(models) do models
                     # sols = get_sols(runs, run_probs, g0, path, origin, dx,
@@ -502,8 +495,8 @@ function gfrun(path; kw...)
                         F, img, autodiff, save_memory, ulims)
                     S = sparams
                     l = 0
+                    print("($i) losses ")
                     for k = keys(targets)
-                        print("($i) losses ")
                         y = targets[k]
                         err = -
                         if :phasediff == k
@@ -517,12 +510,14 @@ function gfrun(path; kw...)
                                                 [ks[findfirst(k -> startswith(string(k), p), ks)] for p = ps]
                                             end
                                             s1, s2 = [S[λ][k] for k in ks]
-                                            normalize(s1 / s2)
+                                            angle(s1 / s2)
                                         end
                                     for ps = keys(targets[k][λ])])
                                 for λ = keys(targets[k])])
-                            y = fmap(cis, targets[k])
-                            err = (x, y) -> angle(x / y) / F(π)
+                            err = (x, y) -> angle(cis(x) / cis(y))
+                            ŷ = flatten(ŷ)
+                            y = flatten(y)
+                            Z = length(y) * F(π)
                         else
                             if :sparams == k
                                 # S = get_sparams(sols)
@@ -531,8 +526,11 @@ function gfrun(path; kw...)
                                 ŷ = fmap(abs2, S)
                             end
                             ŷ = [[ŷ(λ)(k) for k = keys(y[λ])] for λ = keys(y)]
+                            ŷ = flatten(ŷ)
+                            y = flatten(y)
+                            Z = sum(abs, y)
                         end
-                        _l = sum(abs, err.(flatten(ŷ), flatten(y)),) * weights(k) / sum(abs, flatten(y))
+                        _l = sum(abs, err.(ŷ, y),) * weights(k) / Z
                         print("$(k): $_l ")
                         l += _l
                     end
@@ -571,7 +569,6 @@ function gfrun(path; kw...)
             if l < minloss
                 println("Loss below threshold, stopping optimization.")
                 stop = true
-                img = "after.png"
             end
             if i % 15 == 0
                 if best - best0 > -0.01
@@ -586,6 +583,7 @@ function gfrun(path; kw...)
             if i % 10 == 0 || i == iters || stop
                 println("saving checkpoint...")
                 ckptpath = joinpath(path, "checkpoints", replace(string(now()), ':' => '_', '.' => '_'))
+                mkpath(ckptpath)
                 for (i, (m, d)) = enumerate(zip(models, designs))
                     a = Gray.(m() .< 0.5)
 
@@ -611,6 +609,9 @@ function gfrun(path; kw...)
                 open(joinpath(path, "sol.json"), "w") do f
                     write(f, json(cpu(sol)))
                 end
+            end
+            if stop
+                break
             end
         end
         println("Done in $(time() - t0) .")

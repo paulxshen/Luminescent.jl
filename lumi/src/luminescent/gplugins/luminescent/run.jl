@@ -1,12 +1,12 @@
-using Luminescent, Random
-Random.seed!(1)
+using Luminescent
 if isempty(ARGS)
-    path = lastrun()
+    path = lastrun(wd="runs")
     println("path: ", path)
 else
     path = ARGS[1]
 end
 sol = gfrun(path)
+
 # @show sol.tparams
 
 # using Pkg

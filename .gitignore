@@ -1,3 +1,4 @@
+/build/precompile_execution
 /temp
 /_temp
 /recycle
@@ -6,7 +7,7 @@
 /*.mp4
 /.vscode
 docs/build/
-/lumi_runs
+/runs
 /lumi/dist
 *.lock
 *.pyc

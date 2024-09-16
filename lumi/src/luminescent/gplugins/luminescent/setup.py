@@ -32,8 +32,9 @@ def setup(c, study, dx, margin,
           exclude_layers=[
               DESIGN_LAYER, GUESS], approx_2D=False, Courant=None,
           gpu=None, dtype=np.float32,
-          plot=False, magic="", wd=os.getcwd(), **kwargs):
-    name = c.name
+          plot=False, magic="", wd="runs", name=None, **kwargs):
+    if name is None:
+        name = c.name
     if name.startswith("Unnamed"):
         name = ""
     if type(bbox_layer[0]) is int:
@@ -69,9 +70,9 @@ def setup(c, study, dx, margin,
     thickness = zlims[1]-zlims[0]
     prob["thickness"] = thickness
 
-    a = min([min([materials[d.material].epsilon for d in get_layers(
+    a = min([min([materials[d.material]["epsilon"] for d in get_layers(
         layer_stack, l)]) for l in bbox_layer])
-    b = max([materials[d.material].epsilon for d in get_layers(
+    b = max([materials[d.material]["epsilon"] for d in get_layers(
         layer_stack, core_layer)])
     C = 5*math.sqrt(a/b)
     if zmargin is None:

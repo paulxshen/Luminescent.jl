@@ -17,10 +17,12 @@ def mimo(west=0, east=0, south=0, north=0,
          wwg_west=None, wwg_east=None, wwg_south=None, wwg_north=None,
          wwg_layer=LAYER.WG,  # bbox_layer=LAYER.WAFER,
          design_layer=DESIGN_LAYER,
+         name="",
          **kwargs):
     design = gf.Component()
-
     c = gf.Component(**kwargs)
+    if name:
+        c.name = name
     if lwg is None:
         lwg = 4*wwg
     p = [(0, 0), (l, 0), (l, w), (0, w)]

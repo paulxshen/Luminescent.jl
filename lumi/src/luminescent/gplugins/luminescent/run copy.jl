@@ -20,7 +20,7 @@ include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 # using Porcupine: keys, values
 
 if isempty(ARGS)
-    path = joinpath(pwd(), "lumi_runs")
+    path = joinpath(pwd(), "runs")
     path = filter(isdir, readdir(path, join=true)) |> sort |> last
     PROB_PATH = joinpath(path, "prob.bson")
 else
