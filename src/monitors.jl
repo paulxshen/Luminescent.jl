@@ -11,7 +11,7 @@ struct Monitor <: AbstractMonitor
     meta
 end
 
-wavelengths(m::Monitor) = Porcupine.keys(m.wavelength_modes)
+wavelengths(m::Monitor) = keys(m.wavelength_modes)
 
 """
     function Monitor(c, L; normal=nothing, label="")
@@ -32,9 +32,6 @@ function Monitor(c, L, normal=nothing; label="", kw...)
 end
 
 function ModalMonitor(wavelength_modes::Dictlike, c, normal, tangent, L; wavelength=1, wavelengths=[wavelength], label="", kw...)
-    if isa(first(values(wavelength_modes)), AbstractArray{<:Number})
-        wavelength_modes = dict([1 => [wavelength_modes]])
-    end
     Monitor(c, -L / 2, L / 2, normal, tangent, label, wavelength_modes, kw)
 end
 

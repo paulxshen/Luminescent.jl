@@ -202,8 +202,13 @@ def mode_number(port):
     return 0 if len(l) == 1 else int(l[1])
 
 
-def longname(s):
-    o, i = s.split(",")
+def unpack_sparam_key(k):
+    o, i = k.split(",")
     po, pi = port_number(o), port_number(i)
     mo, mi = mode_number(o), mode_number(i)
+    return po, mo, pi, mi
+
+
+def long_sparam_key(k):
+    po, mo, pi, mi = unpack_sparam_key(k)
     return f"o{po}@{mo},o{pi}@{mi}"

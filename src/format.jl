@@ -42,7 +42,7 @@ function mode_number(port)
 end
 
 
-# function longname(s):
+# function long_sparam_key(s):
 #     o, i = s.split(",")
 #     po, pi = port_number(o), port_number(i)
 #     mo, mi = mode_number(o), mode_number(i)

@@ -382,10 +382,10 @@ function gfrun(path; kw...)
                                 zcenter = ms.zcenter
                             end
                             mode = ms.calibrated_modes[mn+1]
-                        end for mn = mn
+                        end for mn = 0:maximum(mns)
                     ]
                 end
-                for (λ, mn) in pairs(m.wavelength_mode_numbers)
+                for (λ, mns) in pairs(m.wavelength_mode_numbers)
             ])
             if d == 3
                 c = [c..., (zcenter - zmin) / λc]
@@ -463,7 +463,6 @@ function gfrun(path; kw...)
         opt = Adam(eta)
         opt_state = Flux.setup(opt, models)
         println("starting optimization... first iter will be slow due to adjoint compilation.")
-        stop = false
         global img = nothing
         best = best0 = 0
         S, ulims = write_sparams(runs, run_probs, g0, origin, dx,
@@ -485,7 +484,7 @@ function gfrun(path; kw...)
         # error()
         println("")
         for i = 1:iters
-            # for i = 1:20
+            stop = i == iters
             # global virgin, stop, best, best0, sparams0
             if isnothing(preset)
                 @time l, (dldm,) = Flux.withgradient(models) do models
@@ -558,29 +557,28 @@ function gfrun(path; kw...)
                 end
             end
 
-            if i == 1
-                best0 = best = l
-            end
+            # if i == 1
+            #     best0 = best = l
+            # end
 
-            Flux.update!(opt_state, models, dldm)# |> gpu)
-            if l < best
-                best = l
-            end
+            # if l < best
+            #     best = l
+            # end
             if l < minloss
                 println("Loss below threshold, stopping optimization.")
                 stop = true
             end
-            if i % 15 == 0
-                if best - best0 > -0.01
-                    println("Loss stagnating, stopping optimization.")
-                    stop = true
-                else
-                    best0 = best
-                end
-            end
+            # if i % 15 == 0
+            #     if best - best0 > -0.01
+            #         println("Loss stagnating, stopping optimization.")
+            #         stop = true
+            #     else
+            #         best0 = best
+            #     end
+            # end
             println("")
 
-            if i % 10 == 0 || i == iters || stop
+            if i % 10 == 0 || stop
                 println("saving checkpoint...")
                 ckptpath = joinpath(path, "checkpoints", replace(string(now()), ':' => '_', '.' => '_'))
                 mkpath(ckptpath)
@@ -613,6 +611,7 @@ function gfrun(path; kw...)
             if stop
                 break
             end
+            Flux.update!(opt_state, models, dldm)# |> gpu)
         end
         println("Done in $(time() - t0) .")
 

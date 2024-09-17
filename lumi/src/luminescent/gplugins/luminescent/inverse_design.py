@@ -16,7 +16,7 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 def gcell_problem(c,  targets=dict(), preset=None,
                   lmin=.1, symmetries=[],
                   weights=dict(),
-                  iters=25, eta=0.2, init=1,   minloss=.01,
+                  iters=25, eta=0.6, init=1,   minloss=.01,
                   design_region_layer=DESIGN_LAYER,
                   #    design_guess_layer=LAYER.GUESS,
                   fill_layer=LAYER.WG,
@@ -34,13 +34,32 @@ def gcell_problem(c,  targets=dict(), preset=None,
             keys = ["o2@0,o1@0"]
             wavelengths = [preset["wavelength"]]
     else:
+        if "tparams" in targets:
+            for wl in targets["tparams"]:
+                d = {}
+                for k in targets["tparams"][wl]:
+                    o, i = k.split(",")
+                    po, mo = o.split("@")
+                    pi, mi = i.split("@")
+                    if mo == "0":
+                        mo = "1"
+                    elif mo == "1":
+                        mo = "0"
+                    else:
+                        mo = ""
+                    if mo:
+                        _k = f"{po}@{mo},{pi}@{mi}"
+                        if _k not in targets["tparams"][wl]:
+                            d[_k] = 0
+                targets["tparams"][wl].update(d)
+        print(targets)
         targets1 = {}
         keys = SortedSet()
         wavelengths = SortedSet()
         for k, d in targets.items():
             d = {
                 wl: {
-                    longname(k): v for k, v in d.items()
+                    long_sparam_key(k): v for k, v in d.items()
                 } for wl, d in d.items()}
             targets1[k] = d
             if k in ["sparams", "tparams"]:
@@ -50,6 +69,7 @@ def gcell_problem(c,  targets=dict(), preset=None,
                 wavelengths.add(wl)
         targets = targets1
         keys = list(keys)
+        print(keys)
         wavelengths = list(wavelengths)
 
     prob = sparams_problem(c,

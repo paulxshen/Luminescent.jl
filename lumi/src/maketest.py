@@ -35,7 +35,7 @@ for (approx_2D, gpu, dtype, save_memory) in itertools.product(
     [None, ],
     ["f32"],
     # ["f32", "f16"],
-    [True, False],
+    [False],
 ):
     prob = lumi.gcell_problem(
         c, targets,

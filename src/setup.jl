@@ -79,10 +79,9 @@ function setup(boundaries, sources, monitors, dx, sz;
             v = reduce(vcat, wavelengths.(monitors))
             v = v |> Set |> collect |> sort |> reverse
             if length(v) == 1
-                steady_state_duration = 4
-
+                steady_state_duration = 2
             else
-                steady_state_duration = 12 / minimum(diff([0, (1 ./ v)...]))
+                steady_state_duration = 6 / minimum(diff([0, (1 ./ v)...]))
             end
         end
     end

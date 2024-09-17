@@ -89,16 +89,15 @@ def lastrun(wd="runs", name="", study="",  **kwargs):
     return l[0]
 
 
-def finetune(iters, **kwargs):
+def finetune(iters, eta=0.2, **kwargs):
     path = lastrun(study="inverse_design", **kwargs)
 
     prob = bson.loads(open(os.path.join(path, "prob.bson"), "rb").read())
     prob["iters"] = iters
+    prob["eta"] = eta
     prob["restart"] = False
     prob = {**prob, **kwargs}
-    # with open(path, "wb") as f:
-    #     f.write(bson.dumps(prob))
-    solve(prob)
+    return solve(prob)
 
 
 def load_sparams(sparams):
