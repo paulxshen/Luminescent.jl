@@ -1,6 +1,6 @@
 using Luminescent
 if isempty(ARGS)
-    path = lastrun(wd="runs")
+    path = lastrun()
     println("path: ", path)
 else
     path = ARGS[1]

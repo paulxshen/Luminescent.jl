@@ -55,10 +55,12 @@ def main(fileName, sizeOfTheCell, layerNum, isDither, scale):
         for y in range(height - 1):
             if binaryImage.item(y, x) == 0 and binaryImage.item(y + 1, x) == 255 \
                     and binaryImage.item(y, x + 1) == 255 and binaryImage.item(y + 1, x + 1) == 0:
-                binaryImage.itemset((y + 1, x), 0)
+                # binaryImage.itemset((y + 1, x), 0)
+                binaryImage[y + 1, x] = 0
             elif binaryImage.item(y, x) == 255 and binaryImage.item(y + 1, x) == 0 \
                     and binaryImage.item(y, x + 1) == 0 and binaryImage.item(y + 1, x + 1) == 255:
-                binaryImage.itemset((y + 1, x + 1), 0)
+                # binaryImage.itemset((y + 1, x + 1), 0)
+                binaryImage[y + 1, x+1] = 0
 
     # Output image.bmp
     cv2.imwrite("image.bmp", binaryImage)

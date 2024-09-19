@@ -1,4 +1,14 @@
-mirror_mode(m) = namedtuple([k => k in (:Ex, :Hx) ? -reverse(m[k], dims=1) : m[k] for k in keys(m)])
+mirror_mode(m) = namedtuple([k =>
+    begin
+        a = reverse(m[k], dims=1)
+        v = ignore_derivatives() do
+            string(k)[2:2]
+        end
+        if v in ("x", "z")
+            a = -a
+        end
+        a
+    end for k in keys(m)])
 
 # function normalize_mode(m, dx)
 function inner(u, v; dx=1)
@@ -25,12 +35,10 @@ end
 
 
 function keepxy(mode)
-    namedtuple([k => mode[k] for k in keys(mode) if string(k)[2] ∈ ('x', 'y')])
+    namedtuple([k => mode[k] for k in keys(mode) if any(endswith.((string(k),), ("x", "y")))])
 end
 
 
-# function mode_decomp(m, u::AbstractVector, dx)
-#     Ex,Hy,Hz
 function mode_decomp(m, u, dx)
     p = real(inner(m, m; dx))
     m1 = m / sqrt(abs(p))

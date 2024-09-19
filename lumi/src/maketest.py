@@ -40,7 +40,7 @@ for (approx_2D, gpu, dtype, save_memory) in itertools.product(
     prob = lumi.gcell_problem(
         c, targets,
         bbox_layer=LAYER.WAFER,
-        lmin=0.2, dx=0.1, iters=3,
+        lmin=0.2, dx=0.1, iters=2,
         approx_2D=approx_2D, gpu=gpu, dtype=dtype, save_memory=save_memory,
         run=False, wd=BUILD_RUNS)
     sol = lumi.solve(prob, run=False)

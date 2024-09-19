@@ -7,16 +7,18 @@ import gdsfactory as gf
 # lumi.show_solution()
 # raise Exception("stop here")
 
-# c = gf.components.straight(.5)
-# sol = lumi.write_sparams(
-# c,wd="runs", name="straight_waveguide",
-#     wavelength=1.55, keys=["2,1"],
-#     # c, wavelengths=[1.55], keys=["o2@1,o1@1"],
-#     bbox_layer=LAYER.WAFER,
-#     # bbox_layer=[LAYER.WAFER, LAYER.SLAB90],
-#     dx=0.1, gpu="CUDA",)
-# # dx=0.1, approx_2D=False, gpu="CUDA",)  # dtype="16", dev=True,)
-# lumi.show_solution()
+c = gf.components.straight(.5)
+sol = lumi.write_sparams(
+    c, wd="runs", name="straight_waveguide",
+    wavelength=[1.2, 1.55],
+    keys=["2,1"],
+    # keys=["o2@1,o1@1"],
+    bbox_layer=LAYER.WAFER,
+    # bbox_layer=[LAYER.WAFER, LAYER.SLAB90],
+    approx_2D=True,
+    dx=0.05, gpu="CUDA",)
+# dx=0.1, approx_2D=False, gpu="CUDA",)  # dtype="16", dev=True,)
+lumi.show_solution()
 
 # c = lumi.gcells.mimo(west=1, east=1, l=1, w=1,  wwg=.5)
 # targets = {"tparams": {

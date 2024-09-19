@@ -18,10 +18,6 @@ from subprocess import Popen, PIPE
 
 
 def solve(prob, dev=False, run=True):
-    if "dev" in prob:
-        dev = prob["dev"]
-    # c0 = prob["component"]
-    # del prob["component"]
     bson_data = bson.dumps(prob)
     # prob["component"] = c0
 
@@ -52,14 +48,8 @@ def solve(prob, dev=False, run=True):
                 print(str(line.decode().strip()), flush=True)
             err_message = proc.stderr.read().decode()
             print(err_message)
-    cmd_dev = [f"julia", os.path.join(os.path.dirname(
-        os.path.abspath(__file__)), "run.jl"), path,]
     cmd = ["lumi", path]
-    if dev:
-        print(" ".join(cmd_dev))
-        run(cmd_dev)
-    else:
-        run(cmd)
+    run(cmd)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:
     #     if p.stderr is not None:
@@ -73,7 +63,7 @@ def solve(prob, dev=False, run=True):
     return sol
 
 
-def lastrun(wd="runs", name="", study="",  **kwargs):
+def lastrun(wd=os.path.join(os.getcwd(), "runs"), name="", study="",  **kwargs):
     if name:
         return os.path.join(wd, name)
     l = [os.path.join(wd, x) for x in os.listdir(wd)]

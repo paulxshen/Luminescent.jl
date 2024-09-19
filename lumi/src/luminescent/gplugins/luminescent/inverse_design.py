@@ -38,9 +38,7 @@ def gcell_problem(c,  targets=dict(), preset=None,
             for wl in targets["tparams"]:
                 d = {}
                 for k in targets["tparams"][wl]:
-                    o, i = k.split(",")
-                    po, mo = o.split("@")
-                    pi, mi = i.split("@")
+                    po, mo, pi, mi = unpack_sparam_key(k)
                     if mo == "0":
                         mo = "1"
                     elif mo == "1":

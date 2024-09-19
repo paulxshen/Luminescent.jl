@@ -275,50 +275,20 @@ function gfrun(path; kw...)
             ms[:calibrated_modes] = []
         end
         for (mode, mode1) in zip(ms.modes, ms.modes1)
-
-            sz = ms.size
-            eps = ms.eps
-            #  ϵmode1=   eps1 = ms.eps1
-
             mode = (; [k => complex.(stack.(v)...) |> F for (k, v) in mode |> pairs]...)
             mode1 = (; [k => complex.(v...) |> F for (k, v) in mode1 |> pairs]...)
-            # ϵmode = eps |> stack |> transpose .|> F
 
-            # sz = round(sz / dx) |> Tuple
-            # # sz = size() - 1
-            # mode = (; Pair.(keys(mode), [resize(v, size(v) - 1) for v in values(mode)])...)
-            # ϵ = resize(ϵ, sz)
             if d == 2
                 mode = mode1
                 # mode = collapse_mode(mode,)
-                # i = round(Int, size(ϵmode, 1) / 2)
-                # ϵcore_ = ϵmode[i]
-                # ϵmode = maximum(ϵmode, dims=2) |> vec
-                # ϵmode = min.(ϵmode, ϵcore_)
             end
-            # mode = normalize_mode(mode, dx / λc)
             mode = keepxy(mode)
-            # global mode0 = deepcopy(mode)
-
-            if calibrate && d == 2
-                # @unpack mode, power = calibrate_mode(mode, ϵmode, dx / ms.wavelength)
-                # global mode /= sqrt(power)
-                # @unpack power, = calibrate_mode(mode, ϵmode, dx / λc;)
-                # mode /= sqrt(power)
-
-                # @unpack power, sol = calibrate_mode(mode, ϵmode, dx / λc; verbose=true)
-                # MyMakie.save(joinpath(path, "calibration.png"), quickie(sol),)
-                # @show power
-                # global mode2 = deepcopy(mode)
-            end
-
-            # error()
             push!(ms[:calibrated_modes], mode)
         end
     end
-
+    # global a = mode_solutions
     # modal source
-    runs_sources = [
+    global runs_sources = [
         begin
             d = run.d
             sources = []
@@ -394,7 +364,7 @@ function gfrun(path; kw...)
         end
         for (port, m) = run.monitors |> pairs] for run in runs]
 
-    run_probs =
+    global run_probs =
         [
             begin
                 ϵ = if run.d == 2
@@ -494,7 +464,7 @@ function gfrun(path; kw...)
                         F, img, autodiff, save_memory, ulims)
                     S = sparams
                     l = 0
-                    print("($i) losses ")
+                    println("($i)  ")
                     for k = keys(targets)
                         y = targets[k]
                         err = -
@@ -524,13 +494,16 @@ function gfrun(path; kw...)
                             elseif :tparams == k
                                 ŷ = fmap(abs2, S)
                             end
+                            ignore_derivatives() do
+                                display(ŷ)
+                            end
                             ŷ = [[ŷ(λ)(k) for k = keys(y[λ])] for λ = keys(y)]
                             ŷ = flatten(ŷ)
                             y = flatten(y)
                             Z = sum(abs, y)
                         end
                         _l = sum(abs, err.(ŷ, y),) * weights(k) / Z
-                        print("$(k): $_l ")
+                        print("$(k) loss: $_l ")
                         l += _l
                     end
                     println("\n weighted total loss $l")

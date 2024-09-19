@@ -32,7 +32,7 @@ def setup(c, study, dx, margin,
           exclude_layers=[
               DESIGN_LAYER, GUESS], approx_2D=False, Courant=None,
           gpu=None, dtype=np.float32,
-          plot=False, magic="", wd="runs", name=None, **kwargs):
+          plot=False, magic="", wd=os.path.join(os.getcwd(),"runs"), name=None, **kwargs):
     if name is None:
         name = c.name
     if name.startswith("Unnamed"):
@@ -74,7 +74,7 @@ def setup(c, study, dx, margin,
         layer_stack, l)]) for l in bbox_layer])
     b = max([materials[d.material]["epsilon"] for d in get_layers(
         layer_stack, core_layer)])
-    C = 5*math.sqrt(a/b)
+    C = 4*math.sqrt(a/b)
     if zmargin is None:
         zmargin = dx*round(C*thickness/dx)
     port_width = max([p.width/1e3 for p in c.ports])
@@ -114,7 +114,8 @@ def setup(c, study, dx, margin,
     prob["d"] = 2 if approx_2D else 3
 
     prob["mode_height"] = h
-    w = port_width+2*margin
+    # w = port_width+2*margin
+    w = 2*port_width
     neffmin = 1000000
     wavelengths = []
     # _c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
