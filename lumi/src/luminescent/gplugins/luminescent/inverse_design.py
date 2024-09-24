@@ -13,10 +13,10 @@ import os
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
-def gcell_problem(c,  targets=dict(), preset=None,
+def gcell_problem(c,  targets, iters,
                   lmin=.1, symmetries=[],
                   weights=dict(),
-                  iters=25, eta=0.6, init=1,   minloss=.01,
+                  eta=2, init=1,   stoploss=.03,
                   design_region_layer=DESIGN_LAYER,
                   #    design_guess_layer=LAYER.GUESS,
                   fill_layer=LAYER.WG,
@@ -29,28 +29,35 @@ def gcell_problem(c,  targets=dict(), preset=None,
     #     raise NotImplementedError(
     #         "3D inverse design feature must be requested from Luminescent AI info@luminescentai.com")
 
-    if preset is not None:
-        if preset["name"] == "phase_shifter":
-            keys = ["o2@0,o1@0"]
-            wavelengths = [preset["wavelength"]]
+    if "phase_shifter" in targets:
+        keys = ["o2@0,o1@0"]
+        wavelengths = [preset["wavelength"]]
     else:
         if "tparams" in targets:
             for wl in targets["tparams"]:
                 d = {}
                 for k in targets["tparams"][wl]:
                     po, mo, pi, mi = unpack_sparam_key(k)
-                    if mo == "0":
-                        mo = "1"
-                    elif mo == "1":
-                        mo = "0"
+                    if mo == 0:
+                        _mo = 1
+                    elif mo == 1:
+                        _mo = 0
                     else:
-                        mo = ""
-                    if mo:
-                        _k = f"{po}@{mo},{pi}@{mi}"
+                        mo = None
+
+                    if mo is not None:
+                        _k = f"o{po}@{_mo},o{pi}@{mi}"
                         if _k not in targets["tparams"][wl]:
                             d[_k] = 0
+                    _k = f"o{pi}@0,o{pi}@{mi}"
+                    if _k not in targets["tparams"][wl]:
+                        d[_k] = 0
+                    _k = f"o{pi}@1,o{pi}@{mi}"
+                    if _k not in targets["tparams"][wl]:
+                        d[_k] = 0
                 targets["tparams"][wl].update(d)
         print(targets)
+
         targets1 = {}
         keys = SortedSet()
         wavelengths = SortedSet()
@@ -83,7 +90,6 @@ def gcell_problem(c,  targets=dict(), preset=None,
         "phasediff": 1,
     }, **weights}
     prob["save_memory"] = save_memory
-    prob["preset"] = preset
     prob["targets"] = targets
     prob["wavelengths"] = wavelengths
     # prob["init"] = init
@@ -108,7 +114,7 @@ def gcell_problem(c,  targets=dict(), preset=None,
         } for p, s in zip(list(polys.values())[0], symmetries)
     ]
     epsmin = np.min(prob["eps_2D"])
-    prob["minloss"] = minloss
+    prob["stoploss"] = stoploss
     prob["design_config"] = dict()
     l = get_layers(layer_stack, fill_layer)[0]
     d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}

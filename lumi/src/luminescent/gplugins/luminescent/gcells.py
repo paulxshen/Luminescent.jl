@@ -51,11 +51,12 @@ def mimo(west=0, east=0, south=0, north=0,
     ):
         for wwg, v in zip(wwg, d):
             center = (x, y+v) if i in [0, 1] else (x+v, y)
+            wwg2 = wwg+.1*lwg
             name = "o"+str(n+1)
-            design.add_port(name=name, center=center, width=wwg,
+            design.add_port(name=name, center=center, width=wwg2,
                             orientation=a, layer=wwg_layer)
-            wg = c << gf.components.straight(
-                length=lwg, width=wwg, layer=wwg_layer)
+            wg = c << gf.components.taper(
+                length=lwg, width1=wwg, width2=wwg2, layer=wwg_layer)
             wg.connect("o2", design.ports[name])
             c.add_port(name=name, port=wg.ports["o1"])
             n += 1

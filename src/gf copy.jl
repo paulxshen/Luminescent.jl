@@ -209,7 +209,7 @@ origin = components.device.bbox[1] - dx * (p * portsides[1])
 if study == "inverse_design"
     @load PROB_PATH designs targets preset eta iters restart save_memory design_config contrast
     prob = load(PROB_PATH)
-    minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
+    stoploss = haskey(prob, :stoploss) ? prob[:stoploss] : -Inf
     if isfile(SOL_PATH)
         sol = open(SOL_PATH, "r") do f
             JSON.parse(f)
@@ -514,7 +514,7 @@ elseif study == "inverse_design"
         if l < best
             best = l
         end
-        if l < minloss
+        if l < stoploss
             println("Loss below threshold, stopping optimization.")
             stop = true
             img = "after.png"

@@ -51,12 +51,11 @@ def extend(endpoints, wm):
         (endpoints[0]-wm*v).tolist(), (endpoints[1]+wm*v).tolist()]
 
 
-def portsides(c):
+def portsides(ports, bbox):
     res = [[False, False], [False, False]]
-    bbox = c.bbox_np()
     xmin0, ymin0 = bbox[0]
     xmax0, ymax0 = bbox[1]
-    for p in c.ports:
+    for p in ports:
         x, y = np.array(p.center)/1e3
         if abs(x - xmin0) < tol:
             res[0][0] = True

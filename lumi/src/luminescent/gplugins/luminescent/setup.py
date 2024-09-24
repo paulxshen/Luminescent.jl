@@ -32,7 +32,7 @@ def setup(c, study, dx, margin,
           exclude_layers=[
               DESIGN_LAYER, GUESS], approx_2D=False, Courant=None,
           gpu=None, dtype=np.float32,
-          plot=False, magic="", wd=os.path.join(os.getcwd(),"runs"), name=None, **kwargs):
+          plot=False, magic="", wd=os.path.join(os.getcwd(), "runs"), name=None, **kwargs):
     if name is None:
         name = c.name
     if name.startswith("Unnamed"):
@@ -164,7 +164,7 @@ def setup(c, study, dx, margin,
     wavelengths = sorted(set(wavelengths))
     wl = np.median(wavelengths)
     if port_source_offset == "auto":
-        port_source_offset = trim(3*wl/neffmin, dx)
+        port_source_offset = trim(2*wl/neffmin, dx)
     prob["port_source_offset"] = port_source_offset
     if source_margin == "auto":
         source_margin = 2*dx
@@ -172,7 +172,23 @@ def setup(c, study, dx, margin,
 
     prob["margin"] = margin
     prob["zmargin"] = zmargin
-    prob["portsides"] = portsides(c)
+
+    bbox = c.bbox_np()
+    source_ports = []
+    nonsource_ports = []
+    for p in c.ports:
+        is_source = False
+        for run in runs:
+            for port in run["sources"]:
+                if port == int(p.name[1]):
+                    is_source = True
+        if is_source:
+            source_ports.append(p)
+        else:
+            nonsource_ports.append(p)
+
+    prob["source_portsides"] = portsides(source_ports, bbox)
+    prob["nonsource_portsides"] = portsides(nonsource_ports, bbox)
 
     prob["mode_solutions"] = mode_solutions
     prob["runs"] = runs

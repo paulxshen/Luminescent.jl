@@ -183,7 +183,7 @@ function gfrun(path; kw...)
     verbose = false
 
     prob = load(PROB_PATH)
-    @load PROB_PATH name dtype margin zmargin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin thickness zcore gpu_backend d magic
+    @load PROB_PATH name dtype margin zmargin source_margin Courant port_source_offset source_portsides nonsource_portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin thickness zcore gpu_backend d magic
     F = Float32
     if contains(dtype, "16")
         F = Float16
@@ -206,24 +206,24 @@ function gfrun(path; kw...)
     zmargin = whole(zmargin, dx)
     source_margin = whole(source_margin, dx)
 
-    p = round((port_source_offset + source_margin) / dx)
-    np = round(margin / dx)
+    n_source_portsides = round((port_source_offset + source_margin) / dx)
+    n_nonsource_portsides = round((source_margin) / dx)
     # p = m + n
     # origin = components.device.bbox[1] - dx * p
     # eps_3D = pad(eps_3D, :replicate, [p, p, 0])
     # eps_2D = pad(eps_2D, :replicate, p)
     models = nothing
-    lr = p * portsides
+    lr = n_source_portsides * source_portsides + n_nonsource_portsides * nonsource_portsides
     eps_2D = pad(eps_2D, :replicate, lr...)
+    origin = components.device.bbox[1] - dx * lr[1]
 
     nz = round(zmargin / dx)
     push!(lr[1], 0)
     push!(lr[2], 0)
     eps_3D = pad(eps_3D, :replicate, lr...)
     # heatmap(eps_3D[round(size(eps_3D, 1) / 2), :, :]) |> display
-    origin = components.device.bbox[1] - dx * (p * portsides[1])
     if study == "inverse_design"
-        @load PROB_PATH designs targets weights preset eta iters restart save_memory design_config minloss
+        @load PROB_PATH designs targets weights eta iters restart save_memory design_config stoploss
         targets = fmap(F, targets)
         prob = load(PROB_PATH)
         if isfile(SOL_PATH)
@@ -456,7 +456,26 @@ function gfrun(path; kw...)
         for i = 1:iters
             stop = i == iters
             # global virgin, stop, best, best0, sparams0
-            if isnothing(preset)
+            if "phase_shifter" == first(keys(targets))
+                @time l, (dldm,) = Flux.withgradient(models) do m
+                    S = write_sparams(runs, run_probs, g0, path, origin, dx,
+                        designs, design_config, m;
+                        F, img, autodiff, save_memory, ulims)#(1)(1)
+                    k = keys(S) |> first
+                    s = S[k][Symbol("o2@0,o1@0")]
+
+                    S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
+                        designs, design_config, m;
+                        F, img, autodiff, save_memory, perturb=:ϵ, ulims)#(1)(1)
+                    s_ = S_[k][Symbol("o2@0,o1@0")]
+
+                    T = abs2(s)
+                    dϕ = angle(s_ / s)
+                    println("T: $T, dϕ: $dϕ")
+                    sparams = S
+                    (T * dϕ)
+                end
+            else
                 @time l, (dldm,) = Flux.withgradient(models) do models
                     # sols = get_sols(runs, run_probs, g0, path, origin, dx,
                     @unpack sparams, sols = write_sparams(runs, run_probs, g0, origin, dx,
@@ -509,25 +528,6 @@ function gfrun(path; kw...)
                     println("\n weighted total loss $l")
                     l
                 end
-            elseif "phase_shifter" == preset.name
-                @time l, (dldm,) = Flux.withgradient(models) do m
-                    S = write_sparams(runs, run_probs, g0, path, origin, dx,
-                        designs, design_config, m;
-                        F, img, autodiff, save_memory, ulims)#(1)(1)
-                    k = keys(S) |> first
-                    s = S[k][Symbol("o2@0,o1@0")]
-
-                    S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
-                        designs, design_config, m;
-                        F, img, autodiff, save_memory, perturb=:ϵ, ulims)#(1)(1)
-                    s_ = S_[k][Symbol("o2@0,o1@0")]
-
-                    T = abs2(s)
-                    dϕ = angle(s_ / s)
-                    println("T: $T, dϕ: $dϕ")
-                    sparams = S
-                    (T * dϕ)
-                end
             end
 
             # if i == 1
@@ -537,7 +537,7 @@ function gfrun(path; kw...)
             # if l < best
             #     best = l
             # end
-            if l < minloss
+            if l < stoploss
                 println("Loss below threshold, stopping optimization.")
                 stop = true
             end

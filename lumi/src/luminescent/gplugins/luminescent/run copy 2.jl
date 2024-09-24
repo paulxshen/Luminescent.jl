@@ -174,7 +174,7 @@ origin = components.device.bbox[1] - dx * (p * portsides[1] + np * (1 - portside
 if study == "inverse_design"
     @load PROB_PATH designs targets target_type eta iters design_config
     prob = load(PROB_PATH)
-    minloss = haskey(prob, :minloss) ? prob[:minloss] : -Inf
+    stoploss = haskey(prob, :stoploss) ? prob[:stoploss] : -Inf
 
     models = [
         # Symbol("o$i") =>
@@ -443,7 +443,7 @@ elseif study == "inverse_design"
         if l < best
             best = l
         end
-        if l < minloss
+        if l < stoploss
             println("Loss below threshold, stopping optimization.")
             stop = true
             img = "after.png"
