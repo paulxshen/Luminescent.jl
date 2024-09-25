@@ -84,14 +84,17 @@ function MonitorInstance(m::Monitor, dx, field_origin, common_left_pad_amount, s
     L = ub - lb
 
     roi = dict([k => begin
-        p = (c + lb - o) / dx + 1.5
-        i = floor(p)
-        w = 1 - mean(abs.(p - i))
-        w = (w, 1 - w)
-        i = [i .+ map(round(L / dx)) do n
-            n == 0 ? 0 : (0:sign(n):n-sign(n))
-        end for i = (i, i + 1)]
-        [(F(w), i) for (w, i) in zip(w, i) if w > 0]
+        a = (c + lb - o) / dx + 1.5
+
+        [l == 0 ? a : (a + (0:sign(l):l-sign(l))) for (a, l) in zip(a, round(L / dx))]
+        # p = (c + lb - o) / dx + 1.5
+        # i = floor(p)
+        # w = 1 - mean(abs.(p - i))
+        # w = (w, 1 - w)
+        # i = [i .+ map(round(L / dx)) do n
+        #     n == 0 ? 0 : (0:sign(n):n-sign(n))
+        # end for i = (i, i + 1)]
+        # [(F(w), i) for (w, i) in zip(w, i) if w > 0]
     end for (k, o) = pairs(field_origin)])
     n = isnothing(n) ? n : F.(n |> normalize)
     _center = round(c / dx) + 1 + common_left_pad_amount
@@ -111,7 +114,8 @@ Args
 - `m`
 """
 function field(a::AbstractArray, k, m)
-    sum([w * a[i...] for (w, i) = m.roi[k]])
+    # sum([w * a[i...] for (w, i) = m.roi[k]])
+    getindexf(a, m.roi[k]...)
 end
 
 function field(u::Dictlike, k, m)

@@ -14,9 +14,9 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
 def gcell_problem(c,  targets, iters,
-                  lmin=.1, symmetries=[],
+                  lvoid=0, lsolid=0, symmetries=[],
                   weights=dict(),
-                  eta=2, init=1,   stoploss=.03,
+                  eta=.1, init=1,   stoploss=.03,
                   design_region_layer=DESIGN_LAYER,
                   #    design_guess_layer=LAYER.GUESS,
                   fill_layer=LAYER.WG,
@@ -110,7 +110,8 @@ def gcell_problem(c,  targets, iters,
             "bbox": _bbox(p.bbox()),
             "symmetries": s,
             "init": init,
-            "lmin": lmin,
+            "lvoid": lvoid,
+            "lsolid": lsolid,
         } for p, s in zip(list(polys.values())[0], symmetries)
     ]
     epsmin = np.min(prob["eps_2D"])

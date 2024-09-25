@@ -251,9 +251,14 @@ function gfrun(path; kw...)
                 #     init = nothing
                 # end
 
-                lmin = round(d.lmin / dx)
+                lvoid = round(d.lvoid / dx)
+                lsolid = round(d.lsolid / dx)
+                lmin = max(lvoid, lsolid, 1)
+                frame = eps_2D[range.(o - lmin, o + szd + lmin - 1)...]
+                frame = frame .== maximum(frame)
+                display(heatmap(frame))
                 b = Blob(szd;
-                    init, lmin, symmetries, F)
+                    init, lvoid, lsolid, symmetries, F, frame)
 
                 if !isnothing(sol) && !restart
                     println("loading saved design...")
@@ -514,7 +519,7 @@ function gfrun(path; kw...)
                                 ŷ = fmap(abs2, S)
                             end
                             ignore_derivatives() do
-                                display(ŷ)
+                                println(json(ŷ))
                             end
                             ŷ = [[ŷ(λ)(k) for k = keys(y[λ])] for λ = keys(y)]
                             ŷ = flatten(ŷ)
@@ -551,7 +556,7 @@ function gfrun(path; kw...)
             # end
             println("")
 
-            if i % 10 == 0 || stop
+            if i % 5 == 0 || stop
                 println("saving checkpoint...")
                 ckptpath = joinpath(path, "checkpoints", replace(string(now()), ':' => '_', '.' => '_'))
                 mkpath(ckptpath)

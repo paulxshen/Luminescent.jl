@@ -115,7 +115,7 @@ def setup(c, study, dx, margin,
 
     prob["mode_height"] = h
     # w = port_width+2*margin
-    w = 2*port_width
+    w = 2.5*port_width
     neffmin = 1000000
     wavelengths = []
     # _c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
@@ -164,7 +164,7 @@ def setup(c, study, dx, margin,
     wavelengths = sorted(set(wavelengths))
     wl = np.median(wavelengths)
     if port_source_offset == "auto":
-        port_source_offset = trim(2*wl/neffmin, dx)
+        port_source_offset = trim(2.6*wl/neffmin, dx)
     prob["port_source_offset"] = port_source_offset
     if source_margin == "auto":
         source_margin = 2*dx
