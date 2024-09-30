@@ -27,10 +27,7 @@ def setup(c, study, dx, margin,
           gpu=None, dtype=np.float32,
           plot=False, framerate=0,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None, **kwargs):
-    if name is None:
-        name = c.name
-    if name.startswith("Unnamed"):
-        name = None
+
     if type(bbox_layer[0]) is int:
         bbox_layer = (bbox_layer,)
     prob = dict()

@@ -65,7 +65,7 @@ def load_solution(**kwargs):
         sol["optimized_designs"] = l
         for i, a in enumerate(l):
             name = f"optimized_design_region_{i+1}.png"
-            Image.fromarray(np.uint8((1-a) * 255),
+            Image.fromarray(np.flip(np.uint8((1-a)) * 255, 0),
                             'L').save(os.path.join(path, name))
             pic2gds(os.path.join(
                 path, name), sol["dx"])
