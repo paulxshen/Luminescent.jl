@@ -15,17 +15,6 @@ for filename in os.listdir(BUILD_RUNS):
     elif os.path.isdir(file_path):
         shutil.rmtree(file_path)
 
-c = gf.components.straight(.5,)
-for (approx_2D, gpu, dtype, wavelengths) in itertools.product(
-    [True, False],
-    [None, "CUDA"],
-    ["f32"],
-        [[1.55], ]):
-    lumi.write_sparams(c, name="",
-                       wavelength=wavelengths, keys=["2,1"], dx=0.1,
-                       approx_2D=approx_2D, gpu=gpu, dtype=dtype,
-                       run=False, wd=BUILD_RUNS)
-    sleep(1)
 
 c = lumi.gcells.mimo(west=1, east=1, l=1, w=1,  wwg=.5)
 targets = {"tparams": {1.55: {"2,1": 1.0}}}
@@ -39,9 +28,23 @@ for (approx_2D, gpu, dtype, save_memory) in itertools.product(
 ):
     prob = lumi.gcell_problem(
         c, targets,
-        bbox_layer=LAYER.WAFER,
-        lmin=0.2, dx=0.1, iters=2,
+        # bbox_layer=LAYER.WAFER,
+        lvoid=0.2, lsolid=.2, dx=0.1, iters=2,
         approx_2D=approx_2D, gpu=gpu, dtype=dtype, save_memory=save_memory,
         run=False, wd=BUILD_RUNS)
     sol = lumi.solve(prob, run=False)
+    sleep(1)
+
+c = gf.components.straight(.5,)
+i = 1
+for (approx_2D, gpu, dtype, wavelengths) in itertools.product(
+    [False, True],
+    [None, "CUDA"],
+    ["f32"],
+        [[1.55], ]):
+    lumi.write_sparams(c, name=f"{i}",
+                       wavelength=wavelengths, keys=["2,1"], dx=0.1,
+                       approx_2D=approx_2D, gpu=gpu, dtype=dtype,
+                       run=False, wd=BUILD_RUNS)
+    i += 1
     sleep(1)

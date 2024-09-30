@@ -17,8 +17,9 @@ function f2(((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T
     ((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T, monitor_instances))
 end
 
-function solve(prob, ; autodiff=false, save_memory=false, ulims=nothing, verbose=false, kwargs...)
-    # global _prob = prob
+function solve(prob, ;
+    autodiff=false, save_memory=false, ulims=(-3, 3),
+    verbose=false, framerate=0, path="", kwargs...)
     @unpack dx, dt, u0, geometry, field_padding, geometry_padding, subpixel_averaging, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
     p = apply_geometry_padding(geometry_padding, geometry)
@@ -53,7 +54,23 @@ function solve(prob, ; autodiff=false, save_memory=false, ulims=nothing, verbose
     if save_memory
         (u,), = adjoint_reduce(f1, 0:dt:T[1], init, ulims)
     else
-        (u,), = reduce(f1, 0:dt:T[1]; init)
+        (u,), = reduce(0:dt:T[1]; init) do us, t
+            ignore() do
+                if framerate > 0 && t > 0
+                    if t % (1 / framerate) < dt
+                        (u,), p, = us
+                        a = u.Hz
+                        g = p.ϵxx
+
+                        _path = joinpath(path, "temp")
+                        mkpath(_path)
+                        CairoMakie.save(joinpath(_path, "$t.png"), quickie(a, g; monitor_instances, source_instances, ulims),)
+                        # quickie(a, g; monitor_instances, source_instances)
+                    end
+                end
+            end
+            f1(us, t)
+        end
     end
     # return sum.(u) |> sum
 

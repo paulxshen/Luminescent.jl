@@ -21,7 +21,7 @@ function lastrun(; name=nothing, study=nothing, wd="runs")
     if !isnothing(study)
         for p = l
             try
-                open(joinpath(p, "sol.json")) do f
+                open(joinpath(p, "solution.json")) do f
                     JSON.parse(f)["study"]
                 end == study && return p
             catch e
@@ -34,7 +34,7 @@ end
 
 function write_sparams(runs, run_probs, geometry, origin, dx,
     designs=nothing, design_config=nothing, models=nothing;
-    autodiff=false, save_memory=false, verbose=false, perturb=nothing, ulims=nothing, kw...)
+    autodiff=false, save_memory=false, verbose=false, perturb=nothing, ulims=nothing, framerate=0, path="", kw...)
     F = run_probs[1].F
     geometry = make_geometry(models, origin, dx, geometry, designs, design_config; F, perturb)
 
@@ -42,7 +42,7 @@ function write_sparams(runs, run_probs, geometry, origin, dx,
         begin
             prob[:geometry] = geometry
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
-            sol = solve(prob; autodiff, ulims, save_memory, verbose)
+            sol = solve(prob; autodiff, ulims, save_memory, verbose, framerate, path)
         end for (i, prob) in enumerate(run_probs)
         # end for (i, prob) in enumerate(run_probs)
     ]
@@ -75,7 +75,7 @@ function write_sparams(runs, run_probs, geometry, origin, dx,
     end
     # return coeffs(1)(1)[1] |> abs2
 
-    global sparams = OrderedDict([λ => OrderedDict([k => begin
+    sparams = OrderedDict([λ => OrderedDict([k => begin
         s = ignore() do
             split(string(k), ",")[2]
         end
@@ -160,7 +160,14 @@ end
 function plotsols(sols, probs, path)
     for (i, (prob, sol)) in enumerate(zip(probs, sols))
         try
-            CairoMakie.save(joinpath(path, "run_$i.png"), quickie(sol |> cpu, cpu(prob)),)
+            @unpack u, p = sol |> cpu
+            @unpack monitor_instances, source_instances = prob |> cpu
+            a = u.Hz
+            g = p.ϵxx
+
+            plt = quickie(a, g; monitor_instances, source_instances)
+            display(plt)
+            CairoMakie.save(joinpath(path, "run_$i.png"), plt,)
         catch e
             println("plot failed")
             println(e)
@@ -173,8 +180,8 @@ end
 function gfrun(path; kw...)
     Random.seed!(1)
     println("setting up simulation...")
-    PROB_PATH = joinpath(path, "prob.bson")
-    SOL_PATH = joinpath(path, "sol.json")
+    PROB_PATH = joinpath(path, "problem.bson")
+    SOL_PATH = joinpath(path, "solution.json")
 
     calibrate = true
     model_name = nothing # if load saved model
@@ -183,7 +190,7 @@ function gfrun(path; kw...)
     verbose = false
 
     prob = load(PROB_PATH)
-    @load PROB_PATH name dtype margin zmargin source_margin Courant port_source_offset source_portsides nonsource_portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin thickness zcore gpu_backend d magic
+    @load PROB_PATH name dtype margin zmargin source_margin Courant port_source_offset source_portsides nonsource_portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin thickness zcore gpu_backend d magic framerate
     F = Float32
     if contains(dtype, "16")
         F = Float16
@@ -251,12 +258,12 @@ function gfrun(path; kw...)
                 #     init = nothing
                 # end
 
-                lvoid = round(d.lvoid / dx)
-                lsolid = round(d.lsolid / dx)
-                lmin = max(lvoid, lsolid, 1)
-                frame = eps_2D[range.(o - lmin, o + szd + lmin - 1)...]
+                lvoid = d.lvoid / dx
+                lsolid = d.lsolid / dx
+                margin = maximum(round.((lvoid, lsolid)))
+                frame = eps_2D[range.(o - margin, o + szd + margin - 1)...]
                 frame = frame .== maximum(frame)
-                display(heatmap(frame))
+                # display(heatmap(frame))
                 b = Blob(szd;
                     init, lvoid, lsolid, symmetries, F, frame)
 
@@ -291,9 +298,9 @@ function gfrun(path; kw...)
             push!(ms[:calibrated_modes], mode)
         end
     end
-    # global a = mode_solutions
+    #  a = mode_solutions
     # modal source
-    global runs_sources = [
+    runs_sources = [
         begin
             d = run.d
             sources = []
@@ -369,7 +376,7 @@ function gfrun(path; kw...)
         end
         for (port, m) = run.monitors |> pairs] for run in runs]
 
-    global run_probs =
+    run_probs =
         [
             begin
                 ϵ = if run.d == 2
@@ -418,9 +425,9 @@ function gfrun(path; kw...)
         println("Computing s-parameters...")
         # sparams = write_sparams(img="", autodiff=false, verbose=true)
         @unpack sparams, sols = write_sparams(runs, run_probs, g0, origin, dx;
-            F, verbose=true)
+            F, verbose=true, framerate, path)
         plotsols(sols, run_probs, path)
-        global sol = (; sparam_family(sparams)...,
+        sol = (; sparam_family(sparams)...,
             path, dx, study)
         open(SOL_PATH, "w") do f
             write(f, json(cpu(sol)))
@@ -434,17 +441,17 @@ function gfrun(path; kw...)
         end
         autodiff = true
         # save_memory = true
-        global sparams = sparams0 = 0
+        sparams = sparams0 = 0
         opt = Adam(eta)
         opt_state = Flux.setup(opt, models)
         println("starting optimization... first iter will be slow due to adjoint compilation.")
-        global img = nothing
+        img = nothing
         best = best0 = 0
         S, ulims = write_sparams(runs, run_probs, g0, origin, dx,
             designs, design_config, models;
-            F, img, autodiff, with=true)
+            F, img, autodiff, with=true,)
         # heatmap(_as[3])
-        # global ass = gradient(models) do models
+        #  ass = gradient(models) do models
         #     write_sparams(runs, run_probs, g0, path, origin, dx,
         #         designs, design_config, models;
         #         F, img, autodiff, save_memory)
@@ -452,7 +459,7 @@ function gfrun(path; kw...)
         # error()
 
         # prob = run_probs[1]
-        # global aaaaa = gradient(g0) do geometry
+        #  aaaaa = gradient(g0) do geometry
         #     # solve(prob, geometry; autodiff, save_memory, verbose).forward_mode_powers[1][1][1]
         #     solve(prob, geometry; autodiff, save_memory, verbose)
         # end
@@ -518,19 +525,25 @@ function gfrun(path; kw...)
                             elseif :tparams == k
                                 ŷ = fmap(abs2, S)
                             end
-                            ignore_derivatives() do
-                                println(json(ŷ))
-                            end
+
+                            # global a1 = ŷ
+                            # global a2 = y
+                            # println("ŷ: $ŷ")
+                            # println("y: $y")
+
                             ŷ = [[ŷ(λ)(k) for k = keys(y[λ])] for λ = keys(y)]
                             ŷ = flatten(ŷ)
                             y = flatten(y)
                             Z = sum(abs, y)
                         end
                         _l = sum(abs, err.(ŷ, y),) * weights(k) / Z
-                        print("$(k) loss: $_l ")
+                        println("$(k) loss: $_l ")
+                        # ignore_derivatives() do
+                        #     println(json(ŷ))
+                        # end
                         l += _l
                     end
-                    println("\n weighted total loss $l")
+                    println("    weighted total loss $l")
                     l
                 end
             end
@@ -559,6 +572,7 @@ function gfrun(path; kw...)
             if i % 5 == 0 || stop
                 println("saving checkpoint...")
                 ckptpath = joinpath(path, "checkpoints", replace(string(now()), ':' => '_', '.' => '_'))
+
                 mkpath(ckptpath)
                 for (i, (m, d)) = enumerate(zip(models, designs))
                     a = Gray.(m() .< 0.5)
@@ -569,7 +583,7 @@ function gfrun(path; kw...)
                 plotsols(sols, run_probs, path)
                 plotsols(sols, run_probs, ckptpath)
 
-                global sol = (;
+                sol = (;
                     sparam_family(sparams)...,
                     optimized_designs=[m() .> 0.5 for m in models],
                     params=getfield.(models, :a),
@@ -579,10 +593,10 @@ function gfrun(path; kw...)
                     study,
                 )
 
-                open(joinpath(ckptpath, "sol.json"), "w") do f
+                open(joinpath(ckptpath, "solution.json"), "w") do f
                     write(f, json(cpu(sol)))
                 end
-                open(joinpath(path, "sol.json"), "w") do f
+                open(joinpath(path, "solution.json"), "w") do f
                     write(f, json(cpu(sol)))
                 end
             end
@@ -590,6 +604,11 @@ function gfrun(path; kw...)
                 break
             end
             Flux.update!(opt_state, models, dldm)# |> gpu)
+        end
+        if framerate > 0
+            write_sparams(runs, run_probs, g0, origin, dx,
+                designs, design_config, models;
+                F, img, autodiff, framerate, path)
         end
         println("Done in $(time() - t0) .")
 

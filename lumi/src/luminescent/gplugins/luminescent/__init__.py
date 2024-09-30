@@ -7,6 +7,7 @@ from .inverse_design import *
 from .sparams import *
 from .sol import *
 from .setup import *
+from .runs_utils import *
 from gdsfactory.generic_tech import *
 
 __all__ = [
@@ -18,7 +19,6 @@ __all__ = [
     "gcell_problem",
     "sparams_problem",
     "solve",
-    "finetune",
     "apply_design",
     "add_bbox",
     "XYMARGIN",
@@ -26,6 +26,10 @@ __all__ = [
     "YMARGIN",
     "ZMARGIN",
     "load_solution",
+    "finetune",
+    "load_problem",
     "show_solution",
+    "make_training_movie",
+    "make_simulation_movie",
     "gcells",
 ]

@@ -16,7 +16,7 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 def gcell_problem(c,  targets, iters,
                   lvoid=0, lsolid=0, symmetries=[],
                   weights=dict(),
-                  eta=.1, init=1,   stoploss=.03,
+                  eta=.4, init=1,   stoploss=.03,
                   design_region_layer=DESIGN_LAYER,
                   #    design_guess_layer=LAYER.GUESS,
                   fill_layer=LAYER.WG,
@@ -49,6 +49,7 @@ def gcell_problem(c,  targets, iters,
                         _k = f"o{po}@{_mo},o{pi}@{mi}"
                         if _k not in targets["tparams"][wl]:
                             d[_k] = 0
+
                     _k = f"o{pi}@0,o{pi}@{mi}"
                     if _k not in targets["tparams"][wl]:
                         d[_k] = 0

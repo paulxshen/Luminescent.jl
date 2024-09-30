@@ -22,7 +22,7 @@ include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 if isempty(ARGS)
     path = joinpath(pwd(), "runs")
     path = filter(isdir, readdir(path, join=true)) |> sort |> last
-    PROB_PATH = joinpath(path, "prob.bson")
+    PROB_PATH = joinpath(path, "problem.bson")
 else
     PROB_PATH = ARGS[1]
     path = dirname(PROB_PATH)
@@ -407,7 +407,7 @@ elseif study == "inverse_design"
         # designs=[m() for m in model],
     )
 end
-# @save "$path/sol.json" sol
-open("$(path)/sol.json", "w") do f
+# @save "$path/solution.json" sol
+open("$(path)/solution.json", "w") do f
     write(f, json(sol))
 end

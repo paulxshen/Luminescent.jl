@@ -26,27 +26,27 @@ struct ModalSource
 
 end
 """
-    function PlaneWave(f, dims; fields...)
+    function PlaneWave(f, dims; mode...)
 
 Constructs plane wave source
 
 Args
 - f: time function
 - dims: eg -1 for wave coming from -x face
-- fields: which fields to excite & their scaling constants (typically a current source, eg Jz=1)
+- mode: which mode to excite & their scaling constants (typically a current source, eg Jz=1)
 """
 struct PlaneWave
     f
-    fields
+    mode
     dims
     label
-    function PlaneWave(f, dims, label=""; fields...)
-        new(f, fields, dims, label)
+    function PlaneWave(f, dims, label=""; mode...)
+        new(f, mode, dims, label)
     end
 end
 @functor PlaneWave
 """
-    function GaussianBeam(f, σ, c, dims; fields...)
+    function GaussianBeam(f, σ, c, dims; mode...)
 
 Constructs gaussian beam source
 
@@ -54,23 +54,23 @@ Args
 - f: time function
 - σ: std dev length
 - dims: eg 1 for x direction
-- fields: which fields to excite & their scaling constants (typically a current source, eg Jz=1)
+- mode: which mode to excite & their scaling constants (typically a current source, eg Jz=1)
 """
 struct GaussianBeam
     f
     σ
-    fields
+    mode
     c
     dims
-    function GaussianBeam(f, σ, c, dims; fields...)
-        new(f, σ, fields, c, dims)
+    function GaussianBeam(f, σ, c, dims; mode...)
+        new(f, σ, mode, c, dims)
     end
 end
 @functor GaussianBeam
 
 """
-    function Source(f, c, lb, ub, label=""; fields...)
-    function Source(f, c, L, label=""; fields...)
+    function Source(f, c, lb, ub, label=""; mode...)
+    function Source(f, c, L, label=""; mode...)
         
 Constructs custom  source. Can be used to specify uniform or modal sources
 
@@ -80,33 +80,33 @@ Args
 - lb: lower bounds wrt to c
 - ub: upper bounds wrt to c
 - L: source dimensions in [wavelengths]
-- fields: which fields to excite & their scaling constants (typically a current source, eg Jz=1)
+- mode: which mode to excite & their scaling constants (typically a current source, eg Jz=1)
 """
 struct Source
     f
-    fields
+    mode
     center
     lb
     ub
     label
     meta
-    function Source(f, fields, c, lb, ub, label::String=""; kw...)
-        new(f, fields, c, lb, ub, label, kw)
+    function Source(f, mode, c, lb, ub, label::String=""; kw...)
+        new(f, mode, c, lb, ub, label, kw)
     end
-    function Source(f, fields, c, L, label::String=""; kw...)
-        new(f, fields, c, -L / 2, L / 2, label, kw)
+    function Source(f, mode, c, L, label::String=""; kw...)
+        new(f, mode, c, -L / 2, L / 2, label, kw)
     end
 end
-# fields(m::Source) = m.fields
+# mode(m::Source) = m.mode
 Base.string(m::Union{Source,ModalSource}) =
     """
     $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.center|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center,"""
-#  exciting $(join(keys(m.fields),", "))"""
+#  exciting $(join(keys(m.mode),", "))"""
 
-function Source(f, c, L, label::AbstractString=""; fields...)
+function Source(f, c, L, label::AbstractString=""; mode...)
     # Source
-    # function Source(f, c, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; fields...)
-    Source(f, c, -L / 2, L / 2, label; fields...)
+    # function Source(f, c, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; mode...)
+    Source(f, c, -L / 2, L / 2, label; mode...)
 end
 Source = Source
 
@@ -164,69 +164,70 @@ function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, s
 
     Jx, Jy, Jz = J
     if D == 2
-        fields = (; Jx, Jy)
+        mode = (; Jx, Jy)
     else
-        fields = (; Jx, Jy, Jz)
+        mode = (; Jx, Jy, Jz)
     end
     v = zip(lb, ub)
     lb = minimum.(v)
     ub = maximum.(v)
-    SourceInstance(Source(f, fields / dx^(D - d), center, lb, ub; meta...), dx, sizes, common_left_pad_amount, fl, sz0; F)
+    SourceInstance(Source(f, mode / dx^(D - d), center, lb, ub; meta...), dx, sizes, common_left_pad_amount, fl, sz0; F)
 end
 function SourceInstance(s::PlaneWave, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
-    @unpack f, fields, dims, label, meta = s
+    @unpack f, mode, dims, label, meta = s
     _F(x::Real) = F(x)
     _F(x::Complex) = complex(F)(x)
     f = _F ∘ f
     d = length(common_left_pad_amount)
-    g = Dict([k => _F(fields[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(fields)])
+    g = Dict([k => _F(mode[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(mode)])
     o = NamedTuple([k =>
         1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
                     for k = keys(fl)])
-    _g = Dict([k => place(zeros(F, sizes[k]), o[k], g[k],) for k = keys(fields)])
+    _g = Dict([k => place(zeros(F, sizes[k]), o[k], g[k],) for k = keys(mode)])
     c = first(values(sizes)) .÷ 2
-    SourceInstance(f, keys(fields), g, _g, o, c, label, meta)
+    SourceInstance(f, keys(mode), g, _g, o, c, label, meta)
 end
 
 function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
     _F(x::Real) = F(x)
     _F(x::Complex) = complex(F)(x)
     f = _F ∘ f
-    @unpack f, σ, fields, c, dims = s
+    @unpack f, σ, mode, c, dims = s
     n = round(Int, 2σ / dx)
     r = n * dx
     r = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(c)]
     g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(r...)] / dx
     fl = fl .- 1 .+ index(c, dx) .- round.(Int, (size(g) .- 1) ./ 2)
     _g = place(zeros(F, sz), g, fl)
-    SourceInstance(f, keys(fields), g, _g, fl, c, label)
+    SourceInstance(f, keys(mode), g, _g, fl, c, label)
 end
 
 function SourceInstance(s::Source, dx, sizes, field_origin, common_left_pad_amount, stop; F=Float32)
-    @unpack f, fields, center, lb, ub, label, meta = s
+    @unpack f, mode, center, lb, ub, label, meta = s
     _F(x::Real) = F(x)
     _F(x::Complex) = complex(F)(x)
 
     f = _F ∘ f
     g = Dict([k =>
         begin
-            if isa(fields[k], AbstractArray)
-                # imresize(fields[k], ratio=1)
-                sz0 = size(fields[k])
+            if isa(mode[k], AbstractArray)
+                sz0 = size(mode[k])
                 sz = max.(1, round(abs.(ub - lb) ./ dx)) |> Tuple
                 # sz0 != sz && @warn "source array size$sz0 not same  as domain size $sz. source will be interpolated"
-                imresize(_F.(fields[k]), sz, method=ImageTransformations.Lanczos4OpenCV())
+                imresize(_F.(mode[k]), sz, method=ImageTransformations.Lanczos4OpenCV())
             else
-                r = [a == b ? (a:a) : (a+dx/2*sign(b - a):dx*sign(b - a):b) for (a, b) = zip(lb, ub)]
-                [_F.(fields[k](v...)) for v = Iterators.product(r...)]
+                # r = [a == b ? (a:a) : (a+dx/2*sign(b - a):dx*sign(b - a):b) for (a, b) = zip(lb, ub)]
+                # [_F.(mode[k](v...)) for v = Iterators.product(r...)]
             end
-        end
-
-              for k = keys(fields)])
+        end for k = keys(mode)])
     o = NamedTuple([k => F((center + lb - o) / dx .+ 1.5) for (k, o) = pairs(field_origin)])
-    _g = Dict([k => place(zeros(F, sizes[k]), o[k], g[k],) for k = keys(fields)])
+    _g = Dict([k => begin
+        a = zeros(complex(F), sizes[k])
+        setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1)...)
+        a
+    end for k = keys(mode)])
     _center = round(center / dx) + 1 + common_left_pad_amount
-    SourceInstance(f, keys(fields), g, _g, o, _center, label, meta)
+    SourceInstance(f, keys(mode), g, _g, o, _center, label, meta)
 end
 
 # Complex

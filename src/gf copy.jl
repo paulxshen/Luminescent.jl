@@ -22,7 +22,7 @@ function lastrun(s=nothing, path=joinpath(pwd(), "runs"))
     end
     for p = reverse(l)
         try
-            open(joinpath(p, "sol.json")) do f
+            open(joinpath(p, "solution.json")) do f
                 JSON.parse(f)["study"]
             end == s && return p
         catch e
@@ -156,8 +156,8 @@ global virgin, stop, best, best0, sparams0
 
 println("setting up simulation...")
 # do something based on ARGS?
-PROB_PATH = joinpath(path, "prob.bson")
-SOL_PATH = joinpath(path, "sol.json")
+PROB_PATH = joinpath(path, "problem.bson")
+SOL_PATH = joinpath(path, "solution.json")
 
 calibrate = true
 model_name = nothing # if load saved model
@@ -544,7 +544,7 @@ elseif study == "inverse_design"
     )
 end
 sol = (; sol..., path, dx, study,) |> cpu
-# @save "$path/sol.json" sol
+# @save "$path/solution.json" sol
 open(SOL_PATH, "w") do f
     write(f, json(sol))
 end

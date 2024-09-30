@@ -124,7 +124,7 @@ using Porcupine: values, keys, fmap
 using CUDA: @allowscalar
 println("setting up simulation...")
 # do something based on ARGS?
-PROB_PATH = joinpath(path, "prob.bson")
+PROB_PATH = joinpath(path, "problem.bson")
 
 calibrate = true
 model_name = nothing # if load saved model
@@ -472,8 +472,8 @@ elseif study == "inverse_design"
     )
 end
 sol = (; sol..., path, dx, study,)
-# @save "$path/sol.json" sol
-open("$(path)/sol.json", "w") do f
+# @save "$path/solution.json" sol
+open("$(path)/solution.json", "w") do f
     write(f, json(sol))
 end
 sol

@@ -8,18 +8,11 @@ import gdsfactory as gf
 from copy import deepcopy
 # from time import time
 import datetime
-import json
-import subprocess
-import sys
-import time
-from functools import partial
 from math import cos, pi, sin
 import os
 import numpy as np
 
-from gdsfactory.cross_section import Section
 from sortedcontainers import SortedDict, SortedSet
-from sympy import N
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
@@ -32,11 +25,12 @@ def setup(c, study, dx, margin,
           exclude_layers=[
               DESIGN_LAYER, GUESS], approx_2D=False, Courant=None,
           gpu=None, dtype=np.float32,
-          plot=False, magic="", wd=os.path.join(os.getcwd(), "runs"), name=None, **kwargs):
+          plot=False, framerate=0,
+          magic="", wd=os.path.join(os.getcwd(), "runs"), name=None, **kwargs):
     if name is None:
         name = c.name
     if name.startswith("Unnamed"):
-        name = ""
+        name = None
     if type(bbox_layer[0]) is int:
         bbox_layer = (bbox_layer,)
     prob = dict()
@@ -44,8 +38,8 @@ def setup(c, study, dx, margin,
     prob["dtype"] = str(dtype)
     prob["timestamp"] = datetime.datetime.now().isoformat(
         timespec="seconds").replace(":", "-")
-    prob["name"] = name
     prob["magic"] = magic
+    prob["framerate"] = framerate
     prob["gpu_backend"] = gpu if gpu else ""
     ports = {
         p.name: {
@@ -105,6 +99,7 @@ def setup(c, study, dx, margin,
         name = "#".join(l)
     path = os.path.join(wd, name)
     prob["path"] = path
+    prob["name"] = name
 
     prob["eps_3D"] = eps.tolist()
     prob["eps"] = prob["eps_3D"]
