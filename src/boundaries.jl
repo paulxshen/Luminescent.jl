@@ -58,7 +58,6 @@ end
 Base.string(m::PML) = "PML of depth $(m.d) on $(dl[m.dims]) side"
 
 struct InPad
-
     b
     l
     r
@@ -68,6 +67,9 @@ struct InPad
     end
 end
 @functor InPad (m,)
+left(x::InPad) = x.l
+right(x::InPad) = x.r
+
 struct OutPad
     b
     l

@@ -1,6 +1,6 @@
 using Optimisers
 using SparseArrays
-using CUDA
+using Flux: AdaBelief
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float32,Int32}) = true
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float16,Int32}) = true
 Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float32,Int32}) = true
@@ -167,7 +167,13 @@ function plotsols(sols, probs, path)
 
             plt = quickie(a, g; monitor_instances, source_instances)
             display(plt)
-            CairoMakie.save(joinpath(path, "run_$i.png"), plt,)
+
+            if !isa(path, Base.AbstractVecOrTuple)
+                path = (path,)
+            end
+            for path = path
+                CairoMakie.save(joinpath(path, "run_$i.png"), plt,)
+            end
         catch e
             println("plot failed")
             println(e)
@@ -442,7 +448,7 @@ function gfrun(path; kw...)
         autodiff = true
         # save_memory = true
         sparams = sparams0 = 0
-        opt = Adam(eta)
+        opt = AdaBelief(eta)
         opt_state = Flux.setup(opt, models)
         println("starting optimization... first iter will be slow due to adjoint compilation.")
         img = nothing
@@ -488,6 +494,7 @@ function gfrun(path; kw...)
                     (T * dϕ)
                 end
             else
+                println("($i)  ")
                 @time l, (dldm,) = Flux.withgradient(models) do models
                     # sols = get_sols(runs, run_probs, g0, path, origin, dx,
                     @unpack sparams, sols = write_sparams(runs, run_probs, g0, origin, dx,
@@ -495,7 +502,6 @@ function gfrun(path; kw...)
                         F, img, autodiff, save_memory, ulims)
                     S = sparams
                     l = 0
-                    println("($i)  ")
                     for k = keys(targets)
                         y = targets[k]
                         err = -
@@ -569,7 +575,7 @@ function gfrun(path; kw...)
             # end
             println("")
 
-            if i % 5 == 0 || stop
+            if i == 1 || i % 2 == 0 || stop
                 println("saving checkpoint...")
                 ckptpath = joinpath(path, "checkpoints", replace(string(now()), ':' => '_', '.' => '_'))
 
@@ -580,8 +586,7 @@ function gfrun(path; kw...)
                     # Images.save(joinpath(ckptpath, "optimized_design_region_$i.png"), a)
                     # Images.save(joinpath(path, "optimized_design_region_$i.png"), a)
                 end
-                plotsols(sols, run_probs, path)
-                plotsols(sols, run_probs, ckptpath)
+                plotsols(sols, run_probs, (path, ckptpath))
 
                 sol = (;
                     sparam_family(sparams)...,

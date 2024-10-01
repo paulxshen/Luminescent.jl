@@ -1,6 +1,5 @@
 using Humanize: digitsep
 using UnPack, LinearAlgebra, Statistics, Random, Jello, Functors, DataStructures, GPUArraysCore
-using ArrayPadding: left, right
 using Zygote
 using CairoMakie
 

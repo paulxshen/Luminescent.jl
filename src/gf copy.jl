@@ -435,7 +435,7 @@ elseif study == "inverse_design"
     autodiff = true
     global sparams = sparams0 = 0
     # @show write_sparams(model)
-    opt = Adam(eta)
+    opt = AdaBelief(eta)
     # model = models[1]
     opt_state = Flux.setup(opt, models)
     # Flux.freeze!(opt_state.w)

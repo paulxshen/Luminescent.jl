@@ -320,6 +320,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     source_instances = SourceInstance.(sources, dx, (field_sizes,), (field_origin,), (common_left_pad_amount,), (sz,); F)
     monitor_instances = MonitorInstance.(monitors, dx, (field_origin,), (common_left_pad_amount,), (sz,), ; F)
     # roi = MonitorInstance(Monitor(zeros(d), zeros(d), dx * sz), dx, sz, common_left_pad_amount, is_field_on_lb, fl; F)
+    onedge = NamedTuple([k => hcat(v, is_field_on_ub[k]) for (k, v) = pairs(is_field_on_lb)])
 
     dt = dx * Courant
     sz = Tuple(sz)
@@ -379,14 +380,15 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
     transient_duration, steady_state_duration = F.((transient_duration, steady_state_duration))
-    (;
-        geometry_padding, field_padding, subpixel_averaging, field_grids,
-        source_instances, monitor_instances, field_names,
-        polarization, F, Courant,
-        transient_duration, steady_state_duration,
-        geometry, n=sqrt(ϵmax),
-        # roi,
-        u0, fields, d, dx, dt, sz, kw...) |> pairs |> OrderedDict
+    global res = (;
+                     geometry_padding, field_padding, subpixel_averaging, field_grids, onedge,
+                     source_instances, monitor_instances, field_names,
+                     polarization, F, Courant,
+                     transient_duration, steady_state_duration,
+                     geometry, n=sqrt(ϵmax),
+                     # roi,
+                     u0, fields, d, dx, dt, sz, kw...) |> pairs |> OrderedDict
+
 end
 update = update
 setup = setup

@@ -16,7 +16,7 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 def gcell_problem(c,  targets, iters,
                   lvoid=0, lsolid=0, symmetries=[],
                   weights=dict(),
-                  eta=.4, init=1,   stoploss=.03,
+                  eta=.1, init=1,   stoploss=.03,
                   design_region_layer=DESIGN_LAYER,
                   #    design_guess_layer=LAYER.GUESS,
                   fill_layer=LAYER.WG,
@@ -29,6 +29,7 @@ def gcell_problem(c,  targets, iters,
     #     raise NotImplementedError(
     #         "3D inverse design feature must be requested from Luminescent AI info@luminescentai.com")
 
+    eta *= 10
     if "phase_shifter" in targets:
         keys = ["o2@0,o1@0"]
         wavelengths = [preset["wavelength"]]
