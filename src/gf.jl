@@ -448,6 +448,7 @@ function gfrun(path; kw...)
         autodiff = true
         # save_memory = true
         sparams = sparams0 = 0
+        eta *= 30
         opt = AdaBelief(eta)
         opt_state = Flux.setup(opt, models)
         println("starting optimization... first iter will be slow due to adjoint compilation.")

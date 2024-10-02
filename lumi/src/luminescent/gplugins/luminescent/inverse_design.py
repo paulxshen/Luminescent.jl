@@ -29,7 +29,6 @@ def gcell_problem(c,  targets, iters,
     #     raise NotImplementedError(
     #         "3D inverse design feature must be requested from Luminescent AI info@luminescentai.com")
 
-    eta *= 10
     if "phase_shifter" in targets:
         keys = ["o2@0,o1@0"]
         wavelengths = [preset["wavelength"]]
