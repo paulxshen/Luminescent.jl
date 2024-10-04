@@ -373,7 +373,8 @@ def material_slice(c, dx, center, w, h, normal, layers, layer_stack, materials=M
 
 def material_voxelate(c, dx, center, l, w, h,  normal, layers, layer_stack, materials):
     # print(l)
-    return np.stack([material_slice(c, dx, [center[0]+x]+center[1:], w, h, normal,    layers, layer_stack, materials) for x in np.arange(dx/2, l-.001, dx)],)
+    return np.stack([material_slice(c, dx, [center[0]+x]+center[1:], w, h, normal,    layers, layer_stack, materials) for x in np.arange(dx/2, l, dx)],)
+    # return np.stack([material_slice(c, dx, [center[0]+x]+center[1:], w, h, normal,    layers, layer_stack, materials) for x in np.arange(0, l+.001, dx)],)
 
 
 def get_layers(layer_stack, layer, withkey=False):

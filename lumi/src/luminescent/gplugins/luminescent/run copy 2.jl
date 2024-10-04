@@ -388,7 +388,7 @@ if study == "sparams"
 elseif study == "inverse_design"
     sparams0 = 0
     # @show write_sparams(model)
-    opt = AdaBelief(eta)
+    opt = RADAM(eta)
     model = models[1]
     opt_state = Flux.setup(opt, model)
     Flux.freeze!(opt_state.w)

@@ -1,10 +1,10 @@
-function f1(((u,), p, (dx, dt, field_padding, source_instances, autodiff)), t)
-    u = update(u, p, t, dx, dt, field_padding, source_instances; autodiff)
-    ((u,), p, (dx, dt, field_padding, source_instances, autodiff))
+function f1(((u,), p, (dx, dt, field_padding, source_instances, alg, past)), t)
+    u = update(u, p, t, dx, dt, field_padding, source_instances; alg, past)
+    ((u,), p, (dx, dt, field_padding, source_instances, alg, past))
 end
 
-function f2(((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T, monitor_instances)), t)
-    u = update(u, p, t, dx, dt, field_padding, source_instances; autodiff)
+function f2(((u, mf), p, (dx, dt, field_padding, source_instances, alg, past), (T, monitor_instances)), t)
+    u = update(u, p, t, dx, dt, field_padding, source_instances; alg, past)
     mf += dt / T * [[
         begin
             E = group(u, :E)
@@ -14,12 +14,12 @@ function f2(((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T
             [E, H] * cispi(-2t / λ)
         end for λ = wavelengths(m)
     ] for m = monitor_instances]
-    ((u, mf), p, (dx, dt, field_padding, source_instances, autodiff), (T, monitor_instances))
+    ((u, mf), p, (dx, dt, field_padding, source_instances, alg, past), (T, monitor_instances))
 end
 
 function solve(prob, ;
-    autodiff=false, save_memory=false, ulims=(-3, 3),
-    verbose=false, framerate=0, path="", kwargs...)
+    save_memory=false, ulims=(-3, 3), alg=nothing,
+    verbose=false, framerate=0, path="", past=true, kwargs...)
     @unpack dx, dt, u0, geometry, field_padding, geometry_padding, subpixel_averaging, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
     p = apply_geometry_padding(geometry_padding, geometry)
@@ -47,10 +47,16 @@ function solve(prob, ;
 
     # i = 0
     # _f = ((u,), p, t) -> begin
-    #     (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, save_memory),)
+    #     (update(u, p, t, dx, dt, field_padding, source_instances; alg, save_memory),)
     # end
     # f = (u, t) -> _f(u, p, t)
-    init = ((u0,), p, (dx, dt, field_padding, source_instances, autodiff))
+    if past
+        us0 = ((u0, u0, u0),)
+    else
+        us0 = (u0,)
+    end
+    init = (us0, p, (dx, dt, field_padding, source_instances, alg, past))
+
     if save_memory
         (u,), = adjoint_reduce(f1, 0:dt:T[1], init, ulims)
     else
@@ -86,7 +92,7 @@ function solve(prob, ;
     #             end for λ = wavelengths(m)
     #         ] for m = monitor_instances]
     #         mf += dt / Δ[2] * dmf
-    #         # if autodiff
+    #         # if alg
     #         # else
     #         #     for (a, b) = zip(mf, dmf)
     #         #         for (a, b) = zip(a, b)
@@ -98,7 +104,7 @@ function solve(prob, ;
     #         #         end
     #         #     end
     #         # end
-    #         (update(u, p, t, dx, dt, field_padding, source_instances; autodiff, save_memory), mf,)
+    #         (update(u, p, t, dx, dt, field_padding, source_instances; alg, save_memory), mf,)
     #     end
     # f = (u, t) -> _f(u, p, t)
     mf0 = ignore_derivatives() do
@@ -113,12 +119,16 @@ function solve(prob, ;
         ] for m = monitor_instances]
     end
     ts = T[1]+dt:dt:T[2]
-    init = ((u, mf0), p, (dx, dt, field_padding, source_instances, autodiff), (Δ[2], monitor_instances))
+    init = ((u, mf0), p, (dx, dt, field_padding, source_instances, alg, past), (Δ[2], monitor_instances))
 
     if save_memory
         (u, mf), = adjoint_reduce(f2, ts, init, ulims)
     else
         (u, mf), = reduce(f2, ts; init)
+    end
+
+    if past
+        u = u[end]
     end
 
     ulims = ignore_derivatives() do

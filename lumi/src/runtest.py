@@ -1,36 +1,17 @@
-from pprint import pprint
-from time import sleep
 import luminescent as lumi
-from gdsfactory.generic_tech import LAYER
+from luminescent import MATERIALS
+from gdsfactory.generic_tech import LAYER, LAYER_STACK
 import gdsfactory as gf
+import pprint as pp
 
-# lumi.show_solution()
-# raise Exception("stop here")
+wg = gf.components.straight(length=0.8, width=0.4, layer=LAYER.WG)
+wg.plot()
 
-c = gf.components.straight(.5)
-sol = lumi.write_sparams(
-    c, wd="runs", name="straight_waveguide",
-    wavelength=[1.2, 1.55],
-    keys=["2,1"],
-    # keys=["o2@1,o1@1"],
-    bbox_layer=LAYER.WAFER,
-    # bbox_layer=[LAYER.WAFER, LAYER.SLAB90],
-    approx_2D=True,
-    dx=0.05, gpu="CUDA",)
-# dx=0.1, approx_2D=False, gpu="CUDA",)  # dtype="16", dev=True,)
-lumi.show_solution()
-
-# c = lumi.gcells.mimo(west=1, east=1, l=1, w=1,  wwg=.5)
-# targets = {"tparams": {
-#     1.55: {
-#         "2,1": 1.0
-#     }}}
-# prob = lumi.gcell_problem(
-#     c, targets, wd="runs",name="tiny_mimo",
-#     lmin=0.2, dx=0.1, iters=2, approx_2D=True, save_memory=False)  # gpu="CUDA", dev=True)
-# # lmin=0.2, dx=0.1, iters=2,  approx_2D=True, gpu="CUDA", dev=True)
-# sol = lumi.solve(prob)
-# sol = lumi.finetune(2)
-lumi.show_solution()
-sol = lumi.load_solution()
-# pprint(sol)
+c = gf.Component()
+c << wg
+c.add_ports(wg.ports)
+# name="wg_TE0"
+sol = lumi.write_sparams(c, wavelength=1.55, keys=["2,1"],  # same as keys=["o2@0,o1@0"]
+                         core_layer=LAYER.WG,   bbox_layer=LAYER.WAFER,  # defaults
+                         layer_stack=LAYER_STACK, materials=MATERIALS,  # defaults
+                         dx=0.1, approx_2D=True, dtype="float32", gpu="CUDA", run=False)  # or gpu=None

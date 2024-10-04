@@ -122,7 +122,7 @@ end
 if train
     # g = Zygote.gradient(loss, model)[1]
     # error()
-    opt = AdaBelief(0.1)
+    opt = RADAM(0.1)
     # opt = AdaGrad()
     opt_state = Flux.setup(opt, model)
 

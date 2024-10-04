@@ -382,7 +382,7 @@ if study == "sparams"
 elseif study == "inverse_design"
     model = model
     # @show loss(model, targets)
-    opt = AdaBelief(1)
+    opt = RADAM(1)
     opt_state = Flux.setup(opt, model)
     # for i = 1:iters
     for i = 1:5

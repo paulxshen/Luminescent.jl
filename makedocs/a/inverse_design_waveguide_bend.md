@@ -175,7 +175,7 @@ loss = model -> score(metrics(model, prob; history))
 We now do adjoint optimization. The first few iterations may show very little change but will pick up momentum
 ```julia
 
-opt = AdaBelief(0.1)
+opt = RADAM(0.1)
 opt_state = Flux.setup(opt, model)
 # iterations2d = 66
 # iterations2d = 400
@@ -262,7 +262,7 @@ end
 
 
 loss = model -> score(metrics(model, prob;))
-opt = AdaBelief(0.1)
+opt = RADAM(0.1)
 opt_state = Flux.setup(opt, model)
 for i = 1:iterations3d
     @time l, (dldm,) = withgradient(loss, model)

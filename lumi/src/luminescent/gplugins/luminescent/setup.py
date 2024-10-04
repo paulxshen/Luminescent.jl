@@ -86,9 +86,9 @@ def setup(c, study, dx, margin,
     center = [c.bbox_np()[0][0], c.bbox_np()[0][1]+w/2, zcenter]
     normal = [1, 0, 0]
 
-    eps = material_voxelate(c, dx, center, l, w, h,
-                            normal, layers, layer_stack, materials)
-    eps_2D = eps[:, :, int(eps.shape[2]/2)]
+    eps_3D = material_voxelate(c, dx, center, l, w, h,
+                               normal, layers, layer_stack, materials)
+    eps_2D = eps_3D[:, :, int(eps_3D.shape[2]/2)]
     prob["study"] = study
 
     if not name:
@@ -98,8 +98,7 @@ def setup(c, study, dx, margin,
     prob["path"] = path
     prob["name"] = name
 
-    prob["eps_3D"] = eps.tolist()
-    prob["eps"] = prob["eps_3D"]
+    prob["eps_3D"] = eps_3D.tolist()
     prob["eps_2D"] = eps_2D.tolist()
     prob["zmin"] = zmin
     prob["zcore"] = zcore
@@ -130,7 +129,7 @@ def setup(c, study, dx, margin,
                     eps = material_slice(
                         c, dx, center, w, h, normal, layers, layer_stack, materials)
                     _modes, _modes1, neffs, _ = solve_modes(
-                        eps, λ=wl, dx=dx, neigs=max(mode_numbers)+1, plot=plot)
+                        eps, λ=wl, dx=dx/2, neigs=max(mode_numbers)+1, plot=plot)
 
                     for n in neffs:
                         if n < neffmin:

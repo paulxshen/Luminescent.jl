@@ -1,6 +1,6 @@
 using Optimisers
 using SparseArrays
-using Flux: AdaBelief
+using Flux: ADAM
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float32,Int32}) = true
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float16,Int32}) = true
 Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float32,Int32}) = true
@@ -34,7 +34,7 @@ end
 
 function write_sparams(runs, run_probs, geometry, origin, dx,
     designs=nothing, design_config=nothing, models=nothing;
-    autodiff=false, save_memory=false, verbose=false, perturb=nothing, ulims=nothing, framerate=0, path="", kw...)
+    alg=nothing, save_memory=false, verbose=false, perturb=nothing, ulims=nothing, framerate=0, path="", kw...)
     F = run_probs[1].F
     geometry = make_geometry(models, origin, dx, geometry, designs, design_config; F, perturb)
 
@@ -42,7 +42,7 @@ function write_sparams(runs, run_probs, geometry, origin, dx,
         begin
             prob[:geometry] = geometry
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
-            sol = solve(prob; autodiff, ulims, save_memory, verbose, framerate, path)
+            sol = solve(prob; alg, ulims, save_memory, verbose, framerate, path)
         end for (i, prob) in enumerate(run_probs)
         # end for (i, prob) in enumerate(run_probs)
     ]
@@ -198,6 +198,8 @@ function gfrun(path; kw...)
     prob = load(PROB_PATH)
     @load PROB_PATH name dtype margin zmargin source_margin Courant port_source_offset source_portsides nonsource_portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin thickness zcore gpu_backend d magic framerate
     F = Float32
+    alg = :spectral
+    alg = nothing
     if contains(dtype, "16")
         F = Float16
         println("Float16 selected. make sure your cpu or GPU supports it. otherwise will be emulated and very slow.")
@@ -206,6 +208,9 @@ function gfrun(path; kw...)
     λc = median(load(PROB_PATH)[:wavelengths])
     eps_2D = F(stack(stack.(eps_2D)))'
     eps_3D = F(permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
+
+    # eps_2D=downsample(eps_2D,2)
+    # eps_3D=downsample(eps_3D,2)
     # heatmap(eps_2D) |> display
     # GLMakie.volume(eps_3D) |> display
     # error()
@@ -300,6 +305,7 @@ function gfrun(path; kw...)
                 mode = mode1
                 # mode = collapse_mode(mode,)
             end
+            mode = downsample(mode, 2)
             mode = keepxy(mode)
             push!(ms[:calibrated_modes], mode)
         end
@@ -429,7 +435,7 @@ function gfrun(path; kw...)
     if study == "sparams"
         # @info "Computing s-parameters..."
         println("Computing s-parameters...")
-        # sparams = write_sparams(img="", autodiff=false, verbose=true)
+        # sparams = write_sparams(img="", alg=false, verbose=true)
         @unpack sparams, sols = write_sparams(runs, run_probs, g0, origin, dx;
             F, verbose=true, framerate, path)
         plotsols(sols, run_probs, path)
@@ -445,30 +451,29 @@ function gfrun(path; kw...)
                 error("3D inverse design feature must be requested from Luminescent AI info@luminescentai.com")
             end
         end
-        autodiff = true
         # save_memory = true
         sparams = sparams0 = 0
-        eta *= 30
-        opt = AdaBelief(eta)
+        # eta *= 20
+        opt = Flux.ADAM(eta)
         opt_state = Flux.setup(opt, models)
         println("starting optimization... first iter will be slow due to adjoint compilation.")
         img = nothing
         best = best0 = 0
         S, ulims = write_sparams(runs, run_probs, g0, origin, dx,
             designs, design_config, models;
-            F, img, autodiff, with=true,)
+            F, img, alg, with=true,)
         # heatmap(_as[3])
         #  ass = gradient(models) do models
         #     write_sparams(runs, run_probs, g0, path, origin, dx,
         #         designs, design_config, models;
-        #         F, img, autodiff, save_memory)
+        #         F, img, alg, save_memory)
         # end
         # error()
 
         # prob = run_probs[1]
         #  aaaaa = gradient(g0) do geometry
-        #     # solve(prob, geometry; autodiff, save_memory, verbose).forward_mode_powers[1][1][1]
-        #     solve(prob, geometry; autodiff, save_memory, verbose)
+        #     # solve(prob, geometry; alg, save_memory, verbose).forward_mode_powers[1][1][1]
+        #     solve(prob, geometry; alg, save_memory, verbose)
         # end
         # error()
         println("")
@@ -479,13 +484,13 @@ function gfrun(path; kw...)
                 @time l, (dldm,) = Flux.withgradient(models) do m
                     S = write_sparams(runs, run_probs, g0, path, origin, dx,
                         designs, design_config, m;
-                        F, img, autodiff, save_memory, ulims)#(1)(1)
+                        F, img, alg, save_memory, ulims)#(1)(1)
                     k = keys(S) |> first
                     s = S[k][Symbol("o2@0,o1@0")]
 
                     S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
                         designs, design_config, m;
-                        F, img, autodiff, save_memory, perturb=:ϵ, ulims)#(1)(1)
+                        F, img, alg, save_memory, perturb=:ϵ, ulims)#(1)(1)
                     s_ = S_[k][Symbol("o2@0,o1@0")]
 
                     T = abs2(s)
@@ -500,7 +505,7 @@ function gfrun(path; kw...)
                     # sols = get_sols(runs, run_probs, g0, path, origin, dx,
                     @unpack sparams, sols = write_sparams(runs, run_probs, g0, origin, dx,
                         designs, design_config, models;
-                        F, img, autodiff, save_memory, ulims)
+                        F, img, alg, save_memory, ulims)
                     S = sparams
                     l = 0
                     for k = keys(targets)
@@ -614,7 +619,7 @@ function gfrun(path; kw...)
         if framerate > 0
             write_sparams(runs, run_probs, g0, origin, dx,
                 designs, design_config, models;
-                F, img, autodiff, framerate, path)
+                F, img, alg, framerate, path)
         end
         println("Done in $(time() - t0) .")
 
