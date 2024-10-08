@@ -286,8 +286,8 @@ function setup(boundaries, sources, monitors, dx, sz;
     geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padding[k]) do p
         p.l + p.r
     end for k = keys(geometry_padding)])
-    # subpixel_averaging = dict(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
-    subpixel_averaging = Dict{Symbol,Any}()
+    # geomlims = dict(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
+    geomlims = Dict{Symbol,Any}()
     field_grids = Dict{Symbol,Any}()
     for k = keys(geometry_sizes)
         if k in (:μ, :m)
@@ -320,7 +320,7 @@ function setup(boundaries, sources, monitors, dx, sz;
                 g => v
             end for f = names
         ])
-        subpixel_averaging[k] = v
+        geomlims[k] = v
     end
 
     field_origin = NamedTuple([k => (1 - v) * dx / 2 - common_left_pad_amount * dx for (k, v) = pairs(is_field_on_lb)])
@@ -387,7 +387,7 @@ function setup(boundaries, sources, monitors, dx, sz;
 
     transient_duration, steady_state_duration = F.((transient_duration, steady_state_duration))
     OrderedDict((;
-        geometry_padding, field_padding, subpixel_averaging, field_grids,
+        geometry_padding, field_padding, geomlims, field_grids,
         source_instances, monitor_instances, field_names,
         polarization, F, Courant,
         transient_duration, steady_state_duration,

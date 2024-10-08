@@ -50,12 +50,12 @@ def gcell_problem(c,  targets, iters,
                         if _k not in targets["tparams"][wl]:
                             d[_k] = 0
 
-                    _k = f"o{pi}@0,o{pi}@{mi}"
-                    if _k not in targets["tparams"][wl]:
-                        d[_k] = 0
-                    _k = f"o{pi}@1,o{pi}@{mi}"
-                    if _k not in targets["tparams"][wl]:
-                        d[_k] = 0
+                    # _k = f"o{pi}@0,o{pi}@{mi}"
+                    # if _k not in targets["tparams"][wl]:
+                    #     d[_k] = 0
+                    # _k = f"o{pi}@1,o{pi}@{mi}"
+                    # if _k not in targets["tparams"][wl]:
+                    #     d[_k] = 0
                 targets["tparams"][wl].update(d)
         print(targets)
 
@@ -94,7 +94,6 @@ def gcell_problem(c,  targets, iters,
     prob["targets"] = targets
     prob["wavelengths"] = wavelengths
     # prob["init"] = init
-    prob = {**prob, **kwargs}
     prob["eta"] = eta
     polys = c.extract([design_region_layer]).get_polygons()
     if not symmetries:

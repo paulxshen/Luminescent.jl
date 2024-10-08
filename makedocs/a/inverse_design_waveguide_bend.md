@@ -89,7 +89,7 @@ static_mask = F.(static_mask)
 sz = size(static_mask)
 
 prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
-@unpack dx, dt, sz, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
+@unpack dx, dt, sz, geometry_padding, geomlims, field_padding, source_instances, monitor_instances, u0, = prob
 
 # n = (size(Jy) .- size(monitor_instances[1])) .÷ 2
 # power_profile = F.(abs.(Jy[range.(1 .+ n, size(Jy) .- n)...]))
@@ -108,7 +108,7 @@ end
 We define a geometry update function that'll be called each adjoint iteration. It calls geometry generator model to generate design region which gets placed onto mask of static features.
     ```julia
 function make_geometry(model, static_mask, prob)#; make3d=false)
-    @unpack sz, geometry_padding, subpixel_averaging = prob
+    @unpack sz, geometry_padding, geomlims = prob
     μ = ones(F, sz)
     σ = zeros(F, sz)
     m = zeros(F, sz)
@@ -127,7 +127,7 @@ function make_geometry(model, static_mask, prob)#; make3d=false)
     end
 
     p = apply(geometry_padding; ϵ, μ, σ, m)
-    p = apply(subpixel_averaging, p)
+    p = apply(geomlims, p)
 end
 ```
 Optimal design will maximize powers into port 1 and out of port 2. Monitor normals were set so both are positive. `metrics` function compute these figures of merit (FOM) quantities by a differentiable FDTD simulation . `loss` is then defined accordingly 

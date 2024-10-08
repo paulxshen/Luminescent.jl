@@ -14,4 +14,5 @@ c.add_ports(wg.ports)
 sol = lumi.write_sparams(c, wavelength=1.55, keys=["2,1"],  # same as keys=["o2@0,o1@0"]
                          core_layer=LAYER.WG,   bbox_layer=LAYER.WAFER,  # defaults
                          layer_stack=LAYER_STACK, materials=MATERIALS,  # defaults
-                         dx=0.1, approx_2D=True, dtype="float32", gpu="CUDA", run=False)  # or gpu=None
+                         dx=0.1, approx_2D=False, dtype="float32", gpu="CUDA",)  # or gpu=None
+lumi.show_solution()

@@ -7,9 +7,14 @@ function f2(((u, mf), p, (dx, dt, field_padding, source_instances, alg, past), (
     u = update(u, p, t, dx, dt, field_padding, source_instances; alg, past)
     mf += dt / T * [[
         begin
-            E = group(u, :E)
+            if past
+                _u = u[end]
+            else
+                _u = u
+            end
+            E = group(_u, :E)
             E = field.((E,), keys(E), (m,))
-            H = group(u, :H)
+            H = group(_u, :H)
             H = field.((H,), keys(H), (m,))
             [E, H] * cispi(-2t / λ)
         end for λ = wavelengths(m)
@@ -20,10 +25,20 @@ end
 function solve(prob, ;
     save_memory=false, ulims=(-3, 3), alg=nothing,
     verbose=false, framerate=0, path="", past=true, kwargs...)
-    @unpack dx, dt, u0, geometry, field_padding, geometry_padding, subpixel_averaging, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
+    @unpack dx, dt, u0, geometry, field_padding, geometry_padding, geomlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
 
-    p = apply_geometry_padding(geometry_padding, geometry)
-    p = apply_subpixel_averaging(subpixel_averaging, p)
+    invϵ = _apply_geometry_padding.((geometry_padding.ϵ,), geometry.invϵ)
+    # q = apply_tensor_smoothing(geomlims, p.invϵ)
+    v = values(geomlims(r"ϵ.*"))
+    invϵ = map(CartesianIndices(invϵ), invϵ) do I, a
+        _apply_subpixel_averaging(v[Tuple(I)[2]], a)
+    end
+
+    global p = apply_geometry_padding(geometry_padding, geometry)
+    p = apply_subpixel_averaging(geomlims, p)
+
+
+    p = merge(p, (; invϵ))
     # return p.ϵxx |> sum
 
     ignore() do
@@ -107,19 +122,19 @@ function solve(prob, ;
     #         (update(u, p, t, dx, dt, field_padding, source_instances; alg, save_memory), mf,)
     #     end
     # f = (u, t) -> _f(u, p, t)
-    mf0 = ignore_derivatives() do
-        [[
-            begin
-                E = group(u, :E)
-                E = field.((E,), keys(E), (m,))
-                H = group(u, :H)
-                H = field.((H,), keys(H), (m,))
-                [E, H] * zero(complex(F))
-            end for λ = wavelengths(m)
-        ] for m = monitor_instances]
-    end
-    ts = T[1]+dt:dt:T[2]
-    init = ((u, mf0), p, (dx, dt, field_padding, source_instances, alg, past), (Δ[2], monitor_instances))
+    # mf0 = ignore_derivatives() do
+    #     [[
+    #         begin
+    #             E = group(u, :E)
+    #             E = field.((E,), keys(E), (m,))
+    #             H = group(u, :H)
+    #             H = field.((H,), keys(H), (m,))
+    #             [E, H] * zero(complex(F))
+    #         end for λ = wavelengths(m)
+    #     ] for m = monitor_instances]
+    # end
+    ts = T[1]+dt:dt:T[2]+F(0.001)
+    init = ((u, 0), p, (dx, dt, field_padding, source_instances, alg, past), (Δ[2], monitor_instances))
 
     if save_memory
         (u, mf), = adjoint_reduce(f2, ts, init, ulims)

@@ -44,7 +44,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     polarization=:TE,
     # transient_duration=max_source_dist(sources), steady_state_duration=2,
     transient_duration=0, steady_state_duration=0,
-    ϵ=1, μ=1, σ=0, m=0, F=Float32,
+    ϵ=1, μ=1, σ=0, m=0, invϵ=1, F=Float32,
     pml_depths=0.5, pml_ramp_fracs=0.2,
     # xpml=0.4, ypml=0.4, zpml=0.4,
     # xpml_ramp_frac=0.5, ypml_ramp_frac=0.5, zpml_ramp_frac=0.5,
@@ -57,7 +57,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     dx, = F.((dx,))
 
     a = ones(F, Tuple(sz))
-    geometry = OrderedDict(pairs((; ϵ, μ, σ, m)))
+    geometry = OrderedDict(pairs((; ϵ, μ, σ, m, invϵ)))
     for (k, v) = pairs(geometry)
         if isa(v, Number)
             geometry[k] = a * geometry[k] |> F
@@ -65,7 +65,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
     ϵmin, ϵmax = extrema(geometry.ϵ)
     if isnothing(Courant)
-        Courant = F(0.7√(ϵmin / length(sz)))# Courant number)
+        Courant = F(0.65√(ϵmin / length(sz)))# Courant number)
         # @show Courant
     end
 
@@ -276,8 +276,8 @@ function setup(boundaries, sources, monitors, dx, sz;
     geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padding[k]) do p
         p.l + p.r
     end for k = keys(geometry_padding)])
-    # subpixel_averaging = NamedTuple(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
-    subpixel_averaging = Dict{Symbol,Any}()
+    # geomlims = NamedTuple(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
+    geomlims = Dict{Symbol,Any}()
     field_grids = Dict{Symbol,Any}()
     for k = keys(geometry_sizes)
         if k in (:μ, :m)
@@ -290,29 +290,13 @@ function setup(boundaries, sources, monitors, dx, sz;
                 xyz = f[2]
                 terminations = zip(is_field_on_lb[f], is_field_on_ub[f])
                 g = Symbol("$(k)$xyz$xyz")
-                v = SubpixelAveraging(
-                    stack([
-                        begin
-                            if v == (0, 0)
-                                [0, 0]
-                            elseif v == (0, 1)
-                                [0, 0]
-                            elseif v == (1, 1)
-                                [-1, 1]
-                            elseif v == (1, 0)
-                                [-1, -1]
-                            end
-                        end for v in terminations
-                    ]))
-                if !haskey(field_grids, f)
-                    field_grids[f] = v
-                end
+                v = [(0.5 - 0.5is_field_on_lb[f]) (geometry_sizes[k] - 0.5 + 0.5is_field_on_ub[f])]
                 g => v
             end for f = names
         ])
-        subpixel_averaging[k] = v
+        geomlims[k] = v
     end
-    subpixel_averaging = merge(values(subpixel_averaging)...)
+    geomlims = merge(values(geomlims)...)
 
     field_origin = NamedTuple([k => (1 - v) * dx / 2 - common_left_pad_amount * dx for (k, v) = pairs(is_field_on_lb)])
     field_origin = add_current_keys(field_origin)
@@ -380,14 +364,14 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
     transient_duration, steady_state_duration = F.((transient_duration, steady_state_duration))
-    global res = (;
-                     geometry_padding, field_padding, subpixel_averaging, field_grids, onedge,
-                     source_instances, monitor_instances, field_names,
-                     polarization, F, Courant,
-                     transient_duration, steady_state_duration,
-                     geometry, n=sqrt(ϵmax),
-                     # roi,
-                     u0, fields, d, dx, dt, sz, kw...) |> pairs |> OrderedDict
+    res = (;
+              geometry_padding, field_padding, geomlims, field_grids, onedge,
+              source_instances, monitor_instances, field_names,
+              polarization, F, Courant,
+              transient_duration, steady_state_duration,
+              geometry, n=sqrt(ϵmax),
+              # roi,
+              u0, fields, d, dx, dt, sz, kw...) |> pairs |> OrderedDict
 
 end
 update = update

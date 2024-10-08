@@ -59,10 +59,10 @@ monitors = [
 # setup
 boundaries = []# unspecified boundaries default to PML
 prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
+@unpack dt, geometry_padding, geomlims, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, m)
-p = apply(subpixel_averaging, p)
+p = apply(geomlims, p)
 
 # move to gpu
 if dogpu
@@ -132,10 +132,10 @@ monitors = [
 # setup
 boundaries = []# unspecified boundaries default to PML
 prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
+@unpack dt, geometry_padding, geomlims, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, m)
-p = apply(subpixel_averaging, p)
+p = apply(geomlims, p)
 
 # move to gpu
 if dogpu

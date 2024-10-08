@@ -31,20 +31,21 @@ for (approx_2D, gpu, dtype, save_memory) in itertools.product(
         # bbox_layer=LAYER.WAFER,
         lvoid=0.2, lsolid=.2, dx=0.1, iters=2,
         approx_2D=approx_2D, gpu=gpu, dtype=dtype, save_memory=save_memory,
-        run=False, wd=BUILD_RUNS)
+        run=False)
+    # run=False, wd=BUILD_RUNS)
     sol = lumi.solve(prob, run=False)
     sleep(1)
 
-c = gf.components.straight(.5,)
-i = 1
-for (approx_2D, gpu, dtype, wavelengths) in itertools.product(
-    [False, True],
-    [None, "CUDA"],
-    ["f32"],
-        [[1.55], ]):
-    lumi.write_sparams(c, name=f"{i}",
-                       wavelength=wavelengths, keys=["2,1"], dx=0.1,
-                       approx_2D=approx_2D, gpu=gpu, dtype=dtype,
-                       run=False, wd=BUILD_RUNS)
-    i += 1
-    sleep(1)
+# c = gf.components.straight(.5,)
+# i = 1
+# for (approx_2D, gpu, dtype, wavelengths) in itertools.product(
+#     [False, True],
+#     [None, "CUDA"],
+#     ["f32"],
+#         [[1.55], ]):
+#     lumi.write_sparams(c, name=f"{i}",
+#                        wavelength=wavelengths, keys=["2,1"], dx=0.1,
+#                        approx_2D=approx_2D, gpu=gpu, dtype=dtype,
+#                        run=False, wd=BUILD_RUNS)
+#     i += 1
+#     sleep(1)

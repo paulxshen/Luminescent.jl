@@ -2,36 +2,42 @@ struct SubpixelAveraging
     v
 end
 
-function _apply_subpixel_averaging(s::SubpixelAveraging, a::AbstractArray)
-    d = ndims(a)
-    # for (i, (do_smooth, pad_left, pad_right)) in enumerate(s.v)
-    for (i, (l, r)) = enumerate(eachcol(s.v))
-        select = i .== (1:d) |> Tuple
-        if l == -1
-            a = pad(a, :replicate, select, 0)
-        end
-        if r == 1
-            a = pad(a, :replicate, 0, select)
-        end
-        if l == -1 == r
-            a = (2selectdim(a, i, 2:(size(a, i))) - diff(a, dims=i)) / 2
-        elseif l == 1 == r
-            a = (2selectdim(a, i, 1:(size(a, i)-1)) + diff(a, dims=i)) / 2
-        end
-    end
-    a
+function _apply_subpixel_averaging(lr, a::AbstractArray)
+    N = ndims(a)
+    lr = cpu(lr)
+    l, r = eachcol(lr)
+    a = pad(a, :replicate, 1)
+    _l = l + 1.5
+    _r = _l + r - l
+    getindexf(a, range.(_l, _r + 0.001)...)
 end
+#     # for (i, (do_smooth, pad_left, pad_right)) in enumerate(s.v)
+#     for (i, (l, r)) = enumerate(eachcol(s.v))
+#         select = i .== (1:d) |> Tuple
+#         if l == -1
+#             a = pad(a, :replicate, select, 0)
+#         end
+#         if r == 1
+#             a = pad(a, :replicate, 0, select)
+#         end
+#         if l == -1 == r
+#             a = (2selectdim(a, i, 2:(size(a, i))) - diff(a, dims=i)) / 2
+#         elseif l == 1 == r
+#             a = (2selectdim(a, i, 1:(size(a, i)-1)) + diff(a, dims=i)) / 2
+#         end
+#     end
+#     a
+# end
 
 
 function apply_subpixel_averaging(sas, gs)
-    sas = ignore_derivatives() do
-        sas
-    end
     namedtuple([k => _apply_subpixel_averaging(sas[k], values(gs)[findfirst(keys(gs)) do gk
         startswith(string(k), string(gk))
     end]) for k = keys(sas)])
 end
-
+function apply_tensor_smoothing(geomlims, A)
+    (; invϵ=stack([_apply_subpixel_averaging.((gl,), c) for (c, gl) = zip(eachcol(A), geomlims(r"ϵ.*"))]),)
+end
 
 function _apply_geometry_padding(p::AbstractVector{<:OutPad}, a)
     for p = p
@@ -42,7 +48,7 @@ function _apply_geometry_padding(p::AbstractVector{<:OutPad}, a)
 end
 
 function apply_geometry_padding(gps, gs)
-    namedtuple([k => _apply_geometry_padding(gps[k], gs[k]) for k = keys(gs)])
+    namedtuple([k => k in keys(gps) ? _apply_geometry_padding(gps[k], gs[k]) : gs[k] for k = keys(gs)])
 end
 
 function _apply_field_padding(p::AbstractVector{<:InPad}, a::AbstractArray; nonzero_only=false)
@@ -74,23 +80,25 @@ end
 
 function apply_field_padding(fps, fs; kw...)
     # namedtuple([k => apply(fps[k], fs[k]; kw...) for k = keys(fs)])
-    dict([k => _apply_field_padding(fps[k], fs[k]; kw...) for k = keys(fs)])
+    dict([k => k in keys(fps) ? _apply_field_padding(fps[k], fs[k]; kw...) : fs[k]
+          for k = keys(fs)])
 end
 
-function _mark(v::AbstractVector, a::AbstractArray)
-    l = sum(v) do p
-        p.l
+function tensorinv(a, ratio)
+    N = ndims(a)
+    T = eltype(a)
+    inva = downsample(a, ratio) do a
+        n = zeros(T, N)
+        if maximum(a) != minimum(a)
+            n = sum.([diff(a; dims) for dims in 1:N])
+            Z = norm(n)
+            if Z != 0
+                n /= Z
+            end
+        end
+        P = n * n'
+        inva = P * mean(1 ./ a) + (I - P) / mean(a)
+        # reduce(vcat, [[inva[i, j] for j = 1:i] for i = 1:N])
     end
-    r = sum(v) do p
-        p.r
-    end
-    PaddedArray(a, l, r)
-end
-
-function mark(p, kw)
-    namedtuple([k => _mark(p[k], kw[k]) for k = keys(kw)])
-end
-
-function unmark(kw)
-    namedtuple([k => array(kw[k]) for k = keys(kw)])
+    [getindex.(inva, i, j) for i = 1:N, j = 1:N]
 end

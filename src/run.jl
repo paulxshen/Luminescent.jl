@@ -10,3 +10,4 @@ gfrun(lastrun())
 # @time diff(a, dims=1)
 # @time fft(a)
 # 1
+# extrema(p.invϵ[1])

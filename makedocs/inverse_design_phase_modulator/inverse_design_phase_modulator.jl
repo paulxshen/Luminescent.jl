@@ -86,7 +86,7 @@ sources = [Source(t -> cispi(2t), c, lb_, ub_; Jx, Jy,)]
 sz = size(static_mask)
 
 prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
-@unpack dx, dt, sz, geometry_padding, subpixel_averaging, field_padding, source_instances, monitor_instances, u0, = prob
+@unpack dx, dt, sz, geometry_padding, geomlims, field_padding, source_instances, monitor_instances, u0, = prob
 nt = round(Int, 1 / dt)
 A = area.(monitor_instances)
 
@@ -110,7 +110,7 @@ We define a geometry update function that'll be called each adjoint iteration. I
     =#
 
 function make_geometry(model, prob, dϵ=0)#; make3d=false)
-    @unpack sz, geometry_padding, subpixel_averaging = prob
+    @unpack sz, geometry_padding, geomlims = prob
     μ = ones(F, sz)
     σ = zeros(F, sz)
     m = zeros(F, sz)
@@ -131,7 +131,7 @@ function make_geometry(model, prob, dϵ=0)#; make3d=false)
     end
 
     p = apply(geometry_padding; ϵ, μ, σ, m)
-    p = apply(subpixel_averaging, p)
+    p = apply(geomlims, p)
 end
 
 #=

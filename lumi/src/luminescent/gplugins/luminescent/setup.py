@@ -27,11 +27,15 @@ def setup(c, study, dx, margin,
           gpu=None, dtype=np.float32,
           plot=False, framerate=0,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None, **kwargs):
-
+    dx0 = dx
+    # dx *= 2
+    ratio = 4
     if type(bbox_layer[0]) is int:
         bbox_layer = (bbox_layer,)
     prob = dict()
     prob = {**prob, **kwargs}
+    prob["dx0"] = dx0
+    prob["ratio"] = ratio
     prob["dtype"] = str(dtype)
     prob["timestamp"] = datetime.datetime.now().isoformat(
         timespec="seconds").replace(":", "-")
@@ -86,7 +90,7 @@ def setup(c, study, dx, margin,
     center = [c.bbox_np()[0][0], c.bbox_np()[0][1]+w/2, zcenter]
     normal = [1, 0, 0]
 
-    eps_3D = material_voxelate(c, dx, center, l, w, h,
+    eps_3D = material_voxelate(c, dx/ratio, center, l, w, h,
                                normal, layers, layer_stack, materials)
     eps_2D = eps_3D[:, :, int(eps_3D.shape[2]/2)]
     prob["study"] = study
@@ -102,11 +106,11 @@ def setup(c, study, dx, margin,
     prob["eps_2D"] = eps_2D.tolist()
     prob["zmin"] = zmin
     prob["zcore"] = zcore
-    prob["d"] = 2 if approx_2D else 3
+    prob["N"] = 2 if approx_2D else 3
 
     prob["mode_height"] = h
     # w = port_width+2*margin
-    w = 2.5*port_width
+    w = 3*port_width
     neffmin = 1000000
     wavelengths = []
     # _c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
@@ -129,7 +133,7 @@ def setup(c, study, dx, margin,
                     eps = material_slice(
                         c, dx, center, w, h, normal, layers, layer_stack, materials)
                     _modes, _modes1, neffs, _ = solve_modes(
-                        eps, λ=wl, dx=dx/2, neigs=max(mode_numbers)+1, plot=plot)
+                        eps, λ=wl, dx=dx, neigs=max(mode_numbers)+1, plot=plot)
 
                     for n in neffs:
                         if n < neffmin:

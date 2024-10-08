@@ -31,7 +31,7 @@ function Monitor(c, L, normal=nothing; label="", kw...)
     Monitor(c, -L / 2, L / 2, normal, label, nothing, kw)
 end
 
-function ModalMonitor(wavelength_modes::Dictlike, c, normal, tangent, L; wavelength=1, wavelengths=[wavelength], label="", kw...)
+function ModalMonitor(wavelength_modes::Map, c, normal, tangent, L; wavelength=1, wavelengths=[wavelength], label="", kw...)
     Monitor(c, -L / 2, L / 2, normal, tangent, label, wavelength_modes, kw)
 end
 
@@ -118,7 +118,7 @@ function field(a::AbstractArray, k, m)
     getindexf(a, m.roi[k]...)
 end
 
-function field(u::Dictlike, k, m)
+function field(u::Map, k, m)
     field(u(k), k, m)
 end
 

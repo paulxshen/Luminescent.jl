@@ -24,7 +24,7 @@ function apply(p; kw...)
     apply(p, kw)
 end
 
-function apply(d::Dictlike, a::AbstractArray)
+function apply(d::Map, a::AbstractArray)
     dict([k => apply(d[k], a) for k = keys(d)])
 end
 
@@ -33,8 +33,8 @@ function apply(i::AbstractVector{<:AbstractRange}, a::AbstractArray)
 end
 
 
-# Flux.gpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.gpu(d[k]) for k = keys(d)])
-# Flux.cpu(d::T) where {T<:Dictlike} = dict(T, [k => Flux.cpu(d[k]) for k = keys(d)])
+# Flux.gpu(d::T) where {T<:Map} = dict(T, [k => Flux.gpu(d[k]) for k = keys(d)])
+# Flux.cpu(d::T) where {T<:Map} = dict(T, [k => Flux.cpu(d[k]) for k = keys(d)])
 
 # Base.Float16(x) = f16(x)
 # Base.Float32(x) = f32(x)

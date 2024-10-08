@@ -223,7 +223,7 @@ function SourceInstance(s::Source, dx, sizes, field_origin, common_left_pad_amou
     o = NamedTuple([k => F((center + lb - o) / dx .+ 1.5) for (k, o) = pairs(field_origin)])
     _g = Dict([k => begin
         a = zeros(complex(F), sizes[k])
-        setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1)...)
+        setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1 + 0.001)...)
         a
     end for k = keys(mode)])
     _center = round(center / dx) + 1 + common_left_pad_amount

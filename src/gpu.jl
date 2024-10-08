@@ -14,8 +14,8 @@ cpu(x::AbstractArray) = cpu.(x)
 
 gpu(x) = isempty(propertynames(x)) ? x : fmap(gpu, x)
 cpu(x) = isempty(propertynames(x)) ? x : fmap(cpu, x)
-gpu(d::Dictlike) = fmap(gpu, d)
-cpu(d::Dictlike) = fmap(cpu, d)
+gpu(d::Map) = fmap(gpu, d)
+cpu(d::Map) = fmap(cpu, d)
 # gpu(v::AbstractVector{<:Collection}) = gpu.(v)
 # cpu(v::AbstractVector{<:Collection}) = cpu.(v)
 
