@@ -7,14 +7,14 @@ function f2(((u, mf), p, (dx, dt, field_padding, source_instances, alg, past), (
     u = update(u, p, t, dx, dt, field_padding, source_instances; alg, past)
     mf += dt / T * [[
         begin
-            if past
-                _u = u[end]
-            else
-                _u = u
-            end
-            E = group(_u, :E)
+            # if past
+            #     _u = u[end]
+            # else
+            #     _u = u
+            # end
+            E = group(u, :E)
             E = field.((E,), keys(E), (m,))
-            H = group(_u, :H)
+            H = group(u, :H)
             H = field.((H,), keys(H), (m,))
             [E, H] * cispi(-2t / λ)
         end for λ = wavelengths(m)
@@ -24,23 +24,17 @@ end
 
 function solve(prob, ;
     save_memory=false, ulims=(-3, 3), alg=nothing,
-    verbose=false, framerate=0, path="", past=true, kwargs...)
-    @unpack dx, dt, u0, geometry, field_padding, geometry_padding, geomlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n = prob
+    verbose=false, framerate=0, path="", past=false, kwargs...)
+    @unpack dx, dt, u0, geometry, _geometry, field_padding, geometry_padding, fieldlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n, sz, ratio, ϵ = prob
 
-    invϵ = _apply_geometry_padding.((geometry_padding.ϵ,), geometry.invϵ)
-    # q = apply_tensor_smoothing(geomlims, p.invϵ)
-    v = values(geomlims(r"ϵ.*"))
-    invϵ = map(CartesianIndices(invϵ), invϵ) do I, a
-        _apply_subpixel_averaging(v[Tuple(I)[2]], a)
-    end
+    p = apply_geometry_padding(geometry, geometry_padding, ratio)
+    p = apply_subpixel_averaging(p, fieldlims)
 
-    global p = apply_geometry_padding(geometry_padding, geometry)
-    p = apply_subpixel_averaging(geomlims, p)
-
+    # global _ϵ = ϵ
+    fieldlims = cpu(fieldlims)
+    invϵ = tensorinv(_geometry.ϵ, ratio, fieldlims)
 
     p = merge(p, (; invϵ))
-    # return p.ϵxx |> sum
-
     ignore() do
         # verbose && @show dx, dt, transient_duration, steady_state_duration
         # sz = p |> values |> first |> values |> first |> size
@@ -75,7 +69,7 @@ function solve(prob, ;
     if save_memory
         (u,), = adjoint_reduce(f1, 0:dt:T[1], init, ulims)
     else
-        (u,), = reduce(0:dt:T[1]; init) do us, t
+        @time (u,), = reduce(0:dt:T[1]; init) do us, t
             ignore() do
                 if framerate > 0 && t > 0
                     if t % (1 / framerate) < dt
@@ -139,7 +133,7 @@ function solve(prob, ;
     if save_memory
         (u, mf), = adjoint_reduce(f2, ts, init, ulims)
     else
-        (u, mf), = reduce(f2, ts; init)
+        @time (u, mf), = reduce(f2, ts; init)
     end
 
     if past

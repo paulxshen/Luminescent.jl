@@ -20,7 +20,7 @@ include("photonics.jl")
 include("gpu.jl")
 include("format.jl")
 include("dispersion.jl")
-include("c.jl")
+# include("c.jl")
 include("snapshot.jl")
 
 using Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, GPUArraysCore

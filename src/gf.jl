@@ -127,34 +127,30 @@ function make_geometry(models, origin, dx, g, designs, design_config; F=Float32,
 
 
     # namedtuple(g)
+    dx /= ratio
     namedtuple([k => begin
         a = g[k]
-        if startswith(string(k), "inv")
-            k = ignore_derivatives() do
-                Symbol(string(k)[end])
-            end
+        if k in keys(design_config.fill)
+            f = design_config.fill[k] |> F
+            v = design_config.void[k] |> F
             for (m, d) in zip(models, designs)
-                f = design_config.fill[k] |> F
-                v = design_config.void[k] |> F
                 if perturb == k
                     f *= F(1.001)
                 end
-                global mask = m(tensorinv, v, f)
+                global mask = m(identity, v, f)
 
-                a = map(a, mask) do a, p
-                    b = Zygote.Buffer(a)
-                    copyto!(b, a)
-                    xy = round((d.bbox[1] - origin) / dx) + 1
-                    if ndims(a) == 2
-                        o = xy
-                    else
-                        o = [xy..., 1 + round((zcore - zmin) / dx)]
-                        p = stack(fill(p, round(thickness / dx)))
-                    end
-                    o = Tuple(o)
-                    b = place!(b, o, p)
-                    a = copy(b)
+                b = Zygote.Buffer(a)
+                copyto!(b, a)
+                xy = round((d.bbox[1] - origin) / dx) + 1
+                if ndims(a) == 2
+                    o = xy
+                else
+                    o = [xy..., 1 + round((zcore - zmin) / dx)]
+                    mask = stack(fill(mask, round(thickness / dx)))
                 end
+                o = Tuple(o)
+                b = place!(b, o, mask)
+                a = copy(b)
             end
         end
         # if haskey(design_config.fill, k)
@@ -191,21 +187,22 @@ function plotsols(sols, probs, path; ratio=1)
         @unpack u, p = sol |> cpu
         @unpack monitor_instances, source_instances, dx, λ = prob |> cpu
         a = u.Hz
-        g = p.ϵxx
+        g = p.ϵ[1]
 
-        plt = quickie(a, g; dx * λ, monitor_instances, source_instances, ratio)
+        plt = quickie(a, g; dx, λ, monitor_instances, source_instances,)
         display(plt)
 
         if !isa(path, Base.AbstractVecOrTuple)
             path = (path,)
         end
         for path = path
-            CairoMakie.save(joinpath(path, "run_$i.png"), plt,)
+            try
+                CairoMakie.save(joinpath(path, "run_$i.png"), plt,)
+            catch e
+                println("save plot failed")
+                println(e)
+            end
         end
-        # catch e
-        #     println("plot failed")
-        #     println(e)
-        # end
     end
 end
 
@@ -237,6 +234,10 @@ function gfrun(path; kw...)
 
     global eps_2D = F(stack(stack.(eps_2D)))'
     eps_3D = F(permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
+    eps_2D = eps_2D[range.(1, floor(size(eps_2D) / ratio) * ratio)...]
+    eps_3D = eps_3D[range.(1, floor(size(eps_3D) / ratio) * ratio)...]
+
+
     port_source_offset = whole(port_source_offset, dx)
     margin = whole(margin, dx)
     zmargin = whole(zmargin, dx)
@@ -254,13 +255,13 @@ function gfrun(path; kw...)
     if N == 3
         eps_3D = pad(eps_3D, :replicate, ratio * lr...)
     end
-    ϵ2 = downsample(eps_2D, ratio)
+    # ϵ2 = downsample(eps_2D, ratio)
 
-    global invϵ2 = tensorinv(eps_2D, ratio)
+    # global invϵ2 = tensorinv(eps_2D, ratio)
     # heatmap(eps_2D) |> display
     if N == 3
-        ϵ3 = downsample(eps_3D, ratio)
-        invϵ3 = tensorinv(eps_3D, ratio)
+        # ϵ3 = downsample(eps_3D, ratio)
+        # invϵ3 = tensorinv(eps_3D, ratio)
     end
     # heatmap(ϵ2) |> display
     # GLMakie.volume(eps_3D) |> display
@@ -275,14 +276,16 @@ function gfrun(path; kw...)
     push!(lr[1], 0)
     push!(lr[2], 0)
     if N == 2
-        ϵ = ϵ2
-        invϵ = invϵ2
+        ϵ = eps_2D
+        # ϵ = ϵ2
+        # invϵ = invϵ2
         # heatmap(ϵ2) |> display
     else
-        ϵ = ϵ3
-        invϵ = invϵ3
+        ϵ = eps_3D
+        # ϵ = ϵ3
+        # invϵ = invϵ3
     end
-    sz = size(ϵ)
+    sz = size(ϵ) .÷ ratio
     ϵmax = maximum(ϵ)
     μ = 1
     σ = PML(1).σ
@@ -444,13 +447,14 @@ function gfrun(path; kw...)
             begin
 
                 setup(boundaries, sources, monitors, dx / λc, sz;
-                    F, Courant, ϵ, invϵ,
-                    pml_depths=[δ, δ, 0.3δ,],
-                    pml_ramp_fracs=[0.2, 0.2, 1],
+                    F, Courant, ϵ,
+                    # pml_depths=[δ, δ, 0.3δ,],
+                    # pml_ramp_fracs=[0.2, 0.2, 1],
                     verbose, λ=λc)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]
 
+    gpu_backend = "CUDA"
     if !isempty(gpu_backend)
         println("using $gpu_backend backend.")
         # Flux.gpu_backend!(gpu_backend)
@@ -467,7 +471,7 @@ function gfrun(path; kw...)
     else
         println("using CPU backend.")
     end
-    g0 = run_probs[1].geometry
+    g0 = run_probs[1]._geometry
 
     virgin = true
     # error()
@@ -480,7 +484,7 @@ function gfrun(path; kw...)
         # sparams = write_sparams(img="", alg=false, verbose=true)
         @unpack sparams, sols = write_sparams(runs, run_probs, g0, origin, dx;
             F, verbose=true, framerate, path)
-        plotsols(sols, run_probs, path; ratio)
+        plotsols(sols, run_probs, path;)
         sol = (; sparam_family(sparams)...,
             path, dx, study)
         open(SOL_PATH, "w") do f
@@ -636,7 +640,7 @@ function gfrun(path; kw...)
                     # Images.save(joinpath(ckptpath, "optimized_design_region_$i.png"), a)
                     # Images.save(joinpath(path, "optimized_design_region_$i.png"), a)
                 end
-                plotsols(sols, run_probs, (path, ckptpath); ratio)
+                plotsols(sols, run_probs, (path, ckptpath);)
 
                 sol = (;
                     sparam_family(sparams)...,

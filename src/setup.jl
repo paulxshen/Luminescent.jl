@@ -44,8 +44,8 @@ function setup(boundaries, sources, monitors, dx, sz;
     polarization=:TE,
     # transient_duration=max_source_dist(sources), steady_state_duration=2,
     transient_duration=0, steady_state_duration=0,
-    ϵ=1, μ=1, σ=0, m=0, invϵ=1, F=Float32,
-    pml_depths=0.5, pml_ramp_fracs=0.2,
+    ϵ=1, μ=1, σ=0, m=0, F=Float32,
+    pml_depths=[0.6, 0.6, 0.15], pml_ramp_fracs=0.2,
     # xpml=0.4, ypml=0.4, zpml=0.4,
     # xpml_ramp_frac=0.5, ypml_ramp_frac=0.5, zpml_ramp_frac=0.5,
 
@@ -54,18 +54,24 @@ function setup(boundaries, sources, monitors, dx, sz;
     Courant=nothing,
     verbose=true,
     kw...)
-    dx, = F.((dx,))
+    dx, ϵ, μ, σ, m = F.((dx, ϵ, μ, σ, m))
 
     a = ones(F, Tuple(sz))
-    geometry = OrderedDict(pairs((; ϵ, μ, σ, m, invϵ)))
-    for (k, v) = pairs(geometry)
-        if isa(v, Number)
-            geometry[k] = a * geometry[k] |> F
+    ratio = Int(size(ϵ, 1) / sz[1])
+    geometry = OrderedDict()
+    _geometry = OrderedDict()
+    for (k, g) = pairs((; μ, σ, m, ϵ))
+        if isa(g, Number)
+            geometry[k] = a * g
+        else
+            _geometry[k] = g
+            geometry[k] = downsample(g, ratio)
         end
     end
+
     ϵmin, ϵmax = extrema(geometry.ϵ)
     if isnothing(Courant)
-        Courant = F(0.65√(ϵmin / length(sz)))# Courant number)
+        Courant = F(0.85√(ϵmin / length(sz)))# Courant number)
         # @show Courant
     end
 
@@ -74,7 +80,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
     if steady_state_duration == 0
         if isempty(monitors)
-            steady_state_duration = 4
+            steady_state_duration = 6
         else
             v = reduce(vcat, wavelengths.(monitors))
             v = v |> Set |> collect |> sort |> reverse
@@ -201,8 +207,8 @@ function setup(boundaries, sources, monitors, dx, sz;
                 push!(geometry_padding[:ϵ], OutPad(:replicate, l, r, sz))
                 push!(geometry_padding[:μ], OutPad(:replicate, l, r, sz))
 
-                l1 = round.(b.ramp_frac * l)
-                r1 = round.(b.ramp_frac * r)
+                l1 = max.(1, round.(b.ramp_frac * l))
+                r1 = max.(1, round.(b.ramp_frac * r))
                 if any(l1 .> 0) || any(r1 .> 0)
                     # rr=ReplicateRamp(F(b.σ))
                     rr = F(b.σ)
@@ -276,8 +282,8 @@ function setup(boundaries, sources, monitors, dx, sz;
     geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padding[k]) do p
         p.l + p.r
     end for k = keys(geometry_padding)])
-    # geomlims = NamedTuple(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
-    geomlims = Dict{Symbol,Any}()
+    # fieldlims = NamedTuple(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
+    fieldlims = Dict{Symbol,Any}()
     field_grids = Dict{Symbol,Any}()
     for k = keys(geometry_sizes)
         if k in (:μ, :m)
@@ -291,12 +297,12 @@ function setup(boundaries, sources, monitors, dx, sz;
                 terminations = zip(is_field_on_lb[f], is_field_on_ub[f])
                 g = Symbol("$(k)$xyz$xyz")
                 v = [(0.5 - 0.5is_field_on_lb[f]) (geometry_sizes[k] - 0.5 + 0.5is_field_on_ub[f])]
-                g => v
+                f => v
             end for f = names
         ])
-        geomlims[k] = v
+        fieldlims[k] = v
     end
-    geomlims = merge(values(geomlims)...)
+    fieldlims = merge(values(fieldlims)...)
 
     field_origin = NamedTuple([k => (1 - v) * dx / 2 - common_left_pad_amount * dx for (k, v) = pairs(is_field_on_lb)])
     field_origin = add_current_keys(field_origin)
@@ -307,6 +313,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     onedge = NamedTuple([k => hcat(v, is_field_on_ub[k]) for (k, v) = pairs(is_field_on_lb)])
 
     dt = dx * Courant
+    dt = 1 / ceil(1 / dt)
     sz = Tuple(sz)
     for (k, v) = pairs(field_padding)
         a = ones(F, size(fields[k]))
@@ -331,6 +338,7 @@ function setup(boundaries, sources, monitors, dx, sz;
         end
     end
 
+    # geometry_padding[:invϵ] = geometry_padding[:ϵ]
     geometry_padding = NamedTuple(geometry_padding)
     field_padding = NamedTuple(field_padding)
 
@@ -364,14 +372,14 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
     transient_duration, steady_state_duration = F.((transient_duration, steady_state_duration))
-    res = (;
-              geometry_padding, field_padding, geomlims, field_grids, onedge,
-              source_instances, monitor_instances, field_names,
-              polarization, F, Courant,
-              transient_duration, steady_state_duration,
-              geometry, n=sqrt(ϵmax),
-              # roi,
-              u0, fields, d, dx, dt, sz, kw...) |> pairs |> OrderedDict
+    global res = (;
+                     geometry_padding, field_padding, fieldlims, field_grids, onedge,
+                     source_instances, monitor_instances, field_names,
+                     polarization, F, Courant,
+                     transient_duration, steady_state_duration,
+                     geometry, _geometry, n=sqrt(ϵmax),
+                     # roi,
+                     u0, fields, d, dx, dt, sz, ratio, kw...) |> pairs |> OrderedDict
 
 end
 update = update

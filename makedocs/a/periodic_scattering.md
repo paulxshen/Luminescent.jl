@@ -52,10 +52,10 @@ monitors = [
 We do `setup` to instantiate at the given discretisation. We adopt `u, p, t` naming conventions from ODE literature: `u ` as state, `p` as params eg geometry
 ```julia
 prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padding, geomlims, field_padding, source_instances, monitor_instances, u0, = prob
+@unpack dt, geometry_padding, fieldlims, field_padding, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padding; ϵ, μ, σ, m)
-p = apply(geomlims; p...)
+p = apply(fieldlims; p...)
 
 # move to gpu
 if dogpu

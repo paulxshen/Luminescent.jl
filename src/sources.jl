@@ -171,7 +171,7 @@ function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, s
     v = zip(lb, ub)
     lb = minimum.(v)
     ub = maximum.(v)
-    SourceInstance(Source(f, mode / dx^(D - d), center, lb, ub; meta...), dx, sizes, common_left_pad_amount, fl, sz0; F)
+    SourceInstance(Source(f, mode / dx^(D - d) / 10, center, lb, ub; meta...), dx, sizes, common_left_pad_amount, fl, sz0; F)
 end
 function SourceInstance(s::PlaneWave, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
     @unpack f, mode, dims, label, meta = s

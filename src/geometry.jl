@@ -1,16 +1,13 @@
-struct SubpixelAveraging
-    v
-end
 
-function _apply_subpixel_averaging(lr, a::AbstractArray)
-    N = ndims(a)
-    lr = cpu(lr)
-    l, r = eachcol(lr)
-    a = pad(a, :replicate, 1)
-    _l = l + 1.5
-    _r = _l + r - l
-    getindexf(a, range.(_l, _r + 0.001)...)
-end
+# function _apply_subpixel_averaging(lr, a::AbstractArray)
+#     N = ndims(a)
+#     lr = cpu(lr)
+#     l, r = eachcol(lr)
+#     a = pad(a, :replicate, 1)
+#     _l = l + 1.5
+#     _r = _l + r - l
+#     getindexf(a, range.(_l, _r + 0.001)...)
+# end
 #     # for (i, (do_smooth, pad_left, pad_right)) in enumerate(s.v)
 #     for (i, (l, r)) = enumerate(eachcol(s.v))
 #         select = i .== (1:d) |> Tuple
@@ -30,25 +27,28 @@ end
 # end
 
 
-function apply_subpixel_averaging(sas, gs)
-    namedtuple([k => _apply_subpixel_averaging(sas[k], values(gs)[findfirst(keys(gs)) do gk
-        startswith(string(k), string(gk))
-    end]) for k = keys(sas)])
+function apply_subpixel_averaging(geometry, fieldlims)
+    namedtuple([k => begin
+        lrs = fieldlims(Regex("$((;ϵ=:E,σ=:E,μ=:H,m=:H,invϵ=:E)[k]).*")) |> cpu |> values
+        map(lrs) do lr
+            crop(a, lr[:, 1] - 0.5, size(a) - 0.5 - lr[:, 2])
+        end
+    end for (k, a) = pairs(geometry)])
 end
-function apply_tensor_smoothing(geomlims, A)
-    (; invϵ=stack([_apply_subpixel_averaging.((gl,), c) for (c, gl) = zip(eachcol(A), geomlims(r"ϵ.*"))]),)
-end
+# function apply_tensor_smoothing(fieldlims, A)
+#     (; invϵ=stack([_apply_subpixel_averaging.((gl,), c) for (c, gl) = zip(eachcol(A), fieldlims(r"ϵ.*"))]),)
+# end
 
-function _apply_geometry_padding(p::AbstractVector{<:OutPad}, a)
+function _pad(p::AbstractVector{<:OutPad}, a::AbstractArray{<:Number}, ratio=1)
     for p = p
         @unpack l, r, b = p
-        a = pad(a, b, l, r)
+        a = pad(a, b, l * ratio, r * ratio)
     end
     a
 end
-
-function apply_geometry_padding(gps, gs)
-    namedtuple([k => k in keys(gps) ? _apply_geometry_padding(gps[k], gs[k]) : gs[k] for k = keys(gs)])
+# _pad(p::AbstractVector{<:OutPad}, a, ratio) = _pad.((p,), a, ratio)
+function apply_geometry_padding(gs, gps, ratio)
+    namedtuple([k => k in keys(gps) ? _pad(gps[k], gs[k], k == :ϵ ? ratio : 1) : gs[k] for k = keys(gs)])
 end
 
 function _apply_field_padding(p::AbstractVector{<:InPad}, a::AbstractArray; nonzero_only=false)
@@ -84,21 +84,38 @@ function apply_field_padding(fps, fs; kw...)
           for k = keys(fs)])
 end
 
-function tensorinv(a, ratio)
+function tensorinv(a, ratio, fieldlims)
+    # global _a, _ratio, _fieldlims = a, ratio, fieldlims
     N = ndims(a)
-    T = eltype(a)
-    inva = downsample(a, ratio) do a
-        n = zeros(T, N)
-        if maximum(a) != minimum(a)
-            n = sum.([diff(a; dims) for dims in 1:N])
-            Z = norm(n)
-            if Z != 0
-                n /= Z
+    T = typeof(a)
+    F = eltype(a)
+    sz = size(a) .÷ ratio
+    margin = ratio ÷ 2
+    A = pad(a, :replicate, margin)
+    A = cpu(A)
+
+    @time v = [
+        begin
+            lr = cpu(lr)
+            l, r = eachcol(lr)
+            start = Int.((l - 0.5) * ratio) + margin + 1
+            finish = size(A) - margin + Int.((r - sz + 0.5) * ratio)
+            # @show start, finish, size(A), margin, l, r, sz
+            _a = A[range.(start, finish)...]
+            downsample(_a, ratio) do a
+                n = zeros(F, N)
+                if maximum(a) != minimum(a)
+                    n = sum.([diff(a; dims) for dims in 1:N])
+                    Z = norm(n)
+                    if Z != 0
+                        n /= Z
+                    end
+                end
+                P = n * n'
+                inva = P * mean(1 ./ a) + (I - P) / mean(a)
+                # reduce(vcat, [[inva[i, j] for j = 1:i] for i = 1:N])
             end
-        end
-        P = n * n'
-        inva = P * mean(1 ./ a) + (I - P) / mean(a)
-        # reduce(vcat, [[inva[i, j] for j = 1:i] for i = 1:N])
-    end
-    [getindex.(inva, i, j) for i = 1:N, j = 1:N]
+        end for lr = fieldlims(r"E.*")
+    ]
+    T.([getindex.(v[j], i, j) for i = 1:N, j = 1:N])
 end

@@ -65,16 +65,23 @@ def setup(c, study, dx, margin,
     thickness = zlims[1]-zlims[0]
     prob["thickness"] = thickness
 
-    a = min([min([materials[d.material]["epsilon"] for d in get_layers(
-        layer_stack, l)]) for l in bbox_layer])
-    b = max([materials[d.material]["epsilon"] for d in get_layers(
-        layer_stack, core_layer)])
-    C = 4*math.sqrt(a/b)
-    if zmargin is None:
-        zmargin = dx*round(C*thickness/dx)
+    C = 1.5
     port_width = max([p.width/1e3 for p in c.ports])
+    if zmargin is None:
+        zmargin = trim(C*thickness, dx)
     if margin is None:
         margin = trim(C*port_width, dx)
+
+    # a = min([min([materials[d.material]["epsilon"] for d in get_layers(
+    #     layer_stack, l)]) for l in bbox_layer])
+    # b = max([materials[d.material]["epsilon"] for d in get_layers(
+    #     layer_stack, core_layer)])
+    # C = 4*math.sqrt(a/b)
+    # if zmargin is None:
+    #     zmargin = dx*round(C*thickness/dx)
+    # port_width = max([p.width/1e3 for p in c.ports])
+    # if margin is None:
+    #     margin = trim(C*port_width, dx)
 
     c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
     layers = set(c.layers)-set(exclude_layers)
@@ -109,8 +116,8 @@ def setup(c, study, dx, margin,
     prob["N"] = 2 if approx_2D else 3
 
     prob["mode_height"] = h
-    # w = port_width+2*margin
-    w = 3*port_width
+    w = port_width+2*trim(.6*port_width, dx)
+    # print(margin)
     neffmin = 1000000
     wavelengths = []
     # _c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
@@ -159,7 +166,8 @@ def setup(c, study, dx, margin,
     wavelengths = sorted(set(wavelengths))
     wl = np.median(wavelengths)
     if port_source_offset == "auto":
-        port_source_offset = trim(2.6*wl/neffmin, dx)
+        # port_source_offset = trim(2.6*wl/neffmin, dx)
+        port_source_offset = trim(4*port_width, dx)
     prob["port_source_offset"] = port_source_offset
     if source_margin == "auto":
         source_margin = 2*dx
