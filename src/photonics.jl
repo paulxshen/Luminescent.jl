@@ -2,7 +2,7 @@ function calibrate_mode(mode, ϵmode, dx, ; F=Float32, verbose=false, name="", k
     mode, ϵmode, dx, = (mode, ϵmode, dx,) |> F
     d = ndims(ϵmode) + 1
 
-    source_margin, port_source_offset, mode_margin = whole.((SOURCE_MARGIN, PORT_SOURCE_OFFSET, MODE_MARGIN), dx)
+    source_margin, port_source_offset, mode_margin = trim.((SOURCE_MARGIN, PORT_SOURCE_OFFSET, MODE_MARGIN), dx)
     l0 = 2
     l = l0 + port_source_offset + source_margin
 
@@ -34,7 +34,7 @@ function calibrate_mode(mode, ϵmode, dx, ; F=Float32, verbose=false, name="", k
     mode = modes[1][1]
     power = forward_mode_powers[1][1][1]
     @show forward_mode_powers
-    quickie(sol)|> display
+    quickie(sol) |> display
     global ret = (; mode, power, sol)
 
 end

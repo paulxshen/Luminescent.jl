@@ -65,7 +65,7 @@ normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
 function MonitorInstance(m::Monitor, dx, field_origin, common_left_pad_amount, sz, ; F=Float32)
     @unpack n, lb, ub, c, tangent, wavelength_modes, = m
-    n, lb, ub, c, tangent = F.((n, lb, ub, c, tangent))
+    n, lb, ub, c, tangent = [convert.(F, a) for a = (n, lb, ub, c, tangent)]
     L = ub - lb
     D = length(c)
     d = length(lb)
@@ -86,7 +86,7 @@ function MonitorInstance(m::Monitor, dx, field_origin, common_left_pad_amount, s
     roi = dict([k => begin
         a = (c + lb - o) / dx + 1.5
 
-        [l == 0 ? a : (a + (0:sign(l):l-sign(l))) for (a, l) in zip(a, round(L / dx))]
+        [l == 0 ? a : (a + (0:sign(l):l-sign(l))) for (a, l) in zip(a, round.(Int, L / dx))]
         # p = (c + lb - o) / dx + 1.5
         # i = floor(p)
         # w = 1 - mean(abs.(p - i))
@@ -96,10 +96,10 @@ function MonitorInstance(m::Monitor, dx, field_origin, common_left_pad_amount, s
         # end for i = (i, i + 1)]
         # [(F(w), i) for (w, i) in zip(w, i) if w > 0]
     end for (k, o) = pairs(field_origin)])
-    n = isnothing(n) ? n : F.(n |> normalize)
-    _center = round(c / dx) + 1 + common_left_pad_amount
+    n = isnothing(n) ? n : n / norm(n)
+    _center = round.(Int, c / dx) + 1 + common_left_pad_amount
 
-    MonitorInstance(d, roi, frame, F(dx), F(A), _center, m.label, F(wavelength_modes))
+    MonitorInstance(d, roi, frame, convert.(complex(F), dx), convert.(complex(F), A), _center, m.label, fmap(x -> convert.(complex(F), x), wavelength_modes))
 end
 
 

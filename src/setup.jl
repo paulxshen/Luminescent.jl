@@ -16,21 +16,21 @@ function get_polarization(u)
     end
     nothing
 end
-function add_current_keys(d)
-    d = OrderedDict(pairs(d))
-    add_current_keys!(d)
+function add_current_keys(N)
+    N = OrderedDict(pairs(N))
+    add_current_keys!(N)
 end
-function add_current_keys!(d::AbstractDict)
-    for k in keys(d) |> collect
+function add_current_keys!(N::AbstractDict)
+    for k in keys(N) |> collect
         if startswith(String(k), "E")
-            d[Symbol("J" * String(k)[2:end])] = d[k]
+            N[Symbol("J" * String(k)[2:end])] = N[k]
         end
 
         if startswith(String(k), "H")
-            d[Symbol("M" * String(k)[2:end])] = d[k]
+            N[Symbol("M" * String(k)[2:end])] = N[k]
         end
     end
-    NamedTuple(d)
+    NamedTuple(N)
 end
 """
     function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
@@ -54,7 +54,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     Courant=nothing,
     verbose=true,
     kw...)
-    dx, ϵ, μ, σ, m = F.((dx, ϵ, μ, σ, m))
+    dx, ϵ, μ, σ, m = [convert.(F, a) for a in (dx, ϵ, μ, σ, m)]
 
     a = ones(F, Tuple(sz))
     ratio = Int(size(ϵ, 1) / sz[1])
@@ -71,7 +71,9 @@ function setup(boundaries, sources, monitors, dx, sz;
 
     ϵmin, ϵmax = extrema(geometry.ϵ)
     if isnothing(Courant)
-        Courant = F(0.85√(ϵmin / length(sz)))# Courant number)
+        Courant = ignore_derivatives() do
+            convert.(F, 0.65√(ϵmin / length(sz)))# Courant number)
+        end
         # @show Courant
     end
 
@@ -91,22 +93,22 @@ function setup(boundaries, sources, monitors, dx, sz;
             end
         end
     end
-    transient_duration, steady_state_duration = F.((transient_duration, steady_state_duration))
+    transient_duration, steady_state_duration = convert.(F, (transient_duration, steady_state_duration))
 
 
-    d = length(sz)
+    N = length(sz)
     if isa(pml_depths, Number)
-        pml_depths = fill(pml_depths, d)
+        pml_depths = fill(pml_depths, N)
     end
     pml_depths = max.(pml_depths, 2dx)
     if isa(pml_ramp_fracs, Number)
-        pml_ramp_fracs = fill(pml_ramp_fracs, d)
+        pml_ramp_fracs = fill(pml_ramp_fracs, N)
     end
 
-    if d == 1
+    if N == 1
         field_names = (:Ez, :Hy)
         polarization = nothing
-    elseif d == 2
+    elseif N == 2
         if polarization == :TM
             Enames = (:Ez,)
             Hnames = (:Hx, :Hy)
@@ -122,18 +124,17 @@ function setup(boundaries, sources, monitors, dx, sz;
         Hnames = (:Hx, :Hy, :Hz)
         field_names = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz)
     end
-    Courant = F(Courant)
+    Courant = convert.(F, Courant)
 
-    nodes = fill(:U, d, 2)
+    nodes = fill(:U, N, 2)
     # pml_depths = [xpml, ypml, zpml]
     # pml_ramp_fracs = [xpml_ramp_frac, ypml_ramp_frac, zpml_ramp_frac]
-    db = Any[PML(j * i, pml_depths[i]; ramp_frac=pml_ramp_fracs[i]) for i = 1:d, j = (-1, 1)]
-    field_padding = DefaultDict(() -> InPad[])
+    db = Any[PML(j * i, pml_depths[i]; ramp_frac=pml_ramp_fracs[i]) for i = 1:N, j = (-1, 1)]
+    field_padding = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
     geometry_padding = DefaultDict(() -> OutPad[])
-    fl = Dict([k => zeros(Int, d) for k = field_names])
-    is_field_on_lb = Dict([k => zeros(Int, d) for k = field_names])
-    is_field_on_ub = Dict([k => zeros(Int, d) for k = field_names])
-    common_left_pad_amount = zeros(Int, d)
+    is_field_on_lb = Dict([k => zeros(Int, N) for k = field_names])
+    is_field_on_ub = Dict([k => zeros(Int, N) for k = field_names])
+    common_left_pad_amount = zeros(Int, N)
     field_sizes = Dict([k => collect(sz) for k = field_names])
 
     for b = boundaries
@@ -151,7 +152,7 @@ function setup(boundaries, sources, monitors, dx, sz;
         end
     end
 
-    for i = 1:d
+    for i = 1:N
         for j = 1:2
             b = db[i, j]
             t = typeof(b)
@@ -164,7 +165,7 @@ function setup(boundaries, sources, monitors, dx, sz;
         end
     end
 
-    for i = 1:d
+    for i = 1:N
         if nodes[i, :] == [:U, :E]
 
             nodes[i, 1] = :H
@@ -193,8 +194,8 @@ function setup(boundaries, sources, monitors, dx, sz;
 
 
 
-    for i = 1:d
-        select = i .== 1:d
+    for i = 1:N
+        select = i .== 1:N
         xyz = para = perp = [:x, :y, :z]
 
         perp = [popat!(para, i)]
@@ -202,16 +203,16 @@ function setup(boundaries, sources, monitors, dx, sz;
             b = db[i, j]
             if isa(b, PML)
                 pml_amount = round(Int, b.d / dx)
-                l = j == 1 ? [i == a ? pml_amount : 0 for a = 1:d] : zeros(Int, d)
-                r = j == 2 ? [i == a ? pml_amount : 0 for a = 1:d] : zeros(Int, d)
+                l = j == 1 ? [i == a ? pml_amount : 0 for a = 1:N] : zeros(Int, N)
+                r = j == 2 ? [i == a ? pml_amount : 0 for a = 1:N] : zeros(Int, N)
                 push!(geometry_padding[:ϵ], OutPad(:replicate, l, r, sz))
                 push!(geometry_padding[:μ], OutPad(:replicate, l, r, sz))
 
                 l1 = max.(1, round.(b.ramp_frac * l))
                 r1 = max.(1, round.(b.ramp_frac * r))
                 if any(l1 .> 0) || any(r1 .> 0)
-                    # rr=ReplicateRamp(F(b.σ))
-                    rr = F(b.σ)
+                    # rr=ReplicateRamp(convert.(F,b.σ))
+                    rr = convert.(F, b.σ)
                     push!(geometry_padding[:σ], OutPad(rr, l1, r1, sz))
                     push!(geometry_padding[:m], OutPad(rr, l1, r1, sz))
                 end
@@ -219,22 +220,19 @@ function setup(boundaries, sources, monitors, dx, sz;
                 r2 = r - r1
                 if any(l2 .> 0) || any(r2 .> 0)
 
-                    push!(geometry_padding[:σ], OutPad(F(b.σ), l2, r2, sz))
+                    push!(geometry_padding[:σ], OutPad(convert.(F, b.σ), l2, r2, sz))
 
-                    push!(geometry_padding[:m], OutPad(F(b.σ), l2, r2, sz))
+                    push!(geometry_padding[:m], OutPad(convert.(F, b.σ), l2, r2, sz))
                 end
                 if j == 1
-                    for k = keys(fl)
-                        fl[k][i] += pml_amount
-                    end
                     common_left_pad_amount[i] += pml_amount
                 end
                 for k = keys(field_sizes)
                     field_sizes[k][i] += pml_amount
                 end
             end
-            l = j == 1 ? Int.((1:d) .== i) : zeros(Int, d)
-            r = j == 2 ? Int.((1:d) .== i) : zeros(Int, d)
+            l = j == 1 ? Int.((1:N) .== i) : zeros(Int, N)
+            r = j == 2 ? Int.((1:N) .== i) : zeros(Int, N)
             t = typeof(b)
 
 
@@ -243,11 +241,9 @@ function setup(boundaries, sources, monitors, dx, sz;
                 q = startswith(String(k), String(f))
                 if (q ? k[2] in para : k[2] in perp)
                     if t == Periodic
-                        lp = j == 1 ? select : zeros(Int, d)
-                        rp = j == 2 ? select : zeros(Int, d)
-                        push!(field_padding[k], InPad(:periodic, lp, rp,))
+                        field_padding[k][i, j] = :periodic
                     else
-                        push!(field_padding[k], InPad(0, l, r,))
+                        field_padding[k][i, j] = 0
                     end
                 end
             end
@@ -256,20 +252,16 @@ function setup(boundaries, sources, monitors, dx, sz;
 
 
     for (k, v) = pairs(field_padding)
-        for p = v
-            fl[k] += p.l
-            is_field_on_lb[k] += p.l
-            is_field_on_ub[k] += p.r
-        end
+        is_field_on_lb[k] = !isnothing.(v[:, 1])
+        is_field_on_ub[k] = !isnothing.(v[:, 2])
     end
 
-    add_current_keys!(fl)
     add_current_keys!(field_sizes)
 
     field_sizes = NamedTuple([k => Tuple(field_sizes[k]) for (k) = keys(field_sizes)])
     fields = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for (k) = field_names])
-    if d == 1
-    elseif d == 3
+    if N == 1
+    elseif N == 3
         u0 = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz, :Jx, :Jy, :Jz)])
     else
         if polarization == :TM
@@ -309,34 +301,12 @@ function setup(boundaries, sources, monitors, dx, sz;
 
     source_instances = SourceInstance.(sources, dx, (field_sizes,), (field_origin,), (common_left_pad_amount,), (sz,); F)
     monitor_instances = MonitorInstance.(monitors, dx, (field_origin,), (common_left_pad_amount,), (sz,), ; F)
-    # roi = MonitorInstance(Monitor(zeros(d), zeros(d), dx * sz), dx, sz, common_left_pad_amount, is_field_on_lb, fl; F)
+    # roi = MonitorInstance(Monitor(zeros(N), zeros(N), dx * sz), dx, sz, common_left_pad_amount, is_field_on_lb, fl; F)
     onedge = NamedTuple([k => hcat(v, is_field_on_ub[k]) for (k, v) = pairs(is_field_on_lb)])
 
     dt = dx * Courant
-    dt = 1 / ceil(1 / dt)
+    dt = 1 / ceil(1 / dt) |> F
     sz = Tuple(sz)
-    for (k, v) = pairs(field_padding)
-        a = ones(F, size(fields[k]))
-        i = filter(eachindex(v)) do i
-            v[i].b == 0
-        end
-        i_ = sort(setdiff(eachindex(v), i))
-        if !isempty(i)
-
-            for i = i
-                @unpack b, l, r = v[i]
-                pad!(a, b, l, r)
-            end
-            field_padding[k] = [
-                InPad(
-                    0,
-                    sum(getproperty.(v[i], :l)),
-                    sum(getproperty.(v[i], :r)),
-                    a),
-                v[i_]...
-            ]
-        end
-    end
 
     # geometry_padding[:invϵ] = geometry_padding[:ϵ]
     geometry_padding = NamedTuple(geometry_padding)
@@ -371,15 +341,15 @@ function setup(boundaries, sources, monitors, dx, sz;
      """
     end
 
-    transient_duration, steady_state_duration = F.((transient_duration, steady_state_duration))
-    global res = (;
-                     geometry_padding, field_padding, fieldlims, field_grids, onedge,
-                     source_instances, monitor_instances, field_names,
-                     polarization, F, Courant,
-                     transient_duration, steady_state_duration,
-                     geometry, _geometry, n=sqrt(ϵmax),
-                     # roi,
-                     u0, fields, d, dx, dt, sz, ratio, kw...) |> pairs |> OrderedDict
+    transient_duration, steady_state_duration = convert.(F, (transient_duration, steady_state_duration))
+    res = (;
+              geometry_padding, field_padding, fieldlims, field_grids, onedge,
+              source_instances, monitor_instances, field_names,
+              polarization, F, Courant,
+              transient_duration, steady_state_duration,
+              geometry, _geometry, n=sqrt(ϵmax),
+              is_field_on_lb, is_field_on_ub, geometry_sizes,          # roi,
+              u0, fields, N, dx, dt, sz, ratio, kw...) |> pairs |> OrderedDict
 
 end
 update = update

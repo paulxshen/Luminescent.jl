@@ -5,40 +5,47 @@ Updates fields.
 """
 function update(u, p, t, dx, dt, field_padding, source_instances; alg=nothing)
     # unpack fields and geometry
-    E, H, J = [u(Regex("$k.*")) for k = (:E, :H, :J)]
-    @unpack invϵ, ϵ, μ, σ, m = p
+    E, H, J = [u(ignore_derivatives() do
+        Regex("$k.*")
+    end) for k = (:E, :H, :J)]
+    # global ___p = p
+    @unpack ϵ, μ, σ, m = p
     J0 = J
+    T = eltype(t)
 
     # staggered grid housekeeping
     N = ndims(E(1))
-    padamt = ignore_derivatives() do
-        1 - namedtuple([
-            k => [sum(left, v) sum(right, v)]
-            for (k, v) = pairs(field_padding)
-        ]) |> cpu
+    Epads = field_padding(r"E.*")
+    ∇ = ignore_derivatives() do
+        Del(fill(dx, N), fmap(a -> reverse(a, dims=2), field_padding, AbstractMatrix), alg)
     end
-    Epadamt = padamt(r"E.*")
-    ∇ = StaggeredDel(fill(dx, N), padamt, alg)
 
     # inject sources
-    J = apply(source_instances, t, J0)
+    J = ignore_derivatives() do
+        apply(source_instances, t, J0)
+    end
 
     # first update E
-    # dEdt = (∇ × H - E * σ - J) / ϵ
+    dEdt = (∇ × H - E ⊙ σ - J) ⊘ ϵ
     # dEdt = invϵ * (∇ × H - E * σ - J)
-    dDdt = (∇ × H - E * σ - J)
-    # tensor subpixel smoothing with staggered grid
-    dEdt = map(1:size(invϵ, 1)) do i
-        row = invϵ[i, :]
-        sum(map(eachindex(row)) do j
-            l, r = eachcol((Epadamt[i] - Epadamt[j]) / 2)
-            crop(row[j] .* dDdt[j], l, r)
-        end)
-    end
+
+    # tensor subpixel smoothing with staggered gridgp
+    # dDdt = (∇ × H - E ⊙ σ - J)
+    # dEdt = map(1:size(invϵ, 1)) do i
+    #     row = invϵ[i, :]
+    #     sum(map(eachindex(row)) do j
+    #         l, r = ignore_derivatives() do
+    #             eachcol((isnothing.(Epads[j]) - isnothing.(Epads[i])) / T(2))
+    #         end
+    #         crop(row[j] .* dDdt[j], l, r)
+    #     end)
+    # end
+    # dEdt = diag(invϵ) ⊙ dDdt
+
     E += dEdt * dt
 
     # then update H
-    dHdt = -(∇ × E + m * H) / μ
+    dHdt = -(∇ × E + m ⊙ H) ⊘ μ
     H += dHdt * dt
 
     u = merge(E, H, J0)
@@ -64,27 +71,27 @@ end
 
 #     J = apply(source_instances, t, J0)
 #     d = ndims(E(1))
-#     padamt = ignore_derivatives() do
+#     field_padding = ignore_derivatives() do
 #         onedge = namedtuple([k => [sum(left, v) sum(right, v)] for (k, v) = pairs(field_padding)]) |> cpu
 #         1 - onedge
 #     end
-#     Epadamt = padamt(r"E.*")
-#     ∇ = StaggeredDel(fill(dx, d), padamt, alg)
+#     Epads = field_padding(r"E.*")
+#     ∇ = StaggeredDel(fill(dx, d), field_padding, alg)
 
 #     # first update E
 #     # dEdt = (∇ × H - E * σ - J) / ϵ
 #     # dEdt = invϵ * (∇ × H - E * σ - J)
 #     dDdt = (∇ × H - E * σ - J)
-#     # dEdt = map(Epadamt, eachrow(invϵ)) do Epadamti, row
+#     # dEdt = map(Epads, eachrow(invϵ)) do Epadsi, row
 #     dEdt = map(1:size(invϵ, 1)) do i
-#         Epadamti = Epadamt[i]
+#         Epadsi = Epads[i]
 #         row = invϵ[i, :]
-#         # sum(map(Epadamt, row, dDdt) do Epadamtj, a, d
+#         # sum(map(Epads, row, dDdt) do Epadsj, a, d
 #         sum(map(eachindex(row)) do j
-#             Epadamtj = Epadamt[j]
+#             Epadsj = Epads[j]
 #             a = row[j]
 #             d = dDdt[j]
-#             l, r = eachcol((Epadamti - Epadamtj) / 2)
+#             l, r = eachcol((Epadsi - Epadsj) / 2)
 #             crop(a .* d, l, r)
 #             # a .* d
 #         end)

@@ -541,7 +541,7 @@ require(['jquery', 'minisearch'], function ($, minisearch) {
     let search_divider = `<div class="search-divider w-100"></div>`;
     let display_link =
       result.location.slice(Math.max(0), Math.min(50, result.location.length)) +
-      (result.location.length > 30 ? "..." : ""); // To cut-off the link because it messes with the overflow of the whole div
+      (result.location.length > 30 ? "..." : ""); // To cut-off the link because it messes with the overflow of the trim div
 
     if (result.page !== "") {
       display_link += ` (${result.page})`;

@@ -185,10 +185,10 @@ ports, = (ports,) .|> SortedDict
 polarization = :TE
 
 # _dx = dx / λc
-port_source_offset = whole(port_source_offset, dx)
-margin = whole(margin, dx)
-zmargin = whole(zmargin, dx)
-source_margin = whole(source_margin, dx)
+port_source_offset = trim(port_source_offset, dx)
+margin = trim(margin, dx)
+zmargin = trim(zmargin, dx)
+source_margin = trim(source_margin, dx)
 
 p = round((port_source_offset + source_margin) / dx)
 np = round(margin / dx)

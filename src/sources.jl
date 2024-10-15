@@ -124,13 +124,12 @@ end
 
 function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
     @unpack f, center, lb, ub, normal, tangent, meta = s
-    C = complex(F)
     J = OrderedDict()
     for k = (:Jx, :Jy, :Jz)
         if k in keys(s.mode)
-            J[k] = C.(s.mode[k])
+            J[k] = ComplexF32.(s.mode[k])
         else
-            J[k] = zeros(C, size(s.mode(1)))
+            J[k] = zeros(ComplexF32, size(s.mode(1)))
         end
     end
     J = values(J)
@@ -147,8 +146,8 @@ function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, s
         # @show J
         # J = reshape.([Jx, Jy, Jz], (sz,))
     else
-        zaxis = normal |> F
-        xaxis = tangent |> F
+        zaxis = convert.(F, normal)
+        xaxis = convert.(F, tangent)
         yaxis = cross(zaxis, xaxis)
     end
 
@@ -171,15 +170,18 @@ function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, s
     v = zip(lb, ub)
     lb = minimum.(v)
     ub = maximum.(v)
-    SourceInstance(Source(f, mode / dx^(D - d) / 10, center, lb, ub; meta...), dx, sizes, common_left_pad_amount, fl, sz0; F)
+    mode = ignore_derivatives() do
+        mode / dx^(D - d)
+    end
+    SourceInstance(Source(f, mode, center, lb, ub; meta...), dx, sizes, common_left_pad_amount, fl, sz0; F)
 end
 function SourceInstance(s::PlaneWave, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
     @unpack f, mode, dims, label, meta = s
     _F(x::Real) = F(x)
-    _F(x::Complex) = complex(F)(x)
+    _F(x::Complex) = ComplexF32(x)
     f = _F ∘ f
     d = length(common_left_pad_amount)
-    g = Dict([k => _F(mode[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(mode)])
+    g = Dict([k => _F.(mode[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(mode)])
     o = NamedTuple([k =>
         1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
                     for k = keys(fl)])
@@ -190,7 +192,7 @@ end
 
 function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
     _F(x::Real) = F(x)
-    _F(x::Complex) = complex(F)(x)
+    _F(x::Complex) = ComplexF32(x)
     f = _F ∘ f
     @unpack f, σ, mode, c, dims = s
     n = round(Int, 2σ / dx)
@@ -205,14 +207,14 @@ end
 function SourceInstance(s::Source, dx, sizes, field_origin, common_left_pad_amount, stop; F=Float32)
     @unpack f, mode, center, lb, ub, label, meta = s
     _F(x::Real) = F(x)
-    _F(x::Complex) = complex(F)(x)
+    _F(x::Complex) = ComplexF32(x)
 
     f = _F ∘ f
     g = Dict([k =>
         begin
             if isa(mode[k], AbstractArray)
                 sz0 = size(mode[k])
-                sz = max.(1, round(abs.(ub - lb) ./ dx)) |> Tuple
+                sz = max.(1, round.(Int, abs.(ub - lb) ./ dx)) |> Tuple
                 # sz0 != sz && @warn "source array size$sz0 not same  as domain size $sz. source will be interpolated"
                 imresize(_F.(mode[k]), sz, method=ImageTransformations.Lanczos4OpenCV())
             else
@@ -220,13 +222,13 @@ function SourceInstance(s::Source, dx, sizes, field_origin, common_left_pad_amou
                 # [_F.(mode[k](v...)) for v = Iterators.product(r...)]
             end
         end for k = keys(mode)])
-    o = NamedTuple([k => F((center + lb - o) / dx .+ 1.5) for (k, o) = pairs(field_origin)])
+    o = NamedTuple([k => F.((center + lb - o) / dx .+ 1.5) for (k, o) = pairs(field_origin)])
     _g = Dict([k => begin
-        a = zeros(complex(F), sizes[k])
-        setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1 + 0.001)...)
+        a = zeros(ComplexF32, sizes[k])
+        setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1)...)
         a
     end for k = keys(mode)])
-    _center = round(center / dx) + 1 + common_left_pad_amount
+    _center = round.(Int, center / dx) + 1 + common_left_pad_amount
     SourceInstance(f, keys(mode), g, _g, o, _center, label, meta)
 end
 

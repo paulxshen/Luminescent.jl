@@ -152,9 +152,9 @@ ports, = (ports,) .|> SortedDict
 polarization = :TE
 
 # _dx = dx / λc
-port_source_offset = whole(port_source_offset, dx)
-margin = whole(margin, dx)
-source_margin = whole(source_margin, dx)
+port_source_offset = trim(port_source_offset, dx)
+margin = trim(margin, dx)
+source_margin = trim(source_margin, dx)
 
 p = round((port_source_offset + source_margin) / dx)
 np = round(margin / dx)
@@ -165,7 +165,7 @@ np = round(margin / dx)
 models = nothing
 lr = p * portsides + np * (1 - portsides)
 eps_2D = pad(eps_2D, :replicate, lr...)
-# nz=whole(ZMARGIN,_dx)
+# nz=trim(ZMARGIN,_dx)
 push!(lr[1], 0)
 push!(lr[2], 0)
 eps_3D = pad(eps_3D, :replicate, lr...)

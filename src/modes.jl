@@ -25,7 +25,9 @@ function inner(u, v; dx=1)
     if haskey(v, :Ey) && haskey(u, :Hx)
         p -= u.Hx ⋅ v.Ey
     end
-    p * dx^ndims(first(values(u))) / 2
+    p * ignore_derivatives() do
+        dx^ndims(first(values(u))) / 2
+    end
     # if p > 0
     #     return r
     # else

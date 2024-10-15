@@ -51,7 +51,7 @@ struct PML
     d::Real
     σ::Real
     ramp_frac
-    function PML(dims, d=0.5f0, σ=4.0f0; ramp_frac=0.2f0)
+    function PML(dims, d=0.5f0, σ=8.0f0; ramp_frac=0.2f0)
         new(dims, d, σ, ramp_frac)
     end
 end

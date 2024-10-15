@@ -1,9 +1,9 @@
+using Porcupine: keys, values, fmap, first, ⊙, trim
 using Humanize: digitsep
-using UnPack, LinearAlgebra, Statistics, Random, Jello, Functors, DataStructures, GPUArraysCore
+using UnPack, LinearAlgebra, Statistics, Random, Jello, Functors, DataStructures, GPUArraysCore, TrackedFloats
 using Zygote
 using CairoMakie
 
-using Porcupine: keys, values, fmap, first
 using Porcupine
 using ArrayPadding
 include("constants.jl")

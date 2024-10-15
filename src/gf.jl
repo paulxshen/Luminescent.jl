@@ -1,10 +1,11 @@
 using Optimisers
 using SparseArrays
-using Flux: ADAM
+using Flux: Adam
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float32,Int32}) = true
 Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float16,Int32}) = true
 Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float32,Int32}) = true
 Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float16,Int32}) = true
+Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{TrackedFloat32,Int32}) = true
 
 function julia_main()::Cint
     if !isempty(ARGS)
@@ -32,15 +33,15 @@ function lastrun(; name=nothing, study=nothing, wd="runs")
     return l[1]
 end
 
-function write_sparams(runs, run_probs, geometry, origin, dx,
+function write_sparams(runs, run_probs, _geometry, origin, dx,
     designs=nothing, design_config=nothing, models=nothing;
     alg=nothing, save_memory=false, verbose=false, perturb=nothing, ulims=nothing, framerate=0, path="", kw...)
     F = run_probs[1].F
-    geometry = make_geometry(models, origin, dx, geometry, designs, design_config; F, perturb)
+    _geometry = make_geometry(models, origin, dx, _geometry, designs, design_config; F, perturb)
 
     sols = [
         begin
-            prob[:geometry] = geometry
+            prob[:_geometry] = _geometry
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
             sol = solve(prob; alg, ulims, save_memory, verbose, framerate, path)
         end for (i, prob) in enumerate(run_probs)
@@ -75,7 +76,7 @@ function write_sparams(runs, run_probs, geometry, origin, dx,
     end
     # return coeffs(1)(1)[1] |> abs2
 
-    sparams = OrderedDict([λ => OrderedDict([k => begin
+    S = OrderedDict([λ => OrderedDict([k => begin
         s = ignore() do
             split(string(k), ",")[2]
         end
@@ -85,7 +86,7 @@ function write_sparams(runs, run_probs, geometry, origin, dx,
     # if source_mn == mn == 0
     #     coeffs[λ]["$monitor_port,$source_port")] = v
     # end
-    return (; sparams, ulims, sols)
+    return (; S, ulims, sols)
 end
 
 function make_geometry(models, origin, dx, g, designs, design_config; F=Float32, perturb=nothing)
@@ -127,29 +128,33 @@ function make_geometry(models, origin, dx, g, designs, design_config; F=Float32,
 
 
     # namedtuple(g)
+    ratio = 1
+    # ratio = models[1].ratio
     dx /= ratio
     namedtuple([k => begin
         a = g[k]
         if k in keys(design_config.fill)
             f = design_config.fill[k] |> F
             v = design_config.void[k] |> F
-            for (m, d) in zip(models, designs)
+            for (mask, d) in zip(models, designs)
                 if perturb == k
-                    f *= F(1.001)
+                    f *= convert.(F, 1.001)
                 end
-                global mask = m(identity, v, f)
+                # global mask = m((x, r) -> x, v, f)
+                # mask = sigmoid.(m)
+                mask = mask * (f - v) + v
 
                 b = Zygote.Buffer(a)
                 copyto!(b, a)
-                xy = round((d.bbox[1] - origin) / dx) + 1
+                xy = round.(Int, (d.bbox[1] - origin) / dx) + 1
                 if ndims(a) == 2
                     o = xy
                 else
-                    o = [xy..., 1 + round((zcore - zmin) / dx)]
-                    mask = stack(fill(mask, round(thickness / dx)))
+                    o = [xy..., 1 + round(Int, (zcore - zmin) / dx)]
+                    mask = stack(fill(mask, round(Int, thickness / dx)))
                 end
                 o = Tuple(o)
-                b = place!(b, o, mask)
+                b[range.(o, o .+ size(mask) .- 1)...] = mask
                 a = copy(b)
             end
         end
@@ -184,12 +189,12 @@ end
 function plotsols(sols, probs, path; ratio=1)
     for (i, (prob, sol)) in enumerate(zip(probs, sols))
         # try
-        @unpack u, p = sol |> cpu
+        @unpack u, p, = sol |> cpu
         @unpack monitor_instances, source_instances, dx, λ = prob |> cpu
         a = u.Hz
-        g = p.ϵ[1]
+        # g = _p.ϵ
 
-        plt = quickie(a, g; dx, λ, monitor_instances, source_instances,)
+        plt = quickie(a, ; dx, λ, monitor_instances, source_instances,)
         display(plt)
 
         if !isa(path, Base.AbstractVecOrTuple)
@@ -222,7 +227,10 @@ function gfrun(path; kw...)
 
     prob = load(PROB_PATH)
     @load PROB_PATH name N dtype margin zmargin dx0 source_margin Courant port_source_offset source_portsides nonsource_portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin thickness zcore gpu_backend magic framerate ratio
-    F = Float32
+    ratio = 1
+    F = Float64
+    # F = TrackedFloat32
+
     alg = :spectral
     alg = nothing
     if contains(dtype, "16")
@@ -232,19 +240,19 @@ function gfrun(path; kw...)
     end
     λc = median(load(PROB_PATH)[:wavelengths])
 
-    global eps_2D = F(stack(stack.(eps_2D)))'
-    eps_3D = F(permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
-    eps_2D = eps_2D[range.(1, floor(size(eps_2D) / ratio) * ratio)...]
-    eps_3D = eps_3D[range.(1, floor(size(eps_3D) / ratio) * ratio)...]
+    global eps_2D = convert.(F, stack(stack.(eps_2D)))'
+    eps_3D = convert.(F, permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
+    eps_2D = eps_2D[range.(1, floor.(Int, size(eps_2D) / ratio) * ratio)...]
+    eps_3D = eps_3D[range.(1, floor.(Int, size(eps_3D) / ratio) * ratio)...]
 
 
-    port_source_offset = whole(port_source_offset, dx)
-    margin = whole(margin, dx)
-    zmargin = whole(zmargin, dx)
-    source_margin = whole(source_margin, dx)
+    port_source_offset = trim(port_source_offset, dx)
+    margin = trim(margin, dx)
+    zmargin = trim(zmargin, dx)
+    source_margin = trim(source_margin, dx)
 
-    n_source_portsides = round((port_source_offset + source_margin) / dx)
-    n_nonsource_portsides = round((source_margin) / dx)
+    n_source_portsides = round(Int, (port_source_offset + source_margin) / dx)
+    n_nonsource_portsides = round(Int, (source_margin) / dx)
     # p = m + n
     # origin = components.device.bbox[1] - dx * p
     # eps_3D = pad(eps_3D, :replicate, [p, p, 0])
@@ -272,7 +280,7 @@ function gfrun(path; kw...)
     # _dx = dx / λc
     origin = components.device.bbox[1] - dx * lr[1]
 
-    nz = round(zmargin / dx)
+    nz = round(Int, zmargin / dx)
     push!(lr[1], 0)
     push!(lr[2], 0)
     if N == 2
@@ -289,7 +297,7 @@ function gfrun(path; kw...)
     ϵmax = maximum(ϵ)
     μ = 1
     σ = PML(1).σ
-    δ = sqrt(ϵmax / μ) / σ
+    @show δ = sqrt(ϵmax / μ) / σ
 
     # heatmap(ϵ3[round(size(ϵ3, 1) / 2), :, :]) |> display
     if study == "inverse_design"
@@ -304,26 +312,17 @@ function gfrun(path; kw...)
             sol = nothing
         end
         models = [
-            # Symbol(Symbol("o$i") =>
             begin
                 @unpack init, bbox = d
                 L = bbox[2] - bbox[1]
                 szd = Tuple(round.(Int, L / dx)) # design region size
                 symmetries = [length(string(s)) == 1 ? Int(s) + 1 : s for s = d.symmetries]
-                o = round((bbox[1] - origin) / dx) + 1
-                # if !isa(init, AbstractArray)
-                # if init == ""
-                # if isnothing(init)
-                #     init = ϵ2[o[1]:o[1]+szd[1]-1, o[2]:o[2]+szd[2]-1]
-                #     # init = init .> (maximum(init) + minimum(init)) / 2
-                #     init = init .≈ design_config.fill.epsilon |> F
-                # elseif init == "random"
-                #     init = nothing
-                # end
+                o = round.(Int, (bbox[1] - origin) / dx) + 1
 
                 lvoid = d.lvoid / dx
                 lsolid = d.lsolid / dx
-                margin = maximum(round.((lvoid, lsolid)))
+                margin = maximum(round.(Int, (lvoid, lsolid)))
+                ϵ2 = downsample(eps_2D, ratio)
                 frame = ϵ2[range.(o - margin, o + szd + margin - 1)...]
                 frame = frame .== maximum(frame)
                 # display(heatmap(frame))
@@ -335,6 +334,7 @@ function gfrun(path; kw...)
                     b.a .= sol.params[i] |> typeof(b.a)
                 end
                 b
+                ones(F, szd)
             end for (i, d) = enumerate(designs)
         ]
     end
@@ -343,15 +343,15 @@ function gfrun(path; kw...)
 
     device = 0
     device, dx, λc =
-        F.((device, dx, λc))
-    # guess = F.(guess)
+        convert.(F, (device, dx, λc))
+    # guess = convert.(F,guess)
     for ms = mode_solutions
         if !haskey(ms, :calibrated_modes)
             ms[:calibrated_modes] = []
         end
         for (mode, mode1) in zip(ms.modes, ms.modes1)
-            mode = (; [k => complex.(stack.(v)...) |> F for (k, v) in mode |> pairs]...)
-            mode1 = (; [k => complex.(v...) |> F for (k, v) in mode1 |> pairs]...)
+            mode = (; [k => complex.([convert.(F, v) for v = stack.(v)]...) for (k, v) in mode |> pairs]...)
+            mode1 = (; [k => complex.([convert.(F, v) for v = v]...) for (k, v) in mode1 |> pairs]...)
 
             if N == 2
                 mode = mode1
@@ -375,9 +375,9 @@ function gfrun(path; kw...)
                 @unpack center, wavelength_mode_numbers = sig
                 for λ in keys(wavelength_mode_numbers)
                     for mn = wavelength_mode_numbers[λ]
-                        λ = F(parse(F, string(λ)))
+                        λ = convert.(F, parse(Float32, string(λ)))
                         i = findfirst(mode_solutions) do v
-                            isapprox(λ, v.wavelength) && string(port) in string.(v.ports)
+                            abs(λ - v.wavelength) < 0.001 && string(port) in string.(v.ports)
                         end
                         ms = mode_solutions[i]
                         mode = ms.calibrated_modes[mn+1]
@@ -419,11 +419,12 @@ function gfrun(path; kw...)
             zcenter = nothing
             wavelength_modes = SortedDict([
                 begin
-                    λ = parse(F, string(λ))
+                    λ = parse(Float32, string(λ))
+                    λ = F(λ)
                     λ / λc => [
                         begin
                             i = findfirst(mode_solutions) do v
-                                isapprox(λ, v.wavelength) && port in v.ports && mn < length(v.modes)
+                                abs(λ - v.wavelength) < 0.001 && port in v.ports && mn < length(v.modes)
                             end
                             ms = mode_solutions[i]
                             if isnothing(zcenter)
@@ -448,13 +449,12 @@ function gfrun(path; kw...)
 
                 setup(boundaries, sources, monitors, dx / λc, sz;
                     F, Courant, ϵ,
-                    # pml_depths=[δ, δ, 0.3δ,],
+                    pml_depths=[δ, δ, 0.2δ,],
                     # pml_ramp_fracs=[0.2, 0.2, 1],
                     verbose, λ=λc)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]
 
-    gpu_backend = "CUDA"
     if !isempty(gpu_backend)
         println("using $gpu_backend backend.")
         # Flux.gpu_backend!(gpu_backend)
@@ -471,7 +471,7 @@ function gfrun(path; kw...)
     else
         println("using CPU backend.")
     end
-    g0 = run_probs[1]._geometry
+    _geometry0 = run_probs[1]._geometry
 
     virgin = true
     # error()
@@ -482,10 +482,10 @@ function gfrun(path; kw...)
         # @info "Computing s-parameters..."
         println("Computing s-parameters...")
         # sparams = write_sparams(img="", alg=false, verbose=true)
-        @unpack sparams, sols = write_sparams(runs, run_probs, g0, origin, dx;
+        @unpack S, sols = write_sparams(runs, run_probs, _geometry0, origin, dx;
             F, verbose=true, framerate, path)
         plotsols(sols, run_probs, path;)
-        sol = (; sparam_family(sparams)...,
+        sol = (; sparam_family(S)...,
             path, dx, study)
         open(SOL_PATH, "w") do f
             write(f, json(cpu(sol)))
@@ -498,63 +498,64 @@ function gfrun(path; kw...)
             end
         end
         # save_memory = true
-        sparams = sparams0 = 0
+        S = sparams0 = 0
         # eta *= 20
         eta = 0.01
         iters = 2
-        opt = Flux.ADAM(eta)
+        opt = Flux.Adam(eta)
         opt_state = Flux.setup(opt, models)
         println("starting optimization... first iter will be slow due to adjoint compilation.")
         img = nothing
         best = best0 = 0
-        S, ulims = write_sparams(runs, run_probs, g0, origin, dx,
+        S, ulims = write_sparams(runs, run_probs, _geometry0, origin, dx,
             designs, design_config, models;
             F, img, alg, with=true,)
         # heatmap(_as[3])
         #  ass = gradient(models) do models
-        #     write_sparams(runs, run_probs, g0, path, origin, dx,
+        #     write_sparams(runs, run_probs, _geometry0, path, origin, dx,
         #         designs, design_config, models;
         #         F, img, alg, save_memory)
         # end
         # error()
 
         # prob = run_probs[1]
-        #  aaaaa = gradient(g0) do geometry
+        #  aaaaa = gradient(_geometry0) do geometry
         #     # solve(prob, geometry; alg, save_memory, verbose).forward_mode_powers[1][1][1]
         #     solve(prob, geometry; alg, save_memory, verbose)
         # end
         # error()
         println("")
         for i = 1:iters
+            println("($i)  ")
             stop = i == iters
             # global virgin, stop, best, best0, sparams0
-            if "phase_shifter" == first(keys(targets))
+            if :phase_shifter == first(keys(targets))
                 @time l, (dldm,) = Flux.withgradient(models) do m
-                    S = write_sparams(runs, run_probs, g0, path, origin, dx,
-                        designs, design_config, m;
+                    @unpack S, sols = write_sparams(runs, run_probs, _geometry0, origin, dx,
+                        designs, design_config, models;
                         F, img, alg, save_memory, ulims)#(1)(1)
                     k = keys(S) |> first
                     s = S[k][Symbol("o2@0,o1@0")]
 
-                    S_ = write_sparams(runs, run_probs, g0, path, origin, dx,
+                    @unpack S = write_sparams(runs, run_probs, _geometry0, origin, dx,
                         designs, design_config, m;
                         F, img, alg, save_memory, perturb=:ϵ, ulims)#(1)(1)
-                    s_ = S_[k][Symbol("o2@0,o1@0")]
+                    s_ = S[k][Symbol("o2@0,o1@0")]
 
                     T = abs2(s)
                     dϕ = angle(s_ / s)
                     println("T: $T, dϕ: $dϕ")
-                    sparams = S
-                    (T * dϕ)
+                    S = S
+                    # (exp(T - 1) * dϕ / π)
+                    T * dϕ / π
                 end
             else
-                println("($i)  ")
                 @time l, (dldm,) = Flux.withgradient(models) do models
-                    # sols = get_sols(runs, run_probs, g0, path, origin, dx,
-                    @unpack sparams, sols = write_sparams(runs, run_probs, g0, origin, dx,
+                    # sols = get_sols(runs, run_probs, _geometry0, path, origin, dx,
+                    @unpack S, sols = write_sparams(runs, run_probs, _geometry0, origin, dx,
                         designs, design_config, models;
                         F, img, alg, save_memory, ulims)
-                    S = sparams
+                    S = S
                     l = 0
                     for k = keys(targets)
                         y = targets[k]
@@ -577,7 +578,7 @@ function gfrun(path; kw...)
                             err = (x, y) -> angle(cis(x) / cis(y))
                             ŷ = flatten(ŷ)
                             y = flatten(y)
-                            Z = length(y) * F(2π)
+                            Z = length(y) * convert.(F, 2π)
                         else
                             if :sparams == k
                                 # S = get_sparams(sols)
@@ -615,7 +616,7 @@ function gfrun(path; kw...)
             # if l < best
             #     best = l
             # end
-            if l < stoploss
+            if !isnothing(stoploss) && l < stoploss
                 println("Loss below threshold, stopping optimization.")
                 stop = true
             end
@@ -635,17 +636,17 @@ function gfrun(path; kw...)
 
                 mkpath(ckptpath)
                 for (i, (m, d)) = enumerate(zip(models, designs))
-                    a = Gray.(m() .< 0.5)
+                    # a = Gray.(m() .< 0.5)
 
                     # Images.save(joinpath(ckptpath, "optimized_design_region_$i.png"), a)
                     # Images.save(joinpath(path, "optimized_design_region_$i.png"), a)
                 end
-                plotsols(sols, run_probs, (path, ckptpath);)
+                # plotsols(sols, run_probs, (path, ckptpath);)
 
                 sol = (;
-                    sparam_family(sparams)...,
-                    optimized_designs=[m() .> 0.5 for m in models],
-                    params=getfield.(models, :a),
+                    sparam_family(S)...,
+                    # optimized_designs=[m() .> 0.5 for m in models],
+                    # params=getfield.(models, :a),
                     designs,
                     design_config, path,
                     dx,
@@ -666,7 +667,7 @@ function gfrun(path; kw...)
             Flux.update!(opt_state, models, dldm)# |> gpu)
         end
         if framerate > 0
-            write_sparams(runs, run_probs, g0, origin, dx,
+            write_sparams(runs, run_probs, _geometry0, origin, dx,
                 designs, design_config, models;
                 F, img, alg, framerate, path)
         end

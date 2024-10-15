@@ -3,7 +3,6 @@
 function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], ulims=nothing, λ=1, unit="um", kw...)
     ratio = dx / 0.025
     u = imresize(u; ratio)
-    g = imresize(g; ratio)
 
     fig = Figure()
     N = ndims(u)
@@ -28,9 +27,9 @@ function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], 
     f = x -> string.(round.(x * dx * λ / ratio, digits=2)) .* (unit,)
     ytickformat = xtickformat = f
     if N == 3
-        l, w, h = size(a)
+        l, w, h = size(u)
     else
-        l, w = size(a)
+        l, w = size(u)
 
     end
     axis0 = (; kw..., xtickformat, ytickformat)
@@ -41,23 +40,25 @@ function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], 
         title *= " (xy slice of 3D array)"
         aspect = l / w
         axis = merge(axis0, (; title, aspect))
-        u = u[:, :, round(Int, size(u, 3) / 2)]
+        u = u[:, :, round.(Int, size(u, 3) / 2)]
         ax, plt = heatmap(grid[1, 1], real(u); axis, colormap, colorrange)
 
         aspect = w / h
         axis = merge(axis0, (; title, aspect))
-        u = u[round(Int, size(u, 1) / 2), :, :]
+        u = u[round.(Int, size(u, 1) / 2), :, :]
         ax, plt = heatmap(grid[1, 2], real(u); axis, colormap, colorrange=colorrange)
     else
         title *= " (2D array)"
         aspect = l / w
         axis = merge(axis0, (; title, aspect))
         ax, plt = heatmap(grid[1, 1], u; axis, colormap, colorrange)
-        if diff(collect(extrema(a)))[1] > 0
-            Colorbar(grid[1, 2], plt)
-            contour = g .> 0.99maximum(g)
-            contour = morpholaplace(contour,)
-            heatmap!(ax, contour; colormap=[(:gray, 0), :black], colorrange=(0, 1))
+        if !isnothing(g)
+            if diff(collect(extrema(u)))[1] > 0
+                Colorbar(grid[1, 2], plt)
+                contour = g .> 0.99maximum(g)
+                contour = morpholaplace(contour,)
+                heatmap!(ax, contour; colormap=[(:gray, 0), :black], colorrange=(0, 1))
+            end
         end
     end
     for (pos, text) in labels
@@ -68,6 +69,7 @@ function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], 
         return fig
     end
 
+    g = imresize(g, size(u))
     grid = fig[2, 1]
     title = "ϵ"
     colormap = [:white, :gray]
@@ -77,19 +79,19 @@ function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], 
 
         aspect = l / w
         axis = merge(axis0, (; title, aspect))
-        g = g[:, :, round(Int, size(a, 3) / 2)]
+        g = g[:, :, round.(Int, size(a, 3) / 2)]
         ax, plt = heatmap(grid[1, 1], g; axis, colormap)
 
         aspect = w / h
         axis = merge(axis0, (; title, aspect))
-        g = g[round(Int, size(a, 1) / 2), :, :]
+        g = g[round.(Int, size(a, 1) / 2), :, :]
         ax, plt = heatmap(grid[1, 2], g; axis, colormap,)
     else
         title *= " (2D array)"
         aspect = l / w
         axis = merge(axis0, (; title, aspect))
         ax, plt = heatmap(grid[1, 1], g; axis, colormap)
-        if diff(collect(extrema(a)))[1] > 0
+        if diff(collect(extrema(g)))[1] > 0
             Colorbar(grid[1, 2], plt)
         end
     end

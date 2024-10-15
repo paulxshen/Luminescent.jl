@@ -10,12 +10,12 @@ function shorten_key(k)
 end
 function simplify_sparams(s)
     k = sort(keys(s))
-    k = k[round((length(k) + 1) / 2)]
+    k = k[round(Int, (length(k) + 1) / 2)]
     dict([shorten_key(k) => v for (k, v) = pairs(s[k]) if !isnothing(shorten_key(k))])
 end
 function sparam_family(sparams)
     # sparams = simplify_sparams(detailed_sparams)
-    tparams = Porcupine.apply(abs2, sparams)
+    tparams = fmap(abs2, sparams)
     # detailed_tparams = Porcupine.apply(abs2, detailed_sparams)
     # sparam_phasors = Porcupine.apply(sparams) do z
     #     (mag=abs(z), phase=angle(z))

@@ -1,75 +1,51 @@
-function f1(((u,), p, (dx, dt, field_padding, source_instances, alg, past)), t)
-    u = update(u, p, t, dx, dt, field_padding, source_instances; alg, past)
-    ((u,), p, (dx, dt, field_padding, source_instances, alg, past))
+function f1(((u,), p, (dx, dt, field_padding, source_instances)), t)
+    u = update(u, p, t, dx, dt, field_padding, source_instances)
+    ((u,), p, (dx, dt, field_padding, source_instances))
 end
 
-function f2(((u, mf), p, (dx, dt, field_padding, source_instances, alg, past), (T, monitor_instances)), t)
-    u = update(u, p, t, dx, dt, field_padding, source_instances; alg, past)
+function f2(((u, mf), p, (dx, dt, field_padding, source_instances), (T, monitor_instances)), t)
+    u = update(u, p, t, dx, dt, field_padding, source_instances;)
     mf += dt / T * [[
         begin
-            # if past
-            #     _u = u[end]
-            # else
-            #     _u = u
-            # end
-            E = group(u, :E)
+            E = u(r"E.*")
             E = field.((E,), keys(E), (m,))
-            H = group(u, :H)
+
+            H = u(r"H.*")
             H = field.((H,), keys(H), (m,))
             [E, H] * cispi(-2t / λ)
         end for λ = wavelengths(m)
     ] for m = monitor_instances]
-    ((u, mf), p, (dx, dt, field_padding, source_instances, alg, past), (T, monitor_instances))
+    ((u, mf), p, (dx, dt, field_padding, source_instances), (T, monitor_instances))
 end
 
 function solve(prob, ;
-    save_memory=false, ulims=(-3, 3), alg=nothing,
-    verbose=false, framerate=0, path="", past=false, kwargs...)
-    @unpack dx, dt, u0, geometry, _geometry, field_padding, geometry_padding, fieldlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, d, n, sz, ratio, ϵ = prob
+    save_memory=false, ulims=(-3, 3), framerate=0, path="",
+    kwargs...)
+    @unpack dx, dt, u0, geometry, _geometry, field_padding, geometry_padding, fieldlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz, ratio = prob
+    ratio = 1
+    p = apply_geometry_padding(geometry, geometry_padding,)
+    # global a1 = p
+    _p = apply_geometry_padding(_geometry, geometry_padding, ratio)
 
-    p = apply_geometry_padding(geometry, geometry_padding, ratio)
     p = apply_subpixel_averaging(p, fieldlims)
+    _p = apply_subpixel_averaging(_p, fieldlims)
+    # global a2 = p
 
     # global _ϵ = ϵ
     fieldlims = cpu(fieldlims)
-    invϵ = tensorinv(_geometry.ϵ, ratio, fieldlims)
+    # invϵ = tensorinv(_p.ϵ, ratio, fieldlims)
 
-    p = merge(p, (; invϵ))
-    ignore() do
-        # verbose && @show dx, dt, transient_duration, steady_state_duration
-        # sz = p |> values |> first |> values |> first |> size
-        # points = prod(sz)
-        # steps = (transient_duration + steady_state_duration) / dt |> round
-        #@debug "" F
-        #@debug "size (includes PML): $sz"
-        #@debug "$(digitsep(points)) points x $(digitsep(steps)) steps = $(digitsep(points*steps)) point-steps"
-    end
-
+    # p = merge(p, (; invϵ))
+    p = merge(p, _p)
     Δ = [transient_duration, steady_state_duration]
     T = cumsum(Δ)
-    # N = T[2] / dt |> round
-    # milestones = 0:0.1:1.01 |> collect
-    # #@debug "simulation started"
-    # clock = ignore() do
-    #     time()
-    # end
-
-    # i = 0
-    # _f = ((u,), p, t) -> begin
-    #     (update(u, p, t, dx, dt, field_padding, source_instances; alg, save_memory),)
-    # end
-    # f = (u, t) -> _f(u, p, t)
-    if past
-        us0 = ((u0, u0, u0),)
-    else
-        us0 = (u0,)
-    end
-    init = (us0, p, (dx, dt, field_padding, source_instances, alg, past))
+    us0 = (u0,)
+    init = (us0, p, (dx, dt, field_padding, source_instances))
 
     if save_memory
         (u,), = adjoint_reduce(f1, 0:dt:T[1], init, ulims)
     else
-        @time (u,), = reduce(0:dt:T[1]; init) do us, t
+        (u,), = reduce(0:dt:T[1]; init) do us, t
             ignore() do
                 if framerate > 0 && t > 0
                     if t % (1 / framerate) < dt
@@ -87,57 +63,13 @@ function solve(prob, ;
             f1(us, t)
         end
     end
-    # return sum.(u) |> sum
-
-    # _f = ((u, mf), p, t) ->
-    #     begin
-    #         dmf = [[
-    #             begin
-    #                 E = group(u, :E)
-    #                 E = field.((E,), keys(E), (m,))
-    #                 H = group(u, :H)
-    #                 H = field.((H,), keys(H), (m,))
-    #                 [E, H] * cispi(-2t / λ)
-    #             end for λ = wavelengths(m)
-    #         ] for m = monitor_instances]
-    #         mf += dt / Δ[2] * dmf
-    #         # if alg
-    #         # else
-    #         #     for (a, b) = zip(mf, dmf)
-    #         #         for (a, b) = zip(a, b)
-    #         #             for (a, b) = zip(a, b)
-    #         #             for (a, b) = zip(a, b)
-    #         #                 a .+= dt / Δ[2] * b
-    #         #             end
-    #         #             end
-    #         #         end
-    #         #     end
-    #         # end
-    #         (update(u, p, t, dx, dt, field_padding, source_instances; alg, save_memory), mf,)
-    #     end
-    # f = (u, t) -> _f(u, p, t)
-    # mf0 = ignore_derivatives() do
-    #     [[
-    #         begin
-    #             E = group(u, :E)
-    #             E = field.((E,), keys(E), (m,))
-    #             H = group(u, :H)
-    #             H = field.((H,), keys(H), (m,))
-    #             [E, H] * zero(complex(F))
-    #         end for λ = wavelengths(m)
-    #     ] for m = monitor_instances]
-    # end
     ts = T[1]+dt:dt:T[2]+F(0.001)
-    init = ((u, 0), p, (dx, dt, field_padding, source_instances, alg, past), (Δ[2], monitor_instances))
+    init = ((u, 0), p, (dx, dt, field_padding, source_instances), (Δ[2], monitor_instances))
 
     if save_memory
         (u, mf), = adjoint_reduce(f2, ts, init, ulims)
     else
-        @time (u, mf), = reduce(f2, ts; init)
-    end
-
-    if past
-        u = u[end]
+        (u, mf), = reduce(f2, ts; init)
     end
 
     ulims = ignore_derivatives() do
@@ -147,14 +79,14 @@ function solve(prob, ;
                 (-c, c)
             end for a = leaves(mf)
         ])) do l
-            l[1] == l[2] ? F.((-1, 1)) : l
+            l[1] == l[2] ? convert.(F, (-1, 1)) : l
         end
     end
 
     v = map(mf, monitor_instances) do mf, m
         map(mf, wavelengths(m)) do u, λ
             E, H = u
-            if d == 2
+            if N == 2
                 if polarization == :TE
                     Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
                     Ex += 0sum(Ez[1:2])
@@ -166,7 +98,7 @@ function solve(prob, ;
                     Ey += 0real(Hz[1])
                     mode = (; Hx, Ey, Hz)
                 end
-            elseif d == 3
+            elseif N == 3
                 Ex, Ey, Ez, = invreframe(frame(m), E)
                 Hx, Hy, Hz = invreframe(frame(m), H)
                 mode = (; Ex, Ey, Ez, Hx, Hy, Hz)

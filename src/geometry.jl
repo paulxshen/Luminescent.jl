@@ -29,11 +29,16 @@
 
 function apply_subpixel_averaging(geometry, fieldlims)
     namedtuple([k => begin
-        lrs = fieldlims(Regex("$((;ϵ=:E,σ=:E,μ=:H,m=:H,invϵ=:E)[k]).*")) |> cpu |> values
+        lrs = ignore_derivatives() do
+            lrs = fieldlims(Regex("$((;ϵ=:E,σ=:E,μ=:H,m=:H,invϵ=:E)[k]).*"))
+            lrs = lrs |> cpu |> values
+        end
+        a = geometry[k]
         map(lrs) do lr
             crop(a, lr[:, 1] - 0.5, size(a) - 0.5 - lr[:, 2])
         end
-    end for (k, a) = pairs(geometry)])
+        # end for (k, a) = pairs(geometry)])
+    end for k = keys(geometry)])
 end
 # function apply_tensor_smoothing(fieldlims, A)
 #     (; invϵ=stack([_apply_subpixel_averaging.((gl,), c) for (c, gl) = zip(eachcol(A), fieldlims(r"ϵ.*"))]),)
@@ -42,13 +47,13 @@ end
 function _pad(p::AbstractVector{<:OutPad}, a::AbstractArray{<:Number}, ratio=1)
     for p = p
         @unpack l, r, b = p
-        a = pad(a, b, l * ratio, r * ratio)
+        a = pad(a, b, Int.(l * ratio), Int.(r * ratio))
     end
     a
 end
 # _pad(p::AbstractVector{<:OutPad}, a, ratio) = _pad.((p,), a, ratio)
-function apply_geometry_padding(gs, gps, ratio)
-    namedtuple([k => k in keys(gps) ? _pad(gps[k], gs[k], k == :ϵ ? ratio : 1) : gs[k] for k = keys(gs)])
+function apply_geometry_padding(gs, gps, ratio=1)
+    namedtuple([k => (k in keys(gps) ? _pad(gps[k], gs[k], ratio) : gs[k]) for k = keys(gs)])
 end
 
 function _apply_field_padding(p::AbstractVector{<:InPad}, a::AbstractArray; nonzero_only=false)
@@ -85,37 +90,46 @@ function apply_field_padding(fps, fs; kw...)
 end
 
 function tensorinv(a, ratio, fieldlims)
-    # global _a, _ratio, _fieldlims = a, ratio, fieldlims
     N = ndims(a)
-    T = typeof(a)
+    # T = typeof(a)
     F = eltype(a)
-    sz = size(a) .÷ ratio
-    margin = ratio ÷ 2
-    A = pad(a, :replicate, margin)
-    A = cpu(A)
+    # sz = size(a) .÷ ratio
+    # margin = ratio ÷ 2
+    # A = pad(a, :replicate, margin)
+    # A = cpu(A)
 
-    @time v = [
-        begin
-            lr = cpu(lr)
-            l, r = eachcol(lr)
-            start = Int.((l - 0.5) * ratio) + margin + 1
-            finish = size(A) - margin + Int.((r - sz + 0.5) * ratio)
-            # @show start, finish, size(A), margin, l, r, sz
-            _a = A[range.(start, finish)...]
-            downsample(_a, ratio) do a
-                n = zeros(F, N)
-                if maximum(a) != minimum(a)
-                    n = sum.([diff(a; dims) for dims in 1:N])
-                    Z = norm(n)
-                    if Z != 0
-                        n /= Z
-                    end
-                end
-                P = n * n'
-                inva = P * mean(1 ./ a) + (I - P) / mean(a)
-                # reduce(vcat, [[inva[i, j] for j = 1:i] for i = 1:N])
-            end
-        end for lr = fieldlims(r"E.*")
-    ]
-    T.([getindex.(v[j], i, j) for i = 1:N, j = 1:N])
+    # v = [
+    #     begin
+    #         lr = cpu(lr)
+    #         l, r = eachcol(lr)
+    #         start = Int.((l - 0.5) * ratio) + margin + 1
+    #         finish = size(A) - margin + Int.((r - sz + 0.5) * ratio)
+    #         # @show start, finish, size(A), margin, l, r, sz
+    #         _a = A[range.(start, finish)...]
+    #         downsample(_a, ratio) do a
+    #             n = ignore_derivatives() do
+    #                 if maximum(a) == minimum(a)
+    #                     zeros(F, N)
+    #                 else
+    #                     n = mean.([diff(a; dims) for dims in 1:N])
+    #                     Z = norm(n)
+    #                     # if Z != 0
+    #                     if Z > 1e-2
+    #                         n / Z
+    #                     else
+    #                         zeros(F, N)
+    #                     end
+    #                 end
+    #             end
+    #             P = n * n'
+    #             P * mean(1 ./ a) + (I - P) / mean(a)
+    #         end
+    #     end for lr = fieldlims(r"E.*")
+    # ]
+    # T.([getindex.(v[j], i, j) for i = 1:N, j = 1:N])
+    @assert !any(iszero, a)
+    @assert !any(isnan, a)
+    println(minimum(a))
+    return [i == j ? 1 ./ a : zeros(F, size(a)) for i = 1:N, j = 1:N]
+    # [i == j ? 1 ./ downsample(a, ratio) : zeros(F, size(a) .÷ ratio) for i = 1:N, j = 1:N]
 end
