@@ -45,7 +45,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     # transient_duration=max_source_dist(sources), steady_state_duration=2,
     transient_duration=0, steady_state_duration=0,
     ϵ=1, μ=1, σ=0, m=0, F=Float32,
-    pml_depths=[0.6, 0.6, 0.15], pml_ramp_fracs=0.2,
+    pml_depths=nothing, pml_ramp_fracs=0.2,
     # xpml=0.4, ypml=0.4, zpml=0.4,
     # xpml_ramp_frac=0.5, ypml_ramp_frac=0.5, zpml_ramp_frac=0.5,
 
@@ -55,7 +55,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     verbose=true,
     kw...)
     dx, ϵ, μ, σ, m = [convert.(F, a) for a in (dx, ϵ, μ, σ, m)]
-
+    N = length(sz)
     a = ones(F, Tuple(sz))
     ratio = Int(size(ϵ, 1) / sz[1])
     geometry = OrderedDict()
@@ -70,30 +70,21 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
     ϵmin, ϵmax = extrema(geometry.ϵ)
+    μmin, μmax = extrema(geometry.μ)
+    @show nmax = sqrt(ϵmax * μmax)
+    @show nmin = sqrt(ϵmin * μmin)
+    if isnothing(pml_depths)
+        mpml = σpml = 2.0
+        @show δ = 6 / nmin / (σpml + mpml)
+        pml_depths = [δ, δ, 0.2δ]
+    end
     if isnothing(Courant)
         Courant = ignore_derivatives() do
-            convert.(F, 0.65√(ϵmin / length(sz)))# Courant number)
+            convert.(F, 0.99 / nmax / √(N))# Courant number)
         end
         # @show Courant
     end
 
-    if transient_duration == 0
-        transient_duration = sum(sz) * dx * sqrt(ϵmax)
-    end
-    if steady_state_duration == 0
-        if isempty(monitors)
-            steady_state_duration = 6
-        else
-            v = reduce(vcat, wavelengths.(monitors))
-            v = v |> Set |> collect |> sort |> reverse
-            if length(v) == 1
-                steady_state_duration = 4v[1]
-            else
-                steady_state_duration = 6 / minimum(diff([0, (1 ./ v)...]))
-            end
-        end
-    end
-    transient_duration, steady_state_duration = convert.(F, (transient_duration, steady_state_duration))
 
 
     N = length(sz)
@@ -129,9 +120,10 @@ function setup(boundaries, sources, monitors, dx, sz;
     nodes = fill(:U, N, 2)
     # pml_depths = [xpml, ypml, zpml]
     # pml_ramp_fracs = [xpml_ramp_frac, ypml_ramp_frac, zpml_ramp_frac]
-    db = Any[PML(j * i, pml_depths[i]; ramp_frac=pml_ramp_fracs[i]) for i = 1:N, j = (-1, 1)]
-    field_padding = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
-    geometry_padding = DefaultDict(() -> OutPad[])
+    db = Any[PML(j * i, pml_depths[i], σpml, mpml; ramp_frac=pml_ramp_fracs[i]) for i = 1:N, j = (-1, 1)]
+    field_padvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
+    geometry_padvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
+    geometry_padamts = DefaultDict(() -> zeros(Int, N, 2))
     is_field_on_lb = Dict([k => zeros(Int, N) for k = field_names])
     is_field_on_ub = Dict([k => zeros(Int, N) for k = field_names])
     common_left_pad_amount = zeros(Int, N)
@@ -193,7 +185,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
 
-
+    pml_amount = nothing
     for i = 1:N
         select = i .== 1:N
         xyz = para = perp = [:x, :y, :z]
@@ -203,27 +195,31 @@ function setup(boundaries, sources, monitors, dx, sz;
             b = db[i, j]
             if isa(b, PML)
                 pml_amount = round(Int, b.d / dx)
-                l = j == 1 ? [i == a ? pml_amount : 0 for a = 1:N] : zeros(Int, N)
-                r = j == 2 ? [i == a ? pml_amount : 0 for a = 1:N] : zeros(Int, N)
-                push!(geometry_padding[:ϵ], OutPad(:replicate, l, r, sz))
-                push!(geometry_padding[:μ], OutPad(:replicate, l, r, sz))
+                # l1 = max.(1, round.(b.ramp_frac * l))
+                # r1 = max.(1, round.(b.ramp_frac * r))
+                # if any(l1 .> 0) || any(r1 .> 0)
+                #     # rr=ReplicateRamp(convert.(F,b.σ))
+                #     rr = convert.(F, b.σ)
+                #     push!(geometry_padvals[:σ], OutPad(rr, l1, r1, sz))
+                #     push!(geometry_padvals[:m], OutPad(rr, l1, r1, sz))
+                # end
+                # l2 = l - l1
+                # r2 = r - r1
+                # if any(l2 .> 0) || any(r2 .> 0)
 
-                l1 = max.(1, round.(b.ramp_frac * l))
-                r1 = max.(1, round.(b.ramp_frac * r))
-                if any(l1 .> 0) || any(r1 .> 0)
-                    # rr=ReplicateRamp(convert.(F,b.σ))
-                    rr = convert.(F, b.σ)
-                    push!(geometry_padding[:σ], OutPad(rr, l1, r1, sz))
-                    push!(geometry_padding[:m], OutPad(rr, l1, r1, sz))
+                #     push!(geometry_padvals[:σ], OutPad(convert.(F, b.σ), l2, r2, sz))
+
+                #     push!(geometry_padvals[:m], OutPad(convert.(F, b.σ), l2, r2, sz))
+                # end
+                for k = (:σ, :m, :ϵ, :μ)
+                    geometry_padamts[k][i, j] = pml_amount
                 end
-                l2 = l - l1
-                r2 = r - r1
-                if any(l2 .> 0) || any(r2 .> 0)
-
-                    push!(geometry_padding[:σ], OutPad(convert.(F, b.σ), l2, r2, sz))
-
-                    push!(geometry_padding[:m], OutPad(convert.(F, b.σ), l2, r2, sz))
+                for k = (:ϵ, :μ)
+                    geometry_padvals[k][i, j] = :replicate
                 end
+                geometry_padvals[:σ][i, j] = b.σ
+                geometry_padvals[:m][i, j] = b.m
+
                 if j == 1
                     common_left_pad_amount[i] += pml_amount
                 end
@@ -241,9 +237,9 @@ function setup(boundaries, sources, monitors, dx, sz;
                 q = startswith(String(k), String(f))
                 if (q ? k[2] in para : k[2] in perp)
                     if t == Periodic
-                        field_padding[k][i, j] = :periodic
+                        field_padvals[k][i, j] = :periodic
                     else
-                        field_padding[k][i, j] = 0
+                        field_padvals[k][i, j] = 0
                     end
                 end
             end
@@ -251,7 +247,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
 
-    for (k, v) = pairs(field_padding)
+    for (k, v) = pairs(field_padvals)
         is_field_on_lb[k] = !isnothing.(v[:, 1])
         is_field_on_ub[k] = !isnothing.(v[:, 2])
     end
@@ -267,13 +263,11 @@ function setup(boundaries, sources, monitors, dx, sz;
         if polarization == :TM
             u0 = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ez, :Hx, :Hy, :Jz)])
         else
-            u0 = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Hz, :Jx, :Jy)])
+            u0 = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Hz)])
         end
     end
 
-    geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padding[k]) do p
-        p.l + p.r
-    end for k = keys(geometry_padding)])
+    geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padamts[k], dims=2) for k = keys(geometry_padamts)])
     # fieldlims = NamedTuple(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
     fieldlims = Dict{Symbol,Any}()
     field_grids = Dict{Symbol,Any}()
@@ -308,9 +302,9 @@ function setup(boundaries, sources, monitors, dx, sz;
     dt = 1 / ceil(1 / dt) |> F
     sz = Tuple(sz)
 
-    # geometry_padding[:invϵ] = geometry_padding[:ϵ]
-    geometry_padding = NamedTuple(geometry_padding)
-    field_padding = NamedTuple(field_padding)
+    # geometry_padvals[:invϵ] = geometry_padvals[:ϵ]
+    geometry_padvals = NamedTuple(geometry_padvals)
+    field_padvals = NamedTuple(field_padvals)
 
     if verbose
         @info """
@@ -341,15 +335,32 @@ function setup(boundaries, sources, monitors, dx, sz;
      """
     end
 
+
+    if transient_duration == 0
+        transient_duration = sum(sz) * dx * nmax
+    end
+    if steady_state_duration == 0
+        if isempty(monitors)
+            steady_state_duration = 1
+        else
+            v = reduce(vcat, wavelengths.(monitors))
+            v = v |> Set |> collect |> sort |> reverse
+            if length(v) == 1
+                steady_state_duration = 1
+            else
+                steady_state_duration = 6 / minimum(diff([0, (1 ./ v)...]))
+            end
+        end
+    end
     transient_duration, steady_state_duration = convert.(F, (transient_duration, steady_state_duration))
-    res = (;
-              geometry_padding, field_padding, fieldlims, field_grids, onedge,
-              source_instances, monitor_instances, field_names,
-              polarization, F, Courant,
-              transient_duration, steady_state_duration,
-              geometry, _geometry, n=sqrt(ϵmax),
-              is_field_on_lb, is_field_on_ub, geometry_sizes,          # roi,
-              u0, fields, N, dx, dt, sz, ratio, kw...) |> pairs |> OrderedDict
+    global res = (;
+                     geometry_padvals, geometry_padamts, field_padvals, fieldlims, field_grids, onedge,
+                     source_instances, monitor_instances, field_names,
+                     polarization, F, Courant,
+                     transient_duration, steady_state_duration,
+                     geometry, _geometry, nmax, nmin,
+                     is_field_on_lb, is_field_on_ub, geometry_sizes,          # roi,
+                     u0, fields, N, dx, dt, sz, ratio, kw...) |> pairs |> OrderedDict
 
 end
 update = update

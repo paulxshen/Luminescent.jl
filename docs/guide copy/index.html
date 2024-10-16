@@ -282,8 +282,8 @@ function Monitor(c, lb, ub; normal=nothing, label=&quot;&quot;)</code></pre>
                     </header>
                     <section>
                         <div>
-                            <pre><code class="language-julia hljs">function update!(u, p, t, field_padding, source_instances)
-function update!(u1, u, p, t, field_padding, source_instances)</code></pre>
+                            <pre><code class="language-julia hljs">function update!(u, p, t, field_padvals, source_instances)
+function update!(u1, u, p, t, field_padvals, source_instances)</code></pre>
                             <p>Updates fields for 3d. Please use <code>update</code> instead of
                                 <code>update!</code> when doing AD. Mutating <code>update!</code> Writes
                                 new fields either onto old fields or into buffer arrays u1
@@ -300,7 +300,7 @@ function update!(u1, u, p, t, field_padding, source_instances)</code></pre>
                     </header>
                     <section>
                         <div>
-                            <pre><code class="language-julia hljs">function update(u, p, t, field_padding, source_instances)</code></pre>
+                            <pre><code class="language-julia hljs">function update(u, p, t, field_padvals, source_instances)</code></pre>
                             <p>Updates fields for 3d in a manner amenable to AD. See also Mutating
                                 <code>update!</code>
                             </p>

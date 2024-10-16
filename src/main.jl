@@ -7,7 +7,6 @@ using CairoMakie
 using Porcupine
 using ArrayPadding
 include("constants.jl")
-include("utils.jl")
 include("modes.jl")
 include("update.jl")
 include("boundaries.jl")

@@ -59,27 +59,27 @@ monitors = [
 # setup
 boundaries = []# unspecified boundaries default to PML
 prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padding, fieldlims, field_padding, source_instances, monitor_instances, u0, = prob
+@unpack dt, geometry_padvals, fieldlims, field_padvals, source_instances, monitor_instances, u0, = prob
 
-p = apply(geometry_padding; ϵ, μ, σ, m)
+p = apply(geometry_padvals; ϵ, μ, σ, m)
 p = apply(fieldlims, p)
 
 # move to gpu
 if dogpu
     using CUDA, Flux
     @assert CUDA.functional()
-    u0, p, field_padding, source_instances = gpu.((u0, p, field_padding, source_instances))
+    u0, p, field_padvals, source_instances = gpu.((u0, p, field_padvals, source_instances))
 end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    update!(deepcopy(u), p, t, dx, dt, field_padvals, source_instances)
 end
 v = [power.(u, (m,),) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
-    u, p, field_padding, source_instances = cpu.((u, p, field_padding, source_instances))
+    u, p, field_padvals, source_instances = cpu.((u, p, field_padvals, source_instances))
 end
 
 # make movie, 
@@ -132,27 +132,27 @@ monitors = [
 # setup
 boundaries = []# unspecified boundaries default to PML
 prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padding, fieldlims, field_padding, source_instances, monitor_instances, u0, = prob
+@unpack dt, geometry_padvals, fieldlims, field_padvals, source_instances, monitor_instances, u0, = prob
 
-p = apply(geometry_padding; ϵ, μ, σ, m)
+p = apply(geometry_padvals; ϵ, μ, σ, m)
 p = apply(fieldlims, p)
 
 # move to gpu
 if dogpu
     using CUDA, Flux
     @assert CUDA.functional()
-    u0, p, field_padding, source_instances = gpu.((u0, p, field_padding, source_instances))
+    u0, p, field_padvals, source_instances = gpu.((u0, p, field_padvals, source_instances))
 end
 
 # run simulation
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances)
+    update!(deepcopy(u), p, t, dx, dt, field_padvals, source_instances)
 end
 v = [power.(u, (m,),) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
-    u, p, field_padding, source_instances = cpu.((u, p, field_padding, source_instances))
+    u, p, field_padvals, source_instances = cpu.((u, p, field_padvals, source_instances))
 end
 
 # make movie, 

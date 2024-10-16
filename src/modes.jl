@@ -28,11 +28,6 @@ function inner(u, v; dx=1)
     p * ignore_derivatives() do
         dx^ndims(first(values(u))) / 2
     end
-    # if p > 0
-    #     return r
-    # else
-    #     return mirror_mode(r)
-    # end
 end
 
 
@@ -43,16 +38,13 @@ end
 
 function mode_decomp(m, u, dx)
     p = real(inner(m, m; dx))
-    m1 = m / sqrt(abs(p))
+    m1 = m / ignore_derivatives() do
+        abs(p)
+    end
     m2 = mirror_mode(m1)
     if p < 0
         m2, m1 = m1, m2
     end
-    # k = ignore() do
-    #     intersect(keys(m1), keys(u)) |> collect |> sort
-    # end
-    # m = [vcat(getindex.((m,), k)...) for m = (m1, m2)]
-    # u = vcat(getindex.((u,), k)...)
     inner.((m1, m2), (u,); dx)
 end
 

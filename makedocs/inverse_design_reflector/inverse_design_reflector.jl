@@ -86,7 +86,7 @@ sources = [Source(t -> cispi(2t), c, lb_, ub_; Jx, Jy,)]
 sz = size(static_mask)
 
 prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
-@unpack dx, dt, sz, geometry_padding, fieldlims, field_padding, source_instances, monitor_instances, u0, = prob
+@unpack dx, dt, sz, geometry_padvals, fieldlims, field_padvals, source_instances, monitor_instances, u0, = prob
 nt = round(Int, 1 / dt)
 A = area.(monitor_instances)
 
@@ -100,9 +100,9 @@ if ongpu
     using Flux
     # using CUDA
     # @assert CUDA.functional()
-    u0, model, static_mask, μ, σ, m, field_padding, source_instances =
-        gpu.((u0, model, static_mask, μ, σ, m, field_padding, source_instances))
-    merge!(prob, (; u0, field_padding, source_instances))
+    u0, model, static_mask, μ, σ, m, field_padvals, source_instances =
+        gpu.((u0, model, static_mask, μ, σ, m, field_padvals, source_instances))
+    merge!(prob, (; u0, field_padvals, source_instances))
 end
 
 #=
@@ -110,7 +110,7 @@ We define a geometry update function that'll be called each adjoint iteration. I
     =#
 
 function make_geometry(model, prob, dϵ=0)#; make3d=false)
-    @unpack sz, geometry_padding, fieldlims = prob
+    @unpack sz, geometry_padvals, fieldlims = prob
     μ = ones(F, sz)
     σ = zeros(F, sz)
     m = zeros(F, sz)
@@ -130,7 +130,7 @@ function make_geometry(model, prob, dϵ=0)#; make3d=false)
         ϵ = sandwich(ϵ, round.(Int, [hbase, hwg, hclad] / λ / dx)..., ϵbase, ϵclad)
     end
 
-    p = apply(geometry_padding; ϵ, μ, σ, m)
+    p = apply(geometry_padvals; ϵ, μ, σ, m)
     p = apply(fieldlims, p)
 end
 
@@ -145,13 +145,13 @@ function metrics(model, prob, dϵ=0; autodiff=true, history=nothing)
             push!(history, p[:ϵ])
         end
     end
-    @unpack u0, field_padding, source_instances, monitor_instances = prob
+    @unpack u0, field_padvals, source_instances, monitor_instances = prob
     # run simulation
-    u = reduce((u, t) -> update(u, p, t, dx, dt, field_padding, source_instances;), 0:dt:T[1], init=deepcopy(u0))
+    u = reduce((u, t) -> update(u, p, t, dx, dt, field_padvals, source_instances;), 0:dt:T[1], init=deepcopy(u0))
 
     u, flux_profile = reduce(T[1]+dt:dt:T[2], init=(u, F(0))) do (u, flux_profile,), t
         ifp = flux.((u,), monitor_instances,)
-        update(u, p, t, dx, dt, field_padding, source_instances),
+        update(u, p, t, dx, dt, field_padvals, source_instances),
         flux_profile + dt * ifp / F(Δ[2])
     end
 
@@ -215,9 +215,9 @@ We do a simulation movie using optimized geometry
 # @show metrics(model)
 function runsave(model, prob; kw...)
     p = make_geometry(model, prob)
-    @unpack u0, dx, dt, field_padding, source_instances, monitor_instances = prob
+    @unpack u0, dx, dt, field_padvals, source_instances, monitor_instances = prob
     @showtime global u = accumulate((u, t) ->
-            update!(deepcopy(u), p, t, dx, dt, field_padding, source_instances),
+            update!(deepcopy(u), p, t, dx, dt, field_padvals, source_instances),
         0:dt:T[2], init=u0)
 
     # move to cpu for plotting
@@ -280,9 +280,9 @@ sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 
 prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin, Courant=0.3)
 if ongpu
-    u0, model, static_mask, μ, σ, m, field_padding, source_instances =
-        gpu.((u0, model, static_mask, μ, σ, m, field_padding, source_instances))
-    merge!(prob, (; u0, field_padding, source_instances))
+    u0, model, static_mask, μ, σ, m, field_padvals, source_instances =
+        gpu.((u0, model, static_mask, μ, σ, m, field_padvals, source_instances))
+    merge!(prob, (; u0, field_padvals, source_instances))
 end
 
 

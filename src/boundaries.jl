@@ -50,9 +50,10 @@ struct PML
     dims
     d::Real
     σ::Real
+    m
     ramp_frac
-    function PML(dims, d=0.5f0, σ=8.0f0; ramp_frac=0.2f0)
-        new(dims, d, σ, ramp_frac)
+    function PML(dims, d, σ, m; ramp_frac=0.2f0)
+        new(dims, d, σ, m, ramp_frac)
     end
 end
 Base.string(m::PML) = "PML of depth $(m.d) on $(dl[m.dims]) side"

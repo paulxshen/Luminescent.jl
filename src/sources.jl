@@ -112,7 +112,6 @@ Source = Source
 
 struct SourceInstance
     f
-    k
     g
     _g
     o
@@ -121,6 +120,7 @@ struct SourceInstance
     meta
 end
 @functor SourceInstance (g, _g,)
+Porcupine.keys(m::SourceInstance) = keys(m.g)
 
 function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
     @unpack f, center, lb, ub, normal, tangent, meta = s
@@ -187,7 +187,7 @@ function SourceInstance(s::PlaneWave, dx, sizes, common_left_pad_amount, fl, sz0
                     for k = keys(fl)])
     _g = Dict([k => place(zeros(F, sizes[k]), o[k], g[k],) for k = keys(mode)])
     c = first(values(sizes)) .÷ 2
-    SourceInstance(f, keys(mode), g, _g, o, c, label, meta)
+    SourceInstance(f, g, _g, o, c, label, meta)
 end
 
 function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
@@ -201,7 +201,7 @@ function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
     g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(r...)] / dx
     fl = fl .- 1 .+ index(c, dx) .- round.(Int, (size(g) .- 1) ./ 2)
     _g = place(zeros(F, sz), g, fl)
-    SourceInstance(f, keys(mode), g, _g, fl, c, label)
+    SourceInstance(f, g, _g, fl, c, label)
 end
 
 function SourceInstance(s::Source, dx, sizes, field_origin, common_left_pad_amount, stop; F=Float32)
@@ -225,56 +225,20 @@ function SourceInstance(s::Source, dx, sizes, field_origin, common_left_pad_amou
     o = NamedTuple([k => F.((center + lb - o) / dx .+ 1.5) for (k, o) = pairs(field_origin)])
     _g = Dict([k => begin
         a = zeros(ComplexF32, sizes[k])
-        setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1)...)
+        setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1 + 0.1)...)
         a
     end for k = keys(mode)])
     _center = round.(Int, center / dx) + 1 + common_left_pad_amount
-    SourceInstance(f, keys(mode), g, _g, o, _center, label, meta)
+    SourceInstance(f, g, _g, o, _center, label, meta)
 end
 
 # Complex
-apply(v::AbstractVector{<:SourceInstance}, t::Real; kw...) = apply(v, t, kw)
-function apply(v::AbstractVector{<:SourceInstance}, t::Real, kw)
-    Porcupine.dict(Symbol, typeof(kw(1)), [
-        # k => sum([real(s.f(t) .* s._g[k]) for s = v if k in s.k], init=kw[k])
-        k => begin
-            as = [real(s.f(t) .* s._g[k]) for s = v if k in s.k]
-            isempty(as) ? kw[k] : kw[k] + sum(as)
-        end
-        for k = keys(kw)])
-    # k => begin
-
-    #     a = kw[k]
-    #     # gpu = isa(first(v).g, CuArray)
-    #     # if gpu
-    #     #     ignore() do
-    #     #         a = cpu(a)
-    #     #     end
-    #     # end
-    #     for s = v
-    #         if k in s.k
-    #             mode = s._g[k]
-    #             # if gpu
-    #             #     ignore() do
-    #             #         mode = cpu(mode)
-    #             #     end
-    #             # end
-    #             a += real(s.f(t) .* mode)
-    #         end
-    #     end
-    #     # if gpu
-    #     #     ignore() do
-    #     #         a = gpu(a)
-    #     #     end
-    #     # end
-    #     a
-    # end
-    # # end for (k, a) = pairs(kw)
+function inject_sources(v::AbstractVector{<:SourceInstance}, t::Real)
+    ks = keys(v[1])
+    namedtuple([
+        k => sum([real(s.f(t) .* s._g[k]) for s = v if k in keys(s)])
+        for k = ks])
 end
-
-# function apply(d,t; kw...)
-#     [apply(d[k], kw[k]) for k = keys(kw)]
-# end
 
 function E2J(d)
     k0 = filter(k -> string(k)[1] == 'E', keys(d))

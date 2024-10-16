@@ -1,10 +1,10 @@
-function f1(((u,), p, (dx, dt, field_padding, source_instances)), t)
-    u = update(u, p, t, dx, dt, field_padding, source_instances)
-    ((u,), p, (dx, dt, field_padding, source_instances))
+function f1(((u,), p, (dx, dt, field_padvals, source_instances)), t)
+    u = update(u, p, t, dx, dt, field_padvals, source_instances)
+    ((u,), p, (dx, dt, field_padvals, source_instances))
 end
 
-function f2(((u, mf), p, (dx, dt, field_padding, source_instances), (T, monitor_instances)), t)
-    u = update(u, p, t, dx, dt, field_padding, source_instances;)
+function f2(((u, mf), p, (dx, dt, field_padvals, source_instances), (T, monitor_instances)), t)
+    u = update(u, p, t, dx, dt, field_padvals, source_instances;)
     mf += dt / T * [[
         begin
             E = u(r"E.*")
@@ -15,32 +15,37 @@ function f2(((u, mf), p, (dx, dt, field_padding, source_instances), (T, monitor_
             [E, H] * cispi(-2t / λ)
         end for λ = wavelengths(m)
     ] for m = monitor_instances]
-    ((u, mf), p, (dx, dt, field_padding, source_instances), (T, monitor_instances))
+    ((u, mf), p, (dx, dt, field_padvals, source_instances), (T, monitor_instances))
 end
 
 function solve(prob, ;
     save_memory=false, ulims=(-3, 3), framerate=0, path="",
     kwargs...)
-    @unpack dx, dt, u0, geometry, _geometry, field_padding, geometry_padding, fieldlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz, ratio = prob
+    @unpack dx, dt, u0, geometry, _geometry, field_padvals, geometry_padvals, geometry_padamts, fieldlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz, ratio = prob
     ratio = 1
-    p = apply_geometry_padding(geometry, geometry_padding,)
+    # transient_duration = steady_state_duration = 0.1
+    u0, dx, dt, field_padvals, geometry_padvals, geometry_padamts, fieldlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz, ratio = ignore_derivatives() do
+        u0, dx, dt, field_padvals, geometry_padvals, geometry_padamts, fieldlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz, ratio
+    end
+    fieldlims = cpu(fieldlims)
+
+    p = pad_geometry(geometry, geometry_padvals, geometry_padamts, ratio)
     # global a1 = p
-    _p = apply_geometry_padding(_geometry, geometry_padding, ratio)
+    # _p = pad_geometry(_geometry, geometry_padvals, ratio)
 
     p = apply_subpixel_averaging(p, fieldlims)
-    _p = apply_subpixel_averaging(_p, fieldlims)
-    # global a2 = p
+    # _p = apply_subpixel_averaging(_p, fieldlims)
+    global a2 = p
 
     # global _ϵ = ϵ
-    fieldlims = cpu(fieldlims)
     # invϵ = tensorinv(_p.ϵ, ratio, fieldlims)
 
     # p = merge(p, (; invϵ))
-    p = merge(p, _p)
+    # p = merge(p, _p)
     Δ = [transient_duration, steady_state_duration]
     T = cumsum(Δ)
     us0 = (u0,)
-    init = (us0, p, (dx, dt, field_padding, source_instances))
+    init = (us0, p, (dx, dt, field_padvals, source_instances))
 
     if save_memory
         (u,), = adjoint_reduce(f1, 0:dt:T[1], init, ulims)
@@ -64,7 +69,7 @@ function solve(prob, ;
         end
     end
     ts = T[1]+dt:dt:T[2]+F(0.001)
-    init = ((u, 0), p, (dx, dt, field_padding, source_instances), (Δ[2], monitor_instances))
+    init = ((u, 0), p, (dx, dt, field_padvals, source_instances), (Δ[2], monitor_instances))
 
     if save_memory
         (u, mf), = adjoint_reduce(f2, ts, init, ulims)

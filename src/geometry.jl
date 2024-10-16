@@ -29,10 +29,14 @@
 
 function apply_subpixel_averaging(geometry, fieldlims)
     namedtuple([k => begin
+        global adsf = fieldlims
         lrs = ignore_derivatives() do
-            lrs = fieldlims(Regex("$((;ϵ=:E,σ=:E,μ=:H,m=:H,invϵ=:E)[k]).*"))
-            lrs = lrs |> cpu |> values
+            E = r"E.*"
+            H = r"H.*"
+            f = (; ϵ=E, σ=E, μ=H, m=H, invϵ=E)[k]
+            fieldlims(f)
         end
+        @assert length(lrs) > 0
         a = geometry[k]
         map(lrs) do lr
             crop(a, lr[:, 1] - 0.5, size(a) - 0.5 - lr[:, 2])
@@ -40,23 +44,19 @@ function apply_subpixel_averaging(geometry, fieldlims)
         # end for (k, a) = pairs(geometry)])
     end for k = keys(geometry)])
 end
-# function apply_tensor_smoothing(fieldlims, A)
-#     (; invϵ=stack([_apply_subpixel_averaging.((gl,), c) for (c, gl) = zip(eachcol(A), fieldlims(r"ϵ.*"))]),)
-# end
 
-function _pad(p::AbstractVector{<:OutPad}, a::AbstractArray{<:Number}, ratio=1)
-    for p = p
-        @unpack l, r, b = p
-        a = pad(a, b, Int.(l * ratio), Int.(r * ratio))
-    end
-    a
-end
-# _pad(p::AbstractVector{<:OutPad}, a, ratio) = _pad.((p,), a, ratio)
-function apply_geometry_padding(gs, gps, ratio=1)
-    namedtuple([k => (k in keys(gps) ? _pad(gps[k], gs[k], ratio) : gs[k]) for k = keys(gs)])
+function pad_geometry(geometry, geometry_padvals, geometry_padamts, ratio=1)
+    namedtuple([
+        k => begin
+            if k in keys(geometry_padvals) && k in keys(geometry_padamts)
+                pad(geometry[k], geometry_padvals[k][1], eachcol(geometry_padamts[k] * ratio)...)
+            else
+                geometry[k]
+            end
+        end for k = keys(geometry)])
 end
 
-function _apply_field_padding(p::AbstractVector{<:InPad}, a::AbstractArray; nonzero_only=false)
+function _apply_field_padvals(p::AbstractVector{<:InPad}, a::AbstractArray; nonzero_only=false)
     if nonzero_only
         p = filter(p) do p
             p.b != 0
@@ -83,9 +83,9 @@ function _apply_field_padding(p::AbstractVector{<:InPad}, a::AbstractArray; nonz
     copy(a_)
 end
 
-function apply_field_padding(fps, fs; kw...)
+function apply_field_padvals(fps, fs; kw...)
     # namedtuple([k => apply(fps[k], fs[k]; kw...) for k = keys(fs)])
-    dict([k => k in keys(fps) ? _apply_field_padding(fps[k], fs[k]; kw...) : fs[k]
+    dict([k => k in keys(fps) ? _apply_field_padvals(fps[k], fs[k]; kw...) : fs[k]
           for k = keys(fs)])
 end
 
