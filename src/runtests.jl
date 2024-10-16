@@ -50,7 +50,7 @@ b = place(mask, model(), design_start)
 boundaries = []
 monitors = [Monitor([0.0f0l, common_left_pad_amount], [:Ez, :Hx, :Hy]), Monitor([common_left_pad_amount, 0.0f0], [:Ez, :Hx, :Hy])]
 sources = [GaussianBeam(t -> cos(F(2π) * t), 0.05f0, (0.0f0, common_left_pad_amount), -1; Ez=1)]
-@unpack geometry_padvals, field_padvals, source_instances, monitor_configs, save_idxs, fields =
+@unpack geometry_padvals, field_boundvals, source_instances, monitor_configs, save_idxs, fields =
     setup(boundaries, sources, monitors, L, dx, polarization; F)
 
 static_geometry = (; μ=ones(Int, dims), σ=zeros(Int, dims), m=zeros(Int, dims))
@@ -70,12 +70,12 @@ function dudt(u, p, t)
     u = apply(source_instances, u, u.t)
     E, H, J = group.((u,), [:E, :H, :J])
 
-    H_ = apply(field_padvals, (; Hx=u.Hx, Hy=u.Hy);)
+    H_ = apply(field_boundvals, (; Hx=u.Hx, Hy=u.Hy);)
     dEzdt, = (∇ × H_) / ϵ
     # dEzdt, = (∇ × H_ - σ * E - J) / ϵ
     E += [dEzdt * dt]
 
-    E_ = apply(field_padvals, (; Ez=E[1]);)
+    E_ = apply(field_boundvals, (; Ez=E[1]);)
     dHxdt, dHydt = -(∇ × E_ + m * H) / μ
     dJzdt = zeros(Int, size(dEzdt))
     # ComponentArray((; Ez, Hx, Hy, Jz,))

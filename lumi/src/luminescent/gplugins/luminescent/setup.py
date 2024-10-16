@@ -29,7 +29,7 @@ def setup(c, study, dx, margin,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None, **kwargs):
     dx0 = dx
     # dx *= 2
-    ratio = 1
+    ratio = 4
     if type(bbox_layer[0]) is int:
         bbox_layer = (bbox_layer,)
     prob = dict()

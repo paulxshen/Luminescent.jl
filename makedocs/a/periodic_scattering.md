@@ -52,7 +52,7 @@ monitors = [
 We do `setup` to instantiate at the given discretisation. We adopt `u, p, t` naming conventions from ODE literature: `u ` as state, `p` as params eg geometry
 ```julia
 prob = setup(boundaries, sources, monitors, dx, sz; ϵmin, F)
-@unpack dt, geometry_padvals, fieldlims, field_padvals, source_instances, monitor_instances, u0, = prob
+@unpack dt, geometry_padvals, fieldlims, field_boundvals, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padvals; ϵ, μ, σ, m)
 p = apply(fieldlims; p...)
@@ -62,19 +62,19 @@ if dogpu
     using Flux
     # using CUDA
     # @assert CUDA.functional()
-    u0, p, field_padvals, source_instances = gpu.((u0, p, field_padvals, source_instances))
+    u0, p, field_boundvals, source_instances = gpu.((u0, p, field_boundvals, source_instances))
 end
 ```
 We run simulation as an `accumulate` loop. `update!` applies Maxwells equations as staggered time stepping on E, H. It's mutating so a copy is made in order to save sequence of states
 ```julia
 @showtime u = accumulate(0:dt:T, init=u0) do u, t
-    update!(deepcopy(u), p, t, dx, dt, field_padvals, source_instances)
+    update!(deepcopy(u), p, t, dx, dt, field_boundvals, source_instances)
 end
 port_powers = [power.(u, (m,),) for m = monitor_instances]
 
 # move back to cpu for plotting
 if dogpu
-    u, p, field_padvals, source_instances = cpu.((u, p, field_padvals, source_instances))
+    u, p, field_boundvals, source_instances = cpu.((u, p, field_boundvals, source_instances))
 end
 ```
 Ready, set, action! We make movie, 

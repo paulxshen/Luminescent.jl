@@ -16,7 +16,7 @@ import gdsfactory as gf
 #         shutil.rmtree(file_path)
 
 
-c = lumi.gcells.mimo(west=1, east=1, l=1, w=1,  wwg=.5)
+c = lumi.gcells.mimo(west=1, east=1, l=1, w=1,  wwg=.4)
 targets = {"tparams": {1.55: {"2,1": 1.0}}}
 for (approx_2D, gpu, dtype, save_memory) in itertools.product(
     [True,],

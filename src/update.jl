@@ -1,45 +1,43 @@
 """
-    function update(u, p, t, field_padvals, source_instances)
+    function update(u, p, t, field_boundvals, source_instances)
 
 Updates fields. 
 """
-function update(u, p, t, dx, dt, field_padvals, source_instances; alg=nothing)
+function update(u, p, t, dx, dt, field_boundvals, source_instances; alg=nothing)
     # unpack fields and geometry
     E, H = [u(ignore_derivatives() do
         Regex("$k.*")
     end) for k = (:E, :H, :J)]
     # global ___p = p
-    @unpack ϵ, μ, σ, m = p
+    @unpack invϵ, μ, σ, m = p
     T = eltype(t)
 
     # staggered grid housekeeping
     N = ndims(E(1))
-    Epads = field_padvals(r"E.*")
+    Epads = field_boundvals(r"E.*")
     ∇ = ignore_derivatives() do
-        Del(fill(dx, N), fmap(a -> reverse(a, dims=2), field_padvals, AbstractMatrix))
+        Del(fill(dx, N), kmap(a -> reverse(a, dims=2), field_boundvals))
     end
-    global _del = ∇
+    # global _del = ∇
 
     # inject sources
     J = inject_sources(source_instances, t)
 
     # first update E
-    dEdt = (∇ × H - values(E) ⊙ σ - J) ⊘ ϵ
+    # dEdt = (∇ × H - values(E) ⊙ σ - J) ⊘ ϵ
     # dEdt = invϵ * (∇ × H - E * σ - J)
 
     # tensor subpixel smoothing with staggered gridgp
-    # dDdt = (∇ × H - E ⊙ σ - J)
-    # dEdt = map(1:size(invϵ, 1)) do i
-    #     row = invϵ[i, :]
-    #     sum(map(eachindex(row)) do j
-    #         l, r = ignore_derivatives() do
-    #             eachcol((isnothing.(Epads[j]) - isnothing.(Epads[i])) / T(2))
-    #         end
-    #         crop(row[j] .* dDdt[j], l, r)
-    #     end)
-    # end
-    # dEdt = diag(invϵ) ⊙ dDdt
-
+    dDdt = (∇ × H - E ⊙ σ - J)
+    dEdt = map(1:size(invϵ, 1)) do i
+        row = invϵ[i, :]
+        sum(map(eachindex(row)) do j
+            l, r = ignore_derivatives() do
+                eachcol((!isnothing.(Epads[i]) - !isnothing.(Epads[j])) / T(2))
+            end
+            crop(row[j] .* dDdt[j], l, r)
+        end)
+    end
     E += dEdt * dt
 
     # then update H
@@ -50,15 +48,15 @@ function update(u, p, t, dx, dt, field_padvals, source_instances; alg=nothing)
     (Ex=E.Ex, Ey=E.Ey, Hz=H.Hz)
 end
 
-# E = apply_field_padvals(field_padvals, E; nonzero_only=true)
+# E = apply_field_boundvals(field_boundvals, E; nonzero_only=true)
 # """
-#     function update(u, p, t, field_padvals, source_instances; autodiff=true)
+#     function update(u, p, t, field_boundvals, source_instances; autodiff=true)
 
 # Updates fields. mutating if autodiff is false
 # """
-# function update(u, p, t, dx, dt, field_padvals, source_instances; past=false, alg=nothing)
-#     # t, dx, dt, field_padvals, source_instances, autodiff, save_memory = ignore_derivatives() do
-#     #     t, dx, dt, field_padvals, source_instances, autodiff, save_memory
+# function update(u, p, t, dx, dt, field_boundvals, source_instances; past=false, alg=nothing)
+#     # t, dx, dt, field_boundvals, source_instances, autodiff, save_memory = ignore_derivatives() do
+#     #     t, dx, dt, field_boundvals, source_instances, autodiff, save_memory
 #     # end
 #     # _u, _dudt, u = u
 #     @unpack invϵ, ϵ, μ, σ, m = p
@@ -70,12 +68,12 @@ end
 
 #     J = apply(source_instances, t, J0)
 #     d = ndims(E(1))
-#     field_padvals = ignore_derivatives() do
-#         onedge = namedtuple([k => [sum(left, v) sum(right, v)] for (k, v) = pairs(field_padvals)]) |> cpu
+#     field_boundvals = ignore_derivatives() do
+#         onedge = namedtuple([k => [sum(left, v) sum(right, v)] for (k, v) = pairs(field_boundvals)]) |> cpu
 #         1 - onedge
 #     end
-#     Epads = field_padvals(r"E.*")
-#     ∇ = StaggeredDel(fill(dx, d), field_padvals, alg)
+#     Epads = field_boundvals(r"E.*")
+#     ∇ = StaggeredDel(fill(dx, d), field_boundvals, alg)
 
 #     # first update E
 #     # dEdt = (∇ × H - E * σ - J) / ϵ
@@ -122,7 +120,7 @@ end
 #     #     end
 #     # end
 
-#     # E = apply_field_padvals(field_padvals, E; nonzero_only=true)
+#     # E = apply_field_boundvals(field_boundvals, E; nonzero_only=true)
 
 #     # then update H
 #     dHdt = -(∇ × E + m * H) / μ
@@ -136,8 +134,8 @@ end
 #     # a .= a + b * dt
 #     # end
 
-#     # H = apply(field_padvals, H)
-#     # H = apply_field_padvals(field_padvals, H; nonzero_only=true)
+#     # H = apply(field_boundvals, H)
+#     # H = apply_field_boundvals(field_boundvals, H; nonzero_only=true)
 #     # global asdffsd1=H
 
 #     u = merge(E, H, J0)

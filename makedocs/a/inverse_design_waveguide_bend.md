@@ -89,7 +89,7 @@ static_mask = F.(static_mask)
 sz = size(static_mask)
 
 prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
-@unpack dx, dt, sz, geometry_padvals, fieldlims, field_padvals, source_instances, monitor_instances, u0, = prob
+@unpack dx, dt, sz, geometry_padvals, fieldlims, field_boundvals, source_instances, monitor_instances, u0, = prob
 
 # n = (size(Jy) .- size(monitor_instances[1])) .÷ 2
 # power_profile = F.(abs.(Jy[range.(1 .+ n, size(Jy) .- n)...]))
@@ -100,9 +100,9 @@ if ongpu
     using Flux
     # using CUDA
     # @assert CUDA.functional()
-    u0, model, static_mask, μ, σ, m, field_padvals, source_instances =
-        gpu.((u0, model, static_mask, μ, σ, m, field_padvals, source_instances))
-    merge!(prob, (; u0, field_padvals, source_instances))
+    u0, model, static_mask, μ, σ, m, field_boundvals, source_instances =
+        gpu.((u0, model, static_mask, μ, σ, m, field_boundvals, source_instances))
+    merge!(prob, (; u0, field_boundvals, source_instances))
 end
 ```
 We define a geometry update function that'll be called each adjoint iteration. It calls geometry generator model to generate design region which gets placed onto mask of static features.
@@ -140,16 +140,16 @@ function metrics(model, prob; autodiff=true, history=nothing)
             push!(history, p[:ϵ])
         end
     end
-    @unpack u0, field_padvals, source_instances, monitor_instances = prob
+    @unpack u0, field_boundvals, source_instances, monitor_instances = prob
     # run simulation
     _step = if autodiff
         update
     else
         update!
     end
-    u = reduce((u, t) -> _step(u, p, t, dx, dt, field_padvals, source_instances;), 0:dt:T[1], init=deepcopy(u0))
+    u = reduce((u, t) -> _step(u, p, t, dx, dt, field_boundvals, source_instances;), 0:dt:T[1], init=deepcopy(u0))
     port_fluxes = reduce(T[1]+dt:dt:T[2], init=(u, 0)) do (u, port_fluxes), t
-        _step(u, p, t, dx, dt, field_padvals, source_instances),
+        _step(u, p, t, dx, dt, field_boundvals, source_instances),
         port_fluxes + dt * flux.((u,), monitor_instances[1:2],)
     end[2] / Δ[2]
 
@@ -194,9 +194,9 @@ We do a simulation movie using optimized geometry
 # @show metrics(model)
 function runsave(model, prob; kw...)
     p = make_geometry(model, static_mask, prob)
-    @unpack u0, dx, dt, field_padvals, source_instances, monitor_instances = prob
+    @unpack u0, dx, dt, field_boundvals, source_instances, monitor_instances = prob
     @showtime global u = accumulate((u, t) ->
-            update!(deepcopy(u), p, t, dx, dt, field_padvals, source_instances),
+            update!(deepcopy(u), p, t, dx, dt, field_boundvals, source_instances),
         0:dt:T[2], init=u0)
 
     # move to cpu for plotting
@@ -255,9 +255,9 @@ sources = [Source(t -> cispi(2t), c, lb, ub; Jx, Jy, Jz)]
 
 prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin, Courant=0.3)
 if ongpu
-    u0, model, static_mask, μ, σ, m, field_padvals, source_instances =
-        gpu.((u0, model, static_mask, μ, σ, m, field_padvals, source_instances))
-    merge!(prob, (; u0, field_padvals, source_instances))
+    u0, model, static_mask, μ, σ, m, field_boundvals, source_instances =
+        gpu.((u0, model, static_mask, μ, σ, m, field_boundvals, source_instances))
+    merge!(prob, (; u0, field_boundvals, source_instances))
 end
 
 

@@ -1,11 +1,10 @@
 using Optimisers
 using SparseArrays
 using Flux: Adam
-Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float32,Int32}) = true
-Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{Float16,Int32}) = true
-Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float32,Int32}) = true
-Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{Float16,Int32}) = true
-Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{TrackedFloat32,Int32}) = true
+for T in (:Float32, :Float16, :Float64)
+    @eval Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{$T,Int32}) = true
+    @eval Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{$T,Int32}) = true
+end
 
 function julia_main()::Cint
     if !isempty(ARGS)
@@ -40,14 +39,14 @@ function write_sparams(runs, run_probs, origin, dx,
 
     sols = [
         begin
-            prob[:geometry] = make_geometry(models, origin, dx, prob.geometry, designs, design_config; F, perturb)
+            prob[:_geometry] = make_geometry(models, origin, dx, prob._geometry, designs, design_config; F, perturb)
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
             sol = solve(prob; alg, save_memory, verbose, framerate, path)
         end for (i, prob) in enumerate(run_probs)
         # end for (i, prob) in enumerate(run_probs)
     ]
-    S = sols[1]("a+", 1) |> abs2
-    return (; S, sols)
+    # S = sols[1]("a+", 1) |> abs2
+    # return (; S, sols)
 
     ulims = sols[1].ulims
     # return sol
@@ -89,10 +88,8 @@ function write_sparams(runs, run_probs, origin, dx,
 end
 
 function make_geometry(models, origin, dx, geometry, designs, design_config; F=Float32, perturb=nothing)
-    return (; μ=geometry.μ, σ=geometry.σ, m=geometry.m, ϵ=2.5mean(models[1]) * ones(F, size(geometry.ϵ)))
     isnothing(models) && return geometry
-    ratio = 1
-    # ratio = models[1].ratio
+    ratio = models[1].ratio
     dx /= ratio
     namedtuple([k => begin
         if k in keys(design_config.fill)
@@ -105,9 +102,9 @@ function make_geometry(models, origin, dx, geometry, designs, design_config; F=F
             b = Zygote.Buffer(geometry[k])
             copyto!(b, geometry[k])
 
-            for (mask, design) in zip(models, designs)
-                # global mask = m((x, r) -> x, v, f)
-                mask = mask * (f - v) + v
+            for (m, design) in zip(models, designs)
+                mask = m((x, r) -> x, v, f)
+                # mask = m() * (f - v) + v
 
                 o = round.(Int, (design.bbox[1] - origin) / dx) + 1
                 if ndims(b) == 3
@@ -165,7 +162,6 @@ function gfrun(path; kw...)
 
     prob = load(PROB_PATH)
     @load PROB_PATH name N dtype margin zmargin dx0 source_margin port_source_offset source_portsides nonsource_portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin thickness zcore gpu_backend magic framerate ratio
-    ratio = 1
     F = Float64
     # F = TrackedFloat32
 
@@ -222,19 +218,16 @@ function gfrun(path; kw...)
     push!(lr[1], 0)
     push!(lr[2], 0)
     if N == 2
-        ϵ = eps_2D
+        _ϵ = eps_2D
         # ϵ = ϵ2
         # invϵ = invϵ2
         # heatmap(ϵ2) |> display
     else
-        ϵ = eps_3D
+        _ϵ = eps_3D
         # ϵ = ϵ3
         # invϵ = invϵ3
     end
-    sz = size(ϵ) .÷ ratio
-    ϵmax = maximum(ϵ)
-    μ = 1
-
+    sz = size(_ϵ) .÷ ratio
 
     # heatmap(ϵ3[round(size(ϵ3, 1) / 2), :, :]) |> display
     if study == "inverse_design"
@@ -264,14 +257,13 @@ function gfrun(path; kw...)
                 frame = frame .== maximum(frame)
                 # display(heatmap(frame))
                 b = Blob(szd;
-                    init, lvoid, lsolid, symmetries, F, frame)
+                    init, lvoid, lsolid, symmetries, F, frame, ratio)
 
                 if !isnothing(sol) && !restart
                     println("loading saved design...")
                     b.a .= sol.params[i] |> typeof(b.a)
                 end
                 b
-                ones(F, szd)
             end for (i, d) = enumerate(designs)
         ]
     end
@@ -385,7 +377,7 @@ function gfrun(path; kw...)
             begin
 
                 setup(boundaries, sources, monitors, dx / λc, sz;
-                    F, ϵ,
+                    F, _ϵ, ratio,
                     verbose, λ=λc)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]
@@ -490,7 +482,6 @@ function gfrun(path; kw...)
                     @unpack S, sols = write_sparams(runs, run_probs, origin, dx,
                         designs, design_config, models;
                         F, img, alg, save_memory)
-                    return S
                     l = 0
                     for k = keys(targets)
                         y = targets[k]

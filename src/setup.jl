@@ -44,7 +44,9 @@ function setup(boundaries, sources, monitors, dx, sz;
     polarization=:TE,
     # transient_duration=max_source_dist(sources), steady_state_duration=2,
     transient_duration=0, steady_state_duration=0,
-    ϵ=1, μ=1, σ=0, m=0, F=Float32,
+    ϵ=1, μ=1, σ=0, m=0,
+    _ϵ=1, _μ=1, _σ=0, _m=0, ratio=1,
+    F=Float32,
     pml_depths=nothing, pml_ramp_fracs=0.2,
     # xpml=0.4, ypml=0.4, zpml=0.4,
     # xpml_ramp_frac=0.5, ypml_ramp_frac=0.5, zpml_ramp_frac=0.5,
@@ -57,15 +59,16 @@ function setup(boundaries, sources, monitors, dx, sz;
     dx, ϵ, μ, σ, m = [convert.(F, a) for a in (dx, ϵ, μ, σ, m)]
     N = length(sz)
     a = ones(F, Tuple(sz))
-    ratio = Int(size(ϵ, 1) / sz[1])
-    geometry = OrderedDict()
-    _geometry = OrderedDict()
-    for (k, g) = pairs((; μ, σ, m, ϵ))
-        if isa(g, Number)
-            geometry[k] = a * g
-        else
-            _geometry[k] = g
-            geometry[k] = downsample(g, ratio)
+    geometry = (; ϵ, μ, σ, m) |> pairs |> OrderedDict
+    _geometry = (; ϵ=_ϵ, μ=_μ, σ=_σ, m=_m) |> pairs |> OrderedDict
+    # geometry = OrderedDict()
+    # _geometry = OrderedDict()
+    f(x::Number) = a * x
+    f(x::AbstractArray) = x
+    geometry = kmap(f, geometry)
+    for (k, v) = pairs(_geometry)
+        if isa(v, AbstractArray)
+            geometry[k] = downsample(v, ratio)
         end
     end
 
@@ -80,7 +83,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
     if isnothing(Courant)
         Courant = ignore_derivatives() do
-            convert.(F, 0.99 / nmax / √(N))# Courant number)
+            convert.(F, 0.99 * nmin / √(N))# Courant number)
         end
         # @show Courant
     end
@@ -121,7 +124,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     # pml_depths = [xpml, ypml, zpml]
     # pml_ramp_fracs = [xpml_ramp_frac, ypml_ramp_frac, zpml_ramp_frac]
     db = Any[PML(j * i, pml_depths[i], σpml, mpml; ramp_frac=pml_ramp_fracs[i]) for i = 1:N, j = (-1, 1)]
-    field_padvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
+    field_boundvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
     geometry_padvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
     geometry_padamts = DefaultDict(() -> zeros(Int, N, 2))
     is_field_on_lb = Dict([k => zeros(Int, N) for k = field_names])
@@ -237,9 +240,9 @@ function setup(boundaries, sources, monitors, dx, sz;
                 q = startswith(String(k), String(f))
                 if (q ? k[2] in para : k[2] in perp)
                     if t == Periodic
-                        field_padvals[k][i, j] = :periodic
+                        field_boundvals[k][i, j] = :periodic
                     else
-                        field_padvals[k][i, j] = 0
+                        field_boundvals[k][i, j] = 0
                     end
                 end
             end
@@ -247,7 +250,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
 
 
-    for (k, v) = pairs(field_padvals)
+    for (k, v) = pairs(field_boundvals)
         is_field_on_lb[k] = !isnothing.(v[:, 1])
         is_field_on_ub[k] = !isnothing.(v[:, 2])
     end
@@ -304,7 +307,7 @@ function setup(boundaries, sources, monitors, dx, sz;
 
     # geometry_padvals[:invϵ] = geometry_padvals[:ϵ]
     geometry_padvals = NamedTuple(geometry_padvals)
-    field_padvals = NamedTuple(field_padvals)
+    field_boundvals = NamedTuple(field_boundvals)
 
     if verbose
         @info """
@@ -354,7 +357,7 @@ function setup(boundaries, sources, monitors, dx, sz;
     end
     transient_duration, steady_state_duration = convert.(F, (transient_duration, steady_state_duration))
     global res = (;
-                     geometry_padvals, geometry_padamts, field_padvals, fieldlims, field_grids, onedge,
+                     geometry_padvals, geometry_padamts, field_boundvals, fieldlims, field_grids, onedge,
                      source_instances, monitor_instances, field_names,
                      polarization, F, Courant,
                      transient_duration, steady_state_duration,
