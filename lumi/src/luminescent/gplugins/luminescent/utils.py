@@ -138,8 +138,8 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
     # neigs = 2
     solver = EMpy.modesolvers.FD.VFDModeSolver(
         λ, x, y, ϵfunc,  "0000").solve(neigs, tol)
-    solvera = EMpy.modesolvers.FD.VFDModeSolver(
-        λ, x, y1, ϵfunc1,  "AA00").solve(2*neigs, tol)
+    # solvera = EMpy.modesolvers.FD.VFDModeSolver(
+    #     λ, x, y1, ϵfunc1,  "AA00").solve(2*neigs, tol)
     # solvers = EMpy.modesolvers.FD.VFDModeSolver(
     #     λ, x, y1, ϵfunc1, "SS00").solve(neigs, tol)
 
@@ -149,9 +149,6 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
     # pylab.imshow(abs(Hy))
     # fig.add_subplot(2, 3, 2)
     # Hy = numpy.transpose(solvera.modes[-1].get_field("Hy", x, y1))
-    # pylab.imshow(abs(Hy))
-    # fig.add_subplot(2, 3, 3)
-    # Hy = numpy.transpose(solvers.modes[-1].get_field("Hy", x, y1))
     # pylab.imshow(abs(Hy))
     # fig.add_subplot(2, 3, 4)
     # e = numpy.transpose(ϵfunc(x, y))
@@ -165,19 +162,21 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
         "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in solver.modes]
     neffs = [np.real(m.neff) for m in solver.modes]
 
-    v = sorted(solvera.modes, key=lambda x: -np.abs(x.neff))
+    # v = sorted(solvera.modes, key=lambda x: -np.abs(x.neff))
 
-    def f(m):
-        a = m.get_field("Hy", x, y1)
-        a = abs(a)
-        return (max(np.std(a, 1)) / np.max(a)) < .1
-    v = filter(f, v)
-    modes1 = [{k: m.get_field(k, x, y1)[:, 0] for k in [
-        "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in v]
-    neffs1 = [np.real(m.neff) for m in v]
+    # def f(m):
+    #     a = m.get_field("Hy", x, y1)
+    #     a = abs(a)
+    #     return (max(np.std(a, 1)) / np.max(a)) < .1
+    # v = filter(f, v)
+    # modes1 = [{k: m.get_field(k, x, y1)[:, 0] for k in [
+    #     "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in v]
+    # neffs1 = [np.real(m.neff) for m in v]
     # "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in sorted(solvera.modes+solvers.modes, key=lambda x: -np.abs(x.neff))]
     # print(solver.modes[0].get_field("Ex", x, y).shape)
-    return modes, modes1, neffs, neffs1
+    # return modes, modes1, neffs, neffs1
+
+    return modes, neffs
 
 
 def s2svg(area, bbox, dx):

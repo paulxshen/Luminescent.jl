@@ -30,10 +30,15 @@ def setup(c, study, dx, margin,
     dx0 = dx
     # dx *= 2
     ratio = 4
-    if type(bbox_layer[0]) is int:
-        bbox_layer = (bbox_layer,)
+    dl = dx/ratio
+    dy = dx
+    dz = dx
     prob = dict()
     prob = {**prob, **kwargs}
+    prob["dx"] = dx
+    prob["dy"] = dy
+    prob["dz"] = dz
+    prob["dl"] = dl
     prob["dx0"] = dx0
     prob["ratio"] = ratio
     prob["dtype"] = str(dtype)
@@ -53,24 +58,82 @@ def setup(c, study, dx, margin,
 
     mode_solutions = []
 
-    if zlims is None:
-        # if core not in layer_stack.layers:
-        #     raise ValueError("please set core=\"core_layer_name\"")
-        # "\"core\" not found in layer_stack so `zlims` must be provided")
-        d = get_layers(layer_stack, core_layer)[0]
-        hcore = d.thickness
-        zcore = d.zmin
-        # hcore = round(d.thickness/dx)*dx
-        zlims = [zcore, zcore+hcore]
-    thickness = zlims[1]-zlims[0]
-    prob["thickness"] = thickness
+    # if zlims is None:
+    # if core not in layer_stack.layers:
+    #     raise ValueError("please set core=\"core_layer_name\"")
+    # "\"core\" not found in layer_stack so `zlims` must be provided")
+    d = get_layers(layer_stack, core_layer)[0]
+    hcore = d.thickness
+    zcore = d.zmin
+    # hcore = round(d.thickness/dx)*dx
+    # zlims = [zcore, zcore+hcore]
+    thickness = hcore
+    zcenter = zcore+hcore/2
 
-    C = 1.5
     port_width = max([p.width/1e3 for p in c.ports])
-    if zmargin is None:
-        zmargin = trim(C*thickness, dx)
-    if margin is None:
-        margin = trim(C*port_width, dx)
+    wg_margin = 1*port_width
+    wg_zmargin = 1*thickness
+    wmode = port_width+2*wg_margin
+    hmode = thickness+2*wg_zmargin
+    wmode = round(wmode / dx)*dx
+    hmode = round(hmode / dz)*dz
+    wg_margin = (wmode-port_width)/2
+    wg_zmargin = (hmode-thickness)/2
+
+    C = 1.4
+    # if zmargin is None:
+    zmargin = C*wg_zmargin
+    # if margin is None:
+    xmargin = ymargin = C * wg_margin
+
+    h = thickness+2*zmargin
+    h = round(h/dz)*dz
+    zmargin = (h-thickness)/2
+    zmin = zcore-zmargin
+
+    prob["thickness"] = thickness
+    prob["zcenter"] = zcenter
+    prob["zmin"] = zmin
+    prob["zcore"] = zcore
+
+    # zlims = [zlims[0]-zmargin, zlims[1]+zmargin]
+    # zcenter = zlims[0]+(zlims[1]-zlims[0])/2
+    # zmin = zlims[0]
+
+    length, width = c.bbox_np()[1]-c.bbox_np()[0]
+
+    l = length+2*xmargin
+    l = round(l/dx)*dx
+    xmargin = (l-length)/2
+
+    w = width+2*ymargin
+    w = round(w/dx)*dx
+    ymargin = (w-width)/2
+
+    _c = gf.Component()
+    _c << gf.components.bbox(
+        component=c, left=xmargin, right=xmargin, top=ymargin, bottom=ymargin, layer=bbox_layer)
+    for orientation in [0, 90, 180, 270]:
+        if orientation in [0, 180]:
+            length = xmargin
+        else:
+            length = ymargin
+        c = gf.components.extend_ports(
+            component=c, orientation=orientation, length=length)
+    c0 = _c << c
+    c = _c
+
+    for run in runs:
+        for port in run["sources"]:
+            run["sources"][port]["center"] = (
+                np.array(c0.ports[port].center)/1e3).tolist()
+        # for port in run["monitors"]:
+        #     x, y = c.ports[port].center
+            # run["monitors"][port]["center"] = [x+xmargin, y+ymargin]
+
+    prob["xmargin"] = xmargin
+    prob["ymargin"] = ymargin
+    prob["zmargin"] = zmargin
 
     # a = min([min([materials[d.material]["epsilon"] for d in get_layers(
     #     layer_stack, l)]) for l in bbox_layer])
@@ -82,22 +145,13 @@ def setup(c, study, dx, margin,
     # port_width = max([p.width/1e3 for p in c.ports])
     # if margin is None:
     #     margin = trim(C*port_width, dx)
-
-    c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
     layers = set(c.layers)-set(exclude_layers)
 
-    # zlims = [zlims[0]-dx, zlims[0]+np.ceil(thickness/dx)*dx+dx]
-    zlims = [zlims[0]-zmargin, zlims[1]+zmargin]
-    h = zlims[1]-zlims[0]
-    zcenter = zlims[0]+(zlims[1]-zlims[0])/2
-    zmin = zlims[0]
-
-    l, w = c.bbox_np()[1]-c.bbox_np()[0]
-    # l, w = round(l/dx)*dx, round(w/dx)*dx
+    # l, w = c.bbox_np()[1]-c.bbox_np()[0]
     center = [c.bbox_np()[0][0], c.bbox_np()[0][1]+w/2, zcenter]
     normal = [1, 0, 0]
 
-    eps_3D = material_voxelate(c, dx/ratio, center, l, w, h,
+    eps_3D = material_voxelate(c, dl, center, l, w, h,
                                normal, layers, layer_stack, materials)
     eps_2D = eps_3D[:, :, int(eps_3D.shape[2]/2)]
     prob["study"] = study
@@ -111,19 +165,17 @@ def setup(c, study, dx, margin,
 
     prob["eps_3D"] = eps_3D.tolist()
     prob["eps_2D"] = eps_2D.tolist()
-    prob["zmin"] = zmin
-    prob["zcore"] = zcore
     prob["N"] = 2 if approx_2D else 3
 
-    prob["mode_height"] = h
-    w = port_width+2*trim(.6*port_width, dx)
+    prob["hmode"] = hmode
+    wmode = port_width+2*wg_margin
     # print(margin)
     neffmin = 1000000
     wavelengths = []
     # _c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
     for run in runs:
         for s in list(run["sources"].values())+list(run["monitors"].values()):
-            s["mode_width"] = w
+            s["mode_width"] = wmode
             for wl in s["wavelength_mode_numbers"]:
                 wavelengths.append(wl)
                 duplicate = False
@@ -138,8 +190,9 @@ def setup(c, study, dx, margin,
 
                     center = np.array(center)-.001*np.array(normal)
                     eps = material_slice(
-                        c, dx, center, w, h, normal, layers, layer_stack, materials)
-                    _modes, _modes1, neffs, _ = solve_modes(
+                        c, dl, center, wmode, hmode, normal, layers, layer_stack, materials)
+                    # _modes, _modes1, neffs, _ = solve_modes(
+                    _modes,  neffs = solve_modes(
                         eps, λ=wl, dx=dx, neigs=max(mode_numbers)+1, plot=plot)
 
                     for n in neffs:
@@ -148,33 +201,30 @@ def setup(c, study, dx, margin,
 
                     modes = [{k: [np.real(mode[k].T).tolist(), np.imag(
                         mode[k].T).tolist()] for k in mode} for mode in _modes]
-                    modes1 = [{k: [np.real(mode[k]).tolist(), np.imag(
-                        mode[k]).tolist()] for k in mode} for mode in _modes1]
+                    # modes1 = [{k: [np.real(mode[k]).tolist(), np.imag(
+                    #     mode[k]).tolist()] for k in mode} for mode in _modes1]
                     # for mn in mode_numbers:
                     mode_solutions.append({
                         "modes": modes,
-                        "modes1": modes1,
+                        # "modes1": modes1,
                         "wavelength": wl,
                         # "mode_number": mn,
                         "ports": [s["port"]],
-                        "size": [w, h],
+                        "size": [wmode, hmode],
                         "eps": eps.tolist(),
                         "width": s["width"],
-                        "mode_width": w,
+                        "mode_width": wmode,
                         "zcenter": zcenter,
                     })
     wavelengths = sorted(set(wavelengths))
     wl = np.median(wavelengths)
     if port_source_offset == "auto":
         # port_source_offset = trim(2.6*wl/neffmin, dx)
-        port_source_offset = trim(4*port_width, dx)
+        port_source_offset = trim(3*port_width, dx)
     prob["port_source_offset"] = port_source_offset
     if source_margin == "auto":
         source_margin = 2*dx
     prob["source_margin"] = source_margin
-
-    prob["margin"] = margin
-    prob["zmargin"] = zmargin
 
     bbox = c.bbox_np()
     source_ports = []
@@ -199,7 +249,7 @@ def setup(c, study, dx, margin,
         "device": {
             "bbox": c.bbox_np().tolist(),
         }}
-    prob["dx"] = dx
+
     prob["Courant"] = Courant
     if not os.path.exists(path):
         os.makedirs(path)
@@ -226,7 +276,7 @@ def unpack_sparam_key(k):
     o, i = k.split(",")
     po, pi = port_number(o), port_number(i)
     mo, mi = mode_number(o), mode_number(i)
-    return po, mo, pi, mi
+    return f"o{po}", mo, f"o{pi}", mi
 
 
 def long_sparam_key(k):

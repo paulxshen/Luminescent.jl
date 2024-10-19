@@ -122,7 +122,7 @@ end
 @functor SourceInstance (g, _g,)
 Porcupine.keys(m::SourceInstance) = keys(m.g)
 
-function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
+function SourceInstance(s::ModalSource, Δ, sizes, origin, fieldlims, common_left_pad_amount, ; F=Float32)
     @unpack f, center, lb, ub, normal, tangent, meta = s
     J = OrderedDict()
     for k = (:Jx, :Jy, :Jz)
@@ -135,7 +135,7 @@ function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, s
     J = values(J)
 
     L = ub .- lb
-    sz = max.(1, round.(Int, L ./ dx)) |> Tuple
+    sz = max.(1, round.(Int, L ./ Δ[1:end-1])) |> Tuple
     d = length(lb)
     D = length(center) # 2D or 3D
     if D == 2
@@ -171,17 +171,17 @@ function SourceInstance(s::ModalSource, dx, sizes, common_left_pad_amount, fl, s
     lb = minimum.(v)
     ub = maximum.(v)
     mode = ignore_derivatives() do
-        mode / dx^(D - d)
+        mode / Δ[findfirst(abs.(zaxis) .> 0.001)]
     end
-    SourceInstance(Source(f, mode, center, lb, ub; meta...), dx, sizes, common_left_pad_amount, fl, sz0; F)
+    SourceInstance(Source(f, mode, center, lb, ub; meta...), Δ, sizes, origin, fieldlims, common_left_pad_amount; F)
 end
-function SourceInstance(s::PlaneWave, dx, sizes, common_left_pad_amount, fl, sz0; F=Float32)
+function SourceInstance(s::PlaneWave, Δ, sizes, common_left_pad_amount, fl, sz0; F=Float32)
     @unpack f, mode, dims, label, meta = s
     _F(x::Real) = F(x)
     _F(x::Complex) = ComplexF32(x)
     f = _F ∘ f
     d = length(common_left_pad_amount)
-    g = Dict([k => _F.(mode[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / dx for k = keys(mode)])
+    g = Dict([k => _F.(mode[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / Δ for k = keys(mode)])
     o = NamedTuple([k =>
         1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
                     for k = keys(fl)])
@@ -190,45 +190,49 @@ function SourceInstance(s::PlaneWave, dx, sizes, common_left_pad_amount, fl, sz0
     SourceInstance(f, g, _g, o, c, label, meta)
 end
 
-function SourceInstance(s::GaussianBeam, dx, sizes, fl, stop; F=Float32)
+function SourceInstance(s::GaussianBeam, Δ, sizes, fl, stop; F=Float32)
     _F(x::Real) = F(x)
     _F(x::Complex) = ComplexF32(x)
     f = _F ∘ f
     @unpack f, σ, mode, c, dims = s
-    n = round(Int, 2σ / dx)
-    r = n * dx
+    n = round(Int, 2σ / Δ)
+    r = n * Δ
     r = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(c)]
-    g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(r...)] / dx
-    fl = fl .- 1 .+ index(c, dx) .- round.(Int, (size(g) .- 1) ./ 2)
+    g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(r...)] / Δ
+    fl = fl .- 1 .+ index(c, Δ) .- round.(Int, (size(g) .- 1) ./ 2)
     _g = place(zeros(F, sz), g, fl)
     SourceInstance(f, g, _g, fl, c, label)
 end
 
-function SourceInstance(s::Source, dx, sizes, field_origin, common_left_pad_amount, stop; F=Float32)
+function SourceInstance(s::Source, Δ, sizes, origin, fieldlims, common_left_pad_amount; F=Float32)
     @unpack f, mode, center, lb, ub, label, meta = s
     _F(x::Real) = F(x)
     _F(x::Complex) = ComplexF32(x)
 
     f = _F ∘ f
-    g = Dict([k =>
-        begin
-            if isa(mode[k], AbstractArray)
-                sz0 = size(mode[k])
-                sz = max.(1, round.(Int, abs.(ub - lb) ./ dx)) |> Tuple
-                # sz0 != sz && @warn "source array size$sz0 not same  as domain size $sz. source will be interpolated"
-                imresize(_F.(mode[k]), sz, method=ImageTransformations.Lanczos4OpenCV())
-            else
-                # r = [a == b ? (a:a) : (a+dx/2*sign(b - a):dx*sign(b - a):b) for (a, b) = zip(lb, ub)]
-                # [_F.(mode[k](v...)) for v = Iterators.product(r...)]
-            end
-        end for k = keys(mode)])
-    o = NamedTuple([k => F.((center + lb - o) / dx .+ 1.5) for (k, o) = pairs(field_origin)])
-    _g = Dict([k => begin
+    # Δmode = Δ[end-N+2:end]
+    # g = Dict([k =>
+    #     begin
+    #         if isa(mode[k], AbstractArray)
+    #             sz0 = size(mode[k])
+    #             sz = max.(1, round.(Int, abs.(ub - lb) ./ Δ)) |> Tuple
+    #             # sz0 != sz && @warn "source array size$sz0 not same  as domain size $sz. source will be interpolated"
+    #             imresize(_F.(mode[k]), sz, method=ImageTransformations.Lanczos4OpenCV())
+    #         else
+    #             # r = [a == b ? (a:a) : (a+Δ/2*sign(b - a):Δ*sign(b - a):b) for (a, b) = zip(lb, ub)]
+    #             # [_F.(mode[k](v...)) for v = Iterators.product(r...)]
+    #         end
+    #     end for k = keys(mode)])
+    g = mode
+    o = NamedTuple([k => F.((center + lb - origin) ./ Δ - fl[:, 1] .+ 1.5) for (k, fl) = pairs(fieldlims)])
+    @show center, lb, origin, Δ, fieldlims, o
+    global _g = Dict([k => begin
         a = zeros(ComplexF32, sizes[k])
-        setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1 + 0.1)...)
+        setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1)...)
         a
     end for k = keys(mode)])
-    _center = round.(Int, center / dx) + 1 + common_left_pad_amount
+    # error("stop")
+    _center = round.(Int, center ./ Δ) + 1 + common_left_pad_amount
     SourceInstance(f, g, _g, o, _center, label, meta)
 end
 

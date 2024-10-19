@@ -134,7 +134,7 @@ verbose = false
 #=
 We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 =#
-@load PROB_PATH name dtype margin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu_backend d
+@load PROB_PATH name dtype margin source_margin Courant port_source_offset portsides runs ports dx components study mode_solutions eps_2D eps_3D hmode zmin gpu_backend d
 F = Float32
 if contains(dtype, "16")
     F = Float16
@@ -282,7 +282,7 @@ runs_sources = [
                     c = (sig.center - origin + port_source_offset * sig.normal) / λc
                     L = [sig.width] / λc
                     if d == 3
-                        L = [L..., mode_height / λc]
+                        L = [L..., hmode / λc]
                         n, tangent, = vcat.((n, tangent,), ([0],))
                         c = [c..., (ms.zcenter - zmin) / λc]
                     end
@@ -306,7 +306,7 @@ runs_monitors = [[
         L = [m.width] / λc
 
         if d == 3
-            L = [L..., mode_height / λc]
+            L = [L..., hmode / λc]
             n, tangent, = vcat.((n, tangent,), ([0],))
         end
 

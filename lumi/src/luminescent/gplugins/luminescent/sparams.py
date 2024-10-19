@@ -22,8 +22,7 @@ def sparams_problem(c: gf.Component,
 
     d = 2 if approx_2D else 3
     prob = dict()
-    ports = [int(p.name[1])
-             for p in c.get_ports_list(prefix="o")]
+    ports = [p.name for p in c.get_ports_list(prefix="o")]
 
     if not entries:
         if not keys:
@@ -70,23 +69,21 @@ def sparams_problem(c: gf.Component,
         for i in wimo[w]:
             for mi in wimo[w][i]:
                 runs.append({
-                    "d": d,
                     "sources": {
-                        port_number(i): {
-                            "center": (np.array(c.ports[f"o{port_number(i)}"].center)/1e3).tolist(),
-                            "width": (np.array(c.ports[f"o{port_number(i)}"].width)/1e3).tolist(),
-                            "normal": normal_from_orientation(c.ports[f"o{port_number(i)}"].orientation),
-                            # "endpoints": extend(c.ports[f"o{port_number(i)}"]., margin),
+                        i: {
+                            "center": (np.array(c.ports[i].center)/1e3).tolist(),
+                            "width": (np.array(c.ports[i].width)/1e3).tolist(),
+                            "normal": normal_from_orientation(c.ports[i].orientation),
                             "wavelength_mode_numbers": {w: [mi]},
-                            "port": port_number(i),
+                            "port": i,
                         }},
                     "monitors": {
-                        port_number(o): {
-                            "port": port_number(o),
-                            "normal": normal_from_orientation(c.ports[f"o{port_number(o)}"].orientation),
-                            "center": (np.array(c.ports[f"o{port_number(o)}"].center)/1e3).tolist(),
-                            "width": (np.array(c.ports[f"o{port_number(o)}"].width)/1e3).tolist(),
-                            # "endpoints": extend(c.ports[f"o{port_number(o)}"].endpoints, margin),
+                        o: {
+                            "port": o,
+                            "normal": normal_from_orientation(c.ports[o].orientation),
+                            "center": (np.array(c.ports[o].center)/1e3).tolist(),
+                            "width": (np.array(c.ports[o].width)/1e3).tolist(),
+                            # "endpoints": extend(c.ports[o].endpoints, margin),
                             "wavelength_mode_numbers": {w: list(range(wimo[w][i][mi][o]+1))}
                         } for o in wimo[w][i][mi]}})
 

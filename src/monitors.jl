@@ -44,7 +44,7 @@ mutable struct MonitorInstance <: AbstractMonitorInstance
     d
     roi
     frame
-    dx
+    Δ
     v
     center
     label
@@ -63,7 +63,7 @@ Base.length(m::MonitorInstance) = 1
 frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
-function MonitorInstance(m::Monitor, dx, field_origin, common_left_pad_amount, sz, ; F=Float32)
+function MonitorInstance(m::Monitor, Δ, origin, fieldlims, common_left_pad_amount; F=Float32)
     @unpack n, lb, ub, c, tangent, wavelength_modes, = m
     n, lb, ub, c, tangent = [convert.(F, a) for a = (n, lb, ub, c, tangent)]
     L = ub - lb
@@ -84,22 +84,13 @@ function MonitorInstance(m::Monitor, dx, field_origin, common_left_pad_amount, s
     L = ub - lb
 
     roi = dict([k => begin
-        a = (c + lb - o) / dx + 1.5
-
-        [l == 0 ? a : (a + (0:sign(l):l-sign(l))) for (a, l) in zip(a, round.(Int, L / dx))]
-        # p = (c + lb - o) / dx + 1.5
-        # i = floor(p)
-        # w = 1 - mean(abs.(p - i))
-        # w = (w, 1 - w)
-        # i = [i .+ map(round(L / dx)) do n
-        #     n == 0 ? 0 : (0:sign(n):n-sign(n))
-        # end for i = (i, i + 1)]
-        # [(F(w), i) for (w, i) in zip(w, i) if w > 0]
-    end for (k, o) = pairs(field_origin)])
+        a = (c + lb - origin) ./ Δ - lr[:, 1] + 1.5
+        [l == 0 ? a : (a + (0:sign(l):l-sign(l))) for (a, l) in zip(a, round.(Int, L ./ Δ))]
+    end for (k, lr) = pairs(fieldlims)])
     n = isnothing(n) ? n : n / norm(n)
-    _center = round.(Int, c / dx) + 1 + common_left_pad_amount
+    _center = round.(Int, c ./ Δ) + 1 + common_left_pad_amount
 
-    MonitorInstance(d, roi, frame, convert.(complex(F), dx), convert.(complex(F), A), _center, m.label, fmap(x -> convert.(complex(F), x), wavelength_modes))
+    MonitorInstance(d, roi, frame, convert.(complex(F), Δ), convert.(complex(F), A), _center, m.label, fmap(x -> convert.(complex(F), x), wavelength_modes))
 end
 
 

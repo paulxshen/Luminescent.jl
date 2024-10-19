@@ -1,8 +1,9 @@
-import itertools
-from pprint import pprint
-import luminescent as lumi
-# lumi.make_training_movie(name="mode_converter")
-# lumi.make_simulation_movie(name="mode_converter")
-name = "mode_converter"
-sol = lumi.load_solution(name=name)
-sol["optimized_component"].show()
+import gdsfactory as gf
+
+cross_section = gf.cross_section.strip()
+
+nxn = gf.components.nxn(
+    west=2, north=2, east=2, south=2, xsize=4, ysize=4, cross_section=cross_section
+)
+c = gf.components.extension.extend_ports(component=nxn, orientation=0)
+c.plot()

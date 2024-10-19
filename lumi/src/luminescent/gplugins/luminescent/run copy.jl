@@ -41,7 +41,7 @@ verbose = false
 #=
 We load design layout which includes a 2d device of device waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 =#
-@load PROB_PATH name runs ports λc dx components study mode_solutions eps_2D eps_3D mode_height zmin gpu
+@load PROB_PATH name runs ports λc dx components study mode_solutions eps_2D eps_3D hmode zmin gpu
 eps_2D = F(stack(stack.(eps_2D)))'
 eps_3D = F(permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
 # heatmap(eps_2D) |> display
@@ -180,7 +180,7 @@ runs_sources = [
                     c = (sig.center - origin + port_source_offset * sig.normal) / λc
                     L = [sig.width] / λc
                     if d == 3
-                        L = [L..., mode_height / λc]
+                        L = [L..., hmode / λc]
                         n, tangent, = vcat.((n, tangent,), ([0],))
                         c = [c..., (ms.zcenter - zmin) / λc]
                     end
@@ -204,7 +204,7 @@ runs_monitors = [[
         L = [m.width] / λc
 
         if d == 3
-            L = [L..., mode_height / λc]
+            L = [L..., hmode / λc]
             n, tangent, = vcat.((n, tangent,), ([0],))
         end
 

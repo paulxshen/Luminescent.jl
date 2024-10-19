@@ -1,8 +1,6 @@
 
 ° = π / 180
-function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], ulims=nothing, λ=1, unit="um", kw...)
-    ratio = dx / 0.025
-    u = imresize(u; ratio)
+function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], ulims=nothing, λ=1, unit="um", ratio)
 
     fig = Figure()
     N = ndims(u)
@@ -24,7 +22,7 @@ function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], 
     end
 
     grid = fig[1, 1]
-    f = x -> string.(round.(x * dx * λ / ratio, digits=2)) .* (unit,)
+    f = x -> string.(round.(x * dx * λ, digits=2)) .* (unit,)
     ytickformat = xtickformat = f
     if N == 3
         l, w, h = size(u)
@@ -32,7 +30,7 @@ function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], 
         l, w = size(u)
 
     end
-    axis0 = (; kw..., xtickformat, ytickformat)
+    axis0 = (; xtickformat, ytickformat)
 
     title = "Hz"
     if N == 3
@@ -40,13 +38,13 @@ function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], 
         title *= " (xy slice of 3D array)"
         aspect = l / w
         axis = merge(axis0, (; title, aspect))
-        u = u[:, :, round.(Int, size(u, 3) / 2)]
-        ax, plt = heatmap(grid[1, 1], real(u); axis, colormap, colorrange)
+        a = u[:, :, round.(Int, size(u, 3) / 2)]
+        ax, plt = heatmap(grid[1, 1], a; axis, colormap, colorrange)
 
         aspect = w / h
         axis = merge(axis0, (; title, aspect))
-        u = u[round.(Int, size(u, 1) / 2), :, :]
-        ax, plt = heatmap(grid[1, 2], real(u); axis, colormap, colorrange=colorrange)
+        a = u[round.(Int, size(u, 1) / 2), :, :]
+        ax, plt = heatmap(grid[1, 2], a; axis, colormap, colorrange=colorrange)
     else
         title *= " (2D array)"
         aspect = l / w
@@ -69,7 +67,6 @@ function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], 
         return fig
     end
 
-    g = imresize(g, size(u))
     grid = fig[2, 1]
     title = "ϵ"
     colormap = [:white, :gray]
@@ -79,13 +76,13 @@ function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], 
 
         aspect = l / w
         axis = merge(axis0, (; title, aspect))
-        g = g[:, :, round.(Int, size(a, 3) / 2)]
-        ax, plt = heatmap(grid[1, 1], g; axis, colormap)
+        a = g[:, :, round.(Int, size(g, 3) / 2)]
+        ax, plt = heatmap(grid[1, 1], a; axis, colormap)
 
         aspect = w / h
         axis = merge(axis0, (; title, aspect))
-        g = g[round.(Int, size(a, 1) / 2), :, :]
-        ax, plt = heatmap(grid[1, 2], g; axis, colormap,)
+        a = g[round.(Int, size(g, 1) / 2), :, :]
+        ax, plt = heatmap(grid[1, 2], a; axis, colormap,)
     else
         title *= " (2D array)"
         aspect = l / w
@@ -135,13 +132,13 @@ end
 #             title *= " (middle slice of 3D array)"
 
 #             a = a[:, :, round(Int, size(a, 3) / 2)]
-#             ax, plt = heatmap(g[1, 1], real(a); axis=(; kw..., title, aspect), colormap, colorrange=colorrange)
+#             ax, plt = heatmap(g[1, 1], real(a); axis=(;  title, aspect), colormap, colorrange=colorrange)
 
 #             a = a[round(Int, size(a, 1) / 2), :, :]
-#             ax, plt = heatmap(g[1, 2], real(a); axis=(; kw..., title, aspect), colormap, colorrange=colorrange)
+#             ax, plt = heatmap(g[1, 2], real(a); axis=(;  title, aspect), colormap, colorrange=colorrange)
 #         else
 #             title *= " (2D array)"
-#             ax, plt = heatmap(g[1, 1], real(a); axis=(; kw..., title, aspect), colormap, colorrange=colorrange)
+#             ax, plt = heatmap(g[1, 1], real(a); axis=(;  title, aspect), colormap, colorrange=colorrange)
 #         end
 #         for (pos, text) in labels
 #             text!(g[1, 1], pos..., ; text, align=(:center, :center))
@@ -151,7 +148,7 @@ end
 #         if isnothing(colorrange)
 #             colorrange = extrema(a) * 0.1
 #         end
-#         ax, plt = volume(g[1, 1], real(a), ; axis=(; kw..., type=Axis3, title,), colormap, colorrange, algorithm)
+#         ax, plt = volume(g[1, 1], real(a), ; axis=(;  type=Axis3, title,), colormap, colorrange, algorithm)
 #         ax.elevation[] = elevation
 #         ax.azimuth[] = azimuth
 #     end

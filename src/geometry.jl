@@ -20,24 +20,23 @@ function pad_geometry(geometry, geometry_padvals, geometry_padamts, ratio=1)
         k => begin
             a = geometry[k]
             if isa(a, AbstractArray) && k in keys(geometry_padvals) && k in keys(geometry_padamts)
-                pad(a, geometry_padvals[k][1], eachcol(geometry_padamts[k] * ratio)...)
+                pad(a, geometry_padvals[k][1], eachcol(geometry_padamts[k] .* ratio)...)
             else
-                [a]
+                a
             end
         end for k = keys(geometry)])
 end
 
 function tensorinv(a, fieldlims, ratio,)
-    @assert ratio > 1
     N = ndims(a)
     T = typeof(a)
     F = eltype(a)
     sz = size(a) .÷ ratio
-    margin = ratio ÷ 2
+    margin = ratio .÷ 2
     A = pad(a, :replicate, margin)
     A = cpu(A)
 
-    v = [
+    global v = [
         begin
             lr = cpu(lr)
             l, r = eachcol(lr)
