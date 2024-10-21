@@ -1,18 +1,4 @@
 abstract type AbstractMonitor end
-struct Monitor <: AbstractMonitor
-    c
-    lb
-    ub
-    n
-    tangent
-    label
-
-    wavelength_modes
-    meta
-end
-
-wavelengths(m::Monitor) = keys(m.wavelength_modes)
-
 """
     function Monitor(c, L; normal=nothing, label="")
     function Monitor(c, lb, ub; normal=nothing, label="")
@@ -27,14 +13,32 @@ Args
 
 - normal: flux monitor direction (eg normal to flux surface)
 """
-function Monitor(c, L, normal=nothing; label="", kw...)
-    Monitor(c, -L / 2, L / 2, normal, label, nothing, kw)
+struct Monitor <: AbstractMonitor
+    c
+    lb
+    ub
+    n
+    tangent
+    label
+
+    wavelength_modes
+    # meta
+    tags
+    function Monitor(c, L, normal=nothing; label="", tags...)
+        new(c, -L / 2, L / 2, normal, string(label), nothing, tags)
+    end
+    function Monitor(a...)
+        new(a...)
+    end
 end
 
-function ModalMonitor(wavelength_modes::Map, c, normal, tangent, L; wavelength=1, wavelengths=[wavelength], label="", kw...)
-    Monitor(c, -L / 2, L / 2, normal, tangent, label, wavelength_modes, kw)
+
+
+function ModalMonitor(wavelength_modes::Map, c, normal, tangent, L; label="", tags...)
+    Monitor(c, -L / 2, L / 2, normal, tangent, string(label), wavelength_modes, tags)
 end
 
+wavelengths(m::Monitor) = keys(m.wavelength_modes)
 Base.string(m::Monitor) =
     """
     $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.c|>d2), physical size of $((m.ub-m.lb)|>d2) relative to center, flux normal towards $(normal(m)|>d2)"""
@@ -53,17 +57,13 @@ mutable struct MonitorInstance <: AbstractMonitorInstance
 end
 @functor MonitorInstance (wavelength_modes,)
 Base.ndims(m::MonitorInstance) = m.d
-# Base.size(m::MonitorInstance) = length.(m.i) |> Tuple
 area(m::MonitorInstance) = m.v
 wavelengths(m::MonitorInstance) = Porcupine.keys(m.wavelength_modes)
-
-
 Base.length(m::MonitorInstance) = 1
-
 frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
-function MonitorInstance(m::Monitor, Δ, origin, fieldlims, common_left_pad_amount; F=Float32)
+function MonitorInstance(m::Monitor, Δ, origin, fieldlims; F=Float32)
     @unpack n, lb, ub, c, tangent, wavelength_modes, = m
     n, lb, ub, c, tangent = [convert.(F, a) for a = (n, lb, ub, c, tangent)]
     L = ub - lb
@@ -88,7 +88,7 @@ function MonitorInstance(m::Monitor, Δ, origin, fieldlims, common_left_pad_amou
         [l == 0 ? a : (a + (0:sign(l):l-sign(l))) for (a, l) in zip(a, round.(Int, L ./ Δ))]
     end for (k, lr) = pairs(fieldlims)])
     n = isnothing(n) ? n : n / norm(n)
-    _center = round.(Int, c ./ Δ) + 1 + common_left_pad_amount
+    _center = round.(Int, (c - origin) ./ Δ) + 1
 
     MonitorInstance(d, roi, frame, convert.(complex(F), Δ), convert.(complex(F), A), _center, m.label, fmap(x -> convert.(complex(F), x), wavelength_modes))
 end

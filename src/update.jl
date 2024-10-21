@@ -28,6 +28,7 @@ function update(u, p, t, Δ, dt, field_boundvals, source_instances; alg=nothing)
     # dEdt = invϵ * (∇ × H - E * σ - J)
 
     # tensor subpixel smoothing with staggered gridgp
+    # @show typeof.((∇ × H, E ⊙ σ, J))
     dDdt = (∇ × H - E ⊙ σ - J)
     dEdt = map(1:size(invϵ, 1)) do i
         row = invϵ[i, :]

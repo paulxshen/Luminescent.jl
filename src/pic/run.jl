@@ -1,169 +1,19 @@
-using Optimisers
-using SparseArrays
-using Flux: Adam
-for T in (:Float32, :Float16, :Float64)
-    @eval Optimisers.maywrite(::CUDA.CUSPARSE.CuSparseMatrixCSC{$T,Int32}) = true
-    @eval Optimisers.maywrite(::SparseArrays.SparseMatrixCSC{$T,Int32}) = true
-end
 
-function julia_main()::Cint
-    if !isempty(ARGS)
-        gfrun(ARGS[1])
-    end
-    return 0
-end
-
-function lastrun(; name=nothing, study=nothing, wd="runs")
-    path = joinpath(pwd(), wd)
-    l = filter(isdir, readdir(path, join=true))
-    sort!(l, by=p -> Dates.unix2datetime(mtime(p)), rev=true)
-
-    if !isnothing(study)
-        for p = l
-            try
-                open(joinpath(p, "solution.json")) do f
-                    JSON.parse(f)["study"]
-                end == study && return p
-            catch e
-                println(e)
-            end
-        end
-    end
-    return l[1]
-end
-
-function write_sparams(runs, run_probs, origin, Δ,
-    designs=nothing, design_config=nothing, models=nothing;
-    alg=nothing, save_memory=false, verbose=false, perturb=nothing, framerate=0, path="", kw...)
-    F = run_probs[1].F
-    dx = Δ[1]
-    sols = [
-        begin
-            prob[:_geometry] = make_geometry(models, origin, dx, prob._geometry, designs, design_config; F, perturb)
-            #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
-            sol = solve(prob; alg, save_memory, verbose, framerate, path)
-        end for (i, prob) in enumerate(run_probs)
-        # end for (i, prob) in enumerate(run_probs)
-    ]
-    # S = sols[1]("a+", 1) |> abs2
-    # return (; S, sols)
-
-    ulims = sols[1].ulims
-    # return sol
-    coeffs = OrderedDict()
-    for (sol, run) in zip(sols, runs)
-        sources = run.sources |> Porcupine.values
-        monitors = run.monitors |> Porcupine.values
-        source_port = first(sources).port
-        # source_mn = first(sources).wavelength_mode_numbers(1)[1]
-        source_mn = first(sources).wavelength_mode_numbers |> Porcupine.first |> Porcupine.first
-        for (m, monitor) = enumerate(monitors)
-            for (w, λ) = enumerate(keys(monitor.wavelength_mode_numbers))
-                for mn = monitor.wavelength_mode_numbers[λ]
-                    monitor_port = monitor.port
-                    λ = Symbol(λ)
-                    if !haskey(coeffs, λ)
-                        coeffs[λ] = OrderedDict()
-                    end
-                    s = "$monitor_port@$mn," * "$source_port@$source_mn"
-                    s = Symbol(s)
-                    coeffs[λ][s] = (sol("a+", m, w, mn), sol("a-", m, w, mn))
-                end
-            end
-        end
-    end
-    # return coeffs(1)(1)[1] |> abs2
-
-    S = OrderedDict([λ => OrderedDict([k => begin
-        s = ignore() do
-            split(string(k), ",")[2]
-        end
-        # Symbol(
-        coeffs[λ][k][1] / coeffs[λ][Symbol("$s,$s")][2]
-    end for (k) = keys(coeffs[λ])]) for (λ) = keys(coeffs)])
-    # if source_mn == mn == 0
-    #     coeffs[λ]["$monitor_port,$source_port")] = v
-    # end
-    return (; S, sols)
-end
-
-function make_geometry(models, origin, dx, geometry, designs, design_config; F=Float32, perturb=nothing)
-    isnothing(models) && return geometry
-    ratio = models[1].ratio
-    dx /= ratio
-    namedtuple([k => begin
-        if k in keys(design_config.fill)
-            f = design_config.fill[k] |> F
-            v = design_config.void[k] |> F
-            if perturb == k
-                f *= convert.(F, 1.001)
-            end
-
-            b = Zygote.Buffer(geometry[k])
-            copyto!(b, geometry[k])
-
-            for (m, design) in zip(models, designs)
-                mask = m((x, r) -> x, v, f)
-                # mask = m() * (f - v) + v
-
-                o = round.(Int, (design.bbox[1] - origin) / dx) + 1
-                if ndims(b) == 3
-                    o = [o..., 1 + round(Int, (zcore - zmin) / dx)]
-                    mask = stack(fill(mask, round(Int, thickness / dx)))
-                end
-                # b[range.(o, o .+ size(mask) .- 1)...] = mask
-                b[[i:j for (i, j) = zip(o, o .+ size(mask) .- 1)]...] = mask
-            end
-            copy(b)
-        else
-            geometry[k]
-        end
-    end for k = keys(geometry)])
-end
-
-function plotsols(sols, probs, path)
-    for (i, (prob, sol)) in enumerate(zip(probs, sols))
-        # try
-        @unpack u, p, _p = sol |> cpu
-        @unpack monitor_instances, source_instances, Δ, dl, λ, ratio = prob |> cpu
-        u = u.Hz
-        g = _p.ϵ
-        u = imresize(u, Tuple(round.(Int, size(u) .* ratio)))
-        g = imresize(g, size(u))
-
-        plt = quickie(u, g; dx=dl, λ, monitor_instances, ratio, source_instances,)
-        display(plt)
-
-        if !isa(path, Base.AbstractVecOrTuple)
-            path = (path,)
-        end
-        for path = path
-            try
-                CairoMakie.save(joinpath(path, "run_$i.png"), plt,)
-            catch e
-                println("save plot failed")
-                println(e)
-            end
-        end
-    end
-end
-
-# using AbbreviatedStackTraces
-# global virgin, stop, best, best0, sparams0
-function gfrun(path; kw...)
+function picrun(path; kw...)
     Random.seed!(1)
     println("setting up simulation...")
     PROB_PATH = joinpath(path, "problem.bson")
     SOL_PATH = joinpath(path, "solution.json")
 
-    calibrate = true
-    model_name = nothing # if load saved model
-    tol = 1e-3
-    dosave = false
     verbose = false
 
     global prob = load(PROB_PATH)
-    @load PROB_PATH name N dtype xmargin ymargin zmargin dx0 source_margin port_source_offset source_portsides nonsource_portsides runs ports dl dx dy dz components study mode_solutions eps_2D eps_3D hmode zmin thickness zcore zcenter gpu_backend magic framerate
+    @load PROB_PATH name N dtype xmargin ymargin zmargin dx0 source_margin port_source_offset source_portsides nonsource_portsides runs ports dl dx dy dz components study mode_solutions hmode zmin thickness zcore zcenter gpu_backend magic framerate layer_stack materials L
+    for (k, v) in pairs(kw)
+        @show k, v
+        @eval $k = $v
+    end
+
     F = Float32
     alg = :spectral
     alg = nothing
@@ -174,18 +24,43 @@ function gfrun(path; kw...)
     end
     λc = median(load(PROB_PATH)[:wavelengths])
 
-    global eps_2D = convert.(F, stack(stack.(eps_2D)))'
-    global eps_3D = convert.(F, permutedims(stack(stack.(eps_3D)), (3, 2, 1)))
+    global eps_2D = nothing
+    global sz = Int.(L .÷ dl)
+    global eps_3D = zeros(F, Tuple(sz))
+    global layer_stack
+    layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2][:mesh_order]) |> OrderedDict
+    global ϵmin = Inf
+    for (k, v) = pairs(layer_stack)
+        a = stack(map(sort(collect(readdir(joinpath(path, "temp", string(k)), join=true)))) do file
+            a = F.(Gray.(FileIO.load(file)))
+            reverse(a', dims=2)
+        end)
+        @unpack material, thickness = v
 
+        start = 1 + floor.([(v.origin / dl)..., (v.zmin - zmin) / dl])
+        I = range.(start, start + size(a) - 1)
+        ϵ = materials[Symbol(material)].epsilon
+        ϵmin = min(ϵ, ϵmin)
+        eps_3D[I...] .*= 1 - a
+        eps_3D[I...] .+= a .* ϵ
+    end
+    eps_3D = max.(ϵmin, eps_3D)
+    eps_2D = eps_3D[:, :, round(Int, (zcenter - zmin) / dl)]
+    heatmap(eps_2D) |> display
 
+    error()
+    # s = run_probs[1].source_instances[1]
+    # ab =Functors.functor(s)
+    # a = gpu(s)
+    # aa = gpu(s.g.Jy)
     Δ = if N == 2
         [dx, dy]
     else
         [dx, dy, dz]
     end
-    ratio = Int.(Δ / dl)
+    ratio = round.(Int, Δ / dl)
 
-    models = nothing
+    global models = nothing
     # heatmap(eps_2D) |> display
     # GLMakie.volume(eps_3D) |> display
     polarization = :TE
@@ -245,14 +120,15 @@ function gfrun(path; kw...)
             ms[:_modes] = []
             ms[:calibrated_modes] = []
         end
-        # for (mode, mode1) in zip(ms.modes, ms.modes1)
-        for (mode) in ms.modes
+        for (mode, mode1D) in zip(ms.modes, ms.modes1D)
+            # for (mode) in ms.modes
             global _mode = mode
             mode = NamedTuple([k => complex.(stack.(F(v))...) for (k, v) in mode |> pairs])
-            # mode1 = (; [k => complex.([convert.(F, v) for v = v]...) for (k, v) in mode1 |> pairs]...)
+            mode1D = (; [k => complex.([convert.(F, v) for v = v]...) for (k, v) in mode1D |> pairs]...)
+
             if N == 2
-                # mode = mode1
-                mode = collapse_mode(mode,)
+                mode = mode1D
+                # mode = collapse_mode(mode,)
             end
             push!(ms[:_modes], mode)
             mode = kmap(mode) do a
@@ -263,8 +139,7 @@ function gfrun(path; kw...)
             push!(ms[:calibrated_modes], mode)
         end
     end
-    #  a = mode_solutions
-    # modal source
+
     global runs_sources = [
         begin
             sources = []
@@ -289,15 +164,14 @@ function gfrun(path; kw...)
                             n, tangent, = vcat.((n, tangent,), ([0],))
                             c = [c..., (zcenter - zmin) / λc]
                         end
-                        push!(sources, ModalSource(t -> cispi(2t * λc / λ), mode, c, n, tangent, L; meta=(; port)))
-
+                        push!(sources, ModalSource(t -> cispi(2t * λc / λ), mode, c, n, tangent, L; label="s$(string(port)[2:end])"))
                     end
                 end
-                # sig[:calibrated_modes] = []
             end
             sources
         end for run in runs
     ]
+    # sort!(runs_sources, by=x -> x.label)
 
     global runs_monitors = [[
         begin
@@ -330,9 +204,10 @@ function gfrun(path; kw...)
             if N == 3
                 c = [c..., (zcenter - zmin) / λc]
             end
-            ModalMonitor(wavelength_modes, c, n, tangent, L; meta=(; port))
-        end
-        for (port, m) = run.monitors |> pairs] for run in runs]
+            ModalMonitor(wavelength_modes, c, n, tangent, L; label=port)
+        end for (port, m) = run.monitors |> pairs] for run in runs]
+    # sort!(runs_monitors, by=x -> x.label)
+
 
     global run_probs =
         [
@@ -355,7 +230,13 @@ function gfrun(path; kw...)
             # elseif gpu_backend == "Metal"
             #     using Metal
         end
-        run_probs = gpu.(run_probs)
+        for prob = run_probs
+            for k = keys(prob)
+                if k in (:u0, :_geometry, :geometry, :source_instances, :monitor_instances)
+                    prob[k] = prob[k] |> gpu
+                end
+            end
+        end
         models = models |> gpu
     else
         println("using CPU backend.")
@@ -366,7 +247,7 @@ function gfrun(path; kw...)
         println("Computing s-parameters...")
         @unpack S, sols = write_sparams(runs, run_probs, origin, Δ;
             F, verbose=true, framerate, path)
-        plotsols(sols, run_probs, path;)
+        plotsols(sols, run_probs, path, origin)
         sol = (; sparam_family(S)...,
             path, dx, study)
         open(SOL_PATH, "w") do f
@@ -499,7 +380,7 @@ function gfrun(path; kw...)
                     # Images.save(joinpath(ckptpath, "optimized_design_region_$i.png"), a)
                     # Images.save(joinpath(path, "optimized_design_region_$i.png"), a)
                 end
-                plotsols(sols, run_probs, (path, ckptpath);)
+                plotsols(sols, run_probs, (path, ckptpath), origin)
 
                 sol = (;
                     sparam_family(S)...,

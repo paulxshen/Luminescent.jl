@@ -216,14 +216,14 @@ for ms = mode_solutions
     if !haskey(ms, :calibrated_modes)
         ms[:calibrated_modes] = []
     end
-    for (mode, mode1) in zip(ms.modes, ms.modes1)
+    for (mode, mode1D) in zip(ms.modes, ms.modes1D)
 
         sz = ms.size
         eps = ms.eps
         #  ϵmode1=   eps1 = ms.eps1
 
         mode = (; [k => complex.(stack.(v)...) |> F for (k, v) in mode |> pairs]...)
-        mode1 = (; [k => complex.(v...) |> F for (k, v) in mode1 |> pairs]...)
+        mode1D = (; [k => complex.(v...) |> F for (k, v) in mode1D |> pairs]...)
         # ϵmode = eps |> stack |> transpose .|> F
 
         # sz = round(sz / dx) |> Tuple
@@ -231,7 +231,7 @@ for ms = mode_solutions
         # mode = (; Pair.(keys(mode), [resize(v, size(v) - 1) for v in values(mode)])...)
         # ϵ = resize(ϵ, sz)
         if d == 2
-            mode = mode1
+            mode = mode1D
             # mode, ϵmode = collapse_mode(mode, ϵmode)
             # i = round(Int, size(ϵmode, 1) / 2)
             # ϵcore_ = ϵmode[i]

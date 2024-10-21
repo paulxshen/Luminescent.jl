@@ -1,3 +1,4 @@
+import stltovoxel
 import copy
 from .constants import *
 import gdsfactory as gf
@@ -138,8 +139,8 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
     # neigs = 2
     solver = EMpy.modesolvers.FD.VFDModeSolver(
         λ, x, y, ϵfunc,  "0000").solve(neigs, tol)
-    # solvera = EMpy.modesolvers.FD.VFDModeSolver(
-    #     λ, x, y1, ϵfunc1,  "AA00").solve(2*neigs, tol)
+    solver1D = EMpy.modesolvers.FD.VFDModeSolver(
+        λ, x, y1, ϵfunc1,  "AA00").solve(2*neigs, tol)
     # solvers = EMpy.modesolvers.FD.VFDModeSolver(
     #     λ, x, y1, ϵfunc1, "SS00").solve(neigs, tol)
 
@@ -148,7 +149,7 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
     # Hy = numpy.transpose(solver.modes[-1].get_field("Hy", x, y))
     # pylab.imshow(abs(Hy))
     # fig.add_subplot(2, 3, 2)
-    # Hy = numpy.transpose(solvera.modes[-1].get_field("Hy", x, y1))
+    # Hy = numpy.transpose(solver1D.modes[-1].get_field("Hy", x, y1))
     # pylab.imshow(abs(Hy))
     # fig.add_subplot(2, 3, 4)
     # e = numpy.transpose(ϵfunc(x, y))
@@ -162,21 +163,19 @@ def solve_modes(eps, λ, dx, neigs=1, plot=False):
         "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in solver.modes]
     neffs = [np.real(m.neff) for m in solver.modes]
 
-    # v = sorted(solvera.modes, key=lambda x: -np.abs(x.neff))
-
-    # def f(m):
-    #     a = m.get_field("Hy", x, y1)
-    #     a = abs(a)
-    #     return (max(np.std(a, 1)) / np.max(a)) < .1
-    # v = filter(f, v)
-    # modes1 = [{k: m.get_field(k, x, y1)[:, 0] for k in [
-    #     "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in v]
-    # neffs1 = [np.real(m.neff) for m in v]
-    # "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in sorted(solvera.modes+solvers.modes, key=lambda x: -np.abs(x.neff))]
+    def f(m):
+        a = m.get_field("Hy", x, y1)
+        a = abs(a)
+        return (max(np.std(a, 1)) / np.max(a)) < .1
+    v = sorted(solver1D.modes, key=lambda x: -np.abs(x.neff))
+    v = filter(f, v)
+    modes1D = [{k: m.get_field(k, x, y1)[:, 0] for k in [
+        "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in v]
+    neffs1D = [np.real(m.neff) for m in v]
+    # "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in sorted(solver1D.modes+solvers.modes, key=lambda x: -np.abs(x.neff))]
     # print(solver.modes[0].get_field("Ex", x, y).shape)
-    # return modes, modes1, neffs, neffs1
 
-    return modes, neffs
+    return modes, neffs, modes1D, neffs1D
 
 
 def s2svg(area, bbox, dx):
@@ -370,10 +369,43 @@ def material_slice(c, dx, center, w, h, normal, layers, layer_stack, materials=M
     return eps_array
 
 
-def material_voxelate(c, dx, center, l, w, h,  normal, layers, layer_stack, materials):
-    # print(l)
-    return np.stack([material_slice(c, dx, [center[0]+x]+center[1:], w, h, normal,    layers, layer_stack, materials) for x in np.arange(dx/2, l, dx)],)
-    # return np.stack([material_slice(c, dx, [center[0]+x]+center[1:], w, h, normal,    layers, layer_stack, materials) for x in np.arange(0, l+.001, dx)],)
+def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
+    stacks = sum([[[v.mesh_order, v.material, tuple(layer), k]
+                 for k, v in get_layers(layer_stack, layer, withkey=True)] for layer in layers], [])
+
+    stacks = sorted(stacks, key=lambda x: -x[0])
+    layer_stack_info = dict()
+    for i, stack in enumerate(stacks):
+        m = stack[1]
+        l1, l2 = layer = stack[2]
+        k = stack[3]
+        # eps = materials[m]["epsilon"]
+
+        _layer_stack = copy.deepcopy(layer_stack)
+        _layer_stack.layers.clear()
+
+        d = copy.deepcopy(layer_stack.layers[k])
+        if d.zmin <= zmax and d.bounds[1] >= zmin:
+            _layer_stack.layers[k] = d
+            d.zmin = max(zmin, d.zmin)
+            d.thickness = min(zmax-d.zmin, d.thickness)
+            # _d.bounds = (_d.zmin, _d.zmin+_d.thickness)
+            origin = (c.extract([layer]).bbox_np()-c.bbox_np())[0].tolist()
+            gf.export.to_stl(c, os.path.join(
+                path, f"{k}.stl"), layer_stack=_layer_stack)
+            dir = os.path.join(path, k)
+            os.makedirs(dir, exist_ok=True)
+            stltovoxel.convert_file(
+                os.path.join(path, f'{k}_{l1}_{l2}.stl'), os.path.join(dir, 'output.png'), voxel_size=dl, pad=0)
+            layer_stack_info[k] = {
+                "layer": (l1, l2),
+                "zmin": d.zmin,
+                "thickness": d.thickness,
+                "material": m,
+                "mesh_order": stack[0],
+                "origin": origin,
+            }
+    return layer_stack_info
 
 
 def get_layers(layer_stack, layer, withkey=False):

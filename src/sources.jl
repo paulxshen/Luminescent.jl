@@ -16,12 +16,12 @@ struct ModalSource
     # xaxis
     mode
     label
-    meta
-    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; label::String="", meta=Dict())
-        new(f, center, lb, ub, normal, tangent, E2J(mode), label, meta)
+    tags
+    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; label="", tags=Dict())
+        new(f, center, lb, ub, normal, tangent, E2J(mode), string(label), tags)
     end
-    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, L, ; label::String="", meta=Dict())
-        new(f, center, -L / 2, L / 2, normal, tangent, E2J(mode), label, meta)
+    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, L, ; label="", tags=Dict())
+        new(f, center, -L / 2, L / 2, normal, tangent, E2J(mode), string(label), tags)
     end
 
 end
@@ -89,12 +89,12 @@ struct Source
     lb
     ub
     label
-    meta
-    function Source(f, mode, c, lb, ub, label::String=""; kw...)
-        new(f, mode, c, lb, ub, label, kw)
+    tags
+    function Source(f, mode, c, lb, ub; label="", kw...)
+        new(f, mode, c, lb, ub, string(label), kw)
     end
-    function Source(f, mode, c, L, label::String=""; kw...)
-        new(f, mode, c, -L / 2, L / 2, label, kw)
+    function Source(f, mode, c, L; label="", kw...)
+        new(f, mode, c, -L / 2, L / 2, string(label), kw)
     end
 end
 # mode(m::Source) = m.mode
@@ -117,13 +117,13 @@ struct SourceInstance
     o
     center
     label
-    meta
+    tags
 end
 @functor SourceInstance (g, _g,)
 Porcupine.keys(m::SourceInstance) = keys(m.g)
 
-function SourceInstance(s::ModalSource, Δ, sizes, origin, fieldlims, common_left_pad_amount, ; F=Float32)
-    @unpack f, center, lb, ub, normal, tangent, meta = s
+function SourceInstance(s::ModalSource, Δ, sizes, origin, fieldlims, ; F=Float32)
+    @unpack f, center, lb, ub, normal, tangent, label, tags = s
     J = OrderedDict()
     for k = (:Jx, :Jy, :Jz)
         if k in keys(s.mode)
@@ -173,10 +173,10 @@ function SourceInstance(s::ModalSource, Δ, sizes, origin, fieldlims, common_lef
     mode = ignore_derivatives() do
         mode / Δ[findfirst(abs.(zaxis) .> 0.001)]
     end
-    SourceInstance(Source(f, mode, center, lb, ub; meta...), Δ, sizes, origin, fieldlims, common_left_pad_amount; F)
+    SourceInstance(Source(f, mode, center, lb, ub; label, tags...), Δ, sizes, origin, fieldlims, ; F)
 end
 function SourceInstance(s::PlaneWave, Δ, sizes, common_left_pad_amount, fl, sz0; F=Float32)
-    @unpack f, mode, dims, label, meta = s
+    @unpack f, mode, dims, label, tags = s
     _F(x::Real) = F(x)
     _F(x::Complex) = ComplexF32(x)
     f = _F ∘ f
@@ -187,7 +187,7 @@ function SourceInstance(s::PlaneWave, Δ, sizes, common_left_pad_amount, fl, sz0
                     for k = keys(fl)])
     _g = Dict([k => place(zeros(F, sizes[k]), o[k], g[k],) for k = keys(mode)])
     c = first(values(sizes)) .÷ 2
-    SourceInstance(f, g, _g, o, c, label, meta)
+    SourceInstance(f, g, _g, o, c, label, tags)
 end
 
 function SourceInstance(s::GaussianBeam, Δ, sizes, fl, stop; F=Float32)
@@ -204,8 +204,8 @@ function SourceInstance(s::GaussianBeam, Δ, sizes, fl, stop; F=Float32)
     SourceInstance(f, g, _g, fl, c, label)
 end
 
-function SourceInstance(s::Source, Δ, sizes, origin, fieldlims, common_left_pad_amount; F=Float32)
-    @unpack f, mode, center, lb, ub, label, meta = s
+function SourceInstance(s::Source, Δ, sizes, origin, fieldlims, ; F=Float32)
+    @unpack f, mode, center, lb, ub, label, tags = s
     _F(x::Real) = F(x)
     _F(x::Complex) = ComplexF32(x)
 
@@ -225,15 +225,15 @@ function SourceInstance(s::Source, Δ, sizes, origin, fieldlims, common_left_pad
     #     end for k = keys(mode)])
     g = mode
     o = NamedTuple([k => F.((center + lb - origin) ./ Δ - fl[:, 1] .+ 1.5) for (k, fl) = pairs(fieldlims)])
-    @show center, lb, origin, Δ, fieldlims, o
+    # @show center, lb, origin, Δ, fieldlims, o
     global _g = Dict([k => begin
         a = zeros(ComplexF32, sizes[k])
         setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1)...)
         a
     end for k = keys(mode)])
     # error("stop")
-    _center = round.(Int, center ./ Δ) + 1 + common_left_pad_amount
-    SourceInstance(f, g, _g, o, _center, label, meta)
+    _center = round.(Int, (center - origin) ./ Δ) + 1
+    SourceInstance(f, g, _g, o, _center, label, tags)
 end
 
 # Complex

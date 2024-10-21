@@ -60,7 +60,8 @@ function setup(boundaries, sources, monitors, Δ, dl;
     if isa(Δ, Number)
         Δ = fill(Δ, N)
     end
-    sz = Tuple(round.(Int, size(ϵ) * dl ./ Δ))
+    L = size(ϵ) * dl
+    sz = Tuple(round.(Int, L ./ Δ))
     a = ones(F, Tuple(sz))
     global _geometry = (; ϵ, μ, σ, m) |> pairs |> OrderedDict
     global geometry = OrderedDict()
@@ -124,7 +125,8 @@ function setup(boundaries, sources, monitors, Δ, dl;
     geometry_padamts = DefaultDict(() -> zeros(Int, N, 2))
     is_field_on_lb = Dict([k => zeros(Int, N) for k = field_names])
     is_field_on_ub = Dict([k => zeros(Int, N) for k = field_names])
-    global common_left_pad_amount = zeros(Int, N)
+    bbox = zeros(F, N, 2)
+    bbox[:, 2] .= L
     field_sizes = Dict([k => collect(sz) for k = field_names])
 
     for b = boundaries
@@ -213,7 +215,7 @@ function setup(boundaries, sources, monitors, Δ, dl;
                 geometry_padvals[:m][i, j] = b.m
 
                 if j == 1
-                    common_left_pad_amount[i] += nspml
+                    bbox[i, :] .+= b.d
                 end
                 for k = keys(field_sizes)
                     field_sizes[k][i] += nspml
@@ -278,11 +280,11 @@ function setup(boundaries, sources, monitors, Δ, dl;
     end
     fieldlims = merge(values(fieldlims)...)
     fieldlims = add_current_keys(fieldlims)
-    origin = -common_left_pad_amount .* Δ
+    origin = -bbox[:, 1]
 
     global _origin, _fieldlims, _sources = origin, fieldlims, sources
-    source_instances = SourceInstance.(sources, (Δ,), (field_sizes,), (origin,), (fieldlims,), (common_left_pad_amount,); F)
-    monitor_instances = MonitorInstance.(monitors, (Δ,), (origin,), (fieldlims,), (common_left_pad_amount,); F)
+    source_instances = SourceInstance.(sources, (Δ,), (field_sizes,), (origin,), (fieldlims,); F)
+    monitor_instances = MonitorInstance.(monitors, (Δ,), (origin,), (fieldlims,); F)
     # roi = MonitorInstance(Monitor(zeros(N), zeros(N), Δ * sz), Δ, sz, common_left_pad_amount, is_field_on_lb, fl; F)
     onedge = NamedTuple([k => hcat(v, is_field_on_ub[k]) for (k, v) = pairs(is_field_on_lb)])
 
@@ -304,7 +306,7 @@ function setup(boundaries, sources, monitors, Δ, dl;
             v = reduce(vcat, wavelengths.(monitors))
             v = v |> Set |> collect |> sort |> reverse
             if length(v) == 1
-                steady_state_duration = 1
+                steady_state_duration = 6
             else
                 steady_state_duration = 6 / minimum(diff([0, (1 ./ v)...]))
             end
@@ -312,7 +314,7 @@ function setup(boundaries, sources, monitors, Δ, dl;
     end
     transient_duration, steady_state_duration = convert.(F, (transient_duration, steady_state_duration))
     global res = (;
-                     geometry_padvals, geometry_padamts, field_boundvals, fieldlims, field_grids, onedge,
+                     geometry_padvals, geometry_padamts, field_boundvals, fieldlims, bbox,
                      source_instances, monitor_instances, field_names,
                      polarization, F, Courant,
                      transient_duration, steady_state_duration,

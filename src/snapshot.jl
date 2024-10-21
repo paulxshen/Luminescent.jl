@@ -1,6 +1,12 @@
+function draw_bbox!(ax, bbox)
+    isnothing(bbox) && return
+    x0, y0 = bbox[:, 1]
+    x1, y1 = bbox[:, 2]
+    lines!(ax, [(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)], color=:black)
+end
 
 ° = π / 180
-function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], ulims=nothing, λ=1, unit="um", ratio)
+function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], ulims=nothing, λ=1, unit="um", ratio, bbox=nothing, origin=0)
 
     fig = Figure()
     N = ndims(u)
@@ -21,76 +27,88 @@ function quickie(u, g=nothing; dx=1, monitor_instances=[], source_instances=[], 
         push!(labels, (ratio * s.center, text))
     end
 
-    grid = fig[1, 1]
-    f = x -> string.(round.(x * dx * λ, digits=2)) .* (unit,)
-    ytickformat = xtickformat = f
+    ax = fig[1, 1]
+    xtickformat = x -> string.(round.(x * dl * λ + origin[1] - bbox[1, 1] * dl, digits=2)) .* (unit,)
+    ytickformat = y -> string.(round.(y * dl * λ + origin[2] - bbox[2, 1] * dl, digits=2)) .* (unit,)
+    ztickformat = z -> string.(round.(z * dl * λ + origin[3] - bbox[3, 1] * dl, digits=2)) .* (unit,)
     if N == 3
         l, w, h = size(u)
     else
         l, w = size(u)
 
     end
-    axis0 = (; xtickformat, ytickformat)
 
     title = "Hz"
     if N == 3
-        # println("3D array: plotting middle slice")
+        ax = fig[1, 1]
         title *= " (xy slice of 3D array)"
         aspect = l / w
-        axis = merge(axis0, (; title, aspect))
+        axis = (; title, aspect, xtickformat, ytickformat)
         a = u[:, :, round.(Int, size(u, 3) / 2)]
-        ax, plt = heatmap(grid[1, 1], a; axis, colormap, colorrange)
+        heatmap(ax, a; axis, colormap, colorrange)
+        draw_bbox!(ax, bbox)
 
+        ax = fig[1, 2]
         aspect = w / h
-        axis = merge(axis0, (; title, aspect))
+        axis = (; title, aspect, xtickformat=ytickformat, ytickformat=ztickformat)
         a = u[round.(Int, size(u, 1) / 2), :, :]
-        ax, plt = heatmap(grid[1, 2], a; axis, colormap, colorrange=colorrange)
+        heatmap(ax, a; axis, colormap, colorrange=colorrange)
+        draw_bbox!(ax, bbox[2:3, :])
+
     else
+        ax = fig[1, 1]
         title *= " (2D array)"
         aspect = l / w
-        axis = merge(axis0, (; title, aspect))
-        ax, plt = heatmap(grid[1, 1], u; axis, colormap, colorrange)
-        if !isnothing(g)
-            if diff(collect(extrema(u)))[1] > 0
-                Colorbar(grid[1, 2], plt)
-                contour = g .> 0.99maximum(g)
-                contour = morpholaplace(contour,)
-                heatmap!(ax, contour; colormap=[(:gray, 0), :black], colorrange=(0, 1))
-            end
-        end
+        axis = (; title, aspect, xtickformat, ytickformat)
+        heatmap(ax, u; axis, colormap, colorrange)
+        draw_bbox!(ax, bbox)
+
+        ax = fig[1, 2]
+        # if !isnothing(g)
+        #     if diff(collect(extrema(u)))[1] > 0
+        #         Colorbar(ax[1, 2], plt)
+        #         contour = g .> 0.99maximum(g)
+        #         contour = morpholaplace(contour,)
+        #         heatmap!(ax, contour; colormap=[(:gray, 0), :black], colorrange=(0, 1))
+        #     end
+        # end
     end
     for (pos, text) in labels
-        text!(grid[1, 1], pos..., ; text, align=(:center, :center))
+        ax = fig[1, 1]
+        text!(ax, pos..., ; text, align=(:center, :center))
         # annotate!(g[1, 1], pos, text; fontsize=10, color=:black)
     end
     if isnothing(g)
         return fig
     end
 
-    grid = fig[2, 1]
     title = "ϵ"
     colormap = [:white, :gray]
     if N == 3
-        # println("3D array: plotting middle slice")
-        title *= " (middle slice of 3D array)"
-
+        ax = fig[2, 1]
+        title *= " (yz slice of 3D array)"
         aspect = l / w
-        axis = merge(axis0, (; title, aspect))
+        axis = (; title, aspect, xtickformat, ytickformat)
         a = g[:, :, round.(Int, size(g, 3) / 2)]
-        ax, plt = heatmap(grid[1, 1], a; axis, colormap)
+        heatmap(ax, a; axis, colormap)
+        draw_bbox!(ax, bbox)
 
+        ax = fig[2, 2]
         aspect = w / h
-        axis = merge(axis0, (; title, aspect))
+        axis = (; title, aspect, xtickformat=ytickformat, ytickformat=ztickformat)
         a = g[round.(Int, size(g, 1) / 2), :, :]
-        ax, plt = heatmap(grid[1, 2], a; axis, colormap,)
+        heatmap(ax, a; axis, colormap,)
+        draw_bbox!(ax, bbox[2:3, :])
     else
+        ax = fig[2, 1]
         title *= " (2D array)"
         aspect = l / w
-        axis = merge(axis0, (; title, aspect))
-        ax, plt = heatmap(grid[1, 1], g; axis, colormap)
-        if diff(collect(extrema(g)))[1] > 0
-            Colorbar(grid[1, 2], plt)
-        end
+        axis = (; title, aspect, xtickformat, ytickformat)
+        heatmap(ax, g; axis, colormap)
+        draw_bbox!(ax, bbox)
+        # if diff(collect(extrema(g)))[1] > 0
+        #     Colorbar(ax[1, 2], plt)
+        # end
     end
 
     # i = 1

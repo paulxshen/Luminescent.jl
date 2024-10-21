@@ -27,13 +27,23 @@ def setup(c, study, dx, margin,
           gpu=None, dtype=np.float32,
           plot=False, framerate=0,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None, **kwargs):
+    prob = dict()
     dx0 = dx
     # dx *= 2
-    ratio = 4
-    dl = dx/ratio
+    # ratio = 4
+    # dl = dx/ratio
+    dl = .01
+    ratio = int(dx/dl)
     dy = dx
-    dz = dx
-    prob = dict()
+    dz = 1.5 * dx
+
+    if not name:
+        l = [prob["timestamp"], study]
+        name = "#".join(l)
+    path = os.path.join(wd, name)
+    prob["path"] = path
+    prob["name"] = name
+
     prob = {**prob, **kwargs}
     prob["dx"] = dx
     prob["dy"] = dy
@@ -84,12 +94,13 @@ def setup(c, study, dx, margin,
     # if zmargin is None:
     zmargin = C*wg_zmargin
     # if margin is None:
-    xmargin = ymargin = C * wg_margin
+    xmargin = ymargin = 4 * wg_margin
 
     h = thickness+2*zmargin
     h = round(h/dz)*dz
     zmargin = (h-thickness)/2
     zmin = zcore-zmargin
+    zmax = zmin+h
 
     prob["thickness"] = thickness
     prob["zcenter"] = zcenter
@@ -122,6 +133,8 @@ def setup(c, study, dx, margin,
             component=c, orientation=orientation, length=length)
     c0 = _c << c
     c = _c
+    c.plot()
+    c.show()
 
     for run in runs:
         for port in run["sources"]:
@@ -134,6 +147,7 @@ def setup(c, study, dx, margin,
     prob["xmargin"] = xmargin
     prob["ymargin"] = ymargin
     prob["zmargin"] = zmargin
+    prob["L"] = [l, w, h]
 
     # a = min([min([materials[d.material]["epsilon"] for d in get_layers(
     #     layer_stack, l)]) for l in bbox_layer])
@@ -147,24 +161,17 @@ def setup(c, study, dx, margin,
     #     margin = trim(C*port_width, dx)
     layers = set(c.layers)-set(exclude_layers)
 
-    # l, w = c.bbox_np()[1]-c.bbox_np()[0]
     center = [c.bbox_np()[0][0], c.bbox_np()[0][1]+w/2, zcenter]
     normal = [1, 0, 0]
 
-    eps_3D = material_voxelate(c, dl, center, l, w, h,
-                               normal, layers, layer_stack, materials)
-    eps_2D = eps_3D[:, :, int(eps_3D.shape[2]/2)]
+    temp = os.path.join(path, "temp")
+    os.makedirs(temp, exist_ok=True)
+    layer_stack_info = material_voxelate(
+        c, dl, zmin, zmax, layers, layer_stack, temp)
+    prob["layer_stack"] = layer_stack_info
+    prob["materials"] = materials
     prob["study"] = study
 
-    if not name:
-        l = [prob["timestamp"], study]
-        name = "#".join(l)
-    path = os.path.join(wd, name)
-    prob["path"] = path
-    prob["name"] = name
-
-    prob["eps_3D"] = eps_3D.tolist()
-    prob["eps_2D"] = eps_2D.tolist()
     prob["N"] = 2 if approx_2D else 3
 
     prob["hmode"] = hmode
@@ -191,8 +198,7 @@ def setup(c, study, dx, margin,
                     center = np.array(center)-.001*np.array(normal)
                     eps = material_slice(
                         c, dl, center, wmode, hmode, normal, layers, layer_stack, materials)
-                    # _modes, _modes1, neffs, _ = solve_modes(
-                    _modes,  neffs = solve_modes(
+                    _modes,  neffs, _modes1D, neffs1D = solve_modes(
                         eps, λ=wl, dx=dx, neigs=max(mode_numbers)+1, plot=plot)
 
                     for n in neffs:
@@ -201,12 +207,12 @@ def setup(c, study, dx, margin,
 
                     modes = [{k: [np.real(mode[k].T).tolist(), np.imag(
                         mode[k].T).tolist()] for k in mode} for mode in _modes]
-                    # modes1 = [{k: [np.real(mode[k]).tolist(), np.imag(
-                    #     mode[k]).tolist()] for k in mode} for mode in _modes1]
-                    # for mn in mode_numbers:
+                    modes1D = [{k: [np.real(mode[k]).tolist(), np.imag(
+                        mode[k]).tolist()] for k in mode} for mode in _modes1D]
+
                     mode_solutions.append({
                         "modes": modes,
-                        # "modes1": modes1,
+                        "modes1D": modes1D,
                         "wavelength": wl,
                         # "mode_number": mn,
                         "ports": [s["port"]],
