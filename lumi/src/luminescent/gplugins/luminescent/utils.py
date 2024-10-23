@@ -1,3 +1,4 @@
+import shutil
 import stltovoxel
 import copy
 from .constants import *
@@ -394,6 +395,8 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
             gf.export.to_stl(c, os.path.join(
                 path, f"{k}.stl"), layer_stack=_layer_stack)
             dir = os.path.join(path, k)
+            shutil.rmtree(dir, ignore_errors=True)
+
             os.makedirs(dir, exist_ok=True)
             stltovoxel.convert_file(
                 os.path.join(path, f'{k}_{l1}_{l2}.stl'), os.path.join(dir, 'output.png'), voxel_size=dl, pad=0)

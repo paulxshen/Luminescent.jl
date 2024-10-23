@@ -31,7 +31,7 @@ function solve(prob, ;
     global _p = pad_geometry(_geometry, geometry_padvals, geometry_padamts, ratio)
 
     p = apply_subpixel_averaging(p, fieldlims)
-    invϵ = tensorinv(_p.ϵ, fieldlims, ratio,)
+    invϵ = tensorinv(_p.ϵ, fieldlims, ratio[1])
 
     p = merge(p, (; invϵ))
     durations = [transient_duration, steady_state_duration]

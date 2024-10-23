@@ -1,5 +1,6 @@
 # import dill
 import math
+import shutil
 from .constants import *
 from .layers import *
 from .utils import *
@@ -30,12 +31,12 @@ def setup(c, study, dx, margin,
     prob = dict()
     dx0 = dx
     # dx *= 2
-    # ratio = 4
-    # dl = dx/ratio
-    dl = .01
-    ratio = int(dx/dl)
+    ratio = 4
+    dl = dx/ratio
+    # dl = .01
+    # ratio = int(dx/dl)
     dy = dx
-    dz = 1.5 * dx
+    dz = 1. * dx
 
     if not name:
         l = [prob["timestamp"], study]
@@ -83,43 +84,40 @@ def setup(c, study, dx, margin,
     port_width = max([p.width/1e3 for p in c.ports])
     wg_margin = 1*port_width
     wg_zmargin = 1*thickness
+    xmargin = ymargin = 8*port_width
+    zmargin = 3*thickness
+
     wmode = port_width+2*wg_margin
     hmode = thickness+2*wg_zmargin
-    wmode = round(wmode / dx)*dx
-    hmode = round(hmode / dz)*dz
+    wmode = trim(wmode, 2*dx)
+    hmode = trim(hmode, 2*dz)
     wg_margin = (wmode-port_width)/2
     wg_zmargin = (hmode-thickness)/2
 
-    C = 1.4
-    # if zmargin is None:
-    zmargin = C*wg_zmargin
-    # if margin is None:
-    xmargin = ymargin = 4 * wg_margin
-
+    C = 1.2
     h = thickness+2*zmargin
-    h = round(h/dz)*dz
+    h = trim(h, 2*dz)
     zmargin = (h-thickness)/2
     zmin = zcore-zmargin
     zmax = zmin+h
+
+    l0, w0 = c.bbox_np()[1]-c.bbox_np()[0]
+    l = l0+2*xmargin
+    l = trim(l, 2*dx)
+    xmargin = (l-l0)/2
+
+    w = w0+2*ymargin
+    w = trim(w, 2*dy)
+    ymargin = (w-w0)/2
 
     prob["thickness"] = thickness
     prob["zcenter"] = zcenter
     prob["zmin"] = zmin
     prob["zcore"] = zcore
-
-    # zlims = [zlims[0]-zmargin, zlims[1]+zmargin]
-    # zcenter = zlims[0]+(zlims[1]-zlims[0])/2
-    # zmin = zlims[0]
-
-    length, width = c.bbox_np()[1]-c.bbox_np()[0]
-
-    l = length+2*xmargin
-    l = round(l/dx)*dx
-    xmargin = (l-length)/2
-
-    w = width+2*ymargin
-    w = round(w/dx)*dx
-    ymargin = (w-width)/2
+    prob["xmargin"] = xmargin
+    prob["ymargin"] = ymargin
+    prob["zmargin"] = zmargin
+    prob["L"] = [l, w, h]
 
     _c = gf.Component()
     _c << gf.components.bbox(
@@ -143,11 +141,6 @@ def setup(c, study, dx, margin,
         # for port in run["monitors"]:
         #     x, y = c.ports[port].center
             # run["monitors"][port]["center"] = [x+xmargin, y+ymargin]
-
-    prob["xmargin"] = xmargin
-    prob["ymargin"] = ymargin
-    prob["zmargin"] = zmargin
-    prob["L"] = [l, w, h]
 
     # a = min([min([materials[d.material]["epsilon"] for d in get_layers(
     #     layer_stack, l)]) for l in bbox_layer])

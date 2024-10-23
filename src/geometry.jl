@@ -42,7 +42,7 @@ function tensorinv(a, fieldlims, ratio,)
             l, r = eachcol(lr)
             start = Int.((l - 0.5) * ratio + margin) + 1
             finish = size(A) + Int.((r - sz + 0.5) * ratio - margin)
-            # @show start, finish, size(A), margin, l, r, sz
+            @show start, finish, size(A), margin, l, r, sz, ratio, size(a)
             _a = A[range.(start, finish)...]
             # _a = crop(A, (l - 0.5) * ratio + margin, margin - (r - sz + 0.5) * ratio)
             downsample(_a, ratio) do a

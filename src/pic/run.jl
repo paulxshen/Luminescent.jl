@@ -25,7 +25,7 @@ function picrun(path; kw...)
     λc = median(load(PROB_PATH)[:wavelengths])
 
     global eps_2D = nothing
-    global sz = Int.(L .÷ dl)
+    global sz = round.(L / dl)
     global eps_3D = zeros(F, Tuple(sz))
     global layer_stack
     layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2][:mesh_order]) |> OrderedDict
@@ -35,10 +35,15 @@ function picrun(path; kw...)
             a = F.(Gray.(FileIO.load(file)))
             reverse(a', dims=2)
         end)
+        # a = a[Base.OneTo.(min.(size(a), sz))...]
         @unpack material, thickness = v
 
         start = 1 + floor.([(v.origin / dl)..., (v.zmin - zmin) / dl])
         I = range.(start, start + size(a) - 1)
+        overhang = max.(last.(I) .- sz, 0)
+        a = a[Base.oneto.(size(a) - overhang)...]
+        I = range.(start, start + size(a) - 1)
+
         ϵ = materials[Symbol(material)].epsilon
         ϵmin = min(ϵ, ϵmin)
         eps_3D[I...] .*= 1 - a
@@ -46,9 +51,8 @@ function picrun(path; kw...)
     end
     eps_3D = max.(ϵmin, eps_3D)
     eps_2D = eps_3D[:, :, round(Int, (zcenter - zmin) / dl)]
-    heatmap(eps_2D) |> display
+    # heatmap(eps_2D) |> display
 
-    error()
     # s = run_probs[1].source_instances[1]
     # ab =Functors.functor(s)
     # a = gpu(s)
@@ -64,7 +68,7 @@ function picrun(path; kw...)
     # heatmap(eps_2D) |> display
     # GLMakie.volume(eps_3D) |> display
     polarization = :TE
-    global origin = components.device.bbox[1]
+    global lb = components.device.bbox[1]
     if N == 2
         ϵ = eps_2D
     else
@@ -87,7 +91,7 @@ function picrun(path; kw...)
                 L = bbox[2] - bbox[1]
                 szd = Tuple(round.(Int, L / dx)) # design region size
                 symmetries = [length(string(s)) == 1 ? Int(s) + 1 : s for s = d.symmetries]
-                o = round.(Int, (bbox[1] - origin) / dx) + 1
+                o = round.(Int, (bbox[1] - lb) / dx) + 1
 
                 lvoid = d.lvoid / dx
                 lsolid = d.lsolid / dx
@@ -157,7 +161,7 @@ function picrun(path; kw...)
                         # heatmap(abs.(bb.source_instances[1]._g.Jy))
                         n = -sig.normal
                         tangent = [-n[2], n[1]]
-                        c = (sig.center - origin) / λc
+                        c = (sig.center - lb) / λc
                         L = [sig.mode_width] / λc
                         if N == 3
                             L = [L..., hmode / λc]
@@ -175,7 +179,7 @@ function picrun(path; kw...)
 
     global runs_monitors = [[
         begin
-            c = (m.center - origin) / λc
+            c = (m.center - lb) / λc
             n = m.normal
             tangent = [-n[2], n[1]]
             L = [m.mode_width] / λc
@@ -243,11 +247,12 @@ function picrun(path; kw...)
     end
     global sols = 0
     t0 = time()
+    lb3 = (lb..., zmin)
     if study == "sparams"
         println("Computing s-parameters...")
-        @unpack S, sols = write_sparams(runs, run_probs, origin, Δ;
+        @unpack S, sols = write_sparams(runs, run_probs, lb, Δ;
             F, verbose=true, framerate, path)
-        plotsols(sols, run_probs, path, origin)
+        plotsols(sols, run_probs, path, lb3)
         sol = (; sparam_family(S)...,
             path, dx, study)
         open(SOL_PATH, "w") do f
@@ -255,7 +260,7 @@ function picrun(path; kw...)
         end
         println("Done in $(time() - t0) s")
     elseif study == "inverse_design"
-        if length(origin) == 3
+        if length(lb) == 3
             if magic != "summersale"
                 error("3D inverse design feature must be requested from Luminescent AI info@luminescentai.com")
             end
@@ -272,13 +277,13 @@ function picrun(path; kw...)
             stop = i == iters
             if :phase_shifter == first(keys(targets))
                 @time l, (dldm,) = Flux.withgradient(models) do m
-                    @unpack S, sols = write_sparams(runs, run_probs, origin, Δ,
+                    @unpack S, sols = write_sparams(runs, run_probs, lb, Δ,
                         designs, design_config, models;
                         F, img, alg)#(1)(1)
                     k = keys(S) |> first
                     s = S[k][Symbol("o2@0,o1@0")]
 
-                    @unpack S = write_sparams(runs, run_probs, origin, Δ,
+                    @unpack S = write_sparams(runs, run_probs, lb, Δ,
                         designs, design_config, m;
                         F, img, alg, save_memory, perturb=:ϵ,)#(1)(1)
                     s_ = S[k][Symbol("o2@0,o1@0")]
@@ -291,8 +296,8 @@ function picrun(path; kw...)
                 end
             else
                 @time l, (dldm,) = Flux.withgradient(models) do models
-                    # sols = get_sols(runs, run_probs,  path, origin, Δ,
-                    @unpack S, sols = write_sparams(runs, run_probs, origin, Δ,
+                    # sols = get_sols(runs, run_probs,  path, lb, Δ,
+                    @unpack S, sols = write_sparams(runs, run_probs, lb, Δ,
                         designs, design_config, models;
                         F, img, alg, save_memory)
                     l = 0
@@ -380,7 +385,7 @@ function picrun(path; kw...)
                     # Images.save(joinpath(ckptpath, "optimized_design_region_$i.png"), a)
                     # Images.save(joinpath(path, "optimized_design_region_$i.png"), a)
                 end
-                plotsols(sols, run_probs, (path, ckptpath), origin)
+                plotsols(sols, run_probs, (path, ckptpath), lb3)
 
                 sol = (;
                     sparam_family(S)...,
@@ -406,7 +411,7 @@ function picrun(path; kw...)
             Flux.update!(opt_state, models, dldm)# |> gpu)
         end
         if framerate > 0
-            write_sparams(runs, run_probs, origin, Δ,
+            write_sparams(runs, run_probs, lb, Δ,
                 designs, design_config, models;
                 F, img, alg, framerate, path)
         end

@@ -54,7 +54,7 @@ function setup(boundaries, sources, monitors, Δ, dl;
     # Courant=0.5,
     Courant=0.95,
     kw...)
-    ratio = Int.(Δ / dl)
+    ratio = round.(Δ / dl)
     Δ, ϵ, μ, σ, m = [convert.(F, a) for a in (Δ, ϵ, μ, σ, m)]
     N = length(Δ)
     if isa(Δ, Number)

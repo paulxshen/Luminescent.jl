@@ -28,9 +28,10 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
     end
 
     ax = fig[1, 1]
-    xtickformat = x -> string.(round.(x * dl * λ + origin[1] - bbox[1, 1] * dl, digits=2)) .* (unit,)
-    ytickformat = y -> string.(round.(y * dl * λ + origin[2] - bbox[2, 1] * dl, digits=2)) .* (unit,)
-    ztickformat = z -> string.(round.(z * dl * λ + origin[3] - bbox[3, 1] * dl, digits=2)) .* (unit,)
+
+    xtickformat = x -> string.(Base.round.(x * dl * λ + origin[1] - bbox[1, 1] * dl, digits=2)) .* (unit,)
+    ytickformat = y -> string.(Base.round.(y * dl * λ + origin[2] - bbox[2, 1] * dl, digits=2)) .* (unit,)
+    ztickformat = z -> string.(Base.round.(z * dl * λ + origin[3] - bbox[3, 1] * dl, digits=2)) .* (unit,)
     if N == 3
         l, w, h = size(u)
     else
