@@ -42,6 +42,12 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 tol = .001
 
 
+def arange(a, b, d):
+    ret = np.linspace(a, b, round((b-a)/d)+1).tolist()
+    print(ret)
+    return ret
+
+
 def trim(x, dx):
     return round(x/dx)*dx
 
@@ -53,20 +59,22 @@ def extend(endpoints, wm):
         (endpoints[0]-wm*v).tolist(), (endpoints[1]+wm*v).tolist()]
 
 
-def portsides(ports, bbox):
-    res = [[False, False], [False, False]]
+def portsides(c):
+    ports = c.ports
+    bbox = c.bbox_np()
+    res = [False, False, False, False]
     xmin0, ymin0 = bbox[0]
     xmax0, ymax0 = bbox[1]
     for p in ports:
         x, y = np.array(p.center)/1e3
         if abs(x - xmin0) < tol:
-            res[0][0] = True
+            res[2] = True
         if abs(x - xmax0) < tol:
-            res[1][0] = True
+            res[0] = True
         if abs(y - ymin0) < tol:
-            res[0][1] = True
+            res[3] = True
         if abs(y - ymax0) < tol:
-            res[1][1] = True
+            res[1] = True
     return res
 
 

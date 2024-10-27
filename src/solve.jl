@@ -1,10 +1,10 @@
-function f1(((u,), p, (Δ, dt, field_boundvals, source_instances)), t)
-    u = update(u, p, t, Δ, dt, field_boundvals, source_instances)
-    ((u,), p, (Δ, dt, field_boundvals, source_instances))
+function f1(((u,), p, (field_diffdeltas, dt, field_boundvals, source_instances)), t)
+    u = update(u, p, t, field_diffdeltas, dt, field_boundvals, source_instances)
+    ((u,), p, (field_diffdeltas, dt, field_boundvals, source_instances))
 end
 
-function f2(((u, mf), p, (Δ, dt, field_boundvals, source_instances), (T, monitor_instances)), t)
-    u = update(u, p, t, Δ, dt, field_boundvals, source_instances;)
+function f2(((u, mf), p, (field_diffdeltas, dt, field_boundvals, source_instances), (T, monitor_instances)), t)
+    u = update(u, p, t, field_diffdeltas, dt, field_boundvals, source_instances;)
     mf += dt / T * [[
         begin
             E = u(r"E.*")
@@ -15,29 +15,25 @@ function f2(((u, mf), p, (Δ, dt, field_boundvals, source_instances), (T, monito
             [E, H] * cispi(-2t / λ)
         end for λ = wavelengths(m)
     ] for m = monitor_instances]
-    ((u, mf), p, (Δ, dt, field_boundvals, source_instances), (T, monitor_instances))
+    ((u, mf), p, (field_diffdeltas, dt, field_boundvals, source_instances), (T, monitor_instances))
 end
 
 function solve(prob, ;
     save_memory=false, ulims=(-3, 3), framerate=0, path="",
     kwargs...)
-    @unpack Δ, dl, dt, u0, geometry, _geometry, field_boundvals, geometry_padvals, geometry_padamts, fieldlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz, ratio = prob
-    u0, Δ, dt, field_boundvals, geometry_padvals, geometry_padamts, fieldlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz, ratio = ignore_derivatives() do
-        u0, Δ, dt, field_boundvals, geometry_padvals, geometry_padamts, fieldlims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz, ratio
-    end
-    fieldlims = cpu(fieldlims)
+    @unpack field_deltas, field_diffdeltas, mode_deltas, dl, dt, u0, geometry, _geometry, field_boundvals, field_spacings, geometry_padvals, geometry_padamts, _geometry_padamts, field_lims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz = prob
 
     global p = pad_geometry(geometry, geometry_padvals, geometry_padamts)
-    global _p = pad_geometry(_geometry, geometry_padvals, geometry_padamts, ratio)
+    global _p = pad_geometry(_geometry, geometry_padvals, _geometry_padamts)
 
-    p = apply_subpixel_averaging(p, fieldlims)
-    invϵ = tensorinv(_p.ϵ, fieldlims, ratio[1])
+    p = apply_subpixel_averaging(p, field_lims)
+    invϵ = tensorinv(_p.ϵ, field_lims, field_spacings)
 
     p = merge(p, (; invϵ))
     durations = [transient_duration, steady_state_duration]
     T = cumsum(durations)
     us0 = (u0,)
-    init = (us0, p, (Δ, dt, field_boundvals, source_instances))
+    init = (us0, p, (field_diffdeltas, dt, field_boundvals, source_instances))
 
     if save_memory
         (u,), = adjoint_reduce(f1, 0:dt:T[1], init, ulims)
@@ -61,24 +57,25 @@ function solve(prob, ;
         end
     end
     ts = T[1]+dt:dt:T[2]+F(0.001)
-    init = ((u, 0), p, (Δ, dt, field_boundvals, source_instances), (durations[2], monitor_instances))
+    init = ((u, 0), p, (field_diffdeltas, dt, field_boundvals, source_instances), (durations[2], monitor_instances))
 
     if save_memory
         (u, mf), = adjoint_reduce(f2, ts, init, ulims)
     else
-        (u, mf), = reduce(f2, ts; init)
+        global (u, mf), = reduce(f2, ts; init)
     end
 
-    ulims = ignore_derivatives() do
-        map(vcat(extrema.(leaves(u)), [
-            begin
-                c = maximum(abs.(a))
-                (-c, c)
-            end for a = leaves(mf)
-        ])) do l
-            l[1] == l[2] ? convert.(F, (-1, 1)) : l
-        end
-    end
+    ulims = 0
+    # ulims = ignore_derivatives() do
+    #     map(vcat(extrema.(leaves(u)), [
+    #         begin
+    #             c = maximum(abs.(a))
+    #             (-c, c)
+    #         end for a = leaves(mf)
+    #     ])) do l
+    #         l[1] == l[2] ? convert.(F, (-1, 1)) : l
+    #     end
+    # end
 
     v = map(mf, monitor_instances) do mf, m
         map(mf, wavelengths(m)) do u, λ
@@ -104,7 +101,7 @@ function solve(prob, ;
             fp = rp = c = nothing
             if !isnothing(m.wavelength_modes)
                 wm = m.wavelength_modes[λ]
-                c = mode_decomp.(wm, (mode,), (Δ[end-N+2:end],))
+                c = mode_decomp.(wm, (mode,), (mode_deltas,))
                 fp = [abs(v[1])^2 for v = c]
                 rp = [abs(v[2])^2 for v = c]
             end

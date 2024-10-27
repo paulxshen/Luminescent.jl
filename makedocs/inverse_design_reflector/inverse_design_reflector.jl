@@ -57,11 +57,11 @@ heatmap(model())
 We set key time intervals. The signal must first propagate to port 2 after which all port power fluxes will get monitored
 =#
 
-Δ = zeros(2)
-# Δ[1] = 1
-Δ[1] = 2 + 2l / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
-Δ[2] = 2 # duration to record power at output ports
-T = cumsum(Δ)
+deltas = zeros(2)
+# deltas[1] = 1
+deltas[1] = 2 + 2l / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
+deltas[2] = 2 # duration to record power at output ports
+T = cumsum(deltas)
 
 #=
 We set boundary conditions, sources , and monitor. The modal source profile is obtained from external mode solver , in our case VectorModesolver.jl . Please refer to guide section of docs website for details . To get an approximate  line source for use in 2d from the cross section profile , we sum and collapse it along its height axis
@@ -86,7 +86,7 @@ sources = [Source(t -> cispi(2t), c, lb_, ub_; Jx, Jy,)]
 sz = size(static_mask)
 
 prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
-@unpack dx, dt, sz, geometry_padvals, fieldlims, field_boundvals, source_instances, monitor_instances, u0, = prob
+@unpack dx, dt, sz, geometry_padvals, field_lims, field_boundvals, source_instances, monitor_instances, u0, = prob
 nt = round(Int, 1 / dt)
 A = area.(monitor_instances)
 
@@ -110,7 +110,7 @@ We define a geometry update function that'll be called each adjoint iteration. I
     =#
 
 function make_geometry(model, prob, dϵ=0)#; make3d=false)
-    @unpack sz, geometry_padvals, fieldlims = prob
+    @unpack sz, geometry_padvals, field_lims = prob
     μ = ones(F, sz)
     σ = zeros(F, sz)
     m = zeros(F, sz)
@@ -131,7 +131,7 @@ function make_geometry(model, prob, dϵ=0)#; make3d=false)
     end
 
     p = apply(geometry_padvals; ϵ, μ, σ, m)
-    p = apply(fieldlims, p)
+    p = apply(field_lims, p)
 end
 
 #=
@@ -152,7 +152,7 @@ function metrics(model, prob, dϵ=0; autodiff=true, history=nothing)
     u, flux_profile = reduce(T[1]+dt:dt:T[2], init=(u, F(0))) do (u, flux_profile,), t
         ifp = flux.((u,), monitor_instances,)
         update(u, p, t, dx, dt, field_boundvals, source_instances),
-        flux_profile + dt * ifp / F(Δ[2])
+        flux_profile + dt * ifp / F(deltas[2])
     end
 
     global flux_profile
@@ -185,7 +185,7 @@ mp0 = F(0.004)
 
 static_mask = F.(static_mask)
 T = F.(T)
-Δ = F.(Δ)
+deltas = F.(deltas)
 ϵbase, ϵcore, ϵclad, dx, dt, dϵ, dϕ0, mp0 = F.((ϵbase, ϵcore, ϵclad, dx, dt, dϵ, dϕ0, mp0))
 
 loss = model -> score(metrics(model, prob))

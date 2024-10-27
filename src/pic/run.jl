@@ -8,7 +8,7 @@ function picrun(path; kw...)
     verbose = false
 
     global prob = load(PROB_PATH)
-    @load PROB_PATH name N dtype xmargin ymargin zmargin dx0 source_margin port_source_offset source_portsides nonsource_portsides runs ports dl dx dy dz components study mode_solutions hmode zmin thickness zcore zcenter gpu_backend magic framerate layer_stack materials L
+    @load PROB_PATH name N dtype xmargin ymargin zmargin dx0 source_margin runs ports dl xs ys zs components study mode_solutions zmode hmode zmin zcenter gpu_backend magic framerate layer_stack materials L
     for (k, v) in pairs(kw)
         @show k, v
         @eval $k = $v
@@ -23,6 +23,15 @@ function picrun(path; kw...)
         # println("Float16 not supported yet, will be in future release.")
     end
     λc = median(load(PROB_PATH)[:wavelengths])
+    ticks = [
+        begin
+            round((v - v[1]) / dl)
+        end for v = [xs, ys, zs]
+    ]
+    global spacings = diff.(ticks)
+    popfirst!.(ticks)
+    deltas = spacings * dl
+    zmin, zcenter, zmode, hmode = trim.((zmin, zcenter, zmode, hmode), dl)
 
     global eps_2D = nothing
     global sz = round.(L / dl)
@@ -57,12 +66,6 @@ function picrun(path; kw...)
     # ab =Functors.functor(s)
     # a = gpu(s)
     # aa = gpu(s.g.Jy)
-    Δ = if N == 2
-        [dx, dy]
-    else
-        [dx, dy, dz]
-    end
-    ratio = round.(Int, Δ / dl)
 
     global models = nothing
     # heatmap(eps_2D) |> display
@@ -96,12 +99,12 @@ function picrun(path; kw...)
                 lvoid = d.lvoid / dx
                 lsolid = d.lsolid / dx
                 margin = maximum(round.(Int, (lvoid, lsolid)))
-                ϵ2 = downsample(eps_2D, ratio[1])
+                ϵ2 = downsample(eps_2D, ratios[1:2])
                 frame = ϵ2[range.(o - margin, o + szd + margin - 1)...]
                 frame = frame .== maximum(frame)
                 # display(heatmap(frame))
                 b = Blob(szd;
-                    init, lvoid, lsolid, symmetries, F, frame, ratio=ratio[1])
+                    init, lvoid, lsolid, symmetries, F, frame, ratios=ratios[1])
 
                 if !isnothing(sol) && !restart
                     println("loading saved design...")
@@ -115,9 +118,13 @@ function picrun(path; kw...)
     boundaries = [] # unspecified boundaries default to PML
 
     device = 0
-    device, dx, λc =
-        convert.(F, (device, dx, λc))
+    λc = F(λc)
     # guess = convert.(F,guess)
+    i = int(v2i(zmode - zmin, deltas[3]))
+    j = int(v2i(zmode + hmode - zmin, deltas[3]))
+    global mode_spacings = [spacings[1][1], adddims(spacings[3][i+1:j], dims=1)]
+    global mode_deltas = mode_spacings * dl
+
     global mode_solutions
     for ms = mode_solutions
         if !haskey(ms, :calibrated_modes)
@@ -136,18 +143,24 @@ function picrun(path; kw...)
             end
             push!(ms[:_modes], mode)
             mode = kmap(mode) do a
-                # imresize(a, Tuple(round.(Int, size(a) * dl ./ (N == 2 ? Δ[1] : Δ[2:3]))))
-                downsample(a, N == 2 ? ratio[1] : ratio[2:3])
+
+                if N == 2
+                    downsample(a, spacings[1][1])
+                else
+
+                    downsample(a, mode_spacings)
+                end
             end
             mode = keepxy(mode)
             push!(ms[:calibrated_modes], mode)
         end
     end
 
+    global runs = [SortedDict([k => isa(v, AbstractDict) ? SortedDict(v) : v for (k, v) = pairs(run)]) for run in runs]
     global runs_sources = [
         begin
             sources = []
-            for (port, sig) = run.sources |> pairs
+            for (port, sig) = SortedDict(run.sources) |> pairs
                 @unpack center, wavelength_mode_numbers = sig
                 for λ in keys(wavelength_mode_numbers)
                     for mn = wavelength_mode_numbers[λ]
@@ -161,14 +174,14 @@ function picrun(path; kw...)
                         # heatmap(abs.(bb.source_instances[1]._g.Jy))
                         n = -sig.normal
                         tangent = [-n[2], n[1]]
-                        c = (sig.center - lb) / λc
+                        center = (sig.center - lb) / λc
                         L = [sig.mode_width] / λc
                         if N == 3
                             L = [L..., hmode / λc]
                             n, tangent, = vcat.((n, tangent,), ([0],))
-                            c = [c..., (zcenter - zmin) / λc]
+                            center = [center..., (zcenter - zmin) / λc]
                         end
-                        push!(sources, ModalSource(t -> cispi(2t * λc / λ), mode, c, n, tangent, L; label="s$(string(port)[2:end])"))
+                        push!(sources, ModalSource(t -> cispi(2t * λc / λ), mode, center, n, tangent, L; label="s$(string(port)[2:end])"))
                     end
                 end
             end
@@ -179,7 +192,7 @@ function picrun(path; kw...)
 
     global runs_monitors = [[
         begin
-            c = (m.center - lb) / λc
+            center = (m.center - lb) / λc
             n = m.normal
             tangent = [-n[2], n[1]]
             L = [m.mode_width] / λc
@@ -206,10 +219,10 @@ function picrun(path; kw...)
                 for (λ, mns) in pairs(m.wavelength_mode_numbers)
             ])
             if N == 3
-                c = [c..., (zcenter - zmin) / λc]
+                center = [center..., (zcenter - zmin) / λc]
             end
-            ModalMonitor(wavelength_modes, c, n, tangent, L; label=port)
-        end for (port, m) = run.monitors |> pairs] for run in runs]
+            ModalMonitor(wavelength_modes, center, n, tangent, L; label=port)
+        end for (port, m) = SortedDict(run.monitors) |> pairs] for run in runs]
     # sort!(runs_monitors, by=x -> x.label)
 
 
@@ -217,8 +230,8 @@ function picrun(path; kw...)
         [
             begin
 
-                setup(boundaries, sources, monitors, Δ / λc, dl / λc;
-                    F, ϵ, ratio,
+                setup(dl / λc, boundaries, sources, monitors, deltas / λc, mode_deltas / λc, ;
+                    F, ϵ,
                     verbose, λ=λc)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]
@@ -250,11 +263,11 @@ function picrun(path; kw...)
     lb3 = (lb..., zmin)
     if study == "sparams"
         println("Computing s-parameters...")
-        @unpack S, sols = write_sparams(runs, run_probs, lb, Δ;
+        @unpack S, sols = write_sparams(runs, run_probs, lb, deltas;
             F, verbose=true, framerate, path)
         plotsols(sols, run_probs, path, lb3)
         sol = (; sparam_family(S)...,
-            path, dx, study)
+            path, study)
         open(SOL_PATH, "w") do f
             write(f, json(cpu(sol)))
         end
@@ -277,13 +290,13 @@ function picrun(path; kw...)
             stop = i == iters
             if :phase_shifter == first(keys(targets))
                 @time l, (dldm,) = Flux.withgradient(models) do m
-                    @unpack S, sols = write_sparams(runs, run_probs, lb, Δ,
+                    @unpack S, sols = write_sparams(runs, run_probs, lb, deltas,
                         designs, design_config, models;
                         F, img, alg)#(1)(1)
                     k = keys(S) |> first
                     s = S[k][Symbol("o2@0,o1@0")]
 
-                    @unpack S = write_sparams(runs, run_probs, lb, Δ,
+                    @unpack S = write_sparams(runs, run_probs, lb, deltas,
                         designs, design_config, m;
                         F, img, alg, save_memory, perturb=:ϵ,)#(1)(1)
                     s_ = S[k][Symbol("o2@0,o1@0")]
@@ -296,8 +309,8 @@ function picrun(path; kw...)
                 end
             else
                 @time l, (dldm,) = Flux.withgradient(models) do models
-                    # sols = get_sols(runs, run_probs,  path, lb, Δ,
-                    @unpack S, sols = write_sparams(runs, run_probs, lb, Δ,
+                    # sols = get_sols(runs, run_probs,  path, lb, deltas,
+                    @unpack S, sols = write_sparams(runs, run_probs, lb, deltas,
                         designs, design_config, models;
                         F, img, alg, save_memory)
                     l = 0
@@ -411,7 +424,7 @@ function picrun(path; kw...)
             Flux.update!(opt_state, models, dldm)# |> gpu)
         end
         if framerate > 0
-            write_sparams(runs, run_probs, lb, Δ,
+            write_sparams(runs, run_probs, lb, deltas,
                 designs, design_config, models;
                 F, img, alg, framerate, path)
         end

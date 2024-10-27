@@ -56,11 +56,11 @@ heatmap(model())
 We set key time intervals. The signal must first propagate to port 2 after which all port power fluxes will get monitored
 ```julia
 
-Δ = zeros(2)
-# Δ[1] = 1
-Δ[1] = 2 + 1.6norm(sources[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
-Δ[2] = 2 # duration to record power at output ports
-T = cumsum(Δ)
+deltas = zeros(2)
+# deltas[1] = 1
+deltas[1] = 2 + 1.6norm(sources[1].c - ports[2].c) / λ * sqrt(ϵcore) # simulation duration in [periods] for signal to reach output ports
+deltas[2] = 2 # duration to record power at output ports
+T = cumsum(deltas)
 ```
 We set boundary conditions, sources , and monitor. The modal source profile is obtained from external mode solver , in our case VectorModesolver.jl . Please refer to guide section of docs website for details . To get an approximate  line source for use in 2d from the cross section profile , we sum and collapse it along its height axis
 ```julia
@@ -89,7 +89,7 @@ static_mask = F.(static_mask)
 sz = size(static_mask)
 
 prob = setup(boundaries, sources, monitors, dx, sz; F, ϵmin)
-@unpack dx, dt, sz, geometry_padvals, fieldlims, field_boundvals, source_instances, monitor_instances, u0, = prob
+@unpack dx, dt, sz, geometry_padvals, field_lims, field_boundvals, source_instances, monitor_instances, u0, = prob
 
 # n = (size(Jy) .- size(monitor_instances[1])) .÷ 2
 # power_profile = F.(abs.(Jy[range.(1 .+ n, size(Jy) .- n)...]))
@@ -108,7 +108,7 @@ end
 We define a geometry update function that'll be called each adjoint iteration. It calls geometry generator model to generate design region which gets placed onto mask of static features.
     ```julia
 function make_geometry(model, static_mask, prob)#; make3d=false)
-    @unpack sz, geometry_padvals, fieldlims = prob
+    @unpack sz, geometry_padvals, field_lims = prob
     μ = ones(F, sz)
     σ = zeros(F, sz)
     m = zeros(F, sz)
@@ -127,7 +127,7 @@ function make_geometry(model, static_mask, prob)#; make3d=false)
     end
 
     p = apply(geometry_padvals; ϵ, μ, σ, m)
-    p = apply(fieldlims, p)
+    p = apply(field_lims, p)
 end
 ```
 Optimal design will maximize powers into port 1 and out of port 2. Monitor normals were set so both are positive. `metrics` function compute these figures of merit (FOM) quantities by a differentiable FDTD simulation . `loss` is then defined accordingly 
@@ -151,7 +151,7 @@ function metrics(model, prob; autodiff=true, history=nothing)
     port_fluxes = reduce(T[1]+dt:dt:T[2], init=(u, 0)) do (u, port_fluxes), t
         _step(u, p, t, dx, dt, field_boundvals, source_instances),
         port_fluxes + dt * flux.((u,), monitor_instances[1:2],)
-    end[2] / Δ[2]
+    end[2] / deltas[2]
 
     A = area.(monitor_instances)
     port_mode_powers = [mean(vec(a) .* vec(power_profile)) * A for (a, A) = zip(port_fluxes, A)]

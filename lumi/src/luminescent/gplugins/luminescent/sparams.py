@@ -68,7 +68,7 @@ def sparams_problem(c: gf.Component,
     for w in wimo:
         for i in wimo[w]:
             for mi in wimo[w][i]:
-                runs.append({
+                d = {
                     "sources": {
                         i: {
                             "center": (np.array(c.ports[i].center)/1e3).tolist(),
@@ -85,7 +85,10 @@ def sparams_problem(c: gf.Component,
                             "width": (np.array(c.ports[o].width)/1e3).tolist(),
                             # "endpoints": extend(c.ports[o].endpoints, margin),
                             "wavelength_mode_numbers": {w: list(range(wimo[w][i][mi][o]+1))}
-                        } for o in wimo[w][i][mi]}})
+                        } for o in wimo[w][i][mi]}}
+                d["sources"] = SortedDict(d["sources"])
+                d["monitors"] = SortedDict(d["monitors"])
+                runs.append(d)
 
     prob = setup(c, study=study,  dx=dx,
                  runs=runs, margin=margin,

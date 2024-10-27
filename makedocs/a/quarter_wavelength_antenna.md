@@ -41,10 +41,10 @@ sources = [
 ]
 
 prob = setup(boundaries, sources, monitors, dx, sz; F,)
-@unpack dt, geometry_padvals, fieldlims, field_boundvals, source_instances, monitor_instances, u0, = prob
+@unpack dt, geometry_padvals, field_lims, field_boundvals, source_instances, monitor_instances, u0, = prob
 
 p = apply(geometry_padvals; ϵ, μ, σ, m)
-p = apply(fieldlims, p)
+p = apply(field_lims, p)
 
 # move to gpu
 if dogpu

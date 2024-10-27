@@ -15,6 +15,8 @@ end
 
 function lastrun(; name=nothing, study=nothing, wd="runs")
     path = joinpath(pwd(), wd)
+    !isnothing(name) && return joinpath(path, name)
+
     l = filter(isdir, readdir(path, join=true))
     sort!(l, by=p -> Dates.unix2datetime(mtime(p)), rev=true)
 
@@ -32,11 +34,11 @@ function lastrun(; name=nothing, study=nothing, wd="runs")
     return l[1]
 end
 
-function write_sparams(runs, run_probs, origin, Δ,
+function write_sparams(runs, run_probs, origin, deltas,
     designs=nothing, design_config=nothing, models=nothing;
     alg=nothing, save_memory=false, verbose=false, perturb=nothing, framerate=0, path="", kw...)
     F = run_probs[1].F
-    dx = Δ[1]
+    dx = deltas[1]
     sols = [
         begin
             prob[:_geometry] = make_geometry(models, origin, dx, prob._geometry, designs, design_config; F, perturb)
@@ -52,8 +54,8 @@ function write_sparams(runs, run_probs, origin, Δ,
     # return sol
     coeffs = OrderedDict()
     for (sol, run) in zip(sols, runs)
-        sources = run.sources |> Porcupine.values
-        monitors = run.monitors |> Porcupine.values
+        sources = values(run.sources)
+        monitors = values(run.monitors)
         source_port = first(sources).port
         # source_mn = first(sources).wavelength_mode_numbers(1)[1]
         source_mn = first(sources).wavelength_mode_numbers |> Porcupine.first |> Porcupine.first
@@ -120,13 +122,16 @@ function make_geometry(models, origin, dx, geometry, designs, design_config; F=F
         end
     end for k = keys(geometry)])
 end
-
+using GLMakie: volume
 function plotsols(sols, probs, path, origin)
     for (i, (prob, sol)) in enumerate(zip(probs, sols))
         # try
         @unpack u, p, _p = sol |> cpu
-        @unpack monitor_instances, source_instances, Δ, dl, λ, ratio, bbox = prob |> cpu
+        @unpack monitor_instances, source_instances, deltas, dl, λ, bbox = prob |> cpu
         u = u.Hz
+        volume(u) |> display
+        heatmap(u[:, :, round(Int, size(u, 3) / 2)]) |> display
+        return
         g = _p.ϵ
         u = imresize(u, Tuple(round.(Int, size(u) .* ratio)))
         g = imresize(g, size(u))

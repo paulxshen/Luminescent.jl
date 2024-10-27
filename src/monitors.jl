@@ -1,20 +1,20 @@
 abstract type AbstractMonitor end
 """
-    function Monitor(c, L; normal=nothing, label="")
-    function Monitor(c, lb, ub; normal=nothing, label="")
+    function Monitor(center, L; normal=nothing, label="")
+    function Monitor(center, lb, ub; normal=nothing, label="")
 
 Constructs monitor which can span a point, line, surface, volume or point cloud monitoring fields or power. 
 
 Args
-- c: origin or center of monitor
+- center: origin or center of monitor
 - L: physical dimensions of monitor
-- lb: lower bounds wrt to c
-- ub: upper bounds wrt to c
+- lb: lower bounds wrt to center
+- ub: upper bounds wrt to center
 
 - normal: flux monitor direction (eg normal to flux surface)
 """
 struct Monitor <: AbstractMonitor
-    c
+    center
     lb
     ub
     n
@@ -24,8 +24,8 @@ struct Monitor <: AbstractMonitor
     wavelength_modes
     # meta
     tags
-    function Monitor(c, L, normal=nothing; label="", tags...)
-        new(c, -L / 2, L / 2, normal, string(label), nothing, tags)
+    function Monitor(center, L, normal=nothing; label="", tags...)
+        new(center, -L / 2, L / 2, normal, string(label), nothing, tags)
     end
     function Monitor(a...)
         new(a...)
@@ -34,21 +34,21 @@ end
 
 
 
-function ModalMonitor(wavelength_modes::Map, c, normal, tangent, L; label="", tags...)
-    Monitor(c, -L / 2, L / 2, normal, tangent, string(label), wavelength_modes, tags)
+function ModalMonitor(wavelength_modes::Map, center, normal, tangent, L; label="", tags...)
+    Monitor(center, -L / 2, L / 2, normal, tangent, string(label), wavelength_modes, tags)
 end
 
 wavelengths(m::Monitor) = keys(m.wavelength_modes)
 Base.string(m::Monitor) =
     """
-    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.c|>d2), physical size of $((m.ub-m.lb)|>d2) relative to center, flux normal towards $(normal(m)|>d2)"""
+    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.center|>d2), physical size of $((m.ub-m.lb)|>d2) relative to center, flux normal towards $(normal(m)|>d2)"""
 
 abstract type AbstractMonitorInstance end
 mutable struct MonitorInstance <: AbstractMonitorInstance
     d
     roi
     frame
-    Δ
+    deltas
     v
     center
     label
@@ -63,11 +63,11 @@ Base.length(m::MonitorInstance) = 1
 frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
-function MonitorInstance(m::Monitor, Δ, origin, fieldlims; F=Float32)
-    @unpack n, lb, ub, c, tangent, wavelength_modes, = m
-    n, lb, ub, c, tangent = [convert.(F, a) for a = (n, lb, ub, c, tangent)]
+function MonitorInstance(m::Monitor, deltas, origin, field_lims; F=Float32)
+    @unpack n, lb, ub, center, tangent, wavelength_modes, = m
+    n, lb, ub, center, tangent = [convert.(F, a) for a = (n, lb, ub, center, tangent)]
     L = ub - lb
-    D = length(c)
+    D = length(center)
     d = length(lb)
     A = isempty(L) ? 0 : prod(L,)
     if D == 2
@@ -83,14 +83,20 @@ function MonitorInstance(m::Monitor, Δ, origin, fieldlims; F=Float32)
     ub = maximum.(v)
     L = ub - lb
 
-    roi = dict([k => begin
-        a = (c + lb - origin) ./ Δ - lr[:, 1] + 1.5
-        [l == 0 ? a : (a + (0:sign(l):l-sign(l))) for (a, l) in zip(a, round.(Int, L ./ Δ))]
-    end for (k, lr) = pairs(fieldlims)])
-    n = isnothing(n) ? n : n / norm(n)
-    _center = round.(Int, (c - origin) ./ Δ) + 1
+    global mdeltas = deltas, center, lb, ub, origin, field_lims
+    start = v2i(center + lb - origin, deltas)
+    stop = v2i(center + ub - origin, deltas)
+    sel = abs.(stop - start) .>= 1e-3
+    start += 0.5sel
+    stop -= 0.5sel
 
-    MonitorInstance(d, roi, frame, convert.(complex(F), Δ), convert.(complex(F), A), _center, m.label, fmap(x -> convert.(complex(F), x), wavelength_modes))
+    roi = dict([k => begin
+        dropitr.(range.(start, stop, int(stop - start + 1))) - lr[:, 1] + 1
+    end for (k, lr) = pairs(field_lims)])
+    n = isnothing(n) ? n : n / norm(n)
+    _center = round(v2i(center - origin, deltas) + 0.5)
+
+    MonitorInstance(d, roi, frame, deltas, convert.(complex(F), A), _center, m.label, fmap(x -> convert.(complex(F), x), wavelength_modes))
 end
 
 
@@ -174,8 +180,8 @@ function power(u, m::MonitorInstance)
     m.v * mean(flux(u, m))
 end
 
-function monitors_on_box(c, L)
-    ox, oy, oz = c
+function monitors_on_box(center, L)
+    ox, oy, oz = center
     lx, ly, lz = L
     rx, ry, rz = L / 2
     [

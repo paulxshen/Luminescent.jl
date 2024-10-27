@@ -3,7 +3,7 @@
 
 Updates fields. 
 """
-function update(u, p, t, Δ, dt, field_boundvals, source_instances; alg=nothing)
+function update(u, p, t, field_diffdeltas, dt, field_boundvals, source_instances; alg=nothing)
     # unpack fields and geometry
     E, H = [u(ignore_derivatives() do
         Regex("$k.*")
@@ -16,7 +16,8 @@ function update(u, p, t, Δ, dt, field_boundvals, source_instances; alg=nothing)
     N = ndims(E(1))
     Epads = field_boundvals(r"E.*")
     ∇ = ignore_derivatives() do
-        Del(Δ, kmap(a -> reverse(a, dims=2), field_boundvals))
+        field_diffpadvals = kmap(a -> reverse(a, dims=2), field_boundvals)
+        Del(field_diffdeltas, field_diffpadvals)
     end
     # global _del = ∇
 
@@ -59,9 +60,9 @@ end
 
 # Updates fields. mutating if autodiff is false
 # """
-# function update(u, p, t, Δ, dt, field_boundvals, source_instances; past=false, alg=nothing)
-#     # t, Δ, dt, field_boundvals, source_instances, autodiff, save_memory = ignore_derivatives() do
-#     #     t, Δ, dt, field_boundvals, source_instances, autodiff, save_memory
+# function update(u, p, t, field_deltas, dt, field_boundvals, source_instances; past=false, alg=nothing)
+#     # t, field_deltas, dt, field_boundvals, source_instances, autodiff, save_memory = ignore_derivatives() do
+#     #     t, field_deltas, dt, field_boundvals, source_instances, autodiff, save_memory
 #     # end
 #     # _u, _dudt, u = u
 #     @unpack invϵ, ϵ, μ, σ, m = p
@@ -78,7 +79,7 @@ end
 #         1 - onedge
 #     end
 #     Epads = field_boundvals(r"E.*")
-#     ∇ = StaggeredDel(fill(Δ, d), field_boundvals, alg)
+#     ∇ = StaggeredDel(fill(field_deltas, d), field_boundvals, alg)
 
 #     # first update E
 #     # dEdt = (∇ × H - E * σ - J) / ϵ

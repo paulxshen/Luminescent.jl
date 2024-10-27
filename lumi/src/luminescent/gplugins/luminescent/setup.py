@@ -31,12 +31,12 @@ def setup(c, study, dx, margin,
     prob = dict()
     dx0 = dx
     # dx *= 2
-    ratio = 4
+    ratio = 10
     dl = dx/ratio
     # dl = .01
     # ratio = int(dx/dl)
     dy = dx
-    dz = 1. * dx
+    dz = .5 * dx
 
     if not name:
         l = [prob["timestamp"], study]
@@ -69,46 +69,45 @@ def setup(c, study, dx, margin,
 
     mode_solutions = []
 
-    # if zlims is None:
-    # if core not in layer_stack.layers:
-    #     raise ValueError("please set core=\"core_layer_name\"")
-    # "\"core\" not found in layer_stack so `zlims` must be provided")
     d = get_layers(layer_stack, core_layer)[0]
     hcore = d.thickness
     zcore = d.zmin
-    # hcore = round(d.thickness/dx)*dx
-    # zlims = [zcore, zcore+hcore]
     thickness = hcore
     zcenter = zcore+hcore/2
-
-    port_width = max([p.width/1e3 for p in c.ports])
-    wg_margin = 1*port_width
-    wg_zmargin = 1*thickness
-    xmargin = ymargin = 8*port_width
     zmargin = 3*thickness
 
-    wmode = port_width+2*wg_margin
-    hmode = thickness+2*wg_zmargin
-    wmode = trim(wmode, 2*dx)
-    hmode = trim(hmode, 2*dz)
-    wg_margin = (wmode-port_width)/2
-    wg_zmargin = (hmode-thickness)/2
-
-    C = 1.2
     h = thickness+2*zmargin
     h = trim(h, 2*dz)
     zmargin = (h-thickness)/2
     zmin = zcore-zmargin
     zmax = zmin+h
 
+#
+    port_width = max([p.width/1e3 for p in c.ports])
+    ps = portsides(c)
+    xmargin = ymargin = 2*port_width
+    source_port_margin = 8*port_width
+    margins = [source_port_margin if p else xmargin for p in ps]
     l0, w0 = c.bbox_np()[1]-c.bbox_np()[0]
-    l = l0+2*xmargin
-    l = trim(l, 2*dx)
-    xmargin = (l-l0)/2
 
-    w = w0+2*ymargin
-    w = trim(w, 2*dy)
-    ymargin = (w-w0)/2
+    _l = l0+margins[0]+margins[2]
+    l = trim(_l, 2*dx)
+    margins[0] += (l-_l)
+
+    _w = w0+margins[1]+margins[3]
+    w = trim(_w, 2*dy)
+    margins[1] += (w-_w)
+
+    #
+    modemargin = 1*port_width
+    zmodemargin = 1*thickness
+    wmode = port_width+2*modemargin
+    hmode = thickness+2*zmodemargin
+    wmode = trim(wmode, 2*dx)
+    hmode = trim(hmode, 2*dz)
+    modemargin = (wmode-port_width)/2
+    zmodemargin = (hmode-thickness)/2
+    zmode = zcore-zmodemargin
 
     prob["thickness"] = thickness
     prob["zcenter"] = zcenter
@@ -120,27 +119,48 @@ def setup(c, study, dx, margin,
     prob["L"] = [l, w, h]
 
     _c = gf.Component()
-    _c << gf.components.bbox(
-        component=c, left=xmargin, right=xmargin, top=ymargin, bottom=ymargin, layer=bbox_layer)
-    for orientation in [0, 90, 180, 270]:
-        if orientation in [0, 180]:
-            length = xmargin
+    kwargs = dict()
+    for (orientation, side, length, p) in zip([0, 90, 180, 270], ["right", "top", "left", "bottom"], margins, ps):
+        if p:
+            c = gf.components.extend_ports(
+                c, None, length, orientation=orientation)
         else:
-            length = ymargin
-        c = gf.components.extend_ports(
-            component=c, orientation=orientation, length=length)
+            kwargs[side] = length
+    _c << gf.components.bbox(component=c, layer=bbox_layer, **kwargs)
     c0 = _c << c
     c = _c
     c.plot()
     c.show()
 
+    lb = c.bbox_np()[0].tolist()
+    center = [c.bbox_np()[0][0], c.bbox_np()[0][1]+w/2, zcenter]
+
+    xs = arange(lb[0], lb[0]+l, dx)
+    ys = arange(lb[1], lb[1]+w, dy)
+    # zs = sorted(list(set(
+    #     arange(zmin, zcore-zmodemargin, 4*dz) +
+    #     arange(zcore-zmodemargin, zcore-2*dz, 2*dz) +
+    #     arange(zcore-2*dz, zcore+hcore+2*dz, dz) +
+    #     arange(zcore+hcore+2*dz, zcore+hcore+zmodemargin, 2*dz) +
+    #     arange(zcore+hcore+zmodemargin, zmax, 4*dz)
+    # )))
+    z0 = zmin
+    z1 = zmode
+    z2 = zmode+hmode
+    z3 = zmax
+    zs = sorted(list(set(
+        arange(z0, z1, 2*dz) +
+        arange(z1, z2, dz) +
+        arange(z2, z3, 2*dz)
+    )))
+    prob["xs"] = xs
+    prob["ys"] = ys
+    prob["zs"] = zs
+
     for run in runs:
         for port in run["sources"]:
             run["sources"][port]["center"] = (
                 np.array(c0.ports[port].center)/1e3).tolist()
-        # for port in run["monitors"]:
-        #     x, y = c.ports[port].center
-            # run["monitors"][port]["center"] = [x+xmargin, y+ymargin]
 
     # a = min([min([materials[d.material]["epsilon"] for d in get_layers(
     #     layer_stack, l)]) for l in bbox_layer])
@@ -154,7 +174,6 @@ def setup(c, study, dx, margin,
     #     margin = trim(C*port_width, dx)
     layers = set(c.layers)-set(exclude_layers)
 
-    center = [c.bbox_np()[0][0], c.bbox_np()[0][1]+w/2, zcenter]
     normal = [1, 0, 0]
 
     temp = os.path.join(path, "temp")
@@ -168,7 +187,9 @@ def setup(c, study, dx, margin,
     prob["N"] = 2 if approx_2D else 3
 
     prob["hmode"] = hmode
-    wmode = port_width+2*wg_margin
+    prob["wmode"] = wmode
+    prob["zmode"] = zmode
+    wmode = port_width+2*modemargin
     # print(margin)
     neffmin = 1000000
     wavelengths = []
@@ -217,10 +238,6 @@ def setup(c, study, dx, margin,
                     })
     wavelengths = sorted(set(wavelengths))
     wl = np.median(wavelengths)
-    if port_source_offset == "auto":
-        # port_source_offset = trim(2.6*wl/neffmin, dx)
-        port_source_offset = trim(3*port_width, dx)
-    prob["port_source_offset"] = port_source_offset
     if source_margin == "auto":
         source_margin = 2*dx
     prob["source_margin"] = source_margin
@@ -238,9 +255,6 @@ def setup(c, study, dx, margin,
             source_ports.append(p)
         else:
             nonsource_ports.append(p)
-
-    prob["source_portsides"] = portsides(source_ports, bbox)
-    prob["nonsource_portsides"] = portsides(nonsource_ports, bbox)
 
     prob["mode_solutions"] = mode_solutions
     prob["runs"] = runs

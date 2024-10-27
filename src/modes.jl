@@ -10,24 +10,24 @@ mirror_mode(m) = namedtuple([k =>
         a
     end for k in keys(m)])
 
-# function normalize_mode(m, Δ)
-function inner(u, v, Δ)
+# function normalize_mode(m, deltas)
+function inner(u, v, deltas)
     p = 0
     if haskey(u, :Ex) && haskey(v, :Hy)
-        p += u.Ex ⋅ v.Hy
+        p += conj(u.Ex) .* v.Hy
     end
     if haskey(u, :Ey) && haskey(v, :Hx)
-        p -= u.Ey ⋅ v.Hx
+        p -= conj(u.Ey) .* v.Hx
     end
     if haskey(v, :Ex) && haskey(u, :Hy)
-        p += u.Hy ⋅ v.Ex
+        p += conj(u.Hy) .* v.Ex
     end
     if haskey(v, :Ey) && haskey(u, :Hx)
-        p -= u.Hx ⋅ v.Ey
+        p -= conj(u.Hx) .* v.Ey
     end
-    p * ignore_derivatives() do
-        prod(Δ) / 2
-    end
+    sum(p .* ignore_derivatives() do
+        reduce(.*, deltas) / 2
+    end)
 end
 
 
@@ -36,8 +36,8 @@ function keepxy(mode)
 end
 
 
-function mode_decomp(m, u, Δ)
-    p = real(inner(m, m, Δ))
+function mode_decomp(m, u, deltas)
+    p = real(inner(m, m, deltas))
     m1 = m / ignore_derivatives() do
         sqrt(abs(p))
     end
@@ -45,7 +45,7 @@ function mode_decomp(m, u, Δ)
     if p < 0
         m2, m1 = m1, m2
     end
-    inner.((m1, m2), (u,), (Δ,))
+    inner.((m1, m2), (u,), (deltas,))
 end
 
 

@@ -32,6 +32,18 @@ function add_current_keys!(N::AbstractDict)
     end
     N
 end
+
+
+_make_field_deltas(d::Real, a...) = d
+function _make_field_deltas(d, field_boundvals, field_sizes, i, isdiff=false)
+    NamedTuple([k => begin
+        if isdiff * isnothing(v[i, 1])
+            d = vcat(d[1], (d[1:end-1] .+ d[2:end]) ./ 2)
+        end
+        sel = i .== 1:N
+        reshape(d, Tuple(1 - sel + field_sizes[k][i] * sel))
+    end for (k, v) = pairs(field_boundvals)])
+end
 """
     function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
 
@@ -40,7 +52,7 @@ Args
 - L: vector of lengths in wavelengths of simulation domain
 - polarization: only applies to 2d which can be :TM (Ez, Hx, Hy) or :TE (Hz, Ex, Ey)
 """
-function setup(boundaries, sources, monitors, Δ, dl;
+function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     polarization=:TE,
     # transient_duration=max_source_dist(sources), steady_state_duration=2,
     transient_duration=0, steady_state_duration=0,
@@ -54,14 +66,11 @@ function setup(boundaries, sources, monitors, Δ, dl;
     # Courant=0.5,
     Courant=0.95,
     kw...)
-    ratio = round.(Δ / dl)
-    Δ, ϵ, μ, σ, m = [convert.(F, a) for a in (Δ, ϵ, μ, σ, m)]
-    N = length(Δ)
-    if isa(Δ, Number)
-        Δ = fill(Δ, N)
-    end
+    deltas, ϵ, μ, σ, m = F.((deltas, ϵ, μ, σ, m))
+    global deltas1 = deltas
+    N = length(deltas)
     L = size(ϵ) * dl
-    sz = Tuple(round.(Int, L ./ Δ))
+    sz = Tuple([isa(d, Number) ? Int(l / d) : length(d) for (d, l) = zip(deltas, L)])
     a = ones(F, Tuple(sz))
     global _geometry = (; ϵ, μ, σ, m) |> pairs |> OrderedDict
     global geometry = OrderedDict()
@@ -87,12 +96,13 @@ function setup(boundaries, sources, monitors, Δ, dl;
     # if isa(pml_ramp_fracs, Number)
     #     pml_ramp_fracs = fill(pml_ramp_fracs, N)
     # end
+    maxdeltas = maximum.(deltas)
     if isnothing(pml_depths)
         mpml = σpml = 2.0
         @show δ = 4 / nmin / (σpml + mpml)
-        pml_depths = max.([δ, δ, 0.2δ][1:N], Δ)
+        pml_depths = max.([δ, δ, 0.2δ][1:N], maxdeltas)
     end
-    pml_depths = trim.(pml_depths, Δ)
+    pml_depths = trim.(pml_depths, maxdeltas)
 
 
 
@@ -123,6 +133,7 @@ function setup(boundaries, sources, monitors, Δ, dl;
     field_boundvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
     geometry_padvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
     geometry_padamts = DefaultDict(() -> zeros(Int, N, 2))
+    _geometry_padamts = DefaultDict(() -> zeros(Int, N, 2))
     is_field_on_lb = Dict([k => zeros(Int, N) for k = field_names])
     is_field_on_ub = Dict([k => zeros(Int, N) for k = field_names])
     bbox = zeros(F, N, 2)
@@ -192,7 +203,8 @@ function setup(boundaries, sources, monitors, Δ, dl;
         for j = 1:2
             b = db[i, j]
             if isa(b, PML)
-                nspml = Int.(b.d / Δ[i])
+                npml = round(b.d / maxdeltas[i])
+                _npml = round(b.d / dl)
                 # l1 = max.(1, round.(b.ramp_frac * l))
                 # r1 = max.(1, round.(b.ramp_frac * r))
                 # if any(l1 .> 0) || any(r1 .> 0)
@@ -201,12 +213,16 @@ function setup(boundaries, sources, monitors, Δ, dl;
                 #     push!(geometry_padvals[:σ], OutPad(rr, l1, r1, sz))
                 #     push!(geometry_padvals[:m], OutPad(rr, l1, r1, sz))
                 # end
-                # l2 = l - l1
-                # r2 = r - r1
-                # if any(l2 .> 0) || any(r2 .> 0)
-
+                if !isa(deltas[i], Number)
+                    if j == 1
+                        pushfirst!(deltas[i], fill(maxdeltas[i], npml)...)
+                    else
+                        push!(deltas[i], fill(maxdeltas[i], npml)...)
+                    end
+                end
                 for k = (:σ, :m, :ϵ, :μ)
-                    geometry_padamts[k][i, j] = nspml
+                    geometry_padamts[k][i, j] = npml
+                    _geometry_padamts[k][i, j] = _npml
                 end
                 for k = (:ϵ, :μ)
                     geometry_padvals[k][i, j] = :replicate
@@ -218,7 +234,7 @@ function setup(boundaries, sources, monitors, Δ, dl;
                     bbox[i, :] .+= b.d
                 end
                 for k = keys(field_sizes)
-                    field_sizes[k][i] += nspml
+                    field_sizes[k][i] += npml
                 end
             end
             f = nodes[i, j]
@@ -244,7 +260,7 @@ function setup(boundaries, sources, monitors, Δ, dl;
     add_current_keys!(field_sizes)
 
     field_sizes = NamedTuple([k => Tuple(field_sizes[k]) for (k) = keys(field_sizes)])
-    fields = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for (k) = field_names])
+    fielmaxdeltas = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for (k) = field_names])
     if N == 1
     elseif N == 3
         u0 = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz, :Jx, :Jy, :Jz)])
@@ -257,9 +273,9 @@ function setup(boundaries, sources, monitors, Δ, dl;
     end
 
     geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padamts[k], dims=2) for k = keys(geometry_padamts)])
-    # fieldlims = NamedTuple(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
-    global fieldlims = OrderedDict{Symbol,Any}()
-    field_grids = Dict{Symbol,Any}()
+    # field_lims = NamedTuple(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
+    global field_lims = OrderedDict{Symbol,Any}()
+    field_grimaxdeltas = Dict{Symbol,Any}()
     for k = keys(geometry_sizes)
         if k in (:μ, :m)
             names = Hnames
@@ -276,19 +292,20 @@ function setup(boundaries, sources, monitors, Δ, dl;
                 f => v
             end for f = names
         ])
-        fieldlims[k] = v
+        field_lims[k] = v
     end
-    fieldlims = merge(values(fieldlims)...)
-    fieldlims = add_current_keys(fieldlims)
+    field_lims = merge(values(field_lims)...)
+    field_lims = add_current_keys(field_lims)
     origin = -bbox[:, 1]
 
-    global _origin, _fieldlims, _sources = origin, fieldlims, sources
-    source_instances = SourceInstance.(sources, (Δ,), (field_sizes,), (origin,), (fieldlims,); F)
-    monitor_instances = MonitorInstance.(monitors, (Δ,), (origin,), (fieldlims,); F)
-    # roi = MonitorInstance(Monitor(zeros(N), zeros(N), Δ * sz), Δ, sz, common_left_pad_amount, is_field_on_lb, fl; F)
-    onedge = NamedTuple([k => hcat(v, is_field_on_ub[k]) for (k, v) = pairs(is_field_on_lb)])
+    field_deltas = [_make_field_deltas(d, field_boundvals, field_sizes, i) for (i, d) = enumerate(deltas)]
+    field_diffdeltas = [_make_field_deltas(d, field_boundvals, field_sizes, i, true) for (i, d) = enumerate(deltas)]
+    global _origin, _field_lims, _sources = origin, field_lims, sources
+    source_instances = SourceInstance.(sources, (deltas,), (field_sizes,), (origin,), (field_lims,); F)
+    monitor_instances = MonitorInstance.(monitors, (deltas,), (origin,), (field_lims,); F)
+    field_spacings = field_deltas / dl
 
-    dt = nmin / √(sum(dx -> 1 / dx^2, Δ)) * Courant
+    dt = nmin / √(sum(dx -> 1 / minimum(dx)^2, deltas)) * Courant
     dt = 1 / ceil(1 / dt) |> F
     sz = Tuple(sz)
 
@@ -297,7 +314,7 @@ function setup(boundaries, sources, monitors, Δ, dl;
     field_boundvals = NamedTuple(field_boundvals)
 
     if transient_duration == 0
-        transient_duration = sum(sz .* Δ * nmax)
+        transient_duration = sum(L * nmax)
     end
     if steady_state_duration == 0
         if isempty(monitors)
@@ -314,13 +331,15 @@ function setup(boundaries, sources, monitors, Δ, dl;
     end
     transient_duration, steady_state_duration = convert.(F, (transient_duration, steady_state_duration))
     global res = (;
-                     geometry_padvals, geometry_padamts, field_boundvals, fieldlims, bbox,
+                     geometry_padvals, geometry_padamts, _geometry_padamts, field_boundvals, field_lims, bbox,
+                     field_deltas, field_diffdeltas, field_spacings,
                      source_instances, monitor_instances, field_names,
+                     mode_deltas,
                      polarization, F, Courant,
                      transient_duration, steady_state_duration,
                      geometry, _geometry, nmax, nmin,
                      is_field_on_lb, is_field_on_ub, geometry_sizes,          # roi,
-                     u0, fields, N, sz, Δ, dl, dt, ratio, kw...) |> pairs |> OrderedDict
+                     u0, N, sz, deltas, dl, dt, kw...) |> pairs |> OrderedDict
 
 end
 update = update

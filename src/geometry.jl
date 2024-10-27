@@ -1,10 +1,10 @@
-function apply_subpixel_averaging(geometry, fieldlims)
+function apply_subpixel_averaging(geometry, field_lims)
     namedtuple([k => begin
         lrs = ignore_derivatives() do
             E = r"E.*"
             H = r"H.*"
             f = (; ϵ=E, σ=E, μ=H, m=H, invϵ=E)[k]
-            fieldlims(f)
+            field_lims(f)
         end
         @assert length(lrs) > 0
         a = geometry[k]
@@ -27,25 +27,22 @@ function pad_geometry(geometry, geometry_padvals, geometry_padamts, ratio=1)
         end for k = keys(geometry)])
 end
 
-function tensorinv(a, fieldlims, ratio,)
+function tensorinv(a, field_lims, field_spacings)
     N = ndims(a)
     T = typeof(a)
     F = eltype(a)
-    sz = size(a) .÷ ratio
-    margin = ratio .÷ 2
-    A = pad(a, :replicate, margin)
-    A = cpu(A)
+    margin = round([field_spacings[i](1)[1] for i = 1:N] / 2)
+    _a = pad(a, :replicate, margin, 0)
+    # A = cpu(A)
 
-    global v = [
+    v = [
         begin
-            lr = cpu(lr)
-            l, r = eachcol(lr)
-            start = Int.((l - 0.5) * ratio + margin) + 1
-            finish = size(A) + Int.((r - sz + 0.5) * ratio - margin)
-            @show start, finish, size(A), margin, l, r, sz, ratio, size(a)
-            _a = A[range.(start, finish)...]
-            # _a = crop(A, (l - 0.5) * ratio + margin, margin - (r - sz + 0.5) * ratio)
-            downsample(_a, ratio) do a
+            fs = round.(vec.(getindex.(field_spacings, k)))
+            l, r = eachcol(field_lims[k])
+            start = round(l .* margin) + 1
+            sz = sum.(fs)
+            global aa = [start, sz, fs, _a]
+            downsample(_a[range.(start, start + sz - 1)...], fs) do a
                 n = ignore_derivatives() do
                     if maximum(a) == minimum(a)
                         zeros(F, N)
@@ -63,11 +60,6 @@ function tensorinv(a, fieldlims, ratio,)
                 P = n * n'
                 P * mean(1 ./ a) + (I - P) / mean(a)
             end
-        end for lr = fieldlims(r"E.*")
-    ]
+        end for k = keys(field_lims(r"E.*"))]
     T.([getindex.(v[j], i, j) for i = 1:N, j = 1:N])
-    # @assert !any(iszero, a)
-    # @assert !any(isnan, a)
-    # # return [i == j ? 1 ./ a : zeros(F, size(a)) for i = 1:N, j = 1:N]
-    # [i == j ? 1 ./ downsample(a, ratio) : zeros(F, size(a) .÷ ratio) for i = 1:N, j = 1:N]
 end

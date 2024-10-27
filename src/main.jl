@@ -5,6 +5,10 @@ using Zygote
 using CairoMakie
 
 using Porcupine
+using Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, GPUArraysCore
+using Flux: mae, Adam
+using Zygote: withgradient, Buffer, ignore_derivatives
+using BSON: @save, @load, load
 using ArrayPadding
 include("constants.jl")
 include("modes.jl")
@@ -22,10 +26,6 @@ include("dispersion.jl")
 # include("c.jl")
 include("snapshot.jl")
 
-using Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, GPUArraysCore
-using Flux: mae, Adam
-using Zygote: withgradient, Buffer, ignore_derivatives
-using BSON: @save, @load, load
 include("pic/utils.jl")
 include("pic/run.jl")
 # using AbbreviatedStackTraces

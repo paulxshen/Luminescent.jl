@@ -105,8 +105,8 @@ boundaries = [] # unspecified boundaries default to PML
 
 # monitors = [monitors[1]]
 
-# device, guess,  Δ, ϵbase, ϵcore, ϵclad, dx, λc =
-#     F.((device, guess,  Δ, ϵbase, ϵcore, ϵclad, dx, λc))
+# device, guess,  deltas, ϵbase, ϵcore, ϵclad, dx, λc =
+#     F.((device, guess,  deltas, ϵbase, ϵcore, ϵclad, dx, λc))
 
 device = 0
 device, dx, λc =

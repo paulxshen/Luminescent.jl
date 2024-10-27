@@ -122,7 +122,7 @@ end
 @functor SourceInstance (g, _g,)
 Porcupine.keys(m::SourceInstance) = keys(m.g)
 
-function SourceInstance(s::ModalSource, Δ, sizes, origin, fieldlims, ; F=Float32)
+function SourceInstance(s::ModalSource, deltas, sizes, origin, field_lims, ; F=Float32)
     @unpack f, center, lb, ub, normal, tangent, label, tags = s
     J = OrderedDict()
     for k = (:Jx, :Jy, :Jz)
@@ -135,7 +135,6 @@ function SourceInstance(s::ModalSource, Δ, sizes, origin, fieldlims, ; F=Float3
     J = values(J)
 
     L = ub .- lb
-    sz = max.(1, round.(Int, L ./ Δ[1:end-1])) |> Tuple
     d = length(lb)
     D = length(center) # 2D or 3D
     if D == 2
@@ -143,8 +142,6 @@ function SourceInstance(s::ModalSource, Δ, sizes, origin, fieldlims, ; F=Float3
         yaxis = [0, 0, 1]
         # xaxis = cross(yaxis, zaxis)
         xaxis = cross(yaxis, zaxis)
-        # @show J
-        # J = reshape.([Jx, Jy, Jz], (sz,))
     else
         zaxis = convert.(F, normal)
         xaxis = convert.(F, tangent)
@@ -152,7 +149,6 @@ function SourceInstance(s::ModalSource, Δ, sizes, origin, fieldlims, ; F=Float3
     end
 
     frame = [xaxis, yaxis, zaxis]
-    # J = resize.(J, (sz,))
     J = reframe(frame, J)
     if D == 2
         J = [J[:, :, 1] for J in J]
@@ -170,69 +166,41 @@ function SourceInstance(s::ModalSource, Δ, sizes, origin, fieldlims, ; F=Float3
     v = zip(lb, ub)
     lb = minimum.(v)
     ub = maximum.(v)
+    n = findfirst(abs.(zaxis) .> 0.001)
     mode = ignore_derivatives() do
-        mode / Δ[findfirst(abs.(zaxis) .> 0.001)]
+        mode / deltas[n][1]#[findfirst(>(center[n]), cumsum(deltas[n]))]
     end
-    SourceInstance(Source(f, mode, center, lb, ub; label, tags...), Δ, sizes, origin, fieldlims, ; F)
-end
-function SourceInstance(s::PlaneWave, Δ, sizes, common_left_pad_amount, fl, sz0; F=Float32)
-    @unpack f, mode, dims, label, tags = s
-    _F(x::Real) = F(x)
-    _F(x::Complex) = ComplexF32(x)
-    f = _F ∘ f
-    d = length(common_left_pad_amount)
-    g = Dict([k => _F.(mode[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / Δ for k = keys(mode)])
-    o = NamedTuple([k =>
-        1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
-                    for k = keys(fl)])
-    _g = Dict([k => place(zeros(F, sizes[k]), o[k], g[k],) for k = keys(mode)])
-    c = first(values(sizes)) .÷ 2
-    SourceInstance(f, g, _g, o, c, label, tags)
+    SourceInstance(Source(f, mode, center, lb, ub; label, tags...), deltas, sizes, origin, field_lims, ; F)
 end
 
-function SourceInstance(s::GaussianBeam, Δ, sizes, fl, stop; F=Float32)
-    _F(x::Real) = F(x)
-    _F(x::Complex) = ComplexF32(x)
-    f = _F ∘ f
-    @unpack f, σ, mode, c, dims = s
-    n = round(Int, 2σ / Δ)
-    r = n * Δ
-    r = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(c)]
-    g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(r...)] / Δ
-    fl = fl .- 1 .+ index(c, Δ) .- round.(Int, (size(g) .- 1) ./ 2)
-    _g = place(zeros(F, sz), g, fl)
-    SourceInstance(f, g, _g, fl, c, label)
-end
-
-function SourceInstance(s::Source, Δ, sizes, origin, fieldlims, ; F=Float32)
+function SourceInstance(s::Source, deltas, sizes, origin, field_lims, ; F=Float32)
     @unpack f, mode, center, lb, ub, label, tags = s
     _F(x::Real) = F(x)
     _F(x::Complex) = ComplexF32(x)
 
     f = _F ∘ f
-    # Δmode = Δ[end-N+2:end]
-    # g = Dict([k =>
-    #     begin
-    #         if isa(mode[k], AbstractArray)
-    #             sz0 = size(mode[k])
-    #             sz = max.(1, round.(Int, abs.(ub - lb) ./ Δ)) |> Tuple
-    #             # sz0 != sz && @warn "source array size$sz0 not same  as domain size $sz. source will be interpolated"
-    #             imresize(_F.(mode[k]), sz, method=ImageTransformations.Lanczos4OpenCV())
-    #         else
-    #             # r = [a == b ? (a:a) : (a+Δ/2*sign(b - a):Δ*sign(b - a):b) for (a, b) = zip(lb, ub)]
-    #             # [_F.(mode[k](v...)) for v = Iterators.product(r...)]
-    #         end
-    #     end for k = keys(mode)])
+    start = v2i(center + lb - origin, deltas)
+    stop = v2i(center + ub - origin, deltas)
+    sel = abs.(stop - start) .>= 0.001
+    start += 0.5sel
+    stop -= 0.5sel
+
+    sz0 = size(mode(1))
+    sz = stop - start .+ 1
+    @show sz0, sz
+    # g = NamedTuple([k => imresize(a, Tuple(round(sz))) for (k, a) = pairs(mode)])
     g = mode
-    o = NamedTuple([k => F.((center + lb - origin) ./ Δ - fl[:, 1] .+ 1.5) for (k, fl) = pairs(fieldlims)])
-    # @show center, lb, origin, Δ, fieldlims, o
-    global _g = Dict([k => begin
+    global sdeltas = deltas
+
+    global o = NamedTuple([k => F.(start - fl[:, 1] + 1) for (k, fl) = pairs(field_lims)])
+    # @show center, lb, origin, deltas, field_lims, o
+    global _g = namedtuple([k => begin
         a = zeros(ComplexF32, sizes[k])
         setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1)...)
         a
     end for k = keys(mode)])
     # error("stop")
-    _center = round.(Int, (center - origin) ./ Δ) + 1
+    _center = round(v2i(center - origin, deltas) + 0.5)
     SourceInstance(f, g, _g, o, _center, label, tags)
 end
 
@@ -255,4 +223,34 @@ function EH2JM(d::T) where {T}
 end
 # function EH2JM(d::NamedTuple)
 #     NamedTuple((d) |> pairs |> OrderedDict |> EH2JM |> pairs)
+# end
+
+
+# function SourceInstance(s::PlaneWave, deltas, sizes, common_left_pad_amount, fl, sz0; F=Float32)
+#     @unpack f, mode, dims, label, tags = s
+#     _F(x::Real) = F(x)
+#     _F(x::Complex) = ComplexF32(x)
+#     f = _F ∘ f
+#     d = length(common_left_pad_amount)
+#     g = Dict([k => _F.(mode[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / deltas for k = keys(mode)])
+#     o = NamedTuple([k =>
+#         1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
+#                     for k = keys(fl)])
+#     _g = Dict([k => place(zeros(F, sizes[k]), o[k], g[k],) for k = keys(mode)])
+#     c = first(values(sizes)) .÷ 2
+#     SourceInstance(f, g, _g, o, c, label, tags)
+# end
+
+# function SourceInstance(s::GaussianBeam, deltas, sizes, fl, stop; F=Float32)
+#     _F(x::Real) = F(x)
+#     _F(x::Complex) = ComplexF32(x)
+#     f = _F ∘ f
+#     @unpack f, σ, mode, c, dims = s
+#     n = round(Int, 2σ / deltas)
+#     r = n * deltas
+#     r = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(c)]
+#     g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(r...)] / deltas
+#     fl = fl .- 1 .+ index(c, deltas) .- round.(Int, (size(g) .- 1) ./ 2)
+#     _g = place(zeros(F, sz), g, fl)
+#     SourceInstance(f, g, _g, fl, c, label)
 # end
