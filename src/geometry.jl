@@ -27,22 +27,26 @@ function pad_geometry(geometry, geometry_padvals, geometry_padamts, ratio=1)
         end for k = keys(geometry)])
 end
 
-function tensorinv(a, field_lims, field_spacings)
+_size(s::Real, n) = int(s * n)
+_size(s, _) = int(sum(s))
+function tensorinv(a, field_lims, spacings)
     N = ndims(a)
     T = typeof(a)
     F = eltype(a)
-    margin = round([field_spacings[i](1)[1] for i = 1:N] / 2)
-    _a = pad(a, :replicate, margin, 0)
+    spacings = _spacings.(spacings, size(a))
+    margin = [spacings[i][1] for i = 1:N]
+    _a = pad(a, :replicate, margin)
     # A = cpu(A)
 
-    v = [
+    v = Flux.@ignore_derivatives values(field_lims(r"E.*"))
+    v = [[
         begin
-            fs = round.(vec.(getindex.(field_spacings, k)))
-            l, r = eachcol(field_lims[k])
-            start = round(l .* margin) + 1
-            sz = sum.(fs)
-            global aa = [start, sz, fs, _a]
-            downsample(_a[range.(start, start + sz - 1)...], fs) do a
+            li, ri = eachcol(v[i])
+            lj, rj = eachcol(v[j])
+            o = min.(li, lj) - 0.5
+            start = round((o + 1) * margin) + 1
+            # global aa = [start, r, l, fs, _a]
+            downsample_by_range(_a[range.(start, start + _size.(spacings, ri - li + 1) - 1)...], [[range(cum + i - space, cum + i - 1) for (cum, space) = zip(cumsum(spacing), spacing)] for (i, spacing) = zip(start, spacings)]) do a
                 n = ignore_derivatives() do
                     if maximum(a) == minimum(a)
                         zeros(F, N)
@@ -60,6 +64,14 @@ function tensorinv(a, field_lims, field_spacings)
                 P = n * n'
                 P * mean(1 ./ a) + (I - P) / mean(a)
             end
-        end for k = keys(field_lims(r"E.*"))]
-    T.([getindex.(v[j], i, j) for i = 1:N, j = 1:N])
+        end for j = 1:i
+    ] for i = 1:N]
+    T.([
+        begin
+            if j > i
+                j, i = i, j
+            end
+            getindex.(v[i][j], i, j)
+        end for i = 1:N, j = 1:N
+    ])
 end

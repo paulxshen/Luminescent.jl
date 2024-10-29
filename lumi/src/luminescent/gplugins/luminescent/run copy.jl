@@ -377,7 +377,7 @@ end
 if study == "sparams"
     sparams = write_sparams()
     # tparams = dict([k => abs(sparams[k])^2 for k = keys(sparams)])
-    # sol = [(; wavelength=λ, sparams=dict([k => reim(v) for (k, v) = pairs(d)])) for (λ, d) = pairs(sparams)]
+    # sol = [(; wavelengths=λ, sparams=dict([k => reim(v) for (k, v) = pairs(d)])) for (λ, d) = pairs(sparams)]
     sol = sparam_family(sparams)
 elseif study == "inverse_design"
     model = model

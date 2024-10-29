@@ -44,7 +44,7 @@ for (approx_2D, gpu, dtype, save_memory) in itertools.product(
 #     ["f32"],
 #         [[1.55], ]):
 #     lumi.write_sparams(c, name=f"{i}",
-#                        wavelength=wavelengths, keys=["2,1"], dx=0.1,
+#                        wavelengths=wavelengths, keys=["2,1"], dx=0.1,
 #                        approx_2D=approx_2D, gpu=gpu, dtype=dtype,
 #                        run=False, wd=BUILD_RUNS)
 #     i += 1

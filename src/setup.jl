@@ -35,7 +35,7 @@ end
 
 
 _make_field_deltas(d::Real, a...) = d
-function _make_field_deltas(d, field_boundvals, field_sizes, i, isdiff=false)
+function _make_field_deltas(d, N, field_boundvals, field_sizes, i, isdiff=false)
     NamedTuple([k => begin
         if isdiff * isnothing(v[i, 1])
             d = vcat(d[1], (d[1:end-1] .+ d[2:end]) ./ 2)
@@ -54,29 +54,21 @@ Args
 """
 function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     polarization=:TE,
-    # transient_duration=max_source_dist(sources), steady_state_duration=2,
     transient_duration=0, steady_state_duration=0,
     ϵ=1, μ=1, σ=0, m=0,
     F=Float32,
     pml_depths=nothing, pml_ramp_fracs=0.2,
-    # xpml=0.4, ypml=0.4, zpml=0.4,
-    # xpml_ramp_frac=0.5, ypml_ramp_frac=0.5, zpml_ramp_frac=0.5,
-
-    # ϵmin=1,
-    # Courant=0.5,
     Courant=0.95,
     kw...)
     deltas, ϵ, μ, σ, m = F.((deltas, ϵ, μ, σ, m))
+    spacings = int(deltas / dl)
     global deltas1 = deltas
     N = length(deltas)
     L = size(ϵ) * dl
-    sz = Tuple([isa(d, Number) ? Int(l / d) : length(d) for (d, l) = zip(deltas, L)])
+    sz = Tuple([isa(d, Number) ? int(l / d) : length(d) for (d, l) = zip(deltas, L)])
     a = ones(F, Tuple(sz))
     global _geometry = (; ϵ, μ, σ, m) |> pairs |> OrderedDict
     global geometry = OrderedDict()
-    # f(x::Number) = a * x
-    # f(x::AbstractArray) = x
-    # geometry = kmap(f, geometry)
     for (k, v) = pairs(_geometry)
         if isa(v, AbstractArray)
             geometry[k] = imresize(v, sz)
@@ -298,8 +290,8 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     field_lims = add_current_keys(field_lims)
     origin = -bbox[:, 1]
 
-    field_deltas = [_make_field_deltas(d, field_boundvals, field_sizes, i) for (i, d) = enumerate(deltas)]
-    field_diffdeltas = [_make_field_deltas(d, field_boundvals, field_sizes, i, true) for (i, d) = enumerate(deltas)]
+    field_deltas = [_make_field_deltas(d, N, field_boundvals, field_sizes, i) for (i, d) = enumerate(deltas)]
+    field_diffdeltas = [_make_field_deltas(d, N, field_boundvals, field_sizes, i, true) for (i, d) = enumerate(deltas)]
     global _origin, _field_lims, _sources = origin, field_lims, sources
     source_instances = SourceInstance.(sources, (deltas,), (field_sizes,), (origin,), (field_lims,); F)
     monitor_instances = MonitorInstance.(monitors, (deltas,), (origin,), (field_lims,); F)
@@ -312,6 +304,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     # geometry_padvals[:invϵ] = geometry_padvals[:ϵ]
     geometry_padvals = NamedTuple(geometry_padvals)
     field_boundvals = NamedTuple(field_boundvals)
+    field_diffpadvals = kmap(a -> reverse(a, dims=2), field_boundvals)
 
     if transient_duration == 0
         transient_duration = sum(L * nmax)
@@ -331,8 +324,8 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     end
     transient_duration, steady_state_duration = convert.(F, (transient_duration, steady_state_duration))
     global res = (;
-                     geometry_padvals, geometry_padamts, _geometry_padamts, field_boundvals, field_lims, bbox,
-                     field_deltas, field_diffdeltas, field_spacings,
+                     geometry_padvals, geometry_padamts, _geometry_padamts, field_boundvals, field_diffpadvals, field_lims, bbox,
+                     field_deltas, field_diffdeltas, field_spacings, spacings,
                      source_instances, monitor_instances, field_names,
                      mode_deltas,
                      polarization, F, Courant,

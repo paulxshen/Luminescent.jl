@@ -129,8 +129,13 @@ function plotsols(sols, probs, path, origin)
         @unpack u, p, _p = sol |> cpu
         @unpack monitor_instances, source_instances, deltas, dl, λ, bbox = prob |> cpu
         u = u.Hz
-        volume(u) |> display
-        heatmap(u[:, :, round(Int, size(u, 3) / 2)]) |> display
+        N = ndims(u)
+        if N == 3
+            volume(u) |> display
+            heatmap(u[:, :, round(Int, size(u, 3) / 2)]) |> display
+        else
+            heatmap(u) |> display
+        end
         return
         g = _p.ϵ
         u = imresize(u, Tuple(round.(Int, size(u) .* ratio)))

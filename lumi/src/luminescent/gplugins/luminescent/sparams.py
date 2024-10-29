@@ -15,7 +15,7 @@ def sparams_problem(c: gf.Component,
                     margin=None,  # zmargin=None,zlims=None,
                     dx=.05,
                     entries=[],
-                    wavelength=1.55, center_wavelength=None, keys=[],
+                    wavelengths=1.55, center_wavelengths=None, keys=[],
                     approx_2D=False, layer_stack=LAYER_STACK,
                     study="sparams",
                     **kwargs):
@@ -31,10 +31,10 @@ def sparams_problem(c: gf.Component,
                 for o in ports:
                     keys.append(f"o,i")
 
-        if type(wavelength) not in [list, tuple]:
-            wavelengths = [wavelength]
+        if type(wavelengths) not in [list, tuple]:
+            wavelengths = [wavelengths]
         else:
-            wavelengths = wavelength
+            wavelengths = wavelengths
         wavelengths = sorted(wavelengths)
         for w in wavelengths:
             for k in keys:

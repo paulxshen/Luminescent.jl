@@ -46,7 +46,7 @@ def gcell_problem(c,  targets, iters,
                         mo = None
 
                     if mo is not None:
-                        _k = f"o{po}@{_mo},o{pi}@{mi}"
+                        _k = f"{po}@{_mo},{pi}@{mi}"
                         if _k not in targets["tparams"][wl]:
                             d[_k] = 0
 
@@ -80,7 +80,7 @@ def gcell_problem(c,  targets, iters,
 
     prob = sparams_problem(c,
                            layer_stack=layer_stack, materials=materials,
-                           wavelength=wavelengths,
+                           wavelengths=wavelengths,
                            study="inverse_design",
                            keys=keys,
                            approx_2D=approx_2D, ** kwargs)
@@ -114,7 +114,6 @@ def gcell_problem(c,  targets, iters,
             "lsolid": lsolid,
         } for p, s in zip(list(polys.values())[0], symmetries)
     ]
-    epsmin = np.min(prob["eps_2D"])
     prob["stoploss"] = stoploss
     prob["design_config"] = dict()
     l = get_layers(layer_stack, fill_layer)[0]
@@ -132,7 +131,7 @@ def gcell_problem(c,  targets, iters,
         d["ϵ"] = d["epsilon"]
     else:
         d = copy.deepcopy(d)
-        d["epsilon"] = epsmin
+        # d["epsilon"] = epsmin
         d["ϵ"] = d["epsilon"]
     prob["design_config"]["void"] = d
 

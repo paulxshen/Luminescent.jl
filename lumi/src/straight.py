@@ -11,7 +11,7 @@ c = gf.Component()
 c << wg
 c.add_ports(wg.ports)
 # name="wg_TE0"
-sol = lumi.write_sparams(c, wavelength=1.55, keys=["o2@0,o1@0"],  # same as keys=["o2@0,o1@0"]
+sol = lumi.write_sparams(c, wavelengths=1.55, keys=["o2@0,o1@0"],  # same as keys=["o2@0,o1@0"]
                          name="straight",
                          core_layer=LAYER.WG,   bbox_layer=LAYER.WAFER,  # defaults
                          layer_stack=LAYER_STACK, materials=MATERIALS,  # defaults

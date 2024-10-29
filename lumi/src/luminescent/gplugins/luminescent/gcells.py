@@ -66,7 +66,7 @@ def mimo(west=0, east=0, south=0, north=0,
 
 
 # def ubend_template(r, l, wwg, lwg=0,
-    #                wavelength=1.55, dx=0.05,
+    #                wavelengths=1.55, dx=0.05,
     #                #    ϵcore=ϵcore, ϵclad=ϵclad,
     #                dir="", init=None, lmin=0.1, LAYER=LAYER, **kwargs):
     # name = "ubend"

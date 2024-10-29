@@ -13,6 +13,7 @@ function picrun(path; kw...)
         @show k, v
         @eval $k = $v
     end
+    # N = 2
 
     F = Float32
     alg = :spectral
@@ -22,13 +23,16 @@ function picrun(path; kw...)
         println("Float16 selected. make sure your cpu or GPU supports it. otherwise will be emulated and very slow.")
         # println("Float16 not supported yet, will be in future release.")
     end
-    λc = median(load(PROB_PATH)[:wavelengths])
+    λ = median(load(PROB_PATH)[:wavelengths])
     ticks = [
         begin
             round((v - v[1]) / dl)
         end for v = [xs, ys, zs]
     ]
     global spacings = diff.(ticks)
+    x = spacings[1][1]
+    spacings = [x, x, spacings[3]]
+    dx = x * dl
     popfirst!.(ticks)
     deltas = spacings * dl
     zmin, zcenter, zmode, hmode = trim.((zmin, zcenter, zmode, hmode), dl)
@@ -47,7 +51,7 @@ function picrun(path; kw...)
         # a = a[Base.OneTo.(min.(size(a), sz))...]
         @unpack material, thickness = v
 
-        start = 1 + floor.([(v.origin / dl)..., (v.zmin - zmin) / dl])
+        start = 1 + round.([(v.origin / dl)..., (v.zmin - zmin) / dl])
         I = range.(start, start + size(a) - 1)
         overhang = max.(last.(I) .- sz, 0)
         a = a[Base.oneto.(size(a) - overhang)...]
@@ -59,7 +63,7 @@ function picrun(path; kw...)
         eps_3D[I...] .+= a .* ϵ
     end
     eps_3D = max.(ϵmin, eps_3D)
-    eps_2D = eps_3D[:, :, round(Int, (zcenter - zmin) / dl)]
+    eps_2D = eps_3D[:, :, 1+round((zcenter - zmin) / dl)]
     # heatmap(eps_2D) |> display
 
     # s = run_probs[1].source_instances[1]
@@ -90,35 +94,36 @@ function picrun(path; kw...)
         end
         models = [
             begin
-                @unpack init, bbox = d
+                @unpack init, bbox = design
                 L = bbox[2] - bbox[1]
                 szd = Tuple(round.(Int, L / dx)) # design region size
-                symmetries = [length(string(s)) == 1 ? Int(s) + 1 : s for s = d.symmetries]
+                symmetries = [length(string(s)) == 1 ? Int(s) + 1 : s for s = design.symmetries]
                 o = round.(Int, (bbox[1] - lb) / dx) + 1
 
-                lvoid = d.lvoid / dx
-                lsolid = d.lsolid / dx
+                lvoid = design.lvoid / dx
+                lsolid = design.lsolid / dx
                 margin = maximum(round.(Int, (lvoid, lsolid)))
-                ϵ2 = downsample(eps_2D, ratios[1:2])
+                ratio = spacings[1]
+                ϵ2 = downsample(eps_2D, ratio)
                 frame = ϵ2[range.(o - margin, o + szd + margin - 1)...]
                 frame = frame .== maximum(frame)
                 # display(heatmap(frame))
                 b = Blob(szd;
-                    init, lvoid, lsolid, symmetries, F, frame, ratios=ratios[1])
+                    init, lvoid, lsolid, symmetries, F, frame, ratio)
 
                 if !isnothing(sol) && !restart
                     println("loading saved design...")
                     b.a .= sol.params[i] |> typeof(b.a)
                 end
                 b
-            end for (i, d) = enumerate(designs)
+            end for (i, design) = enumerate(designs)
         ]
     end
 
     boundaries = [] # unspecified boundaries default to PML
 
     device = 0
-    λc = F(λc)
+    λ = F(λ)
     # guess = convert.(F,guess)
     i = int(v2i(zmode - zmin, deltas[3]))
     j = int(v2i(zmode + hmode - zmin, deltas[3]))
@@ -162,11 +167,11 @@ function picrun(path; kw...)
             sources = []
             for (port, sig) = SortedDict(run.sources) |> pairs
                 @unpack center, wavelength_mode_numbers = sig
-                for λ in keys(wavelength_mode_numbers)
-                    for mn = wavelength_mode_numbers[λ]
-                        λ = convert.(F, parse(Float32, string(λ)))
+                for _λ in keys(wavelength_mode_numbers)
+                    for mn = wavelength_mode_numbers[_λ]
+                        _λ = convert.(F, parse(Float32, string(_λ)))
                         i = findfirst(mode_solutions) do v
-                            abs(λ - v.wavelength) < 0.001 && string(port) in string.(v.ports)
+                            abs(_λ - v.wavelength) < 0.001 && string(port) in string.(v.ports)
                         end
                         ms = mode_solutions[i]
                         mode = ms.calibrated_modes[mn+1]
@@ -174,14 +179,14 @@ function picrun(path; kw...)
                         # heatmap(abs.(bb.source_instances[1]._g.Jy))
                         n = -sig.normal
                         tangent = [-n[2], n[1]]
-                        center = (sig.center - lb) / λc
-                        L = [sig.mode_width] / λc
+                        center = (sig.center - lb) / λ
+                        L = [sig.mode_width] / λ
                         if N == 3
-                            L = [L..., hmode / λc]
+                            L = [L..., hmode / λ]
                             n, tangent, = vcat.((n, tangent,), ([0],))
-                            center = [center..., (zcenter - zmin) / λc]
+                            center = [center..., (zcenter - zmin) / λ]
                         end
-                        push!(sources, ModalSource(t -> cispi(2t * λc / λ), mode, center, n, tangent, L; label="s$(string(port)[2:end])"))
+                        push!(sources, ModalSource(t -> cispi(2t * λ / _λ), mode, center, n, tangent, L; label="s$(string(port)[2:end])"))
                     end
                 end
             end
@@ -192,34 +197,34 @@ function picrun(path; kw...)
 
     global runs_monitors = [[
         begin
-            center = (m.center - lb) / λc
+            center = (m.center - lb) / λ
             n = m.normal
             tangent = [-n[2], n[1]]
-            L = [m.mode_width] / λc
+            L = [m.mode_width] / λ
 
             if N == 3
-                L = [L..., hmode / λc]
+                L = [L..., hmode / λ]
                 n, tangent, = vcat.((n, tangent,), ([0],))
             end
 
             wavelength_modes = SortedDict([
                 begin
-                    λ = parse(Float32, string(λ))
-                    λ = F(λ)
-                    λ / λc => [
+                    _λ = parse(Float32, string(_λ))
+                    _λ = F(_λ)
+                    _λ / λ => [
                         begin
                             i = findfirst(mode_solutions) do v
-                                abs(λ - v.wavelength) < 0.001 && string(port) in v.ports && mn < length(v.modes)
+                                abs(_λ - v.wavelength) < 0.001 && string(port) in v.ports && mn < length(v.modes)
                             end
                             ms = mode_solutions[i]
                             mode = ms.calibrated_modes[mn+1]
                         end for mn = 0:maximum(mns)
                     ]
                 end
-                for (λ, mns) in pairs(m.wavelength_mode_numbers)
+                for (_λ, mns) in pairs(m.wavelength_mode_numbers)
             ])
             if N == 3
-                center = [center..., (zcenter - zmin) / λc]
+                center = [center..., (zcenter - zmin) / λ]
             end
             ModalMonitor(wavelength_modes, center, n, tangent, L; label=port)
         end for (port, m) = SortedDict(run.monitors) |> pairs] for run in runs]
@@ -229,10 +234,8 @@ function picrun(path; kw...)
     global run_probs =
         [
             begin
-
-                setup(dl / λc, boundaries, sources, monitors, deltas / λc, mode_deltas / λc, ;
-                    F, ϵ,
-                    verbose, λ=λc)
+                setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ;
+                    F, ϵ, λ)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]
 
@@ -319,19 +322,19 @@ function picrun(path; kw...)
                         err = -
                         if :phasediff == k
                             ŷ = namedtuple([
-                                λ => namedtuple([
+                                _λ => namedtuple([
                                     ps =>
                                         begin
                                             ks = ignore_derivatives() do
                                                 ps = split(string(ps), ",")
-                                                ks = keys(S[λ])
+                                                ks = keys(S[_λ])
                                                 [ks[findfirst(k -> startswith(string(k), p), ks)] for p = ps]
                                             end
-                                            s1, s2 = [S[λ][k] for k in ks]
+                                            s1, s2 = [S[_λ][k] for k in ks]
                                             angle(s1 / s2)
                                         end
-                                    for ps = keys(targets[k][λ])])
-                                for λ = keys(targets[k])])
+                                    for ps = keys(targets[k][_λ])])
+                                for _λ = keys(targets[k])])
                             err = (x, y) -> angle(cis(x) / cis(y))
                             ŷ = flatten(ŷ)
                             y = flatten(y)
@@ -349,7 +352,7 @@ function picrun(path; kw...)
                             # println("ŷ: $ŷ")
                             # println("y: $y")
 
-                            ŷ = [[ŷ(λ)(k) for k = keys(y[λ])] for λ = keys(y)]
+                            ŷ = [[ŷ(_λ)(k) for k = keys(y[_λ])] for _λ = keys(y)]
                             ŷ = flatten(ŷ)
                             y = flatten(y)
                             Z = sum(abs, y)
@@ -392,7 +395,7 @@ function picrun(path; kw...)
                 ckptpath = joinpath(path, "checkpoints", replace(string(now()), ':' => '_', '.' => '_'))
 
                 mkpath(ckptpath)
-                for (i, (m, d)) = enumerate(zip(models, designs))
+                for (i, (m, design)) = enumerate(zip(models, designs))
                     # a = Gray.(m() .< 0.5)
 
                     # Images.save(joinpath(ckptpath, "optimized_design_region_$i.png"), a)

@@ -31,7 +31,7 @@ def setup(c, study, dx, margin,
     prob = dict()
     dx0 = dx
     # dx *= 2
-    ratio = 10
+    ratio = 8
     dl = dx/ratio
     # dl = .01
     # ratio = int(dx/dl)
@@ -273,6 +273,13 @@ def setup(c, study, dx, margin,
     return prob
 
 
+def port_name(port):
+    s = str(port).split("@")[0]
+    if s[0] == "o":
+        return s
+    return f"o{s}"
+
+
 def port_number(port):
     s = str(port).split("@")[0]
     if s[0] == "o":
@@ -287,11 +294,11 @@ def mode_number(port):
 
 def unpack_sparam_key(k):
     o, i = k.split(",")
-    po, pi = port_number(o), port_number(i)
+    po, pi = port_name(o), port_name(i)
     mo, mi = mode_number(o), mode_number(i)
-    return f"o{po}", mo, f"o{pi}", mi
+    return po, mo, pi, mi
 
 
 def long_sparam_key(k):
     po, mo, pi, mi = unpack_sparam_key(k)
-    return f"o{po}@{mo},o{pi}@{mi}"
+    return f"{po}@{mo},{pi}@{mi}"

@@ -3,7 +3,7 @@
 
 Updates fields. 
 """
-function update(u, p, t, field_diffdeltas, dt, field_boundvals, source_instances; alg=nothing)
+function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances; alg=nothing)
     # unpack fields and geometry
     E, H = [u(ignore_derivatives() do
         Regex("$k.*")
@@ -14,9 +14,7 @@ function update(u, p, t, field_diffdeltas, dt, field_boundvals, source_instances
 
     # staggered grid housekeeping
     N = ndims(E(1))
-    Epads = field_boundvals(r"E.*")
     ∇ = ignore_derivatives() do
-        field_diffpadvals = kmap(a -> reverse(a, dims=2), field_boundvals)
         Del(field_diffdeltas, field_diffpadvals)
     end
     # global _del = ∇
@@ -26,24 +24,20 @@ function update(u, p, t, field_diffdeltas, dt, field_boundvals, source_instances
 
     # first update E
     # dEdt = (∇ × H - values(E) ⊙ σ - J) ⊘ ϵ
-    # dEdt = invϵ * (∇ × H - E * σ - J)
 
     # tensor subpixel smoothing with staggered gridgp
     # @show typeof.((∇ × H, E ⊙ σ, J))
-    dDdt = (∇ × H - E ⊙ σ - J)
-    dEdt = map(1:size(invϵ, 1)) do i
-        row = invϵ[i, :]
-        sum(map(eachindex(row)) do j
-            l, r = ignore_derivatives() do
-                eachcol((!isnothing.(Epads[i]) - !isnothing.(Epads[j])) / T(2))
-            end
-            crop(row[j] .* dDdt[j], l, r)
-        end)
-    end
+    global dDdt = (∇ × H - E ⊙ σ - J)
+    dEdt = invϵ * dDdt
     E += dEdt * dt
 
     # then update H
-    dHdt = -(∇ × E + values(H) ⊙ m) ⊘ μ
+    dBdt = -(∇ × E + values(H) ⊙ m)
+    if μ == 1
+        dHdt = dBdt
+    else
+        dHdt = dBdt ⊘ μ
+    end
     H += dHdt * dt
 
     # u = merge(E, H)

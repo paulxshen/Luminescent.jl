@@ -1,6 +1,7 @@
 include("main.jl")
 # gfrun(lastrun(); gpu_backend="CUDA")
-picrun(lastrun(name="straight"); N=3)
+picrun(lastrun(name="bend"))
+# picrun(lastrun(name="straight");)
 # # # using Pkg
 # # pkg"add Porcupine,Jello,ArrayPadding;up"
 
