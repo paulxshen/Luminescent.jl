@@ -21,14 +21,16 @@ end
 function solve(prob, ;
     save_memory=false, ulims=(-3, 3), framerate=0, path="",
     kwargs...)
-    @unpack field_deltas, field_diffdeltas, mode_deltas, dl, dt, u0, geometry, _geometry, field_boundvals, field_diffpadvals, field_spacings, spacings, geometry_padvals, geometry_padamts, _geometry_padamts, field_lims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz = prob
+    @unpack deltas, field_deltas, field_diffdeltas, mode_deltas, dl, dt, u0, geometry, _geometry, field_boundvals, field_diffpadvals, field_spacings, spacings, geometry_padvals, geometry_padamts, _geometry_padamts, field_lims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz = prob
+    p = geometry
+    # ϵ = downsample(_geometry.ϵ, int(deltas / dl))
+    # p[:ϵ] = ϵ
 
-    global p = pad_geometry(geometry, geometry_padvals, geometry_padamts)
-    global _p = pad_geometry(_geometry, geometry_padvals, _geometry_padamts)
-
+    global p = pad_geometry(p, geometry_padvals, geometry_padamts)
     p = apply_subpixel_averaging(p, field_lims)
-    global field_lims, field_spacings
-    global invϵ = tensorinv(_p.ϵ, field_lims, spacings)
+
+    global _p = pad_geometry(_geometry, geometry_padvals, _geometry_padamts)
+    global invϵ = tensorinv(_p.ϵ, values(field_lims(r"E.*")), spacings)
 
     p = merge(p, (; invϵ))
     durations = [transient_duration, steady_state_duration]

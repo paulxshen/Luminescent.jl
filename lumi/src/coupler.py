@@ -9,5 +9,5 @@ c.plot()
 sol = lumi.write_sparams(c, name="coupler2D", wavelengths=1.55, keys=["2,1", "3,1", "4,1"],  # same as keys=["o2@0,o1@0"]
                          core_layer=LAYER.WG,   bbox_layer=LAYER.WAFER,  # defaults
                          layer_stack=LAYER_STACK, materials=MATERIALS,  # defaults
-                         dx=0.1, approx_2D=True, run=False)
+                         dx=0.1, N=True, N=3)
 # lumi.show_solution()

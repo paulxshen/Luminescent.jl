@@ -7,16 +7,14 @@ function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instanc
     # unpack fields and geometry
     E, H = [u(ignore_derivatives() do
         Regex("$k.*")
-    end) for k = (:E, :H, :J)]
+    end) for k = (:E, :H)]
     # global ___p = p
-    @unpack invϵ, μ, σ, m, ϵ = p
-    T = eltype(t)
+    @unpack μ, σ, m, invϵ = p
+    # @ignore_derivatives_vars t, dt, field_diffdeltas, field_diffpadvals, source_instances, μ, σ, m
 
     # staggered grid housekeeping
     N = ndims(E(1))
-    ∇ = ignore_derivatives() do
-        Del(field_diffdeltas, field_diffpadvals)
-    end
+    ∇ = Del(field_diffdeltas, field_diffpadvals)
     # global _del = ∇
 
     # inject sources
@@ -24,10 +22,9 @@ function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instanc
 
     # first update E
     # dEdt = (∇ × H - values(E) ⊙ σ - J) ⊘ ϵ
-
     # tensor subpixel smoothing with staggered gridgp
     # @show typeof.((∇ × H, E ⊙ σ, J))
-    global dDdt = (∇ × H - E ⊙ σ - J)
+    dDdt = (∇ × H - E ⊙ σ - J)
     dEdt = invϵ * dDdt
     E += dEdt * dt
 

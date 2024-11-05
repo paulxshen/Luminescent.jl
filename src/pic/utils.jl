@@ -88,24 +88,28 @@ function write_sparams(runs, run_probs, origin, deltas,
     # end
     return (; S, sols)
 end
-
 function make_geometry(models, origin, dx, geometry, designs, design_config; F=Float32, perturb=nothing)
     isnothing(models) && return geometry
     ratio = models[1].ratio
     dx /= ratio
     namedtuple([k => begin
+        a = geometry[k]
         if k in keys(design_config.fill)
             f = design_config.fill[k] |> F
-            v = design_config.void[k] |> F
+            v = minimum(a)
             if perturb == k
                 f *= convert.(F, 1.001)
             end
 
-            b = Zygote.Buffer(geometry[k])
-            copyto!(b, geometry[k])
+            b = Zygote.Buffer(a)
+            copyto!(b, a)
 
             for (m, design) in zip(models, designs)
-                mask = m((x, r) -> x, v, f)
+                mask = m(nothing, v, f)
+                # ignore() do
+                #     display(heatmap(mask))
+                #     error()
+                # end
                 # mask = m() * (f - v) + v
 
                 o = round.(Int, (design.bbox[1] - origin) / dx) + 1
@@ -118,43 +122,49 @@ function make_geometry(models, origin, dx, geometry, designs, design_config; F=F
             end
             copy(b)
         else
-            geometry[k]
+            a
         end
     end for k = keys(geometry)])
 end
-using GLMakie: volume
+# using GLMakie: volume
 function plotsols(sols, probs, path, origin)
-    for (i, (prob, sol)) in enumerate(zip(probs, sols))
-        # try
-        @unpack u, p, _p = sol |> cpu
-        @unpack monitor_instances, source_instances, deltas, dl, λ, bbox = prob |> cpu
-        u = u.Hz
-        N = ndims(u)
-        if N == 3
-            volume(u) |> display
-            heatmap(u[:, :, round(Int, size(u, 3) / 2)]) |> display
-        else
-            heatmap(u) |> display
-        end
-        return
-        g = _p.ϵ
-        u = imresize(u, Tuple(round.(Int, size(u) .* ratio)))
-        g = imresize(g, size(u))
-        bbox /= dl
+    try
+        for (i, (prob, sol)) in enumerate(zip(probs, sols))
+            # try
+            @unpack u, p, _p = sol |> cpu
+            @unpack monitor_instances, source_instances, deltas, spacings, dl, λ, bbox = prob |> cpu
+            u = u.Hz
+            N = ndims(u)
+            # if N == 3
+            #     volume(u) |> display
+            #     heatmap(u[:, :, round(Int, size(u, 3) / 2)]) |> display
+            # else
+            #     heatmap(u) |> display
+            # end
+            # return
+            g = _p.ϵ
+            u = upsample(u, spacings)
+            g = imresize(g, size(u))
+            bbox /= dl
+            ratio = int(deltas[1] / dl)
 
-        plt = quickie(u, g; dl, λ, monitor_instances, ratio, source_instances, origin, bbox)
-        display(plt)
+            plt = quickie(u, g; dl, λ, monitor_instances, ratio, source_instances, origin, bbox)
+            display(plt)
 
-        if !isa(path, Base.AbstractVecOrTuple)
-            path = (path,)
-        end
-        for path = path
-            try
-                CairoMakie.save(joinpath(path, "run_$i.png"), plt,)
-            catch e
-                println("save plot failed")
-                println(e)
+            if !isa(path, Base.AbstractVecOrTuple)
+                path = (path,)
+            end
+            for path = path
+                try
+                    CairoMakie.save(joinpath(path, "run_$i.png"), plt,)
+                catch e
+                    println("save plot failed")
+                    println(e)
+                end
             end
         end
+    catch e
+        println("plot failed")
+        println(e)
     end
 end

@@ -4,13 +4,11 @@ from gdsfactory.generic_tech import LAYER, LAYER_STACK
 import gdsfactory as gf
 import pprint as pp
 
-# c = gf.components.bend_euler(5)
-c = gf.components.bend_circular(2, allow_min_radius_violation=True)
+c = gf.components.bend_euler(5)
+# c = gf.components.bend_circular(5, allow_min_radius_violation=True)
 c.plot()
 c.show()
 # raise ValueError("This is a test error")
-sol = lumi.write_sparams(c, name="bend", wavelengths=1.55, keys=["2,1"],  # same as keys=["o2@0,o1@0"]
-                         core_layer=LAYER.WG,   bbox_layer=LAYER.WAFER,  # defaults
-                         layer_stack=LAYER_STACK, materials=MATERIALS,  # defaults
-                         dx=0.05, approx_2D=False, run=False)
+sol = lumi.write_sparams(c, name="bend_euler", wavelengths=1.55, keys=["2,1"],  # same as keys=["o2@0,o1@0"]
+                         dx=0.05, N=3, run=False)
 # lumi.show_solution()

@@ -25,9 +25,10 @@ function inner(u, v, deltas)
     if haskey(v, :Ey) && haskey(u, :Hx)
         p -= conj(u.Hx) .* v.Ey
     end
-    sum(p .* ignore_derivatives() do
-        reduce(.*, deltas) / 2
-    end)
+    # sum(p .* ignore_derivatives() do
+    #     reduce(.*, deltas) / 2
+    # end)
+    sum(p .* reduce(.*, deltas) / 2)
 end
 
 
@@ -45,6 +46,7 @@ function mode_decomp(m, u, deltas)
     if p < 0
         m2, m1 = m1, m2
     end
+    # @ignore_derivatives_vars m1, m2, deltas
     inner.((m1, m2), (u,), (deltas,))
 end
 

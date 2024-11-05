@@ -39,16 +39,17 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
 
     end
 
-    title = "Hz"
+    title0 = "Hz"
     if N == 3
         ax = fig[1, 1]
-        title *= " (xy slice of 3D array)"
+        title = "$title0 (xy slice of 3D array)"
         aspect = l / w
         axis = (; title, aspect, xtickformat, ytickformat)
         a = u[:, :, round.(Int, size(u, 3) / 2)]
         heatmap(ax, a; axis, colormap, colorrange)
         draw_bbox!(ax, bbox)
 
+        title = "$title0 (yz slice of 3D array)"
         ax = fig[1, 2]
         aspect = w / h
         axis = (; title, aspect, xtickformat=ytickformat, ytickformat=ztickformat)
@@ -58,7 +59,7 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
 
     else
         ax = fig[1, 1]
-        title *= " (2D array)"
+        title = " $title0 (2D array)"
         aspect = l / w
         axis = (; title, aspect, xtickformat, ytickformat)
         heatmap(ax, u; axis, colormap, colorrange)
@@ -83,17 +84,18 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
         return fig
     end
 
-    title = "ϵ"
+    title0 = "ϵ"
     colormap = [:white, :gray]
     if N == 3
         ax = fig[2, 1]
-        title *= " (yz slice of 3D array)"
+        title = "$title0 (xy slice of 3D array)"
         aspect = l / w
         axis = (; title, aspect, xtickformat, ytickformat)
         a = g[:, :, round.(Int, size(g, 3) / 2)]
         heatmap(ax, a; axis, colormap)
         draw_bbox!(ax, bbox)
 
+        title = "$title0 (yz slice of 3D array)"
         ax = fig[2, 2]
         aspect = w / h
         axis = (; title, aspect, xtickformat=ytickformat, ytickformat=ztickformat)
@@ -102,7 +104,7 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
         draw_bbox!(ax, bbox[2:3, :])
     else
         ax = fig[2, 1]
-        title *= " (2D array)"
+        title = " $title0 (2D array)"
         aspect = l / w
         axis = (; title, aspect, xtickformat, ytickformat)
         heatmap(ax, g; axis, colormap)
@@ -148,7 +150,7 @@ end
 #         aspect = size(a, 1) / size(a, 2)
 #         if d == 3
 #             # println("3D array: plotting middle slice")
-#             title *= " (middle slice of 3D array)"
+#             title = " $title0 (middle slice of 3D array)"
 
 #             a = a[:, :, round(Int, size(a, 3) / 2)]
 #             ax, plt = heatmap(g[1, 1], real(a); axis=(;  title, aspect), colormap, colorrange=colorrange)
@@ -156,7 +158,7 @@ end
 #             a = a[round(Int, size(a, 1) / 2), :, :]
 #             ax, plt = heatmap(g[1, 2], real(a); axis=(;  title, aspect), colormap, colorrange=colorrange)
 #         else
-#             title *= " (2D array)"
+#             title = " $title0 (2D array)"
 #             ax, plt = heatmap(g[1, 1], real(a); axis=(;  title, aspect), colormap, colorrange=colorrange)
 #         end
 #         for (pos, text) in labels

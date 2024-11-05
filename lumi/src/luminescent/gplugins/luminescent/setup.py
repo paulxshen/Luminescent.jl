@@ -19,24 +19,24 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 def setup(c, study, dx, margin,
           bbox_layer=LAYER.WAFER,
-          zmargin=None, zlims=None, core_layer=LAYER.WG,
+          zmargin2=None, zlims=None, core_layer=LAYER.WG,
           port_source_offset="auto", source_margin="auto",
           runs=[],  sources=[],
           layer_stack=LAYER_STACK, materials=MATERIALS,
           exclude_layers=[
-              DESIGN_LAYER, GUESS], approx_2D=False, Courant=None,
+              DESIGN_LAYER, GUESS], N=3, Courant=None,
           gpu=None, dtype=np.float32,
           plot=False, framerate=0,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None, **kwargs):
     prob = dict()
     dx0 = dx
     # dx *= 2
-    ratio = 8
+    ratio = 4
     dl = dx/ratio
     # dl = .01
     # ratio = int(dx/dl)
     dy = dx
-    dz = .5 * dx
+    dz = 1 * dx
 
     if not name:
         l = [prob["timestamp"], study]
@@ -72,14 +72,19 @@ def setup(c, study, dx, margin,
     d = get_layers(layer_stack, core_layer)[0]
     hcore = d.thickness
     zcore = d.zmin
-    thickness = hcore
-    zcenter = zcore+hcore/2
-    zmargin = 3*thickness
 
-    h = thickness+2*zmargin
-    h = trim(h, 2*dz)
-    zmargin = (h-thickness)/2
-    zmin = zcore-zmargin
+    zmargin1 = 1*hcore
+    hmode = hcore+2*zmargin1
+    hmode = trim(hmode, 2*dz)
+    zmargin1 = (hmode-hcore)/2
+
+    zmode = zcore-zmargin1
+    zcenter = zcore+hcore/2
+
+    zmargin2 = 2*hcore
+    zmargin2 = trim(zmargin2, 2 * dz)
+    h = hcore+2*(zmargin1+zmargin2)
+    zmin = zcore-zmargin2-zmargin1
     zmax = zmin+h
 
 #
@@ -100,22 +105,17 @@ def setup(c, study, dx, margin,
 
     #
     modemargin = 1*port_width
-    zmodemargin = 1*thickness
     wmode = port_width+2*modemargin
-    hmode = thickness+2*zmodemargin
     wmode = trim(wmode, 2*dx)
-    hmode = trim(hmode, 2*dz)
     modemargin = (wmode-port_width)/2
-    zmodemargin = (hmode-thickness)/2
-    zmode = zcore-zmodemargin
 
-    prob["thickness"] = thickness
+    prob["hcore"] = hcore
     prob["zcenter"] = zcenter
     prob["zmin"] = zmin
     prob["zcore"] = zcore
     prob["xmargin"] = xmargin
     prob["ymargin"] = ymargin
-    prob["zmargin"] = zmargin
+    prob["zmargin2"] = zmargin2
     prob["L"] = [l, w, h]
 
     _c = gf.Component()
@@ -138,11 +138,11 @@ def setup(c, study, dx, margin,
     xs = arange(lb[0], lb[0]+l, dx)
     ys = arange(lb[1], lb[1]+w, dy)
     # zs = sorted(list(set(
-    #     arange(zmin, zcore-zmodemargin, 4*dz) +
-    #     arange(zcore-zmodemargin, zcore-2*dz, 2*dz) +
+    #     arange(zmin, zcore-zmargin1, 4*dz) +
+    #     arange(zcore-zmargin1, zcore-2*dz, 2*dz) +
     #     arange(zcore-2*dz, zcore+hcore+2*dz, dz) +
-    #     arange(zcore+hcore+2*dz, zcore+hcore+zmodemargin, 2*dz) +
-    #     arange(zcore+hcore+zmodemargin, zmax, 4*dz)
+    #     arange(zcore+hcore+2*dz, zcore+hcore+zmargin1, 2*dz) +
+    #     arange(zcore+hcore+zmargin1, zmax, 4*dz)
     # )))
     z0 = zmin
     z1 = zmode
@@ -167,8 +167,8 @@ def setup(c, study, dx, margin,
     # b = max([materials[d.material]["epsilon"] for d in get_layers(
     #     layer_stack, core_layer)])
     # C = 4*math.sqrt(a/b)
-    # if zmargin is None:
-    #     zmargin = dx*round(C*thickness/dx)
+    # if zmargin2 is None:
+    #     zmargin2 = dx*round(C*hcore/dx)
     # port_width = max([p.width/1e3 for p in c.ports])
     # if margin is None:
     #     margin = trim(C*port_width, dx)
@@ -184,7 +184,7 @@ def setup(c, study, dx, margin,
     prob["materials"] = materials
     prob["study"] = study
 
-    prob["N"] = 2 if approx_2D else 3
+    prob["N"] = N
 
     prob["hmode"] = hmode
     prob["wmode"] = wmode

@@ -11,5 +11,5 @@ targets = {
 prob = lumi.gcell_problem(
     c, targets, name=name,
     symmetries=[1], lvoid=0.1, lsolid=0.1, dx=0.1,
-    approx_2D=True, stoploss=.03, iters=40)
+    N=True, stoploss=.03, iters=40)
 sol = lumi.solve(prob)

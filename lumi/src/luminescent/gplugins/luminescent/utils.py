@@ -43,7 +43,7 @@ tol = .001
 
 
 def arange(a, b, d):
-    ret = np.linspace(a, b, round((b-a)/d)+1).tolist()
+    ret = np.linspace(a, b, round((b-a)/(d))+1).tolist()
     print(ret)
     return ret
 

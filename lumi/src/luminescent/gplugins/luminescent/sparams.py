@@ -16,11 +16,11 @@ def sparams_problem(c: gf.Component,
                     dx=.05,
                     entries=[],
                     wavelengths=1.55, center_wavelengths=None, keys=[],
-                    approx_2D=False, layer_stack=LAYER_STACK,
+                    N=3, layer_stack=LAYER_STACK,
                     study="sparams",
                     **kwargs):
 
-    d = 2 if approx_2D else 3
+    d = 2 if N else 3
     prob = dict()
     ports = [p.name for p in c.get_ports_list(prefix="o")]
 
@@ -92,7 +92,7 @@ def sparams_problem(c: gf.Component,
 
     prob = setup(c, study=study,  dx=dx,
                  runs=runs, margin=margin,
-                 layer_stack=layer_stack, approx_2D=approx_2D, **kwargs)
+                 layer_stack=layer_stack, N=N, **kwargs)
     prob["wavelengths"] = wavelengths
 
     return prob

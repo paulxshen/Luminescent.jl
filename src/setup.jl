@@ -58,10 +58,9 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     ϵ=1, μ=1, σ=0, m=0,
     F=Float32,
     pml_depths=nothing, pml_ramp_fracs=0.2,
-    Courant=0.95,
+    Courant=0.9,
     kw...)
-    deltas, ϵ, μ, σ, m = F.((deltas, ϵ, μ, σ, m))
-    spacings = int(deltas / dl)
+    @convert F (deltas, mode_deltas, ϵ, μ, σ, m)
     global deltas1 = deltas
     N = length(deltas)
     L = size(ϵ) * dl
@@ -70,10 +69,12 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     global _geometry = (; ϵ, μ, σ, m) |> pairs |> OrderedDict
     global geometry = OrderedDict()
     for (k, v) = pairs(_geometry)
-        if isa(v, AbstractArray)
-            geometry[k] = imresize(v, sz)
+        geometry[k] = if isa(v, AbstractArray)
+            downsample(v, int(deltas / dl))
+        elseif k ∈ (:σ, :m)
+            a * v
         else
-            geometry[k] = a * v
+            v
         end
     end
 
@@ -295,7 +296,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     global _origin, _field_lims, _sources = origin, field_lims, sources
     source_instances = SourceInstance.(sources, (deltas,), (field_sizes,), (origin,), (field_lims,); F)
     monitor_instances = MonitorInstance.(monitors, (deltas,), (origin,), (field_lims,); F)
-    field_spacings = field_deltas / dl
+    field_spacings = int(field_deltas / dl)
 
     dt = nmin / √(sum(dx -> 1 / minimum(dx)^2, deltas)) * Courant
     dt = 1 / ceil(1 / dt) |> F
@@ -305,6 +306,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     geometry_padvals = NamedTuple(geometry_padvals)
     field_boundvals = NamedTuple(field_boundvals)
     field_diffpadvals = kmap(a -> reverse(a, dims=2), field_boundvals)
+    spacings = int(deltas / dl)
 
     if transient_duration == 0
         transient_duration = sum(L * nmax)

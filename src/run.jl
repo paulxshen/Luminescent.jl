@@ -1,6 +1,9 @@
 include("main.jl")
+using GLMakie
+
+picrun(lastrun())
 # gfrun(lastrun(); gpu_backend="CUDA")
-picrun(lastrun(name="bend"))
+# picrun(lastrun(name="tiny"))
 # picrun(lastrun(name="straight");)
 # # # using Pkg
 # # pkg"add Porcupine,Jello,ArrayPadding;up"
@@ -14,4 +17,3 @@ picrun(lastrun(name="bend"))
 # using GLMakie
 # volume(abs.(run_probs[1].source_instances[1]._g.Jy))
 # heatmap(sum(abs.(run_probs[1].source_instances[1]._g.Jy), dims=1)[1, :, :])
-# heatmap(abs.(_sources[1].mode.

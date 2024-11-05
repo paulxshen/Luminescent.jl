@@ -1,4 +1,3 @@
-
 function picrun(path; kw...)
     Random.seed!(1)
     println("setting up simulation...")
@@ -8,7 +7,7 @@ function picrun(path; kw...)
     verbose = false
 
     global prob = load(PROB_PATH)
-    @load PROB_PATH name N dtype xmargin ymargin zmargin dx0 source_margin runs ports dl xs ys zs components study mode_solutions zmode hmode zmin zcenter gpu_backend magic framerate layer_stack materials L
+    @load PROB_PATH name N dtype xmargin ymargin dx0 source_margin runs ports dl xs ys zs components study mode_solutions zmode hmode zmin zcenter gpu_backend magic framerate layer_stack materials L
     for (k, v) in pairs(kw)
         @show k, v
         @eval $k = $v
@@ -21,7 +20,6 @@ function picrun(path; kw...)
     if contains(dtype, "16")
         F = Float16
         println("Float16 selected. make sure your cpu or GPU supports it. otherwise will be emulated and very slow.")
-        # println("Float16 not supported yet, will be in future release.")
     end
     λ = median(load(PROB_PATH)[:wavelengths])
     ticks = [
@@ -35,7 +33,6 @@ function picrun(path; kw...)
     dx = x * dl
     popfirst!.(ticks)
     deltas = spacings * dl
-    zmin, zcenter, zmode, hmode = trim.((zmin, zcenter, zmode, hmode), dl)
 
     global eps_2D = nothing
     global sz = round.(L / dl)
@@ -65,6 +62,8 @@ function picrun(path; kw...)
     eps_3D = max.(ϵmin, eps_3D)
     eps_2D = eps_3D[:, :, 1+round((zcenter - zmin) / dl)]
     # heatmap(eps_2D) |> display
+    # GLMakie.volume(eps_3D) |> display
+    # error("stop")
 
     # s = run_probs[1].source_instances[1]
     # ab =Functors.functor(s)
@@ -72,9 +71,6 @@ function picrun(path; kw...)
     # aa = gpu(s.g.Jy)
 
     global models = nothing
-    # heatmap(eps_2D) |> display
-    # GLMakie.volume(eps_3D) |> display
-    polarization = :TE
     global lb = components.device.bbox[1]
     if N == 2
         ϵ = eps_2D
@@ -108,8 +104,7 @@ function picrun(path; kw...)
                 frame = ϵ2[range.(o - margin, o + szd + margin - 1)...]
                 frame = frame .== maximum(frame)
                 # display(heatmap(frame))
-                b = Blob(szd;
-                    init, lvoid, lsolid, symmetries, F, frame, ratio)
+                b = Blob(szd; init, lvoid, lsolid, symmetries, F, frame, ratio)
 
                 if !isnothing(sol) && !restart
                     println("loading saved design...")
@@ -138,7 +133,6 @@ function picrun(path; kw...)
         end
         for (mode, mode1D) in zip(ms.modes, ms.modes1D)
             # for (mode) in ms.modes
-            global _mode = mode
             mode = NamedTuple([k => complex.(stack.(F(v))...) for (k, v) in mode |> pairs])
             mode1D = (; [k => complex.([convert.(F, v) for v = v]...) for (k, v) in mode1D |> pairs]...)
 
@@ -148,15 +142,14 @@ function picrun(path; kw...)
             end
             push!(ms[:_modes], mode)
             mode = kmap(mode) do a
-
+                global _a = [a, mode_spacings]
                 if N == 2
-                    downsample(a, spacings[1][1])
+                    downsample(a, mode_spacings[1][1])
                 else
-
                     downsample(a, mode_spacings)
                 end
             end
-            mode = keepxy(mode)
+            global _mode = mode = keepxy(mode)
             push!(ms[:calibrated_modes], mode)
         end
     end
@@ -243,12 +236,7 @@ function picrun(path; kw...)
         println("using $gpu_backend backend.")
         # Flux.gpu_backend!(gpu_backend)
         if gpu_backend == "CUDA"
-            # study == "inverse_design" && CUDA.allowscalar(true)
             @assert CUDA.functional()
-            # elseif gpu_backend == "AMDGPU"
-            #     using AMDGPU
-            # elseif gpu_backend == "Metal"
-            #     using Metal
         end
         for prob = run_probs
             for k = keys(prob)

@@ -1,3 +1,15 @@
-import stltovoxel
-stltovoxel.convert_files(['in1.stl', 'in.stl'], 'temp/output.png',
-                         colors=[(255, 0, 0), (0, 0, 255)], voxel_size=0.01, pad=0)
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Create some 3D data
+x, y, z = np.indices((8, 8, 8))
+voxelarray = (x < 3) & (y < 3) & (z < 3)
+
+# Create a figure and axes
+fig = plt.figure()
+ax = fig.add_subplot(projection='3d')
+
+# Plot the voxels
+ax.voxels(voxelarray, edgecolor='k')
+
+plt.show()

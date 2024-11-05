@@ -18,7 +18,7 @@ import gdsfactory as gf
 
 c = lumi.gcells.mimo(west=1, east=1, l=1, w=1,  wwg=.4)
 targets = {"tparams": {1.55: {"2,1": 1.0}}}
-for (approx_2D, gpu, dtype, save_memory) in itertools.product(
+for (N, gpu, dtype, save_memory) in itertools.product(
     [True,],
     # [None, "CUDA"],
     [None, ],
@@ -30,22 +30,22 @@ for (approx_2D, gpu, dtype, save_memory) in itertools.product(
         c, targets,
         # bbox_layer=LAYER.WAFER,
         lvoid=0.2, lsolid=.2, dx=0.1, iters=2,
-        approx_2D=approx_2D, gpu=gpu, dtype=dtype, save_memory=save_memory,
-        run=False)
-    # run=False, wd=BUILD_RUNS)
-    sol = lumi.solve(prob, run=False)
+        N=N, gpu=gpu, dtype=dtype, save_memory=save_memory,
+        N=3)
+    # N=3, wd=BUILD_RUNS)
+    sol = lumi.solve(prob, N=3)
     sleep(1)
 
 # c = gf.components.straight(.5,)
 # i = 1
-# for (approx_2D, gpu, dtype, wavelengths) in itertools.product(
+# for (N, gpu, dtype, wavelengths) in itertools.product(
 #     [False, True],
 #     [None, "CUDA"],
 #     ["f32"],
 #         [[1.55], ]):
 #     lumi.write_sparams(c, name=f"{i}",
 #                        wavelengths=wavelengths, keys=["2,1"], dx=0.1,
-#                        approx_2D=approx_2D, gpu=gpu, dtype=dtype,
-#                        run=False, wd=BUILD_RUNS)
+#                        N=N, gpu=gpu, dtype=dtype,
+#                        N=3, wd=BUILD_RUNS)
 #     i += 1
 #     sleep(1)

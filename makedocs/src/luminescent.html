@@ -7721,7 +7721,7 @@ all of MD as it is not optimized for dense, information rich UIs.
 <span class="n">c</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
 <span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">write_sparams</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">wavelengths</span><span class="o">=</span><span class="p">[</span><span class="mf">1.55</span><span class="p">],</span> <span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s2">"2,1"</span><span class="p">],</span>
-                         <span class="n">dx</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">approx_2D</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">gpu</span><span class="o">=</span><span class="kc">None</span><span class="p">,)</span>
+                         <span class="n">dx</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">gpu</span><span class="o">=</span><span class="kc">None</span><span class="p">,)</span>
 <span class="c1"># sol = lumi.load_solution()</span>
 <span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
 </pre>
@@ -7798,7 +7798,7 @@ all of MD as it is not optimized for dense, information rich UIs.
               also design MMI splitters, mode converters , phase , filters in addition to wavelength domain multiplexers
             </p>
             <p>Adjoint optimization then optimizes geometry inside design regions with pre geometry as starting point .
-              With <code>approx_2D=True</code>, we optimize in 2.5D which is significantly faster . However , for
+              With <code>N=True</code>, we optimize in 2.5D which is significantly faster . However , for
               accuracy , the result must be finetuned in 3D, a feature that can be requested from Luminescent AI</p>
           </div>
         </div>
@@ -7830,7 +7830,7 @@ all of MD as it is not optimized for dense, information rich UIs.
 
 <span class="n">prob</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">gcell_problem</span><span class="p">(</span>
     <span class="n">c</span><span class="p">,</span> <span class="n">tparam_targets</span><span class="o">=</span><span class="n">targets</span><span class="p">,</span>
-    <span class="n">lmin</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">iters</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span> <span class="n">approx_2D</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">lmin</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">iters</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">"post optim tparams:"</span><span class="p">)</span>

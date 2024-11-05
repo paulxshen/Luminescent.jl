@@ -22,10 +22,10 @@ def gcell_problem(c,  targets, iters,
                   fill_layer=LAYER.WG,
                   void_layer=None,
                   layer_stack=LAYER_STACK, materials=MATERIALS,
-                  plot=False, approx_2D=True,
+                  plot=False, N=True,
                   restart=True, save_memory=False, **kwargs):
     design_region_layer = tuple(design_region_layer)
-    # if not approx_2D:
+    # if not N:
     #     raise NotImplementedError(
     #         "3D inverse design feature must be requested from Luminescent AI info@luminescentai.com")
 
@@ -83,7 +83,7 @@ def gcell_problem(c,  targets, iters,
                            wavelengths=wavelengths,
                            study="inverse_design",
                            keys=keys,
-                           approx_2D=approx_2D, ** kwargs)
+                           N=N, ** kwargs)
     prob["restart"] = restart
     prob["weights"] = {**{
         "tparams": 1,
@@ -123,17 +123,17 @@ def gcell_problem(c,  targets, iters,
     d["layer"] = fill_layer
     prob["design_config"]["fill"] = d
 
-    if void_layer is not None:
-        l = get_layers(layer_stack, void_layer)[0]
-        d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
-        d["layer"] = void_layer
-        d["epsilon"] = materials[d["material"]]["epsilon"]
-        d["ϵ"] = d["epsilon"]
-    else:
-        d = copy.deepcopy(d)
-        # d["epsilon"] = epsmin
-        d["ϵ"] = d["epsilon"]
-    prob["design_config"]["void"] = d
+    # if void_layer is not None:
+    #     l = get_layers(layer_stack, void_layer)[0]
+    #     d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
+    #     d["layer"] = void_layer
+    #     d["epsilon"] = materials[d["material"]]["epsilon"]
+    #     d["ϵ"] = d["epsilon"]
+    # else:
+    #     d = copy.deepcopy(d)
+    #     d["epsilon"] = epsmin
+    #     d["ϵ"] = d["epsilon"]
+    # prob["design_config"]["void"] = d
 
     prob["design_config"]["design_region_layer"] = design_region_layer
     prob["iters"] = iters

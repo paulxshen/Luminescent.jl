@@ -1,15 +1,8 @@
+using UnPack, LinearAlgebra, Statistics, Random, Jello, Functors, DataStructures, GPUArraysCore, FileIO, Porcupine, Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, GPUArraysCore, Zygote, CairoMakie, ArrayPadding
 using Porcupine: keys, values, fmap, first, ⊙, trim, round, floor, ceil
-using Humanize: digitsep
-using UnPack, LinearAlgebra, Statistics, Random, Jello, Functors, DataStructures, GPUArraysCore, FileIO
-using Zygote
-using CairoMakie
-
-using Porcupine
-using Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, GPUArraysCore
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer, ignore_derivatives
 using BSON: @save, @load, load
-using ArrayPadding
 include("constants.jl")
 include("modes.jl")
 include("update.jl")
