@@ -12,5 +12,5 @@ targets = {"tparams": {
 prob = lumi.gcell_problem(
     c, targets,
     lvoid=0.1, lsolid=0.1, dx=0.1,
-    N=True, iters=50)
+    N=2, iters=50)
 sol = lumi.solve(prob)

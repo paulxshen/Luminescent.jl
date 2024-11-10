@@ -34,14 +34,16 @@ function lastrun(; name=nothing, study=nothing, wd="runs")
     return l[1]
 end
 
-function write_sparams(runs, run_probs, origin, deltas,
+function write_sparams(runs, run_probs, origin, dl,
     designs=nothing, design_config=nothing, models=nothing;
     alg=nothing, save_memory=false, verbose=false, perturb=nothing, framerate=0, path="", kw...)
     F = run_probs[1].F
-    dx = deltas[1]
+    x = [m(nothing; withloss=true) for m = models]
+    masks = getindex.(x, 1)
+    lminloss = mean(getindex.(x, 2))
     sols = [
         begin
-            prob[:_geometry] = make_geometry(models, origin, dx, prob._geometry, designs, design_config; F, perturb)
+            prob[:_geometry] = make_geometry(masks, origin, dl, prob._geometry, designs, design_config; F, perturb)
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
             sol = solve(prob; alg, save_memory, verbose, framerate, path)
         end for (i, prob) in enumerate(run_probs)
@@ -86,12 +88,10 @@ function write_sparams(runs, run_probs, origin, deltas,
     # if source_mn == mn == 0
     #     coeffs[λ]["$monitor_port,$source_port")] = v
     # end
-    return (; S, sols)
+    return (; S, sols, lminloss)
 end
-function make_geometry(models, origin, dx, geometry, designs, design_config; F=Float32, perturb=nothing)
-    isnothing(models) && return geometry
-    ratio = models[1].ratio
-    dx /= ratio
+function make_geometry(masks, origin, dl, geometry, designs, design_config; F=Float32, perturb=nothing)
+    isnothing(masks) && return geometry
     namedtuple([k => begin
         a = geometry[k]
         if k in keys(design_config.fill)
@@ -104,18 +104,17 @@ function make_geometry(models, origin, dx, geometry, designs, design_config; F=F
             b = Zygote.Buffer(a)
             copyto!(b, a)
 
-            for (m, design) in zip(models, designs)
-                mask = m(nothing, v, f)
+            for (m, design) in zip(masks, designs)
                 # ignore() do
                 #     display(heatmap(mask))
                 #     error()
                 # end
-                # mask = m() * (f - v) + v
+                mask = m * (f - v) + v
 
-                o = round.(Int, (design.bbox[1] - origin) / dx) + 1
+                o = round.(Int, (design.bbox[1] - origin) / dl) + 1
                 if ndims(b) == 3
-                    o = [o..., 1 + round(Int, (zcore - zmin) / dx)]
-                    mask = stack(fill(mask, round(Int, thickness / dx)))
+                    o = [o..., 1 + round(Int, (zcore - zmin) / dl)]
+                    mask = stack(fill(mask, round(Int, thickness / dl)))
                 end
                 # b[range.(o, o .+ size(mask) .- 1)...] = mask
                 b[[i:j for (i, j) = zip(o, o .+ size(mask) .- 1)]...] = mask

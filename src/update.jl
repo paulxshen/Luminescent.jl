@@ -10,7 +10,7 @@ function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instanc
     end) for k = (:E, :H)]
     # global ___p = p
     @unpack μ, σ, m, invϵ = p
-    # @ignore_derivatives_vars t, dt, field_diffdeltas, field_diffpadvals, source_instances, μ, σ, m
+    @ignore_derivatives_vars t, dt, field_diffdeltas, field_diffpadvals, source_instances, μ, σ, m
 
     # staggered grid housekeeping
     N = ndims(E(1))

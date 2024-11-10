@@ -8,10 +8,16 @@ function picrun(path; kw...)
 
     global prob = load(PROB_PATH)
     @load PROB_PATH name N dtype xmargin ymargin dx0 source_margin runs ports dl xs ys zs components study mode_solutions zmode hmode zmin zcenter gpu_backend magic framerate layer_stack materials L
-    for (k, v) in pairs(kw)
-        @show k, v
-        @eval $k = $v
+    if study == "inverse_design"
+        @load PROB_PATH designs targets weights eta iters restart save_memory design_config stoploss
     end
+    # for (k, v) in pairs(kw)
+    #     @show k, v
+    #     @eval $k = $k
+    #     @eval $k = $v
+    # end
+    # @show eta
+    # eta = 0.02
     # N = 2
 
     F = Float32
@@ -104,7 +110,7 @@ function picrun(path; kw...)
                 frame = ϵ2[range.(o - margin, o + szd + margin - 1)...]
                 frame = frame .== maximum(frame)
                 # display(heatmap(frame))
-                b = Blob(szd; init, lvoid, lsolid, symmetries, F, frame, ratio)
+                b = Blob(szd; init, lvoid, lsolid, symmetries, F, frame, margin, ratio)
 
                 if !isnothing(sol) && !restart
                     println("loading saved design...")
@@ -131,14 +137,11 @@ function picrun(path; kw...)
             ms[:_modes] = []
             ms[:calibrated_modes] = []
         end
-        for (mode, mode1D) in zip(ms.modes, ms.modes1D)
-            # for (mode) in ms.modes
+        for mode = ms.modes
             mode = NamedTuple([k => complex.(stack.(F(v))...) for (k, v) in mode |> pairs])
-            mode1D = (; [k => complex.([convert.(F, v) for v = v]...) for (k, v) in mode1D |> pairs]...)
 
             if N == 2
-                mode = mode1D
-                # mode = collapse_mode(mode,)
+                mode = collapse_mode(mode,)
             end
             push!(ms[:_modes], mode)
             mode = kmap(mode) do a
@@ -254,7 +257,7 @@ function picrun(path; kw...)
     lb3 = (lb..., zmin)
     if study == "sparams"
         println("Computing s-parameters...")
-        @unpack S, sols = write_sparams(runs, run_probs, lb, deltas;
+        @unpack S, sols = write_sparams(runs, run_probs, lb, dl;
             F, verbose=true, framerate, path)
         plotsols(sols, run_probs, path, lb3)
         sol = (; sparam_family(S)...,
@@ -280,28 +283,28 @@ function picrun(path; kw...)
             println("($i)  ")
             stop = i == iters
             if :phase_shifter == first(keys(targets))
-                @time l, (dldm,) = Flux.withgradient(models) do m
-                    @unpack S, sols = write_sparams(runs, run_probs, lb, deltas,
+                @time l, (dldm,) = Flux.withgradient(models) do models
+                    @unpack S, sols, lminloss = write_sparams(runs, run_probs, lb, dl,
                         designs, design_config, models;
                         F, img, alg)#(1)(1)
                     k = keys(S) |> first
                     s = S[k][Symbol("o2@0,o1@0")]
 
-                    @unpack S = write_sparams(runs, run_probs, lb, deltas,
-                        designs, design_config, m;
+                    @unpack S = write_sparams(runs, run_probs, lb, dl,
+                        designs, design_config, models;
                         F, img, alg, save_memory, perturb=:ϵ,)#(1)(1)
                     s_ = S[k][Symbol("o2@0,o1@0")]
 
                     T = abs2(s)
                     dϕ = angle(s_ / s)
                     println("T: $T, dϕ: $dϕ")
-                    (exp(T - 1) * dϕ / π)
+                    (exp(T - 1) * dϕ / π) + lminloss
                     # T * dϕ / π
                 end
             else
                 @time l, (dldm,) = Flux.withgradient(models) do models
                     # sols = get_sols(runs, run_probs,  path, lb, deltas,
-                    @unpack S, sols = write_sparams(runs, run_probs, lb, deltas,
+                    @unpack S, sols, lminloss = write_sparams(runs, run_probs, lb, dl,
                         designs, design_config, models;
                         F, img, alg, save_memory)
                     l = 0
@@ -351,31 +354,18 @@ function picrun(path; kw...)
                         #     println(json(ŷ))
                         # end
                         l += _l
+                        println("lminloss: $lminloss")
+                        l += lminloss
                     end
                     println("    weighted total loss $l")
                     l
                 end
             end
 
-            # if i == 1
-            #     best0 = best = l
-            # end
-
-            # if l < best
-            #     best = l
-            # end
             if !isnothing(stoploss) && l < stoploss
                 println("Loss below threshold, stopping optimization.")
                 stop = true
             end
-            # if i % 15 == 0
-            #     if best - best0 > -0.01
-            #         println("Loss stagnating, stopping optimization.")
-            #         stop = true
-            #     else
-            #         best0 = best
-            #     end
-            # end
             println("")
 
             if i == 1 || i % 2 == 0 || stop
@@ -408,14 +398,14 @@ function picrun(path; kw...)
                     write(f, json(cpu(sol)))
                 end
             end
-            # if stop
-            #     break
-            # end
+            if stop
+                break
+            end
             global aaa = dldm
             Flux.update!(opt_state, models, dldm)# |> gpu)
         end
         if framerate > 0
-            write_sparams(runs, run_probs, lb, deltas,
+            write_sparams(runs, run_probs, lb, dl,
                 designs, design_config, models;
                 F, img, alg, framerate, path)
         end

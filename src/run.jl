@@ -1,7 +1,7 @@
 include("main.jl")
-using GLMakie
+# using GLMakie
 
-picrun(lastrun())
+picrun(lastrun())#; eta=0.01, iters=20)
 # gfrun(lastrun(); gpu_backend="CUDA")
 # picrun(lastrun(name="tiny"))
 # picrun(lastrun(name="straight");)

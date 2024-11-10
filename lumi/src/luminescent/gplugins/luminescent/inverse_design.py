@@ -16,13 +16,13 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 def gcell_problem(c,  targets, iters,
                   lvoid=0, lsolid=0, symmetries=[],
                   weights=dict(),
-                  eta=.1, init=1,   stoploss=None,
+                  eta=.01, init=1,   stoploss=None,
                   design_region_layer=DESIGN_LAYER,
                   #    design_guess_layer=LAYER.GUESS,
                   fill_layer=LAYER.WG,
                   void_layer=None,
                   layer_stack=LAYER_STACK, materials=MATERIALS,
-                  plot=False, N=True,
+                  plot=False, N=2,
                   restart=True, save_memory=False, **kwargs):
     design_region_layer = tuple(design_region_layer)
     # if not N:

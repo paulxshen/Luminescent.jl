@@ -190,17 +190,18 @@ function SourceInstance(s::Source, deltas, sizes, origin, field_lims, ; F=Float3
     @show sz0, sz
     # g = NamedTuple([k => imresize(a, Tuple(round(sz))) for (k, a) = pairs(mode)])
     g = mode
-    global sdeltas = deltas
 
-    global o = NamedTuple([k => F.(start - fl[:, 1] + 1) for (k, fl) = pairs(field_lims)])
+    o = NamedTuple([k => F.(start - fl[:, 1] + 1) for (k, fl) = pairs(field_lims)])
     # @show center, lb, origin, deltas, field_lims, o
-    global _g = namedtuple([k => begin
+    _g = namedtuple([k => begin
         a = zeros(ComplexF32, sizes[k])
         setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1)...)
         a
     end for k = keys(mode)])
     # error("stop")
     _center = round(v2i(center - origin, deltas) + 0.5)
+    @show center, origin, _center
+
     SourceInstance(f, g, _g, o, _center, label, tags)
 end
 

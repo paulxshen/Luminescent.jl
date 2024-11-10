@@ -10,5 +10,5 @@ targets = {"tparams": {1.55: {"o2@0,o1@1": 1.0}}}
 prob = lumi.gcell_problem(
     c, targets,
     lvoid=0.2, lsolid=.1, dx=0.05,
-    N=True, iters=60, stoploss=.03)
+    N=2, iters=60, stoploss=.03)
 sol = lumi.solve(prob)

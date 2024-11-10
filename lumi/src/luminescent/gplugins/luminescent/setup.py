@@ -87,12 +87,31 @@ def setup(c, study, dx, margin,
     zmin = zcore-zmargin2-zmargin1
     zmax = zmin+h
 
+    source_ports = []
+    nonsource_ports = []
+    for p in c.ports:
+        is_source = False
+        for run in runs:
+            for port in run["sources"]:
+                if port == p.name[1]:
+                    is_source = True
+        if is_source:
+            source_ports.append(p)
+        else:
+            nonsource_ports.append(p)
 #
     port_width = max([p.width/1e3 for p in c.ports])
     ps = portsides(c)
     xmargin = ymargin = 2*port_width
     source_port_margin = 8*port_width
-    margins = [source_port_margin if p else xmargin for p in ps]
+    margins = []
+    for p in ps:
+        if set(p).intersection(source_ports):
+            margins.append(source_port_margin)
+        # elif p:
+            # margins.append(border_margin)
+        else:
+            margins.append(xmargin)
     l0, w0 = c.bbox_np()[1]-c.bbox_np()[0]
 
     _l = l0+margins[0]+margins[2]
@@ -243,18 +262,6 @@ def setup(c, study, dx, margin,
     prob["source_margin"] = source_margin
 
     bbox = c.bbox_np()
-    source_ports = []
-    nonsource_ports = []
-    for p in c.ports:
-        is_source = False
-        for run in runs:
-            for port in run["sources"]:
-                if port == int(p.name[1]):
-                    is_source = True
-        if is_source:
-            source_ports.append(p)
-        else:
-            nonsource_ports.append(p)
 
     prob["mode_solutions"] = mode_solutions
     prob["runs"] = runs

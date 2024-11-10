@@ -95,6 +95,7 @@ function MonitorInstance(m::Monitor, deltas, origin, field_lims; F=Float32)
     end for (k, lr) = pairs(field_lims)])
     n = isnothing(n) ? n : n / norm(n)
     _center = round(v2i(center - origin, deltas) + 0.5)
+    @show center, origin, _center
 
     MonitorInstance(d, roi, frame, deltas, convert.(complex(F), A), _center, m.label, fmap(x -> convert.(complex(F), x), wavelength_modes))
 end

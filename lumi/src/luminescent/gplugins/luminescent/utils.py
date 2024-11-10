@@ -62,19 +62,20 @@ def extend(endpoints, wm):
 def portsides(c):
     ports = c.ports
     bbox = c.bbox_np()
-    res = [False, False, False, False]
+    res = [[], [], [], []]
     xmin0, ymin0 = bbox[0]
     xmax0, ymax0 = bbox[1]
     for p in ports:
         x, y = np.array(p.center)/1e3
+
         if abs(x - xmin0) < tol:
-            res[2] = True
+            res[2].append(p.name)
         if abs(x - xmax0) < tol:
-            res[0] = True
+            res[0].append(p.name)
         if abs(y - ymin0) < tol:
-            res[3] = True
+            res[3].append(p.name)
         if abs(y - ymax0) < tol:
-            res[1] = True
+            res[1].append(p.name)
     return res
 
 
