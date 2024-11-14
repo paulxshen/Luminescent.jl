@@ -13,16 +13,17 @@ function simplify_sparams(s)
     k = k[round(Int, (length(k) + 1) / 2)]
     dict([shorten_key(k) => v for (k, v) = pairs(s[k]) if !isnothing(shorten_key(k))])
 end
-function sparam_family(sparams)
-    # sparams = simplify_sparams(detailed_sparams)
-    tparams = fmap(abs2, sparams)
+function sparam_family(S)
+    # S = simplify_sparams(detailed_sparams)
+    T = fmap(abs2, S)
+    dB = fmap(T) do x
+        10log10(x)
+    end
     # detailed_tparams = Porcupine.apply(abs2, detailed_sparams)
-    # sparam_phasors = Porcupine.apply(sparams) do z
-    #     (mag=abs(z), phase=angle(z))
-    # end
-    # println(tparams)
-    # sparams = apply(reim, sparams)
-    sol = (; sparams, tparams,)# detailed_sparams, detailed_tparams)#sparam_phasors)
+    phasors = fmap(S) do z
+        (mag=abs(z), phase=rad2deg(angle(z)))
+    end
+    sol = (; S, T, phasors, dB)
 end
 function port_number(port)
     s = split(string(port), "@")[1]

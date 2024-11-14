@@ -26,11 +26,11 @@ function solve(prob, ;
     # ϵ = downsample(_geometry.ϵ, int(deltas / dl))
     # p[:ϵ] = ϵ
 
-    global p = pad_geometry(p, geometry_padvals, geometry_padamts)
+    p = pad_geometry(p, geometry_padvals, geometry_padamts)
     p = apply_subpixel_averaging(p, field_lims)
 
-    global _p = pad_geometry(_geometry, geometry_padvals, _geometry_padamts)
-    global invϵ = tensorinv(_p.ϵ, values(field_lims(r"E.*")), spacings)
+    _p = pad_geometry(_geometry, geometry_padvals, _geometry_padamts)
+    invϵ = tensorinv(_p.ϵ, values(field_lims(r"E.*")), spacings)
 
     p = merge(p, (; invϵ))
     durations = [transient_duration, steady_state_duration]
@@ -88,33 +88,33 @@ function solve(prob, ;
                     Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
                     Ex += 0sum(Ez[1:2])
                     Hy += 0sum(Ez[1:2])
-                    mode = (; Ex, Hy, Ez)
+                    dftfields = (; Ex, Hy, Ez)
                 else
                     Hx, Ey, Hz = invreframe(frame(m), vcat(H, E))
                     Hx += 0real(Hz[1])
                     Ey += 0real(Hz[1])
-                    mode = (; Hx, Ey, Hz)
+                    dftfields = (; Hx, Ey, Hz)
                 end
             elseif N == 3
                 Ex, Ey, Ez, = invreframe(frame(m), E)
                 Hx, Hy, Hz = invreframe(frame(m), H)
-                mode = (; Ex, Ey, Ez, Hx, Hy, Hz)
+                dftfields = (; Ex, Ey, Ez, Hx, Hy, Hz)
             end
-            # mode = keepxy(mode)
+            # dftfields = keepxy(dftfields)
             fp = rp = c = nothing
             if !isnothing(m.wavelength_modes)
                 wm = m.wavelength_modes[λ]
-                c = mode_decomp.(wm, (mode,), (mode_deltas,))
-                fp = [abs(v[1])^2 for v = c]
-                rp = [abs(v[2])^2 for v = c]
+                c = mode_decomp.(wm, (dftfields,), (mode_deltas,))
+                # fp = [abs(v[1])^2 for v = c]
+                # rp = [abs(v[2])^2 for v = c]
             end
 
-            mode, c
+            dftfields, c
         end
     end
     um = [[v[1] for v = v] for v in v]
-    ap = [[getindex.(v[2], 1) for v = v] for v in v]
-    am = [[getindex.(v[2], 2) for v = v] for v in v]
+    ap = [[isnothing(v[2]) ? nothing : getindex.(v[2], 1) for v = v] for v in v]
+    am = [[isnothing(v[2]) ? nothing : getindex.(v[2], 2) for v = v] for v in v]
     return Solution(u, p, _p, ulims, um, ap, am)
 end
 

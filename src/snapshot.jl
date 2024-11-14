@@ -6,7 +6,7 @@ function draw_bbox!(ax, bbox)
 end
 
 ° = π / 180
-function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], ulims=nothing, λ=1, unit="um", ratio, bbox=nothing, origin=0)
+function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], ulims=nothing, λ=1, unit="um", ratio, bbox=zeros(3), origin=zeros(3),)
 
     fig = Figure()
     N = ndims(u)
@@ -29,9 +29,11 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
 
     ax = fig[1, 1]
 
-    xtickformat = x -> string.(Base.round.(x * dl * λ + origin[1] - bbox[1, 1] * dl, digits=2)) .* (unit,)
-    ytickformat = y -> string.(Base.round.(y * dl * λ + origin[2] - bbox[2, 1] * dl, digits=2)) .* (unit,)
-    ztickformat = z -> string.(Base.round.(z * dl * λ + origin[3] - bbox[3, 1] * dl, digits=2)) .* (unit,)
+    # o=origin - bbox[:, 1] * dl
+    o = zeros(3)
+    xtickformat = x -> string.(Base.round.(x * dl * λ + o[1], digits=2)) .* (unit,)
+    ytickformat = y -> string.(Base.round.(y * dl * λ + o[2], digits=2)) .* (unit,)
+    ztickformat = z -> string.(Base.round.(z * dl * λ + o[3], digits=2)) .* (unit,)
     if N == 3
         l, w, h = size(u)
     else
@@ -58,14 +60,15 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
         draw_bbox!(ax, bbox[2:3, :])
 
     else
-        ax = fig[1, 1]
+        ax0 = fig[1, 1]
+        ax = ax0[1, 1]
         title = " $title0 (2D array)"
         aspect = l / w
         axis = (; title, aspect, xtickformat, ytickformat)
         heatmap(ax, u; axis, colormap, colorrange)
         draw_bbox!(ax, bbox)
 
-        ax = fig[1, 2]
+        ax = ax0[1, 2]
         # if !isnothing(g)
         #     if diff(collect(extrema(u)))[1] > 0
         #         Colorbar(ax[1, 2], plt)
@@ -76,7 +79,7 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
         # end
     end
     for (pos, text) in labels
-        ax = fig[1, 1]
+        ax = fig[1, 1][1, 1]
         text!(ax, pos..., ; text, align=(:center, :center))
         # annotate!(g[1, 1], pos, text; fontsize=10, color=:black)
     end
@@ -103,15 +106,16 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
         heatmap(ax, a; axis, colormap,)
         draw_bbox!(ax, bbox[2:3, :])
     else
-        ax = fig[2, 1]
+        ax0 = fig[2, 1]
+        ax = ax0[1, 1]
         title = " $title0 (2D array)"
         aspect = l / w
         axis = (; title, aspect, xtickformat, ytickformat)
-        heatmap(ax, g; axis, colormap)
+        _, plt = heatmap(ax, g; axis, colormap)
         draw_bbox!(ax, bbox)
-        # if diff(collect(extrema(g)))[1] > 0
-        #     Colorbar(ax[1, 2], plt)
-        # end
+
+        ax = ax0[1, 2]
+        Colorbar(ax, plt)
     end
 
     # i = 1

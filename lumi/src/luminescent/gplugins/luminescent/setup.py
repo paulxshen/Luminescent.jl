@@ -31,7 +31,7 @@ def setup(c, study, dx, margin,
     prob = dict()
     dx0 = dx
     # dx *= 2
-    ratio = 4
+    ratio = 6
     dl = dx/ratio
     # dl = .01
     # ratio = int(dx/dl)
@@ -93,17 +93,17 @@ def setup(c, study, dx, margin,
         is_source = False
         for run in runs:
             for port in run["sources"]:
-                if port == p.name[1]:
+                if port == p.name:
                     is_source = True
         if is_source:
-            source_ports.append(p)
+            source_ports.append(p.name)
         else:
-            nonsource_ports.append(p)
+            nonsource_ports.append(p.name)
 #
     port_width = max([p.width/1e3 for p in c.ports])
     ps = portsides(c)
     xmargin = ymargin = 2*port_width
-    source_port_margin = 8*port_width
+    source_port_margin = 6*port_width
     margins = []
     for p in ps:
         if set(p).intersection(source_ports):

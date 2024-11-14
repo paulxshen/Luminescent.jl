@@ -11,6 +11,7 @@ function picrun(path; kw...)
     if study == "inverse_design"
         @load PROB_PATH designs targets weights eta iters restart save_memory design_config stoploss
     end
+    # iters = 15
     # for (k, v) in pairs(kw)
     #     @show k, v
     #     @eval $k = $k
@@ -19,6 +20,7 @@ function picrun(path; kw...)
     # @show eta
     # eta = 0.02
     # N = 2
+    # heatmap(debug.mask)
 
     F = Float32
     alg = :spectral
@@ -84,7 +86,7 @@ function picrun(path; kw...)
         ϵ = eps_3D
     end
     if study == "inverse_design"
-        @load PROB_PATH designs targets weights eta iters restart save_memory design_config stoploss
+
         targets = fmap(F, targets)
         prob = load(PROB_PATH)
         if isfile(SOL_PATH)
@@ -98,19 +100,17 @@ function picrun(path; kw...)
             begin
                 @unpack init, bbox = design
                 L = bbox[2] - bbox[1]
-                szd = Tuple(round.(Int, L / dx)) # design region size
+                szd = Tuple(round.(Int, L / dl)) # design region size
                 symmetries = [length(string(s)) == 1 ? Int(s) + 1 : s for s = design.symmetries]
-                o = round.(Int, (bbox[1] - lb) / dx) + 1
 
-                lvoid = design.lvoid / dx
-                lsolid = design.lsolid / dx
-                margin = maximum(round.(Int, (lvoid, lsolid)))
-                ratio = spacings[1]
-                ϵ2 = downsample(eps_2D, ratio)
-                frame = ϵ2[range.(o - margin, o + szd + margin - 1)...]
-                frame = frame .== maximum(frame)
-                # display(heatmap(frame))
-                b = Blob(szd; init, lvoid, lsolid, symmetries, F, frame, margin, ratio)
+                lvoid = design.lvoid / dl
+                lsolid = design.lsolid / dl
+                frame = eps_2D
+                frame = frame .>= 0.99maximum(frame)
+                # frame = nothing
+                start = round((bbox[1] - lb) / dl + 1)
+                b = Blob(szd; init, lvoid, lsolid, symmetries, F, frame, start)
+                # display(heatmap(b.frame))
 
                 if !isnothing(sol) && !restart
                     println("loading saved design...")
@@ -259,7 +259,7 @@ function picrun(path; kw...)
         println("Computing s-parameters...")
         @unpack S, sols = write_sparams(runs, run_probs, lb, dl;
             F, verbose=true, framerate, path)
-        plotsols(sols, run_probs, path, lb3)
+        plotsols(sols, run_probs, path)
         sol = (; sparam_family(S)...,
             path, study)
         open(SOL_PATH, "w") do f
@@ -304,7 +304,7 @@ function picrun(path; kw...)
             else
                 @time l, (dldm,) = Flux.withgradient(models) do models
                     # sols = get_sols(runs, run_probs,  path, lb, deltas,
-                    @unpack S, sols, lminloss = write_sparams(runs, run_probs, lb, dl,
+                    @unpack S, sols = write_sparams(runs, run_probs, lb, dl,
                         designs, design_config, models;
                         F, img, alg, save_memory)
                     l = 0
@@ -350,12 +350,7 @@ function picrun(path; kw...)
                         end
                         _l = sum(abs, err.(ŷ, y),) * weights(k) / Z
                         println("$(k) loss: $_l ")
-                        # ignore_derivatives() do
-                        #     println(json(ŷ))
-                        # end
                         l += _l
-                        println("lminloss: $lminloss")
-                        l += lminloss
                     end
                     println("    weighted total loss $l")
                     l
@@ -379,12 +374,12 @@ function picrun(path; kw...)
                     # Images.save(joinpath(ckptpath, "optimized_design_region_$i.png"), a)
                     # Images.save(joinpath(path, "optimized_design_region_$i.png"), a)
                 end
-                plotsols(sols, run_probs, (path, ckptpath), lb3)
+                plotsols(sols, run_probs, (path, ckptpath))
 
                 sol = (;
                     sparam_family(S)...,
                     # optimized_designs=[m() .> 0.5 for m in models],
-                    # params=getfield.(models, :a),
+                    params=getfield.(models, :p),
                     designs,
                     design_config, path,
                     dx,

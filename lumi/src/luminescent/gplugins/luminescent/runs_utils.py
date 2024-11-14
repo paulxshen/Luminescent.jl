@@ -49,14 +49,14 @@ def load_problem(**kwargs):
     return bson.loads(open(os.path.join(path, "problem.bson"), "rb").read())
 
 
-def load_solution(**kwargs):
+def load_solution(show=True, **kwargs):
     path = lastrun(**kwargs)
     print(f"loading solution from {path}")
     prob = bson.loads(open(os.path.join(path, "problem.bson"), "rb").read())
     p = os.path.join(path, "solution.json")
     # sol = bson.loads(p, "rb").read())["sol"]
     sol = json.loads(open(p).read())
-    sol["sparams"] = load_sparams(sol["sparams"])
+    sol["S"] = load_sparams(sol["S"])
     sol["component"] = gf.import_gds(os.path.join(path, "component.gds"))
     if prob["study"] == "sparams":
         pass
@@ -73,29 +73,25 @@ def load_solution(**kwargs):
         # sol["optimized_component"] = copy.deepcopy(c)
         sol["optimized_component"] = c
         c.write_gds(os.path.join(path, "optimized_component.gds"))
+
+    if show:
+        # sol = {k: sol[k] for k in ["path", "sparams", "tparams", ]}
+        pprint(sol)
+
+        i = 1
+        while True:
+            p = os.path.join(path, f"run_{i}.png")
+            if os.path.exists(p):
+                img = Image.open(p)
+                img.show()
+                try:
+                    display(img)
+                except:
+                    pass
+                i += 1
+            else:
+                break
     return sol
-
-
-def show_solution(**kwargs):
-    path = lastrun(**kwargs)
-    print(f"showing solution from {path}")
-    sol = load_solution(**kwargs)
-    sol = {k: sol[k] for k in ["path", "sparams", "tparams", ]}
-    pprint(sol)
-
-    i = 1
-    while True:
-        p = os.path.join(path, f"run_{i}.png")
-        if os.path.exists(p):
-            img = Image.open(p)
-            img.show()
-            try:
-                display(img)
-            except:
-                pass
-            i += 1
-        else:
-            break
 
 
 def make_simulation_movie(framerate=30, **kwargs):

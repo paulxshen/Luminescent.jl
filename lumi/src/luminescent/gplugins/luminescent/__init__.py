@@ -28,7 +28,6 @@ __all__ = [
     "load_solution",
     "finetune",
     "load_problem",
-    "show_solution",
     "make_training_movie",
     "make_simulation_movie",
     "gcells",

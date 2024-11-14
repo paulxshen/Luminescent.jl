@@ -1,6 +1,6 @@
-using UnPack, LinearAlgebra, Statistics, Random, Jello, Functors, DataStructures, GPUArraysCore, FileIO, Porcupine, Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, GPUArraysCore, Zygote, CairoMakie, ArrayPadding
+using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, Zygote, CairoMakie, ArrayPadding
 using Porcupine: keys, values, fmap, first, ⊙, trim, round, floor, ceil
-using Flux: mae, Adam
+using Flux: mae, Adam, @functor
 using Zygote: withgradient, Buffer, ignore_derivatives
 using BSON: @save, @load, load
 include("constants.jl")
