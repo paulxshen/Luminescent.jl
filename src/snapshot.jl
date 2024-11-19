@@ -19,11 +19,13 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
     algorithm = :absorption
     labels = []
     for (i, m) = enumerate(monitor_instances)
-        text = isempty(m.label) ? "o$i" : m.label
+        # text = isempty(m.label) ? "o$i" : m.label
+        text = "o$i"
         push!(labels, (ratio * m.center, text))
     end
     for (i, s) = enumerate(source_instances)
-        text = isempty(s.label) ? "s$i" : s.label
+        # text = isempty(s.label) ? "s$i" : s.label
+        text = "s$i"
         push!(labels, (ratio * s.center, text))
     end
 

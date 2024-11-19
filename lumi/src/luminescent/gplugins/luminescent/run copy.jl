@@ -209,7 +209,7 @@ runs_monitors = [[
         end
 
         zcenter = nothing
-        wavelength_modes = OrderedDict([
+        λmodes = OrderedDict([
             begin
                 λ = parse(F, string(λ))
                 λ / λc => [
@@ -230,7 +230,7 @@ runs_monitors = [[
         if d == 3
             c = [c..., (zcenter - zmin) / λc]
         end
-        ModalMonitor(wavelength_modes, c, n, tangent, L; meta=(; port))
+        Monitor(λmodes, c, n, tangent, L; meta=(; port))
     end
     for (port, m) = run.monitors |> pairs] for run in runs]
 

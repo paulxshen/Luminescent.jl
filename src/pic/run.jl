@@ -203,7 +203,7 @@ function picrun(path; kw...)
                 n, tangent, = vcat.((n, tangent,), ([0],))
             end
 
-            wavelength_modes = SortedDict([
+            λmodes = SortedDict([
                 begin
                     _λ = parse(Float32, string(_λ))
                     _λ = F(_λ)
@@ -222,7 +222,7 @@ function picrun(path; kw...)
             if N == 3
                 center = [center..., (zcenter - zmin) / λ]
             end
-            ModalMonitor(wavelength_modes, center, n, tangent, L; label=port)
+            Monitor(λmodes, center, n, tangent, L; label=port)
         end for (port, m) = SortedDict(run.monitors) |> pairs] for run in runs]
     # sort!(runs_monitors, by=x -> x.label)
 

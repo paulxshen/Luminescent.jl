@@ -24,7 +24,7 @@ function calibrate_mode(mode, ϵmode, dx, ; F=Float32, verbose=false, name="", k
 
     normal = [1, zeros(d - 1)...]
     tangent = [0, -1, zeros(d - 2)...]
-    m = [ModalMonitor(mode, [x, w / 2], normal, tangent, L) for x = range(0, l0, 3) + source_margin + port_source_offset]
+    m = [Monitor(mode, [x, w / 2], normal, tangent, L) for x = range(0, l0, 3) + source_margin + port_source_offset]
     s = ModalSource(t -> cispi(2t), mode, [source_margin, w / 2], -normal, tangent, L;)
 
     prob = setup([], [s], m, dx, sz; F, ϵ, verbose)

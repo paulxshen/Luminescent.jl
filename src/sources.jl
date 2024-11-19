@@ -17,10 +17,10 @@ struct ModalSource
     mode
     label
     tags
-    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; label="", tags=Dict())
+    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; tags=Dict())
         new(f, center, lb, ub, normal, tangent, E2J(mode), string(label), tags)
     end
-    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, L, ; label="", tags=Dict())
+    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, L, ; tags=Dict())
         new(f, center, -L / 2, L / 2, normal, tangent, E2J(mode), string(label), tags)
     end
 
@@ -36,12 +36,11 @@ Args
 - mode: which mode to excite & their scaling constants (typically a current source, eg Jz=1)
 """
 struct PlaneWave
-    f
-    mode
+    λmodes
     dims
     label
-    function PlaneWave(f, dims, label=""; mode...)
-        new(f, mode, dims, label)
+    function PlaneWave(λmodes, dims, label="")
+        new(λmodes, dims, label)
     end
 end
 @functor PlaneWave
@@ -90,17 +89,17 @@ struct Source
     ub
     label
     tags
-    function Source(f, mode, c, lb, ub; label="", kw...)
+    function Source(f, mode, c, lb, ub; kw...)
         new(f, mode, c, lb, ub, string(label), kw)
     end
-    function Source(f, mode, c, L; label="", kw...)
+    function Source(f, mode, c, L; kw...)
         new(f, mode, c, -L / 2, L / 2, string(label), kw)
     end
 end
 # mode(m::Source) = m.mode
-Base.string(m::Union{Source,ModalSource}) =
-    """
-    $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.center|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center,"""
+# Base.string(m::Union{Source,ModalSource}) =
+#     """
+#     $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.center|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center,"""
 #  exciting $(join(keys(m.mode),", "))"""
 
 function Source(f, c, L, label::AbstractString=""; mode...)
@@ -123,6 +122,57 @@ end
 Porcupine.keys(m::SourceInstance) = keys(m.g)
 
 function SourceInstance(s::ModalSource, deltas, sizes, origin, field_lims, ; F=Float32)
+    @unpack f, center, lb, ub, normal, tangent, label, tags = s
+    J = OrderedDict()
+    for k = (:Jx, :Jy, :Jz)
+        if k in keys(s.mode)
+            J[k] = ComplexF32.(s.mode[k])
+        else
+            J[k] = zeros(ComplexF32, size(s.mode(1)))
+        end
+    end
+    J = values(J)
+
+    L = ub .- lb
+    d = length(lb)
+    D = length(center) # 2D or 3D
+    if D == 2
+        zaxis = [normal..., 0]
+        yaxis = [0, 0, 1]
+        # xaxis = cross(yaxis, zaxis)
+        xaxis = cross(yaxis, zaxis)
+    else
+        zaxis = convert.(F, normal)
+        xaxis = convert.(F, tangent)
+        yaxis = cross(zaxis, xaxis)
+    end
+
+    frame = [xaxis, yaxis, zaxis]
+    J = reframe(frame, J)
+    if D == 2
+        J = [J[:, :, 1] for J in J]
+    end
+    lb = sum(lb .* frame[1:d])[1:D]
+    ub = sum(ub .* frame[1:d])[1:D]
+    L = ub - lb
+
+    Jx, Jy, Jz = J
+    if D == 2
+        mode = (; Jx, Jy)
+    else
+        mode = (; Jx, Jy, Jz)
+    end
+    v = zip(lb, ub)
+    lb = minimum.(v)
+    ub = maximum.(v)
+    n = findfirst(abs.(zaxis) .> 0.001)
+    mode = ignore_derivatives() do
+        mode / deltas[n][1]#[findfirst(>(center[n]), cumsum(deltas[n]))]
+    end
+    SourceInstance(Source(f, mode, center, lb, ub; label, tags...), deltas, sizes, origin, field_lims, ; F)
+end
+
+function SourceInstance(s::PlaneWave, deltas, sizes, origin, field_lims, ; F=Float32)
     @unpack f, center, lb, ub, normal, tangent, label, tags = s
     J = OrderedDict()
     for k = (:Jx, :Jy, :Jz)

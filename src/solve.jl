@@ -102,8 +102,8 @@ function solve(prob, ;
             end
             # dftfields = keepxy(dftfields)
             fp = rp = c = nothing
-            if !isnothing(m.wavelength_modes)
-                wm = m.wavelength_modes[λ]
+            if !isnothing(m.λmodes)
+                wm = m.λmodes[λ]
                 c = mode_decomp.(wm, (dftfields,), (mode_deltas,))
                 # fp = [abs(v[1])^2 for v = c]
                 # rp = [abs(v[2])^2 for v = c]

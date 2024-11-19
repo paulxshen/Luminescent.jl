@@ -1,10 +1,25 @@
-Photonics simulation & inverse design in just few lines of code! GPU & automatic differentiation (AD) compatible FDTD in Julia with Python frontend. Experimental release: expect occasional critters..
+Photonic and RF simulation and inverse design in just few lines of code! Fully featured, fully differentiable, GPU accelerated FDTD engine and geometry optimizer. Experimental release: expect occasional critters..
 
 https://github.com/user-attachments/assets/c7307ac7-ad27-4b8c-856c-77762008a4d1
 
+Features 
+- Automatic differentiation (AD) compatible for adjoint optimization
+- Optional GPU acceleration 
+- Length scale controlled geometry optimizer 
+- Nonlinear and anisotropic materials 
+- Tensor subpixel smoothing for accuracy 
+- Adaptive graded grid and Float16 support for speed 
+- PML, periodic, PEC, PMC boundaries 
+- Modal sources, plane waves, Gaussian beams
+- Modal monitors, DFT fields 
 
-[Python API](https://paulxshen.github.io/Luminescent.jl/luminescent.html): gdsfactory plugin for photonic IC simulation & inverse design  
-[Julia backend](): fully featured FDTD (not documented)  
-[Follow us](https://www.linkedin.com/company/luminescent-ai/about) on our new Linkedin page for package updates and bug fixes!  
+Application specific [Python API](https://paulxshen.github.io/Luminescent.jl/luminescent.html) UI and `gdsfactory` integration for simulation and inverse design 
+- Photonic integrated circuits (PIC) - available now
+- Metasurface optics and thin films - please request 
+- RF microstrip and patch atennas - please request 
+ 
+General purpose backend API is in Julia and is not documented (unless there's interest)
 
-Feel free to raise an issue. We respond daily. Star us if you like this repo :)
+[Follow us](https://www.linkedin.com/company/luminescent-ai/about) on our new Linkedin page for package updates and bug fixes! Feel free to raise an issue. We respond daily. Star us if you like this repo :)
+
+Paul Shen, <pxshen@alumni.stanford.edu>
