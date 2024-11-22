@@ -176,13 +176,15 @@ function picrun(path; kw...)
                         n = -sig.normal
                         tangent = [-n[2], n[1]]
                         center = (sig.center - lb) / λ
-                        L = [sig.mode_width] / λ
+                        L = tangent * sig.mode_width / λ
                         if N == 3
                             L = [L..., hmode / λ]
-                            n, tangent, = vcat.((n, tangent,), ([0],))
+                            # n, tangent, = vcat.((n, tangent,), ([0],))
                             center = [center..., (zcenter - zmin) / λ]
                         end
-                        push!(sources, ModalSource(t -> cispi(2t * λ / _λ), mode, center, n, tangent, L; label="s$(string(port)[2:end])"))
+                        dimsperm = getdimsperm(L)
+                        insert!(dimsperm, 2, 3)
+                        push!(sources, Source([(λ / _λ) => mode], center, -L / 2, L / 2, dimsperm, (; label="s$(string(port)[2:end])")))
                     end
                 end
             end

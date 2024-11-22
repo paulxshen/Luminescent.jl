@@ -1,49 +1,3 @@
-using Porcupine: keys, values
-function get_polarization(u)
-    # u=flatten(u)
-    if haskey(u, :E)
-        if length(u.E) == 2
-            return :TE
-        elseif length(u.H) == 2
-            return :TM
-        end
-    else
-        if haskey(u, :Hy)
-            return :TE
-        elseif haskey(u, :Ey)
-            return :TM
-        end
-    end
-    nothing
-end
-function add_current_keys(N)
-    N = OrderedDict(pairs(N))
-    add_current_keys!(N)
-end
-function add_current_keys!(N::AbstractDict)
-    for k in keys(N) |> collect
-        if startswith(String(k), "E")
-            N[Symbol("J" * String(k)[2:end])] = N[k]
-        end
-
-        # if startswith(String(k), "H")
-        #     N[Symbol("M" * String(k)[2:end])] = N[k]
-        # end
-    end
-    N
-end
-
-
-_make_field_deltas(d::Real, a...) = d
-function _make_field_deltas(d, N, field_boundvals, field_sizes, i, isdiff=false)
-    NamedTuple([k => begin
-        if isdiff * isnothing(v[i, 1])
-            d = vcat(d[1], (d[1:end-1] .+ d[2:end]) ./ 2)
-        end
-        sel = i .== 1:N
-        reshape(d, Tuple(1 - sel + field_sizes[k][i] * sel))
-    end for (k, v) = pairs(field_boundvals)])
-end
 """
     function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
 
@@ -289,24 +243,30 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     end
     field_lims = merge(values(field_lims)...)
     field_lims = add_current_keys(field_lims)
-    origin = -bbox[:, 1]
+    lb = -bbox[:, 1]
 
     field_deltas = [_make_field_deltas(d, N, field_boundvals, field_sizes, i) for (i, d) = enumerate(deltas)]
     field_diffdeltas = [_make_field_deltas(d, N, field_boundvals, field_sizes, i, true) for (i, d) = enumerate(deltas)]
-    global _origin, _field_lims, _sources = origin, field_lims, sources
-    source_instances = SourceInstance.(sources, (deltas,), (field_sizes,), (origin,), (field_lims,); F)
-    monitor_instances = MonitorInstance.(monitors, (deltas,), (origin,), (field_lims,); F)
+
+    geometry_padvals = NamedTuple(geometry_padvals)
+    field_boundvals = NamedTuple(field_boundvals)
+    field_diffpadvals = kmap(a -> reverse(a, dims=2), field_boundvals)
     field_spacings = int(field_deltas / dl)
+    spacings = int(deltas / dl)
+
+    grid = Grid(F, N, L, sz, deltas, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals)
+    mods = (; spacings, geometry_padvals, geometry_padamts, _geometry_padamts)
+
+    source_instances = SourceInstance.(sources, (grid,))
+    monitor_instances = MonitorInstance.(monitors, (grid,))
 
     dt = nmin / √(sum(dx -> 1 / minimum(dx)^2, deltas)) * Courant
     dt = 1 / ceil(1 / dt) |> F
     sz = Tuple(sz)
 
     # geometry_padvals[:invϵ] = geometry_padvals[:ϵ]
-    geometry_padvals = NamedTuple(geometry_padvals)
-    field_boundvals = NamedTuple(field_boundvals)
-    field_diffpadvals = kmap(a -> reverse(a, dims=2), field_boundvals)
-    spacings = int(deltas / dl)
+
+
 
     if transient_duration == 0
         transient_duration = sum(L * nmax)
@@ -326,15 +286,14 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     end
     transient_duration, steady_state_duration = convert.(F, (transient_duration, steady_state_duration))
     global res = (;
-                     geometry_padvals, geometry_padamts, _geometry_padamts, field_boundvals, field_diffpadvals, field_lims, bbox,
-                     field_deltas, field_diffdeltas, field_spacings, spacings,
+                     grid, mods,
                      source_instances, monitor_instances, field_names,
                      mode_deltas,
-                     polarization, F, Courant,
+                     polarization, Courant,
                      transient_duration, steady_state_duration,
                      geometry, _geometry, nmax, nmin,
-                     is_field_on_lb, is_field_on_ub, geometry_sizes,          # roi,
-                     u0, N, sz, deltas, dl, dt, kw...) |> pairs |> OrderedDict
+                     is_field_on_lb, is_field_on_ub,
+                     u0, dl, dt, kw...) |> pairs |> OrderedDict
 
 end
 update = update

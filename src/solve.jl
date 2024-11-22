@@ -7,12 +7,12 @@ function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instan
     u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
     mf += dt / T * [[
         begin
-            E = u(r"E.*")
-            E = field.((E,), keys(E), (m,))
+            # E = u(r"E.*")
+            # E = field.((E,), keys(E), (m,))
 
-            H = u(r"H.*")
-            H = field.((H,), keys(H), (m,))
-            [E, H] * cispi(-2t / λ)
+            # H = u(r"H.*")
+            # H = field.((H,), keys(H), (m,))
+            field.((u,), keys(u), (m,)) * cispi(-2t / λ)
         end for λ = wavelengths(m)
     ] for m = monitor_instances]
     ((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (T, monitor_instances))
@@ -21,8 +21,17 @@ end
 function solve(prob, ;
     save_memory=false, ulims=(-3, 3), framerate=0, path="",
     kwargs...)
-    @unpack deltas, field_deltas, field_diffdeltas, mode_deltas, dl, dt, u0, geometry, _geometry, field_boundvals, field_diffpadvals, field_spacings, spacings, geometry_padvals, geometry_padamts, _geometry_padamts, field_lims, source_instances, monitor_instances, transient_duration, F, polarization, steady_state_duration, N, sz = prob
+    @unpack grid, mods,
+    mode_deltas, polarization,
+    dl, dt,
+    u0, geometry, _geometry,
+    source_instances, monitor_instances,
+    transient_duration, steady_state_duration, = prob
+    @unpack F, N, sz, field_diffdeltas, field_diffpadvals, field_lims = grid
+    @unpack spacings, geometry_padvals, geometry_padamts, _geometry_padamts = mods
+
     p = geometry
+
     # ϵ = downsample(_geometry.ϵ, int(deltas / dl))
     # p[:ϵ] = ϵ
 
@@ -82,24 +91,24 @@ function solve(prob, ;
 
     v = map(mf, monitor_instances) do mf, m
         map(mf, wavelengths(m)) do u, λ
-            E, H = u
-            if N == 2
-                if polarization == :TE
-                    Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
-                    Ex += 0sum(Ez[1:2])
-                    Hy += 0sum(Ez[1:2])
-                    dftfields = (; Ex, Hy, Ez)
-                else
-                    Hx, Ey, Hz = invreframe(frame(m), vcat(H, E))
-                    Hx += 0real(Hz[1])
-                    Ey += 0real(Hz[1])
-                    dftfields = (; Hx, Ey, Hz)
-                end
-            elseif N == 3
-                Ex, Ey, Ez, = invreframe(frame(m), E)
-                Hx, Hy, Hz = invreframe(frame(m), H)
-                dftfields = (; Ex, Ey, Ez, Hx, Hy, Hz)
-            end
+            dftfields = permutexyz(u, invperm(m.dimsperm), N)
+            # if N == 2
+            # if polarization == :TE
+            #     Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
+            #     Ex += 0sum(Ez[1:2])
+            #     Hy += 0sum(Ez[1:2])
+            #     dftfields = (; Ex, Hy, Ez)
+            # else
+            #     Hx, Ey, Hz = invreframe(frame(m), vcat(H, E))
+            #     Hx += 0real(Hz[1])
+            #     Ey += 0real(Hz[1])
+            #     dftfields = (; Hx, Ey, Hz)
+            # end
+            # elseif N == 3
+            #     Ex, Ey, Ez, = invreframe(frame(m), E)
+            #     Hx, Hy, Hz = invreframe(frame(m), H)
+            #     dftfields = (; Ex, Ey, Ez, Hx, Hy, Hz)
+            # end
             # dftfields = keepxy(dftfields)
             fp = rp = c = nothing
             if !isnothing(m.λmodes)

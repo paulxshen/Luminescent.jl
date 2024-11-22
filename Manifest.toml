@@ -2,7 +2,7 @@
 
 julia_version = "1.11.0"
 manifest_format = "2.0"
-project_hash = "841873ddacf4bcabe087717d15f7867ba0ffcd0b"
+project_hash = "aed42dd127b21689c9c1f0d980cad9c553960976"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -375,6 +375,11 @@ deps = ["ColorTypes", "FixedPointNumbers", "Reexport"]
 git-tree-sha1 = "362a287c3aa50601b0bc359053d5c2468f0e7ce0"
 uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.12.11"
+
+[[deps.Combinatorics]]
+git-tree-sha1 = "08c8b6831dc00bfea825826be0bc8336fc369860"
+uuid = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
+version = "1.0.2"
 
 [[deps.CommonSubexpressions]]
 deps = ["MacroTools"]
@@ -1686,6 +1691,12 @@ deps = ["Dates", "PrecompileTools", "UUIDs"]
 git-tree-sha1 = "8489905bcdbcfac64d1daa51ca07c0d8f0283821"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
 version = "2.8.1"
+
+[[deps.Permutations]]
+deps = ["Combinatorics", "LinearAlgebra", "Random"]
+git-tree-sha1 = "f92b0a7b722b1ecfd5c0d77a7eda24b4eea5c56a"
+uuid = "2ae35dd2-176d-5d53-8349-f30d82d94d4f"
+version = "0.4.22"
 
 [[deps.Pixman_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "LLVMOpenMP_jll", "Libdl"]

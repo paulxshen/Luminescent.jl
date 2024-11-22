@@ -54,17 +54,16 @@ wavelengths(m::Monitor) = keys(m.λmodes)
 #     $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.center|>d2), physical size of $((m.ub-m.lb)|>d2) relative to center, flux normal towards $(normal(m)|>d2)"""
 
 abstract type AbstractMonitorInstance end
-mutable struct MonitorInstance <: AbstractMonitorInstance
+struct MonitorInstance <: AbstractMonitorInstance
     d
     roi
     frame
-    axisperm
+    dimsperm
     deltas
     v
     center
-    label
-
     λmodes
+    tags
 end
 @functor MonitorInstance (λmodes,)
 Base.ndims(m::MonitorInstance) = m.d
@@ -74,8 +73,9 @@ Base.length(m::MonitorInstance) = 1
 frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
-function MonitorInstance(m::Monitor, deltas, origin, field_lims; F=Float32)
+function MonitorInstance(m::Monitor, g; tags...)
     @unpack n, lb, ub, center, tangent, λmodes, = m
+    @unpack deltas, field_lims, F = g
     n, lb, ub, center, tangent = [convert.(F, a) for a = (n, lb, ub, center, tangent)]
     L = ub - lb
     D = length(center)
@@ -94,9 +94,8 @@ function MonitorInstance(m::Monitor, deltas, origin, field_lims; F=Float32)
     ub = maximum.(v)
     L = ub - lb
 
-    global mdeltas = deltas, center, lb, ub, origin, field_lims
-    start = v2i(center + lb - origin, deltas)
-    stop = v2i(center + ub - origin, deltas)
+    start = v2i(center + lb - g.lb, deltas)
+    stop = v2i(center + ub - g.lb, deltas)
     sel = abs.(stop - start) .>= 1e-3
     start += 0.5sel
     stop -= 0.5sel
@@ -105,15 +104,16 @@ function MonitorInstance(m::Monitor, deltas, origin, field_lims; F=Float32)
         dropitr.(range.(start, stop, int(stop - start + 1))) - lr[:, 1] + 1
     end for (k, lr) = pairs(field_lims)])
     n = isnothing(n) ? n : n / norm(n)
-    _center = round(v2i(center - origin, deltas) + 0.5)
-    @show center, origin, _center
+    _center = round(v2i(center - g.lb, deltas) + 0.5)
+    @show center, g.lb, _center
 
-    MonitorInstance(d, roi, frame, nothing, deltas, convert.(complex(F), A), _center, fmap(x -> convert.(complex(F), x), λmodes))
+    MonitorInstance(d, roi, frame, nothing, deltas, convert.(complex(F), A), _center, fmap(x -> convert.(complex(F), x), λmodes), tags)
 end
-function MonitorInstance(m::PlaneMonitor, L, deltas, origin, field_lims; F=Float32)
+function MonitorInstance(m::PlaneMonitor, g::Grid; tags...)
+    @unpack L, deltas, lb, field_lims, F = grid
     stop = collect(L)
     i = m.dims
-    stop[i] = m.q - origin[i]
+    stop[i] = m.q - lb[i]
     start = 0
     A = prod(filter(!iszero, stop - start))
 
@@ -126,10 +126,10 @@ function MonitorInstance(m::PlaneMonitor, L, deltas, origin, field_lims; F=Float
     end for (k, lr) = pairs(field_lims)])
     _center = 0
 
-    axisperm = getaxisperm(dims)
+    dimsperm = getdimsperm(dims)
     frame = nothing
-    λmodes = permutexyz(λmodes, axisperm)
-    MonitorInstance(d, roi, frame, axisperm, deltas, convert.(complex(F), A), _center, fmap(x -> convert.(complex(F), x), λmodes))
+    λmodes = permutexyz(λmodes, dimsperm)
+    MonitorInstance(d, roi, frame, dimsperm, deltas, convert.(complex(F), A), _center, fmap(x -> convert.(complex(F), x), λmodes), tags)
 end
 
 

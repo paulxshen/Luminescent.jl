@@ -3,26 +3,39 @@ function resize(a, sz)
     imresize(a, sz, method=ImageTransformations.Lanczos4OpenCV())
 
 end
+
+function _aug(sm, N)
+    f, mode = sm
+    length(mode) == N && return sm
+    f, OrderedDict([
+        begin
+            i = findfirst(keys(mode)) do k
+                endswith(string(k), s)
+            end
+            isnothing(i) ? (Symbol("J$s") => 0) : (keys(mode)[i] => mode[keys(mode)[i]])
+        end for s = "xyz"[1:N]
+    ])
+end
+
 """
 """
-struct ModalSource
-    f
+struct Source
+    sigmodes
     center
     lb
     ub
-    normal
-    tangent
+    # normal
+    # tangent
     # zaxis
     # xaxis
-    mode
-    label
+    dimsperm
     tags
-    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; tags=Dict())
-        new(f, center, lb, ub, normal, tangent, E2J(mode), string(label), tags)
-    end
-    function ModalSource(f, mode, center::Base.AbstractVecOrTuple, normal, tangent, L, ; tags=Dict())
-        new(f, center, -L / 2, L / 2, normal, tangent, E2J(mode), string(label), tags)
-    end
+    # function Source(sigmodes, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; tags...)
+    #     new(f, center, lb, ub, normal, tangent, E2J(mode), tags)
+    # end
+    # function Source(sigmodes, center::Base.AbstractVecOrTuple, L; tags...)
+    #     new(sigmodes, center, -L / 2, L / 2, getdimsperm(L), tags)
+    # end
 
 end
 """
@@ -38,9 +51,9 @@ Args
 struct PlaneWave
     λmodes
     dims
-    label
-    function PlaneWave(λmodes, dims, label="")
-        new(λmodes, dims, label)
+    tags
+    function PlaneWave(sigmodes, dims; tags...)
+        new(sigmodes, dims, tags)
     end
 end
 @functor PlaneWave
@@ -68,61 +81,88 @@ end
 @functor GaussianBeam
 
 """
-    function Source(f, c, lb, ub, label=""; mode...)
-    function Source(f, c, L, label=""; mode...)
+    function Source(f, c, lb, ub, tags=""; mode...)
+    function Source(f, c, L, tags=""; mode...)
         
 Constructs custom  source. Can be used to specify uniform or modal sources
 
 Args
 - f: time function
-- c: origin or center of source
+- c: g.lb or center of source
 - lb: lower bounds wrt to c
 - ub: upper bounds wrt to c
 - L: source dimensions in [wavelengths]
 - mode: which mode to excite & their scaling constants (typically a current source, eg Jz=1)
 """
-struct Source
-    f
-    mode
-    center
-    lb
-    ub
-    label
-    tags
-    function Source(f, mode, c, lb, ub; kw...)
-        new(f, mode, c, lb, ub, string(label), kw)
-    end
-    function Source(f, mode, c, L; kw...)
-        new(f, mode, c, -L / 2, L / 2, string(label), kw)
-    end
-end
+
 # mode(m::Source) = m.mode
-# Base.string(m::Union{Source,ModalSource}) =
+# Base.string(m::Union{Source,Source}) =
 #     """
-#     $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.center|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center,"""
+#     $(m.tags): $(count((m.ub.-m.lb).!=0))-dimensional source, centered at $(m.center|>d2), spanning from $(m.lb|>d2) to $(m.ub|>d2) relative to center,"""
 #  exciting $(join(keys(m.mode),", "))"""
 
-function Source(f, c, L, label::AbstractString=""; mode...)
-    # Source
-    # function Source(f, c, L::Union{AbstractVector{<:Real},Tuple{<:Real}}; mode...)
-    Source(f, c, -L / 2, L / 2, label; mode...)
-end
-Source = Source
 
 struct SourceInstance
-    f
-    g
-    _g
+    sigmodes
     o
     center
-    label
+    dimsperm
     tags
 end
-@functor SourceInstance (g, _g,)
-Porcupine.keys(m::SourceInstance) = keys(m.g)
+@functor SourceInstance (sigmodes,)
 
-function SourceInstance(s::ModalSource, deltas, sizes, origin, field_lims, ; F=Float32)
-    @unpack f, center, lb, ub, normal, tangent, label, tags = s
+
+# J = OrderedDict()
+# for k = (:Jx, :Jy, :Jz)
+#     if k in keys(s.mode)
+#         J[k] = ComplexF32.(s.mode[k])
+#     else
+#         J[k] = zeros(ComplexF32, size(s.mode(1)))
+#     end
+# end
+# J = values(J)
+
+# L = ub .- lb
+# d = length(lb)
+# D = length(center) # 2D or 3D
+# if D == 2
+#     zaxis = [normal..., 0]
+#     yaxis = [0, 0, 1]
+#     # xaxis = cross(yaxis, zaxis)
+#     xaxis = cross(yaxis, zaxis)
+# else
+#     zaxis = convert.(F, normal)
+#     xaxis = convert.(F, tangent)
+#     yaxis = cross(zaxis, xaxis)
+# end
+
+# frame = [xaxis, yaxis, zaxis]
+# J = reframe(frame, J)
+# if D == 2
+#     J = [J[:, :, 1] for J in J]
+# end
+# lb = sum(lb .* frame[1:d])[1:D]
+# ub = sum(ub .* frame[1:d])[1:D]
+# L = ub - lb
+
+# Jx, Jy, Jz = J
+# if D == 2
+#     mode = (; Jx, Jy)
+# else
+#     mode = (; Jx, Jy, Jz)
+# end
+# v = zip(lb, ub)
+# lb = minimum.(v)
+# ub = maximum.(v)
+# n = findfirst(abs.(zaxis) .> 0.001)
+# mode = ignore_derivatives() do
+#     mode / deltas[n][1]#[findfirst(>(center[n]), cumsum(deltas[n]))]
+# end
+
+function SourceInstance(s::PlaneWave, g)
+    @unpack sigmodes, center, lb, ub, normal, tangent, tags = s
+    @unpack F, deltas, field_sizes, field_lims = g
+
     J = OrderedDict()
     for k = (:Jx, :Jy, :Jz)
         if k in keys(s.mode)
@@ -169,98 +209,56 @@ function SourceInstance(s::ModalSource, deltas, sizes, origin, field_lims, ; F=F
     mode = ignore_derivatives() do
         mode / deltas[n][1]#[findfirst(>(center[n]), cumsum(deltas[n]))]
     end
-    SourceInstance(Source(f, mode, center, lb, ub; label, tags...), deltas, sizes, origin, field_lims, ; F)
+    SourceInstance(Source(sigmodes, center, lb, ub; tags...), g)
 end
 
-function SourceInstance(s::PlaneWave, deltas, sizes, origin, field_lims, ; F=Float32)
-    @unpack f, center, lb, ub, normal, tangent, label, tags = s
-    J = OrderedDict()
-    for k = (:Jx, :Jy, :Jz)
-        if k in keys(s.mode)
-            J[k] = ComplexF32.(s.mode[k])
-        else
-            J[k] = zeros(ComplexF32, size(s.mode(1)))
-        end
-    end
-    J = values(J)
+function SourceInstance(s::Source, g)
+    @unpack center, lb, ub, tags, dimsperm = s
+    @unpack F, deltas, field_sizes, field_lims = g
 
-    L = ub .- lb
-    d = length(lb)
-    D = length(center) # 2D or 3D
-    if D == 2
-        zaxis = [normal..., 0]
-        yaxis = [0, 0, 1]
-        # xaxis = cross(yaxis, zaxis)
-        xaxis = cross(yaxis, zaxis)
-    else
-        zaxis = convert.(F, normal)
-        xaxis = convert.(F, tangent)
-        yaxis = cross(zaxis, xaxis)
-    end
+    N = length(center)
+    sigmodes = _aug.(s.sigmodes, N)
 
-    frame = [xaxis, yaxis, zaxis]
-    J = reframe(frame, J)
-    if D == 2
-        J = [J[:, :, 1] for J in J]
-    end
-    lb = sum(lb .* frame[1:d])[1:D]
-    ub = sum(ub .* frame[1:d])[1:D]
-    L = ub - lb
-
-    Jx, Jy, Jz = J
-    if D == 2
-        mode = (; Jx, Jy)
-    else
-        mode = (; Jx, Jy, Jz)
-    end
-    v = zip(lb, ub)
-    lb = minimum.(v)
-    ub = maximum.(v)
-    n = findfirst(abs.(zaxis) .> 0.001)
-    mode = ignore_derivatives() do
-        mode / deltas[n][1]#[findfirst(>(center[n]), cumsum(deltas[n]))]
-    end
-    SourceInstance(Source(f, mode, center, lb, ub; label, tags...), deltas, sizes, origin, field_lims, ; F)
-end
-
-function SourceInstance(s::Source, deltas, sizes, origin, field_lims, ; F=Float32)
-    @unpack f, mode, center, lb, ub, label, tags = s
-    _F(x::Real) = F(x)
-    _F(x::Complex) = ComplexF32(x)
-
-    f = _F ∘ f
-    start = v2i(center + lb - origin, deltas)
-    stop = v2i(center + ub - origin, deltas)
+    start = v2i(center + lb - g.lb, deltas)
+    stop = v2i(center + ub - g.lb, deltas)
     sel = abs.(stop - start) .>= 0.001
     start += 0.5sel
     stop -= 0.5sel
 
-    sz0 = size(mode(1))
-    sz = stop - start .+ 1
-    @show sz0, sz
-    # g = NamedTuple([k => imresize(a, Tuple(round(sz))) for (k, a) = pairs(mode)])
-    g = mode
-
     o = NamedTuple([k => F.(start - fl[:, 1] + 1) for (k, fl) = pairs(field_lims)])
-    # @show center, lb, origin, deltas, field_lims, o
-    _g = namedtuple([k => begin
-        a = zeros(ComplexF32, sizes[k])
-        setindexf!(a, g[k], range.(o[k], o[k] + size(g[k]) - 1)...)
-        a
-    end for k = keys(mode)])
+    sigmodes = [
+        begin
+            _f = if isa(sig, Number)
+                t -> cispi(2t * sig)
+            else
+                sig
+            end
+            f = x -> convert(complex(F), _f(x))
+            mode = permutexyz(mode, dimsperm, N)
+            @show dimsperm
+            _mode = namedtuple([k => begin
+                a = zeros(ComplexF32, field_sizes[k])
+                global aaaa = a, mode, o, k
+                b = mode[k]
+                setindexf!(a, b, range.(o[k], o[k] + size(b) - 1)...)
+                a
+            end for k = keys(mode)])
+            (f, _mode)
+        end for (sig, mode) = s.sigmodes
+    ]
     # error("stop")
-    _center = round(v2i(center - origin, deltas) + 0.5)
-    @show center, origin, _center
+    _center = round(v2i(center - g.lb, deltas) + 0.5)
+    # @show center, g.lb, _center
 
-    SourceInstance(f, g, _g, o, _center, label, tags)
+    SourceInstance(sigmodes, o, _center, dimsperm, tags)
 end
 
 # Complex
-function inject_sources(v::AbstractVector{<:SourceInstance}, t::Real)
-    ks = keys(v[1])
+function (s::SourceInstance)(t::Real)
     namedtuple([
-        k => sum([real(s.f(t) .* s._g[k]) for s = v if k in keys(s)])
-        for k = ks])
+        k => sum(s.sigmodes) do (f, _mode)
+            real(f(t) .* _mode[k])
+        end for k = keys(s.sigmodes[1][2])])
 end
 
 function E2J(d)
@@ -277,22 +275,22 @@ end
 # end
 
 
-# function SourceInstance(s::PlaneWave, deltas, sizes, common_left_pad_amount, fl, sz0; F=Float32)
-#     @unpack f, mode, dims, label, tags = s
+# function SourceInstance(s::PlaneWave, deltas, field_sizes, common_left_pad_amount, fl, sz0; F=Float32)
+#     @unpack sigmodes, dims,  tags = s
 #     _F(x::Real) = F(x)
 #     _F(x::Complex) = ComplexF32(x)
 #     f = _F ∘ f
 #     d = length(common_left_pad_amount)
 #     g = Dict([k => _F.(mode[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / deltas for k = keys(mode)])
 #     o = NamedTuple([k =>
-#         1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? sizes[k][i] - 1 : 0 for i = 1:d])
+#         1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? field_sizes[k][i] - 1 : 0 for i = 1:d])
 #                     for k = keys(fl)])
-#     _g = Dict([k => place(zeros(F, sizes[k]), o[k], g[k],) for k = keys(mode)])
-#     c = first(values(sizes)) .÷ 2
-#     SourceInstance(f, g, _g, o, c, label, tags)
+#     _mode = Dict([k => place(zeros(F, field_sizes[k]), o[k], mode[k],) for k = keys(mode)])
+#     c = first(values(field_sizes)) .÷ 2
+#     SourceInstance(f, g, _mode, o, c,  tags)
 # end
 
-# function SourceInstance(s::GaussianBeam, deltas, sizes, fl, stop; F=Float32)
+# function SourceInstance(s::GaussianBeam, deltas, field_sizes, fl, stop; F=Float32)
 #     _F(x::Real) = F(x)
 #     _F(x::Complex) = ComplexF32(x)
 #     f = _F ∘ f
@@ -302,6 +300,6 @@ end
 #     r = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(c)]
 #     g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(r...)] / deltas
 #     fl = fl .- 1 .+ index(c, deltas) .- round.(Int, (size(g) .- 1) ./ 2)
-#     _g = place(zeros(F, sz), g, fl)
-#     SourceInstance(f, g, _g, fl, c, label)
+#     _mode = place(zeros(F, sz), g, fl)
+#     SourceInstance(f, g, _mode, fl, c, tags)
 # end

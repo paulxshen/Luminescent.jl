@@ -184,7 +184,7 @@ runs_sources = [
                         n, tangent, = vcat.((n, tangent,), ([0],))
                         c = [c..., (ms.zcenter - zmin) / λc]
                     end
-                    push!(sources, ModalSource(t -> cispi(2t * λc / λ), mode, c, n, tangent, L; meta=(; port)))
+                    push!(sources, Source(t -> cispi(2t * λc / λ), mode, c, n, tangent, L; meta=(; port)))
 
                 end
             end

@@ -1,7 +1,7 @@
-using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, Zygote, CairoMakie, ArrayPadding
-using Porcupine: keys, values, fmap, first, ⊙, trim, round, floor, ceil
+using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, Zygote, CairoMakie, ArrayPadding, Permutations
+using Porcupine: keys, values, fmap, first, ⊙, trim, round, floor, ceil, invperm, permutedims, dict
 using Flux: mae, Adam, @functor
-using Zygote: withgradient, Buffer, ignore_derivatives
+using Zygote: withgradient, Buffer, ignore_derivatives, @ignore_derivatives
 using BSON: @save, @load, load
 include("utils.jl")
 include("constants.jl")

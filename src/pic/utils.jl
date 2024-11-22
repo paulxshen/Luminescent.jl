@@ -30,7 +30,7 @@ end
 function write_sparams(runs, run_probs, lb, dl,
     designs=nothing, design_config=nothing, models=nothing;
     alg=nothing, save_memory=false, verbose=false, perturb=nothing, framerate=0, path="", kw...)
-    F = run_probs[1].F
+    F = run_probs[1].grid.F
     # if isnothing(models)
     #     masks = nothing
     #     lminloss = 0

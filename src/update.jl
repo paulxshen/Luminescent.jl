@@ -18,7 +18,7 @@ function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instanc
     # global _del = ∇
 
     # inject sources
-    J = inject_sources(source_instances, t)
+    J = sum([s(t) for s = source_instances])
 
     # first update E
     # dEdt = (∇ × H - values(E) ⊙ σ - J) ⊘ ϵ
