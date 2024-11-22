@@ -12,7 +12,8 @@ function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instan
 
             # H = u(r"H.*")
             # H = field.((H,), keys(H), (m,))
-            field.((u,), keys(u), (m,)) * cispi(-2t / λ)
+            global _b = u
+            namedtuple([k => (field(u, k, m) * cispi(-2t / λ)) for k = keys(u)])
         end for λ = wavelengths(m)
     ] for m = monitor_instances]
     ((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (T, monitor_instances))
@@ -21,14 +22,13 @@ end
 function solve(prob, ;
     save_memory=false, ulims=(-3, 3), framerate=0, path="",
     kwargs...)
-    @unpack grid, mods,
+    @unpack grid,
     mode_deltas, polarization,
-    dl, dt,
+    dt,
     u0, geometry, _geometry,
     source_instances, monitor_instances,
     transient_duration, steady_state_duration, = prob
-    @unpack F, N, sz, field_diffdeltas, field_diffpadvals, field_lims = grid
-    @unpack spacings, geometry_padvals, geometry_padamts, _geometry_padamts = mods
+    @unpack F, N, sz, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = grid
 
     p = geometry
 

@@ -198,12 +198,7 @@ function picrun(path; kw...)
             center = (m.center - lb) / λ
             n = m.normal
             tangent = [-n[2], n[1]]
-            L = [m.mode_width] / λ
-
-            if N == 3
-                L = [L..., hmode / λ]
-                n, tangent, = vcat.((n, tangent,), ([0],))
-            end
+            # n, tangent, = vcat.((n, tangent,), ([0],))
 
             λmodes = SortedDict([
                 begin
@@ -221,10 +216,18 @@ function picrun(path; kw...)
                 end
                 for (_λ, mns) in pairs(m.wavelength_mode_numbers)
             ])
+
+
+            L = tangent * m.mode_width / λ
             if N == 3
+                L = [L..., hmode / λ]
+                # n, tangent, = vcat.((n, tangent,), ([0],))
                 center = [center..., (zcenter - zmin) / λ]
             end
-            Monitor(λmodes, center, n, tangent, L; label=port)
+            dimsperm = getdimsperm(L)
+            insert!(dimsperm, 2, 3)
+
+            Monitor(λmodes, center, -L / 2, L / 2, dimsperm, (; label=port))
         end for (port, m) = SortedDict(run.monitors) |> pairs] for run in runs]
     # sort!(runs_monitors, by=x -> x.label)
 

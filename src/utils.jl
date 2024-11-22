@@ -18,7 +18,7 @@ function getdimsperm(L::Base.AbstractVecOrTuple)
         end
     end
     v = vcat(a, b)
-    v[end] *= (-1)^sign(Permutation(abs.(v))) * prod(sign.(v[1:end-1]))
+    v[end] *= sign(Permutation(abs.(v))) * prod(sign.(v))
     v
 end
 function permutexyz(d, p, N=length(p))
@@ -28,7 +28,7 @@ function permutexyz(d, p, N=length(p))
             k = string(k)
             i = findfirst(k[end], "xyz",)
             # global _a = p, i
-            Symbol(k[1:end-1] * "xyz"[p[i]]) => sign(p[i]) * permutedims(v, _p, N)
+            Symbol(k[1:end-1] * "xyz"[abs(p[i])]) => sign(p[i]) * permutedims(v, _p, N)
         end for (k, v) = pairs(d)
     ])
 end

@@ -128,7 +128,9 @@ function plotsols(sols, probs, path,)
     for (i, (prob, sol)) in enumerate(zip(probs, sols))
         # try
         @unpack u, p, _p = sol |> cpu
-        @unpack monitor_instances, source_instances, deltas, spacings, dl, λ, bbox = prob |> cpu
+        prob = prob |> cpu
+        @unpack monitor_instances, source_instances, λ, = prob
+        @unpack deltas, spacings, bbox, dl = prob.grid
         u = u.Hz
         N = ndims(u)
         # if N == 3

@@ -219,8 +219,10 @@ function SourceInstance(s::Source, g)
     N = length(center)
     sigmodes = _aug.(s.sigmodes, N)
 
-    start = v2i(center + lb - g.lb, deltas)
-    stop = v2i(center + ub - g.lb, deltas)
+    start0 = v2i(center + lb - g.lb, deltas)
+    stop0 = v2i(center + ub - g.lb, deltas)
+    start, stop = min.(start0, stop0), max.(start0, stop0)
+
     sel = abs.(stop - start) .>= 0.001
     start += 0.5sel
     stop -= 0.5sel

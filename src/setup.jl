@@ -254,8 +254,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     field_spacings = int(field_deltas / dl)
     spacings = int(deltas / dl)
 
-    grid = Grid(F, N, L, sz, deltas, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals)
-    mods = (; spacings, geometry_padvals, geometry_padamts, _geometry_padamts)
+    grid = (; F, N, L, bbox, sz, deltas, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals, geometry_padvals, geometry_padamts, _geometry_padamts, dl, spacings,)
 
     source_instances = SourceInstance.(sources, (grid,))
     monitor_instances = MonitorInstance.(monitors, (grid,))
@@ -286,14 +285,14 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     end
     transient_duration, steady_state_duration = convert.(F, (transient_duration, steady_state_duration))
     global res = (;
-                     grid, mods,
+                     grid,
                      source_instances, monitor_instances, field_names,
                      mode_deltas,
                      polarization, Courant,
                      transient_duration, steady_state_duration,
                      geometry, _geometry, nmax, nmin,
                      is_field_on_lb, is_field_on_ub,
-                     u0, dl, dt, kw...) |> pairs |> OrderedDict
+                     u0, dt, kw...) |> pairs |> OrderedDict
 
 end
 update = update

@@ -14,23 +14,24 @@ Args
 - normal: flux monitor direction (eg normal to flux surface)
 """
 struct Monitor <: AbstractMonitor
+    λmodes
     center
     lb
     ub
-    n
-    tangent
+    dimsperm
+    # n
+    # tangent
 
-    λmodes
     tags
-    function Monitor(center, L, normal=nothing; tags...)
-        new(center, -L / 2, L / 2, normal, nothing, tags)
-    end
-    function Monitor(λmodes::Map, center, normal, tangent, L; tags...)
-        Monitor(center, -L / 2, L / 2, normal, tangent, λmodes, tags)
-    end
-    function Monitor(a...)
-        new(a...)
-    end
+    # function Monitor(center, L, normal=nothing; tags...)
+    #     new(center, -L / 2, L / 2, normal, nothing, tags)
+    # end
+    # function Monitor(λmodes::Map, center, normal, tangent, L; tags...)
+    #     Monitor(center, -L / 2, L / 2, normal, tangent, λmodes, tags)
+    # end
+    # function Monitor(a...)
+    #     new(a...)
+    # end
 end
 
 struct PlaneMonitor <: AbstractMonitor
@@ -55,12 +56,10 @@ wavelengths(m::Monitor) = keys(m.λmodes)
 
 abstract type AbstractMonitorInstance end
 struct MonitorInstance <: AbstractMonitorInstance
-    d
     roi
     frame
     dimsperm
     deltas
-    v
     center
     λmodes
     tags
@@ -74,40 +73,42 @@ frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
 function MonitorInstance(m::Monitor, g; tags...)
-    @unpack n, lb, ub, center, tangent, λmodes, = m
+    @unpack lb, ub, center, dimsperm, λmodes, = m
     @unpack deltas, field_lims, F = g
-    n, lb, ub, center, tangent = [convert.(F, a) for a = (n, lb, ub, center, tangent)]
-    L = ub - lb
-    D = length(center)
-    d = length(lb)
-    A = isempty(L) ? 0 : prod(L,)
-    if D == 2
-        frame = [[-n[2], n[1], 0], [0, 0, 1], [n..., 0]]
 
-    elseif D == 3
-        frame = [tangent, n × tangent, n]
-    end
-    lb = sum(lb .* frame[1:d])[1:D]
-    ub = sum(ub .* frame[1:d])[1:D]
-    v = zip(lb, ub)
-    lb = minimum.(v)
-    ub = maximum.(v)
-    L = ub - lb
+    # n, lb, ub, center, tangent = [convert.(F, a) for a = (n, lb, ub, center, tangent)]
+    # L = ub - lb
+    # D = length(center)
+    # d = length(lb)
+    # A = isempty(L) ? 0 : prod(L,)
+    # if D == 2
+    #     frame = [[-n[2], n[1], 0], [0, 0, 1], [n..., 0]]
 
-    start = v2i(center + lb - g.lb, deltas)
-    stop = v2i(center + ub - g.lb, deltas)
+    # elseif D == 3
+    #     frame = [tangent, n × tangent, n]
+    # end
+    # lb = sum(lb .* frame[1:d])[1:D]
+    # ub = sum(ub .* frame[1:d])[1:D]
+    # v = zip(lb, ub)
+    # lb = minimum.(v)
+    # ub = maximum.(v)
+    # L = ub - lb
+
+    start0 = v2i(center + lb - g.lb, deltas)
+    stop0 = v2i(center + ub - g.lb, deltas)
+    start, stop = min.(start0, stop0), max.(start0, stop0)
+
     sel = abs.(stop - start) .>= 1e-3
     start += 0.5sel
     stop -= 0.5sel
 
     roi = dict([k => begin
-        dropitr.(range.(start, stop, int(stop - start + 1))) - lr[:, 1] + 1
+        range.(start, stop, int(stop - start + 1)) - lr[:, 1] + 1
     end for (k, lr) = pairs(field_lims)])
-    n = isnothing(n) ? n : n / norm(n)
     _center = round(v2i(center - g.lb, deltas) + 0.5)
     @show center, g.lb, _center
 
-    MonitorInstance(d, roi, frame, nothing, deltas, convert.(complex(F), A), _center, fmap(x -> convert.(complex(F), x), λmodes), tags)
+    MonitorInstance(roi, nothing, dimsperm, deltas, _center, fmap(x -> convert.(complex(F), x), λmodes), tags)
 end
 function MonitorInstance(m::PlaneMonitor, g::Grid; tags...)
     @unpack L, deltas, lb, field_lims, F = grid
@@ -145,7 +146,7 @@ Args
 """
 function field(a::AbstractArray, k, m)
     # sum([w * a[i...] for (w, i) = m.roi[k]])
-    getindexf(a, m.roi[k]...)
+    permutedims(getindexf(a, m.roi[k]...), invperm(m.dimsperm))
 end
 
 function field(u::Map, k, m)
