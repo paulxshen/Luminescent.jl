@@ -101,7 +101,7 @@ function picrun(path; kw...)
                 @unpack init, bbox = design
                 L = bbox[2] - bbox[1]
                 szd = Tuple(round.(Int, L / dl)) # design region size
-                symmetries = [length(string(s)) == 1 ? Int(s) + 1 : s for s = design.symmetries]
+                symmetries = [Int(s) + 1 for s = design.symmetries]
 
                 lvoid = design.lvoid / dl
                 lsolid = design.lsolid / dl
@@ -145,14 +145,14 @@ function picrun(path; kw...)
             end
             push!(ms[:_modes], mode)
             mode = kmap(mode) do a
-                global _a = [a, mode_spacings]
+                # global _a = [a, mode_spacings]
                 if N == 2
                     downsample(a, mode_spacings[1][1])
                 else
                     downsample(a, mode_spacings)
                 end
             end
-            global _mode = mode = keepxy(mode)
+            # global _mode = mode = keepxy(mode)
             push!(ms[:calibrated_modes], mode)
         end
     end

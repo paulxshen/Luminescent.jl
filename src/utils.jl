@@ -25,11 +25,14 @@ function permutexyz(d, p, N=length(p))
     _p = @ignore_derivatives invperm(p)
     namedtuple([
         begin
+            v = d[k]
+            global _d = k, v
             k = string(k)
-            i = findfirst(k[end], "xyz",)
-            # global _a = p, i
-            Symbol(k[1:end-1] * "xyz"[abs(p[i])]) => sign(p[i]) * permutedims(v, _p, N)
-        end for (k, v) = pairs(d)
+            i = @ignore_derivatives findfirst(k[end], "xyz",)
+            global _a = p, i, k, d
+            k = @ignore_derivatives Symbol(k[1:end-1] * "xyz"[abs(p[i])])
+            k => sign(p[i]) * permutedims(v, _p, N)
+        end for k = keys(d)
     ])
 end
 

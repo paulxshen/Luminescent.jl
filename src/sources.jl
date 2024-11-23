@@ -160,56 +160,9 @@ end
 # end
 
 function SourceInstance(s::PlaneWave, g)
-    @unpack sigmodes, center, lb, ub, normal, tangent, tags = s
-    @unpack F, deltas, field_sizes, field_lims = g
-
-    J = OrderedDict()
-    for k = (:Jx, :Jy, :Jz)
-        if k in keys(s.mode)
-            J[k] = ComplexF32.(s.mode[k])
-        else
-            J[k] = zeros(ComplexF32, size(s.mode(1)))
-        end
-    end
-    J = values(J)
-
-    L = ub .- lb
-    d = length(lb)
-    D = length(center) # 2D or 3D
-    if D == 2
-        zaxis = [normal..., 0]
-        yaxis = [0, 0, 1]
-        # xaxis = cross(yaxis, zaxis)
-        xaxis = cross(yaxis, zaxis)
-    else
-        zaxis = convert.(F, normal)
-        xaxis = convert.(F, tangent)
-        yaxis = cross(zaxis, xaxis)
-    end
-
-    frame = [xaxis, yaxis, zaxis]
-    J = reframe(frame, J)
-    if D == 2
-        J = [J[:, :, 1] for J in J]
-    end
-    lb = sum(lb .* frame[1:d])[1:D]
-    ub = sum(ub .* frame[1:d])[1:D]
-    L = ub - lb
-
-    Jx, Jy, Jz = J
-    if D == 2
-        mode = (; Jx, Jy)
-    else
-        mode = (; Jx, Jy, Jz)
-    end
-    v = zip(lb, ub)
-    lb = minimum.(v)
-    ub = maximum.(v)
-    n = findfirst(abs.(zaxis) .> 0.001)
-    mode = ignore_derivatives() do
-        mode / deltas[n][1]#[findfirst(>(center[n]), cumsum(deltas[n]))]
-    end
-    SourceInstance(Source(sigmodes, center, lb, ub; tags...), g)
+    @unpack L = g
+    @unpack dims, sigmodes, tags = s
+    SourceInstance(Source(sigmodes, L / 2, -L / 2, L / 2, getdimsperm(dims), tags), g)
 end
 
 function SourceInstance(s::Source, g)
@@ -237,14 +190,14 @@ function SourceInstance(s::Source, g)
             end
             f = x -> convert(complex(F), _f(x))
             mode = permutexyz(mode, dimsperm, N)
-            @show dimsperm
+            ks = sort(filter(k -> startswith(string(k), "E"), keys(mode)))
             _mode = namedtuple([k => begin
                 a = zeros(ComplexF32, field_sizes[k])
-                global aaaa = a, mode, o, k
+                # global aaaa = a, mode, o, k
                 b = mode[k]
                 setindexf!(a, b, range.(o[k], o[k] + size(b) - 1)...)
                 a
-            end for k = keys(mode)])
+            end for k = ks])
             (f, _mode)
         end for (sig, mode) = s.sigmodes
     ]

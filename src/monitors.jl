@@ -48,7 +48,6 @@ end
 
 
 
-
 wavelengths(m::Monitor) = keys(m.λmodes)
 # Base.string(m::Monitor) =
 #     """
@@ -72,7 +71,7 @@ Base.length(m::MonitorInstance) = 1
 frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
-function MonitorInstance(m::Monitor, g; tags...)
+function MonitorInstance(m::Monitor, g)
     @unpack lb, ub, center, dimsperm, λmodes, = m
     @unpack deltas, field_lims, F = g
 
@@ -110,27 +109,11 @@ function MonitorInstance(m::Monitor, g; tags...)
 
     MonitorInstance(roi, nothing, dimsperm, deltas, _center, fmap(x -> convert.(complex(F), x), λmodes), tags)
 end
-function MonitorInstance(m::PlaneMonitor, g::Grid; tags...)
-    @unpack L, deltas, lb, field_lims, F = grid
-    stop = collect(L)
-    i = m.dims
-    stop[i] = m.q - lb[i]
-    start = 0
-    A = prod(filter(!iszero, stop - start))
 
-    sel = abs.(stop - start) .>= 1e-3
-    start += 0.5sel
-    stop -= 0.5sel
-
-    roi = dict([k => begin
-        dropitr.(range.(start, stop, int(stop - start + 1))) - lr[:, 1] + 1
-    end for (k, lr) = pairs(field_lims)])
-    _center = 0
-
-    dimsperm = getdimsperm(dims)
-    frame = nothing
-    λmodes = permutexyz(λmodes, dimsperm)
-    MonitorInstance(d, roi, frame, dimsperm, deltas, convert.(complex(F), A), _center, fmap(x -> convert.(complex(F), x), λmodes), tags)
+function MonitorInstance(m::PlaneMonitor, g)
+    @unpack L = g
+    @unpack dims, q, λmodes, tags = m
+    MonitorInstance(Monitor(λmodes, L / 2, -L / 2, L / 2, getdimsperm(dims), tags), g)
 end
 
 
@@ -145,8 +128,8 @@ Args
 - `m`
 """
 function field(a::AbstractArray, k, m)
-    # sum([w * a[i...] for (w, i) = m.roi[k]])
-    permutedims(getindexf(a, m.roi[k]...), invperm(m.dimsperm))
+    getindexf(a, m.roi[k]...)
+    # permutedims(getindexf(a, m.roi[k]...), p)
 end
 
 function field(u::Map, k, m)

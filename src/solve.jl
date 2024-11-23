@@ -7,12 +7,7 @@ function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instan
     u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
     mf += dt / T * [[
         begin
-            # E = u(r"E.*")
-            # E = field.((E,), keys(E), (m,))
-
-            # H = u(r"H.*")
-            # H = field.((H,), keys(H), (m,))
-            global _b = u
+            # global _b = u
             namedtuple([k => (field(u, k, m) * cispi(-2t / λ)) for k = keys(u)])
         end for λ = wavelengths(m)
     ] for m = monitor_instances]
@@ -89,9 +84,12 @@ function solve(prob, ;
     #     end
     # end
 
+
     v = map(mf, monitor_instances) do mf, m
+        perm = @ignore_derivatives invperm(m.dimsperm)
         map(mf, wavelengths(m)) do u, λ
-            dftfields = permutexyz(u, invperm(m.dimsperm), N)
+            global _c = u, perm, N
+            dftfields = permutexyz(u, perm, N)
             # if N == 2
             # if polarization == :TE
             #     Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
