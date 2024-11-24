@@ -51,16 +51,18 @@ end
 
 
 function collapse_mode(m, p=:TE)
-    @unpack Ex, Ey, Ez, Hx, Hy, Hz = m
-    Ex, Ey, Ez, Hx, Hy, Hz = map([Ex, Ey, Ez, Hx, Hy, Hz]) do a
+    # @unpack Ex, Ey, Ez, Hx, Hy, Hz = m
+    # Ex, Ey, Ez, Hx, Hy, Hz = map([Ex, Ey, Ez, Hx, Hy, Hz]) do a
+    #     mean(a, dims=2) |> vec
+    # end
+    m = kmap(m) do a
         mean(a, dims=2) |> vec
     end
     # (; Ex, Hy, Ez), sum(E .* ϵ, dims=2) ./ sum(E, dims=2) |> vec
     if p == :TE
-        (; Ex, Hy, Ez)
+        (; Ex=m.Ex,)
         #, maximum.(eachrow(ϵ))
     else
-        (; Hx, Ey, Hz)
     end
 end
 
@@ -110,7 +112,11 @@ function solvemodes(ϵ, dx, λ, neigs)
     neigs = 1
     tol = 1e-4
     boundary = (0, 0, 0, 0)
-    f = (x, y) -> getindexf(ϵ, x + 0.5, y + 0.5)
+    f = (x, y) -> begin
+        v = getindexf(ϵ, x + 0.5, y + 0.5)
+        (v, 0, 0, v, v)
+    end
+    global _a = ϵ
     solver = VectorialModesolver(λ, x, y, boundary, f)
     modes = VectorModesolver.solve(solver, neigs, tol)
 

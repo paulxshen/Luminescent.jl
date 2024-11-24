@@ -277,7 +277,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         if isempty(monitors)
             steady_state_duration = 1
         else
-            v = reduce(vcat, wavelengths.(monitors))
+            v = reduce(vcat, wavelengths.(monitor_instances))
             v = v |> Set |> collect |> sort |> reverse
             if length(v) == 1
                 steady_state_duration = 6

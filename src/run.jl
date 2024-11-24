@@ -1,5 +1,6 @@
 ENV["JULIA_PKG_PRECOMPILE_AUTO"] = 0
 include("main.jl")
+Base.convert(::Type{Float64}, x::ComplexF64) = abs(x)
 # using GLMakie
 
 # picrun(lastrun())#; eta=0.01, iters=20)

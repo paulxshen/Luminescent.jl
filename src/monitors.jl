@@ -70,13 +70,13 @@ end
 @functor MonitorInstance (λmodes,)
 Base.ndims(m::MonitorInstance) = m.d
 area(m::MonitorInstance) = m.v
-wavelengths(m::MonitorInstance) = Porcupine.keys(m.λmodes)
+wavelengths(m::MonitorInstance) = keys(m.λmodes)
 Base.length(m::MonitorInstance) = 1
 frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
 function MonitorInstance(m::Monitor, g, ϵ=1)
-    @unpack lb, ub, center, dimsperm, specs, N, center3, lb3, ub3 = m
+    @unpack lb, ub, center, dimsperm, specs, N, center3, lb3, ub3, tags = m
     @unpack deltas, deltas3, field_lims, F = g
 
     dx = deltas[1][1]
@@ -84,6 +84,8 @@ function MonitorInstance(m::Monitor, g, ϵ=1)
     if !isnothing(λmodenums)
         start = v2i(center3 + lb3, deltas3)
         stop = v2i(center3 + ub3, deltas3)
+        start, stop = min.(start, stop), max.(start, stop)
+
         sel = abs.(stop - start) .>= 1e-3
         stop[!sel] .= start[!sel]
         start += 0.5sel

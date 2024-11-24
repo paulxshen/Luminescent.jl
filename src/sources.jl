@@ -4,11 +4,10 @@ function resize(a, sz)
 
 end
 
-_aug(sm::Map, N) = _aug(pairs(sm), N)
-function _aug(sm, N)
-    f, mode = sm
-    length(mode) == N && return sm
-    f, OrderedDict([
+_augλmodes(sm::Map, N) = reduce(vcat, [zip(fill(λ, length(modes)), _aug.(modes, N)) for (λ, modes) = (pairs(sm))])
+function _aug(mode, N)
+    length(mode) == N && return mode
+    OrderedDict([
         begin
             i = findfirst(keys(mode)) do k
                 endswith(string(k), s)
@@ -181,6 +180,8 @@ function SourceInstance(s::Source, g, ϵ=1)
     if !isnothing(λmodenums)
         start = v2i(center3 + lb3, deltas3)
         stop = v2i(center3 + ub3, deltas3)
+        start, stop = min.(start, stop), max.(start, stop)
+
         sel = abs.(stop - start) .>= 1e-3
         stop[!sel] .= start[!sel]
         start += 0.5sel
@@ -189,10 +190,10 @@ function SourceInstance(s::Source, g, ϵ=1)
         ϵmode = getindexf(ϵ, range.(start + 0.5, stop + 0.5, len)...)
         global _a = ϵmode, dimsperm
         ϵmode = permutedims(ϵmode, dimsperm, 2)
-        λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1)[mns+1] for (λ, mns) = pairs(λmodenums)])
+        global λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1)[mns+1] for (λ, mns) = pairs(λmodenums)])
     end
 
-    sigmodes = _aug.(λmodes, N)
+    sigmodes = _augλmodes(λmodes, N)
 
     start = v2i(center + lb - g.lb, deltas)
     stop = v2i(center + ub - g.lb, deltas)
@@ -212,7 +213,10 @@ function SourceInstance(s::Source, g, ϵ=1)
                 sig
             end
             f = x -> convert(complex(F), _f(x))
-            mode = permutexyz(mode, dimsperm, N)
+            if N == 2
+                mode = collapse_mode(mode)
+            end
+            mode = permutexyz(mode, invperm(dimsperm), N)
             ks = sort(filter(k -> startswith(string(k), "E"), keys(mode)))
             _mode = namedtuple([k => begin
                 a = zeros(ComplexF32, field_sizes[k])
@@ -222,7 +226,7 @@ function SourceInstance(s::Source, g, ϵ=1)
                 a
             end for k = ks])
             (f, _mode)
-        end for (sig, mode) = s.sigmodes
+        end for (sig, mode) = sigmodes
     ]
     # error("stop")
     _center = round(v2i(center - g.lb, deltas) + 0.5)

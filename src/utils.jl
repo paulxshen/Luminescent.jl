@@ -30,8 +30,8 @@ function permutexyz(d, p, N=length(p))
             k = string(k)
             i = @ignore_derivatives findfirst(k[end], "xyz",)
             global _a = p, i, k, d
-            k = @ignore_derivatives Symbol(k[1:end-1] * "xyz"[abs(p[i])])
-            k => sign(p[i]) * permutedims(v, _p, N)
+            k = @ignore_derivatives Symbol(k[1:end-1] * "xyz"[abs(_p[i])])
+            k => sign(p[i]) * permutedims(v, p, N)
         end for k = keys(d)
     ])
 end

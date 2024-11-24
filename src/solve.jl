@@ -86,10 +86,8 @@ function solve(prob, ;
 
 
     v = map(mf, monitor_instances) do mf, m
-        perm = @ignore_derivatives invperm(m.dimsperm)
         map(mf, wavelengths(m)) do u, λ
-            global _c = u, perm, N
-            dftfields = permutexyz(u, perm, N)
+            dftfields = permutexyz(u, m.dimsperm, N)
             # if N == 2
             # if polarization == :TE
             #     Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
