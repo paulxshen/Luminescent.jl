@@ -265,7 +265,7 @@ function picrun(path; kw...)
                         y = targets[k]
                         err = -
                         if :phasediff == k
-                            ŷ = namedtuple([
+                            yhat = namedtuple([
                                 _λ => namedtuple([
                                     ps =>
                                         begin
@@ -280,28 +280,24 @@ function picrun(path; kw...)
                                     for ps = keys(targets[k][_λ])])
                                 for _λ = keys(targets[k])])
                             err = (x, y) -> angle(cis(x) / cis(y))
-                            ŷ = flatten(ŷ)
+                            yhat = flatten(yhat)
                             y = flatten(y)
                             Z = length(y) * convert.(F, 2π)
                         else
                             if :sparams == k
                                 # S = get_sparams(sols)
-                                ŷ = S
+                                yhat = S
                             elseif :tparams == k
-                                ŷ = fmap(abs2, S)
+                                global yhat = fmap(abs2, S)
                             end
 
-                            # global a1 = ŷ
-                            # global a2 = y
-                            # println("ŷ: $ŷ")
-                            # println("y: $y")
-
-                            ŷ = [[ŷ(_λ)(k) for k = keys(y[_λ])] for _λ = keys(y)]
-                            ŷ = flatten(ŷ)
+                            global a1 = S, y
+                            yhat = [[yhat(_λ)(k) for k = keys(y[_λ])] for _λ = keys(y)]
+                            yhat = flatten(yhat)
                             y = flatten(y)
                             Z = sum(abs, y)
                         end
-                        _l = sum(abs, err.(ŷ, y),) * weights(k) / Z
+                        _l = sum(abs, err.(yhat, y),) * weights(k) / Z
                         println("$(k) loss: $_l ")
                         l += _l
                     end

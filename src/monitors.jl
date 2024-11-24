@@ -93,6 +93,9 @@ function MonitorInstance(m::Monitor, g, ϵ=1)
         ϵmode = getindexf(ϵ, range.(start + 0.5, stop + 0.5, int(stop - start + 1))...)
         ϵmode = permutedims(ϵmode, dimsperm, 2)
         λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1) for (λ, mns) = pairs(λmodenums)])
+        if N == 2
+            λmodes = kmap(v -> collapse_mode.(v), λmodes)
+        end
     end
 
     start = v2i(center + lb - g.lb, deltas)

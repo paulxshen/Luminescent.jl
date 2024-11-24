@@ -191,6 +191,9 @@ function SourceInstance(s::Source, g, ϵ=1)
         global _a = ϵmode, dimsperm
         ϵmode = permutedims(ϵmode, dimsperm, 2)
         global λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1)[mns+1] for (λ, mns) = pairs(λmodenums)])
+        if N == 2
+            λmodes = kmap(v -> collapse_mode.(v, true), λmodes)
+        end
     end
 
     sigmodes = _augλmodes(λmodes, N)
@@ -213,9 +216,7 @@ function SourceInstance(s::Source, g, ϵ=1)
                 sig
             end
             f = x -> convert(complex(F), _f(x))
-            if N == 2
-                mode = collapse_mode(mode)
-            end
+
             mode = permutexyz(mode, invperm(dimsperm), N)
             ks = sort(filter(k -> startswith(string(k), "E"), keys(mode)))
             _mode = namedtuple([k => begin

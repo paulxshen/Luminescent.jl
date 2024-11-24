@@ -50,7 +50,7 @@ function mode_decomp(m, u, deltas)
 end
 
 
-function collapse_mode(m, p=:TE)
+function collapse_mode(m, Eonly=false, p=:TE)
     # @unpack Ex, Ey, Ez, Hx, Hy, Hz = m
     # Ex, Ey, Ez, Hx, Hy, Hz = map([Ex, Ey, Ez, Hx, Hy, Hz]) do a
     #     mean(a, dims=2) |> vec
@@ -60,7 +60,7 @@ function collapse_mode(m, p=:TE)
     end
     # (; Ex, Hy, Ez), sum(E .* ϵ, dims=2) ./ sum(E, dims=2) |> vec
     if p == :TE
-        (; Ex=m.Ex,)
+        Eonly ? (; Ex=m.Ex,) : (; Ex=m.Ex, Hy=m.Hy)
         #, maximum.(eachrow(ϵ))
     else
     end
@@ -109,17 +109,19 @@ invreframe(frame, u) = reframe(frame, u, true)
 function solvemodes(ϵ, dx, λ, neigs)
     x = range(dx / 2; step=dx, length=size(ϵ, 1))
     y = range(dx / 2; step=dx, length=size(ϵ, 2))
-    neigs = 1
-    tol = 1e-4
+    tol = 1e-8
     boundary = (0, 0, 0, 0)
     f = (x, y) -> begin
-        v = getindexf(ϵ, x + 0.5, y + 0.5)
+        v = getindexf(ϵ, x / dx + 0.5, y / dx + 0.5)
         (v, 0, 0, v, v)
     end
-    global _a = ϵ
+    global _as = ϵ, x, y
     solver = VectorialModesolver(λ, x, y, boundary, f)
     modes = VectorModesolver.solve(solver, neigs, tol)
-
-    plot_mode_fields(modes[1])
-    [(Ex=m.Ex, Ey=m.Ey) for m in modes]
+    T = transpose
+    # plot_mode_fields(modes[1]) |> display
+    display(heatmap(ϵ))
+    display(heatmap(real(transpose(modes[1].Ex))))
+    display(heatmap(imag(transpose(modes[1].Ex))))
+    [namedtuple([k => transpose(getfield(mode, k)) for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
 end
