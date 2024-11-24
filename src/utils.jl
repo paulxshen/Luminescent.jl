@@ -26,30 +26,16 @@ function permutexyz(d, p, N=length(p))
     namedtuple([
         begin
             v = d[k]
-            global _d = k, v
             k = string(k)
             i = @ignore_derivatives findfirst(k[end], "xyz",)
-            global _a = p, i, k, d
+            # global _a = p, i, k, d
             k = @ignore_derivatives Symbol(k[1:end-1] * "xyz"[abs(_p[i])])
             k => sign(p[i]) * permutedims(v, p, N)
         end for k = keys(d)
     ])
 end
 
-struct Grid
-    F
-    N
-    L
-    sz
-    deltas
-    lb
-    field_lims
-    field_sizes
-    field_boundvals
-    field_deltas
-    field_diffdeltas
-    field_diffpadvals
-end
+
 function get_polarization(u)
     # u=flatten(u)
     if haskey(u, :E)

@@ -17,13 +17,12 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     deltas3=deltas,
     kw...)
     @convert F (deltas, mode_deltas, ϵ, μ, σ, m)
-    global deltas1 = deltas
     N = length(deltas)
     L = size(ϵ) * dl
     sz = Tuple([isa(d, Number) ? int(l / d) : length(d) for (d, l) = zip(deltas, L)])
     a = ones(F, Tuple(sz))
-    global _geometry = (; ϵ, μ, σ, m) |> pairs |> OrderedDict
-    global geometry = OrderedDict()
+    _geometry = (; ϵ, μ, σ, m) |> pairs |> OrderedDict
+    geometry = OrderedDict()
     for (k, v) = pairs(_geometry)
         geometry[k] = if isa(v, AbstractArray)
             downsample(v, int(deltas / dl))
@@ -224,7 +223,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
 
     geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padamts[k], dims=2) for k = keys(geometry_padamts)])
     # field_lims = NamedTuple(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
-    global field_lims = OrderedDict{Symbol,Any}()
+    field_lims = OrderedDict{Symbol,Any}()
     field_grimaxdeltas = Dict{Symbol,Any}()
     for k = keys(geometry_sizes)
         if k in (:μ, :m)

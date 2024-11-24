@@ -52,7 +52,6 @@ function tensorinv(a, lims, spacings)
             _l = max.(li, lj) + 0.5
             Δ = _l - l
             start = round((l + 1) * margin) + 1
-            global aa = [start, _l, l, spacings]
             downsample_by_range(_a[range.(start, start + sum.(spacings) + int((Δ - 1) * last.(spacings)) - 1)...], [[range(cum - space + 1, int(Δi .* space) + cum - space) for (cum, space) = zip(cumsum(spacing), spacing)] for (Δi, spacing) = zip(Δ, spacings)]) do a
                 # n = ignore_derivatives() do
                 n = if maximum(a) == minimum(a)

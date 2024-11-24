@@ -69,7 +69,7 @@ function solve(prob, ;
     if save_memory
         (u, mf), = adjoint_reduce(f2, ts, init, ulims)
     else
-        global (u, mf), = reduce(f2, ts; init)
+        (u, mf), = reduce(f2, ts; init)
     end
 
     ulims = 0

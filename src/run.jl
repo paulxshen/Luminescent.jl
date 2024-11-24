@@ -3,10 +3,10 @@ include("main.jl")
 Base.convert(::Type{Float64}, x::ComplexF64) = abs(x)
 # using GLMakie
 
-picrun(lastrun())#; eta=0.01, iters=20)
+# picrun(lastrun())#; eta=0.01, iters=20)
 # gfrun(lastrun(); gpu_backend="CUDA")
 # picrun(lastrun(name="1x2_splitter"))
-# picrun(lastrun(name="tiny"))
+picrun(lastrun(name="tiny"))
 # picrun(lastrun(name="straight");)
 # # # using Pkg
 # # pkg"add Porcupine,Jello,ArrayPadding;up"

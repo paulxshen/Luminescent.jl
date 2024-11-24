@@ -115,7 +115,7 @@ function solvemodes(ϵ, dx, λ, neigs)
         v = getindexf(ϵ, x / dx + 0.5, y / dx + 0.5)
         (v, 0, 0, v, v)
     end
-    global _as = ϵ, x, y
+    # global _as = ϵ, x, y
     solver = VectorialModesolver(λ, x, y, boundary, f)
     modes = VectorModesolver.solve(solver, neigs, tol)
     T = transpose

@@ -5,7 +5,7 @@ function picrun(path; kw...)
     SOL_PATH = joinpath(path, "solution.json")
 
     io = open(PROB_PATH)
-    global s = read(io, String)
+    s = read(io, String)
     global prob = JSON.parse(s)
     @unpack name, N, dtype, xmargin, ymargin, dx0, source_margin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, gpu_backend, magic, framerate, layer_stack, materials, L = prob
     if study == "inverse_design"
@@ -35,7 +35,7 @@ function picrun(path; kw...)
             round((v - v[1]) / dl)
         end for v = [xs, ys, zs]
     ]
-    global spacings = diff.(ticks)
+    spacings = diff.(ticks)
     x = spacings[1][1]
     spacings = [x, x, spacings[3]]
     dx = x * dl
@@ -43,12 +43,11 @@ function picrun(path; kw...)
     deltas = spacings * dl
 
 
-    global ϵ2 = nothing
-    global sz = round.(L / dl)
-    global ϵ3 = zeros(F, Tuple(sz))
-    global layer_stack
+    ϵ2 = nothing
+    sz = round.(L / dl)
+    ϵ3 = zeros(F, Tuple(sz))
     layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2].mesh_order) |> OrderedDict
-    global ϵmin = Inf
+    ϵmin = Inf
     for (k, v) = pairs(layer_stack)
         a = stack(map(sort(collect(readdir(joinpath(path, "temp", string(k)), join=true)))) do file
             a = F.(Gray.(FileIO.load(file)))
@@ -80,7 +79,7 @@ function picrun(path; kw...)
     # aa = gpu(s.g.Jy)
 
     global models = nothing
-    global lb = components.device.bbox[1]
+    lb = components.device.bbox[1]
     if N == 2
         ϵ = ϵ2
     else
@@ -127,8 +126,8 @@ function picrun(path; kw...)
     # guess = convert.(F,guess)
     i = int(v2i(zmode - zmin, deltas[3]))
     j = int(v2i(zmode + hmode - zmin, deltas[3]))
-    global mode_spacings = [spacings[1][1], adddims(spacings[3][i+1:j], dims=1)]
-    global mode_deltas = mode_spacings * dl
+    mode_spacings = [spacings[1][1], adddims(spacings[3][i+1:j], dims=1)]
+    mode_deltas = mode_spacings * dl
     global runs = [SortedDict([k => isa(v, AbstractDict) ? SortedDict(v) : v for (k, v) = pairs(run)]) for run in runs]
     global runs_sources = [
         begin
@@ -205,7 +204,6 @@ function picrun(path; kw...)
     else
         println("using CPU backend.")
     end
-    global sols = 0
     t0 = time()
     lb3 = (lb..., zmin)
     if study == "sparams"
@@ -232,7 +230,6 @@ function picrun(path; kw...)
         best = best0 = 0
         println("")
         for i = 1:iters
-            global sols
             println("($i)  ")
             stop = i == iters
             if :phase_shifter == first(keys(targets))
@@ -255,7 +252,7 @@ function picrun(path; kw...)
                     # T * dϕ / π
                 end
             else
-                @time l, (dldm,) = Flux.withgradient(models) do models
+                @time global l, (dldm,) = Flux.withgradient(models) do models
                     # sols = get_sols(runs, run_probs,  path, lb, deltas,
                     @unpack S, sols = write_sparams(runs, run_probs, lb, dl,
                         designs, design_config, models;
@@ -284,14 +281,13 @@ function picrun(path; kw...)
                             y = flatten(y)
                             Z = length(y) * convert.(F, 2π)
                         else
-                            if :sparams == k
-                                # S = get_sparams(sols)
-                                yhat = S
-                            elseif :tparams == k
-                                global yhat = fmap(abs2, S)
+                            yhat = if "sparams" == string(k)
+                                S
+                            elseif "tparams" == string(k)
+                                fmap(abs2, S)
                             end
 
-                            global a1 = S, y
+                            # global a1 = S, y
                             yhat = [[yhat(_λ)(k) for k = keys(y[_λ])] for _λ = keys(y)]
                             yhat = flatten(yhat)
                             y = flatten(y)
@@ -345,26 +341,29 @@ function picrun(path; kw...)
             if stop
                 break
             end
-            global aaa = dldm
-
-            da = Inf
-            α = 1
-            masks0 = [m() for m in models]
-            models0 = deepcopy(model0)
             Flux.update!(opt_state, models, dldm)# |> gpu)
-            models1 = deepcopy(models)
-            while da > 0.5l
-                for (m, m0, m1) = (models, models0, models1)
-                    m.p .= α * m1.p + (1 - α) * m0.p
-                end
-                masks = [m() for m in models]
-                da = sum(Base.broadcasted(abs), masks - masks0) / sum(masks) do a
-                    prod(size(a))
-                end
-                α *= 0.9
-            end
-            @show α
-            println("fractional change in design: $da")
+
+            # da = Inf
+            # α = 1
+            # masks0 = [m() for m in models]
+            # models0 = deepcopy(models)
+            # Flux.update!(opt_state, models, dldm)# |> gpu)
+            # models1 = deepcopy(models)
+            # while da > 0.5l
+            #     for (m, m0, m1) = zip(models, models0, models1)
+            #         m.p .= α * m1.p + (1 - α) * m0.p
+            #     end
+            #     masks = [m() for m in models]
+            #     da = sum(masks - masks0) do a
+            #         sum(abs, a)
+            #     end
+            #     da /= sum(masks) do a
+            #         prod(size(a))
+            #     end
+            #     α *= 0.9
+            # end
+            # @show α
+            # println("fractional change in design: $da")
         end
         if framerate > 0
             write_sparams(runs, run_probs, lb, dl,

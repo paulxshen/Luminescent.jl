@@ -188,9 +188,9 @@ function SourceInstance(s::Source, g, ϵ=1)
         stop -= 0.5sel
         len = int(stop - start + 1)
         ϵmode = getindexf(ϵ, range.(start + 0.5, stop + 0.5, len)...)
-        global _a = ϵmode, dimsperm
+        # global _a = ϵmode, dimsperm
         ϵmode = permutedims(ϵmode, dimsperm, 2)
-        global λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1)[mns+1] for (λ, mns) = pairs(λmodenums)])
+        λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1)[mns+1] for (λ, mns) = pairs(λmodenums)])
         if N == 2
             λmodes = kmap(v -> collapse_mode.(v, true), λmodes)
         end
