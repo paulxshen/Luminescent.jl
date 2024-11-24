@@ -14,12 +14,15 @@ Args
 - normal: flux monitor direction (eg normal to flux surface)
 """
 struct Monitor <: AbstractMonitor
-    λmodes
+    specs
     center
     lb
     ub
     dimsperm
-    # n
+    N
+    center3
+    lb3
+    ub3
     # tangent
 
     tags
@@ -33,6 +36,7 @@ struct Monitor <: AbstractMonitor
     #     new(a...)
     # end
 end
+Monitor(args...; λmodenums=nothing, λmodes=nothing, tags...) = Monitor((; λmodenums, λmodes), args..., tags)
 
 struct PlaneMonitor <: AbstractMonitor
     dims
@@ -71,33 +75,30 @@ Base.length(m::MonitorInstance) = 1
 frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
-function MonitorInstance(m::Monitor, g)
-    @unpack lb, ub, center, dimsperm, λmodes, = m
-    @unpack deltas, field_lims, F = g
+function MonitorInstance(m::Monitor, g, ϵ=1)
+    @unpack lb, ub, center, dimsperm, specs, N, center3, lb3, ub3 = m
+    @unpack deltas, deltas3, field_lims, F = g
 
-    # n, lb, ub, center, tangent = [convert.(F, a) for a = (n, lb, ub, center, tangent)]
-    # L = ub - lb
-    # D = length(center)
-    # d = length(lb)
-    # A = isempty(L) ? 0 : prod(L,)
-    # if D == 2
-    #     frame = [[-n[2], n[1], 0], [0, 0, 1], [n..., 0]]
+    dx = deltas[1][1]
+    @unpack λmodenums, λmodes = specs
+    if !isnothing(λmodenums)
+        start = v2i(center3 + lb3, deltas3)
+        stop = v2i(center3 + ub3, deltas3)
+        sel = abs.(stop - start) .>= 1e-3
+        stop[!sel] .= start[!sel]
+        start += 0.5sel
+        stop -= 0.5sel
+        ϵmode = getindexf(ϵ, range.(start + 0.5, stop + 0.5, int(stop - start + 1))...)
+        ϵmode = permutedims(ϵmode, dimsperm, 2)
+        λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1) for (λ, mns) = pairs(λmodenums)])
+    end
 
-    # elseif D == 3
-    #     frame = [tangent, n × tangent, n]
-    # end
-    # lb = sum(lb .* frame[1:d])[1:D]
-    # ub = sum(ub .* frame[1:d])[1:D]
-    # v = zip(lb, ub)
-    # lb = minimum.(v)
-    # ub = maximum.(v)
-    # L = ub - lb
-
-    start0 = v2i(center + lb - g.lb, deltas)
-    stop0 = v2i(center + ub - g.lb, deltas)
-    start, stop = min.(start0, stop0), max.(start0, stop0)
+    start = v2i(center + lb - g.lb, deltas)
+    stop = v2i(center + ub - g.lb, deltas)
+    start, stop = min.(start, stop), max.(start, stop)
 
     sel = abs.(stop - start) .>= 1e-3
+    stop[!sel] .= start[!sel]
     start += 0.5sel
     stop -= 0.5sel
 
@@ -210,3 +211,21 @@ function monitors_on_box(center, L)
         Monitor([ox, oy, oz + rz], [lx, ly, 0,], [0, 0, 1,]),
     ]
 end
+
+# n, lb, ub, center, tangent = [convert.(F, a) for a = (n, lb, ub, center, tangent)]
+# L = ub - lb
+# D = length(center)
+# d = length(lb)
+# A = isempty(L) ? 0 : prod(L,)
+# if D == 2
+#     frame = [[-n[2], n[1], 0], [0, 0, 1], [n..., 0]]
+
+# elseif D == 3
+#     frame = [tangent, n × tangent, n]
+# end
+# lb = sum(lb .* frame[1:d])[1:D]
+# ub = sum(ub .* frame[1:d])[1:D]
+# v = zip(lb, ub)
+# lb = minimum.(v)
+# ub = maximum.(v)
+# L = ub - lb

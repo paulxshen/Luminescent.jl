@@ -1,11 +1,10 @@
 # import dill
 from pprint import pprint
-from PIL import Image
 import os
 import subprocess
 import time
 import json
-import bson
+import json
 import numpy as np
 from .inverse_design import *
 from .sparams import *
@@ -18,7 +17,7 @@ from subprocess import Popen, PIPE
 
 
 def solve(prob, dev=False, run=True):
-    bson_data = bson.dumps(prob)
+    bson_data = json.dumps(prob)
     # prob["component"] = c0
 
     path = prob["path"]
@@ -29,8 +28,8 @@ def solve(prob, dev=False, run=True):
           started julia process
           compiling julia code...
           """)
-    prob_path = os.path.join(path, "problem.bson")
-    with open(prob_path, "wb") as f:
+    prob_path = os.path.join(path, "problem.json")
+    with open(prob_path, "w") as f:
         # Write the BSON data to the file
         f.write(bson_data)
 

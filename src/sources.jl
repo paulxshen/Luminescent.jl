@@ -4,6 +4,7 @@ function resize(a, sz)
 
 end
 
+_aug(sm::Map, N) = _aug(pairs(sm), N)
 function _aug(sm, N)
     f, mode = sm
     length(mode) == N && return sm
@@ -20,7 +21,7 @@ end
 """
 """
 struct Source
-    sigmodes
+    specs
     center
     lb
     ub
@@ -29,6 +30,10 @@ struct Source
     # zaxis
     # xaxis
     dimsperm
+    N
+    center3
+    lb3
+    ub3
     tags
     # function Source(sigmodes, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; tags...)
     #     new(f, center, lb, ub, normal, tangent, E2J(mode), tags)
@@ -38,6 +43,7 @@ struct Source
     # end
 
 end
+Source(args...; λmodenums=nothing, λmodes=nothing, tags...) = Source((; λmodenums, λmodes), args..., tags)
 """
     function PlaneWave(f, dims; mode...)
 
@@ -165,18 +171,35 @@ function SourceInstance(s::PlaneWave, g)
     SourceInstance(Source(sigmodes, L / 2, -L / 2, L / 2, getdimsperm(dims), tags), g)
 end
 
-function SourceInstance(s::Source, g)
-    @unpack center, lb, ub, tags, dimsperm = s
-    @unpack F, deltas, field_sizes, field_lims = g
+function SourceInstance(s::Source, g, ϵ=1)
+    @unpack center, lb, ub, tags, dimsperm, specs, N, center3, lb3, ub3 = s
+    @unpack F, deltas, deltas3, field_sizes, field_lims = g
 
-    N = length(center)
-    sigmodes = _aug.(s.sigmodes, N)
 
-    start0 = v2i(center + lb - g.lb, deltas)
-    stop0 = v2i(center + ub - g.lb, deltas)
-    start, stop = min.(start0, stop0), max.(start0, stop0)
+    dx = deltas[1][1]
+    @unpack λmodenums, λmodes = specs
+    if !isnothing(λmodenums)
+        start = v2i(center3 + lb3, deltas3)
+        stop = v2i(center3 + ub3, deltas3)
+        sel = abs.(stop - start) .>= 1e-3
+        stop[!sel] .= start[!sel]
+        start += 0.5sel
+        stop -= 0.5sel
+        len = int(stop - start + 1)
+        ϵmode = getindexf(ϵ, range.(start + 0.5, stop + 0.5, len)...)
+        global _a = ϵmode, dimsperm
+        ϵmode = permutedims(ϵmode, dimsperm, 2)
+        λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1)[mns+1] for (λ, mns) = pairs(λmodenums)])
+    end
+
+    sigmodes = _aug.(λmodes, N)
+
+    start = v2i(center + lb - g.lb, deltas)
+    stop = v2i(center + ub - g.lb, deltas)
+    start, stop = min.(start, stop), max.(start, stop)
 
     sel = abs.(stop - start) .>= 0.001
+    stop[!sel] .= start[!sel]
     start += 0.5sel
     stop -= 0.5sel
 

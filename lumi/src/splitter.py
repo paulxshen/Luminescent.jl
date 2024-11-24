@@ -24,3 +24,7 @@ sol = lumi.solve(prob)
 #     symmetries=[1], lvoid=0.1, lsolid=0.1, dx=0.1,
 #    N=2, stoploss=.03, iters=40)
 # sol = lumi.solve(prob)
+
+# apt install libgl1-mesa-glx
+# sudo apt-get install libcairo2-dev
+# sudo apt install libxcb-cursor0

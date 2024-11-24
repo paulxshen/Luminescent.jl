@@ -102,3 +102,18 @@ function reframe(frame, u, inv=false)
     end
 end
 invreframe(frame, u) = reframe(frame, u, true)
+
+
+function solvemodes(ϵ, dx, λ, neigs)
+    x = range(dx / 2; step=dx, length=size(ϵ, 1))
+    y = range(dx / 2; step=dx, length=size(ϵ, 2))
+    neigs = 1
+    tol = 1e-4
+    boundary = (0, 0, 0, 0)
+    f = (x, y) -> getindexf(ϵ, x + 0.5, y + 0.5)
+    solver = VectorialModesolver(λ, x, y, boundary, f)
+    modes = VectorModesolver.solve(solver, neigs, tol)
+
+    plot_mode_fields(modes[1])
+    [(Ex=m.Ex, Ey=m.Ey) for m in modes]
+end

@@ -1,15 +1,15 @@
 function picrun(path; kw...)
     Random.seed!(1)
     println("setting up simulation...")
-    PROB_PATH = joinpath(path, "problem.bson")
+    global PROB_PATH = joinpath(path, "problem.json")
     SOL_PATH = joinpath(path, "solution.json")
 
-    verbose = false
-
-    global prob = load(PROB_PATH)
-    @load PROB_PATH name N dtype xmargin ymargin dx0 source_margin runs ports dl xs ys zs components study mode_solutions zmode hmode zmin zcenter gpu_backend magic framerate layer_stack materials L
+    io = open(PROB_PATH)
+    global s = read(io, String)
+    global prob = JSON.parse(s)
+    @unpack name, N, dtype, xmargin, ymargin, dx0, source_margin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, gpu_backend, magic, framerate, layer_stack, materials, L = prob
     if study == "inverse_design"
-        @load PROB_PATH designs targets weights eta iters restart save_memory design_config stoploss
+        @unpack designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end
     # iters = 15
     # for (k, v) in pairs(kw)
@@ -20,7 +20,7 @@ function picrun(path; kw...)
     # @show eta
     # eta = 0.02
     # N = 2
-    # heatmap(debug.mask)
+    # heatmap(debug.mask) 
 
     F = Float32
     alg = :spectral
@@ -29,7 +29,7 @@ function picrun(path; kw...)
         F = Float16
         println("Float16 selected. make sure your cpu or GPU supports it. otherwise will be emulated and very slow.")
     end
-    λ = median(load(PROB_PATH)[:wavelengths])
+    λ = median(prob.wavelengths)
     ticks = [
         begin
             round((v - v[1]) / dl)
@@ -42,11 +42,12 @@ function picrun(path; kw...)
     popfirst!.(ticks)
     deltas = spacings * dl
 
-    global eps_2D = nothing
+
+    global ϵ2 = nothing
     global sz = round.(L / dl)
-    global eps_3D = zeros(F, Tuple(sz))
+    global ϵ3 = zeros(F, Tuple(sz))
     global layer_stack
-    layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2][:mesh_order]) |> OrderedDict
+    layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2].mesh_order) |> OrderedDict
     global ϵmin = Inf
     for (k, v) = pairs(layer_stack)
         a = stack(map(sort(collect(readdir(joinpath(path, "temp", string(k)), join=true)))) do file
@@ -62,15 +63,15 @@ function picrun(path; kw...)
         a = a[Base.oneto.(size(a) - overhang)...]
         I = range.(start, start + size(a) - 1)
 
-        ϵ = materials[Symbol(material)].epsilon
+        ϵ = materials(material).epsilon
         ϵmin = min(ϵ, ϵmin)
-        eps_3D[I...] .*= 1 - a
-        eps_3D[I...] .+= a .* ϵ
+        ϵ3[I...] .*= 1 - a
+        ϵ3[I...] .+= a .* ϵ
     end
-    eps_3D = max.(ϵmin, eps_3D)
-    eps_2D = eps_3D[:, :, 1+round((zcenter - zmin) / dl)]
-    # heatmap(eps_2D) |> display
-    # GLMakie.volume(eps_3D) |> display
+    ϵ3 = max.(ϵmin, ϵ3)
+    ϵ2 = ϵ3[:, :, 1+round((zcenter - zmin) / dl)]
+    # heatmap(ϵ2) |> display
+    # GLMakie.volume(ϵ3) |> display
     # error("stop")
 
     # s = run_probs[1].source_instances[1]
@@ -81,14 +82,12 @@ function picrun(path; kw...)
     global models = nothing
     global lb = components.device.bbox[1]
     if N == 2
-        ϵ = eps_2D
+        ϵ = ϵ2
     else
-        ϵ = eps_3D
+        ϵ = ϵ3
     end
     if study == "inverse_design"
-
         targets = fmap(F, targets)
-        prob = load(PROB_PATH)
         if isfile(SOL_PATH)
             sol = open(SOL_PATH, "r") do f
                 JSON.parse(f)
@@ -105,7 +104,7 @@ function picrun(path; kw...)
 
                 lvoid = design.lvoid / dl
                 lsolid = design.lsolid / dl
-                frame = eps_2D
+                frame = ϵ2
                 frame = frame .>= 0.99maximum(frame)
                 # frame = nothing
                 start = round((bbox[1] - lb) / dl + 1)
@@ -130,63 +129,30 @@ function picrun(path; kw...)
     j = int(v2i(zmode + hmode - zmin, deltas[3]))
     global mode_spacings = [spacings[1][1], adddims(spacings[3][i+1:j], dims=1)]
     global mode_deltas = mode_spacings * dl
-
-    global mode_solutions
-    for ms = mode_solutions
-        if !haskey(ms, :calibrated_modes)
-            ms[:_modes] = []
-            ms[:calibrated_modes] = []
-        end
-        for mode = ms.modes
-            mode = NamedTuple([k => complex.(stack.(F(v))...) for (k, v) in mode |> pairs])
-
-            if N == 2
-                mode = collapse_mode(mode,)
-            end
-            push!(ms[:_modes], mode)
-            mode = kmap(mode) do a
-                # global _a = [a, mode_spacings]
-                if N == 2
-                    downsample(a, mode_spacings[1][1])
-                else
-                    downsample(a, mode_spacings)
-                end
-            end
-            # global _mode = mode = keepxy(mode)
-            push!(ms[:calibrated_modes], mode)
-        end
-    end
-
     global runs = [SortedDict([k => isa(v, AbstractDict) ? SortedDict(v) : v for (k, v) = pairs(run)]) for run in runs]
     global runs_sources = [
         begin
             sources = []
             for (port, sig) = SortedDict(run.sources) |> pairs
                 @unpack center, wavelength_mode_numbers = sig
-                for _λ in keys(wavelength_mode_numbers)
-                    for mn = wavelength_mode_numbers[_λ]
-                        _λ = convert.(F, parse(Float32, string(_λ)))
-                        i = findfirst(mode_solutions) do v
-                            abs(_λ - v.wavelength) < 0.001 && string(port) in string.(v.ports)
-                        end
-                        ms = mode_solutions[i]
-                        mode = ms.calibrated_modes[mn+1]
-                        # sum(abs.(aa.source_instances[1].g.Jy))
-                        # heatmap(abs.(bb.source_instances[1]._g.Jy))
-                        n = -sig.normal
-                        tangent = [-n[2], n[1]]
-                        center = (sig.center - lb) / λ
-                        L = tangent * sig.mode_width / λ
-                        if N == 3
-                            L = [L..., hmode / λ]
-                            # n, tangent, = vcat.((n, tangent,), ([0],))
-                            center = [center..., (zcenter - zmin) / λ]
-                        end
-                        dimsperm = getdimsperm(L)
-                        insert!(dimsperm, 2, 3)
-                        push!(sources, Source([(λ / _λ) => mode], center, -L / 2, L / 2, dimsperm, (; label="s$(string(port)[2:end])")))
-                    end
+                # i = findfirst(mode_solutions) do v
+                #     abs(_λ - v.wavelength) < 0.001 && string(port) in string.(v.ports)
+                # end
+                # sum(abs.(aa.source_instances[1].g.Jy))
+                # heatmap(abs.(bb.source_instances[1]._g.Jy))
+                n = -sig.normal
+                tangent = [-n[2], n[1]]
+                center = (sig.center - lb) / λ
+                L = tangent * sig.mode_width / λ
+                L3 = [L..., hmode / λ]
+                center3 = [center..., (zcenter - zmin) / λ]
+                if N == 3
+                    L = L3
+                    center = center3
                 end
+                dimsperm = getdimsperm([L..., 1])
+                λmodenums = SortedDict([(F(_λ) / λ) => v for (_λ, v) in pairs(wavelength_mode_numbers)])
+                push!(sources, Source(center, -L / 2, L / 2, dimsperm, N, center3, -L3 / 2, L3 / 2; λmodenums, label="s$(string(port)[2:end])"))
             end
             sources
         end for run in runs
@@ -200,43 +166,25 @@ function picrun(path; kw...)
             tangent = [-n[2], n[1]]
             # n, tangent, = vcat.((n, tangent,), ([0],))
 
-            λmodes = SortedDict([
-                begin
-                    _λ = parse(Float32, string(_λ))
-                    _λ = F(_λ)
-                    _λ / λ => [
-                        begin
-                            i = findfirst(mode_solutions) do v
-                                abs(_λ - v.wavelength) < 0.001 && string(port) in v.ports && mn < length(v.modes)
-                            end
-                            ms = mode_solutions[i]
-                            mode = ms.calibrated_modes[mn+1]
-                        end for mn = 0:maximum(mns)
-                    ]
-                end
-                for (_λ, mns) in pairs(m.wavelength_mode_numbers)
-            ])
-
+            λmodenums = SortedDict([(F(_λ) / λ) => v for (_λ, v) in pairs(m.wavelength_mode_numbers)])
 
             L = tangent * m.mode_width / λ
+            L3 = [L..., hmode / λ]
+            center3 = [center..., (zcenter - zmin) / λ]
             if N == 3
-                L = [L..., hmode / λ]
-                # n, tangent, = vcat.((n, tangent,), ([0],))
-                center = [center..., (zcenter - zmin) / λ]
+                L = L3
+                center = center3
             end
-            dimsperm = getdimsperm(L)
-            insert!(dimsperm, 2, 3)
+            dimsperm = getdimsperm(L3)
 
-            Monitor(λmodes, center, -L / 2, L / 2, dimsperm, (; label=port))
+            Monitor(center, -L / 2, L / 2, dimsperm, N, center3, -L3 / 2, L3 / 2; λmodenums, label=port)
         end for (port, m) = SortedDict(run.monitors) |> pairs] for run in runs]
-    # sort!(runs_monitors, by=x -> x.label)
-
 
     global run_probs =
         [
             begin
                 setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ;
-                    F, ϵ, λ)
+                    F, ϵ, ϵ3, deltas3=deltas / λ, λ)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]
 
@@ -402,7 +350,25 @@ function picrun(path; kw...)
                 break
             end
             global aaa = dldm
+
+            da = Inf
+            α = 1
+            masks0 = [m() for m in models]
+            models0 = deepcopy(model0)
             Flux.update!(opt_state, models, dldm)# |> gpu)
+            models1 = deepcopy(models)
+            while da > 0.5l
+                for (m, m0, m1) = (models, models0, models1)
+                    m.p .= α * m1.p + (1 - α) * m0.p
+                end
+                masks = [m() for m in models]
+                da = sum(Base.broadcasted(abs), masks - masks0) / sum(masks) do a
+                    prod(size(a))
+                end
+                α *= 0.9
+            end
+            @show α
+            println("fractional change in design: $da")
         end
         if framerate > 0
             write_sparams(runs, run_probs, lb, dl,

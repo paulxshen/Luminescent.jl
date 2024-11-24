@@ -4,14 +4,13 @@ from .setup import *
 from .constants import *
 from .layers import *
 from .utils import *
-import bson
 import gdsfactory as gf
 from copy import deepcopy
 from functools import partial
 from math import cos, pi, sin
 import os
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
-
+import json
 
 def gcell_problem(c,  targets, iters,
                   lvoid=0, lsolid=0, symmetries=[],
@@ -84,6 +83,7 @@ def gcell_problem(c,  targets, iters,
                            study="inverse_design",
                            keys=keys,
                            N=N, ** kwargs)
+    
     prob["restart"] = restart
     prob["weights"] = {**{
         "tparams": 1,
@@ -119,7 +119,6 @@ def gcell_problem(c,  targets, iters,
     l = get_layers(layer_stack, fill_layer)[0]
     d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
     d["epsilon"] = materials[d["material"]]["epsilon"]
-    d["ϵ"] = d["epsilon"]
     d["layer"] = fill_layer
     prob["design_config"]["fill"] = d
 

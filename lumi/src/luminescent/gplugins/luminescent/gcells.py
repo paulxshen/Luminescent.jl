@@ -1,7 +1,6 @@
 
 from .constants import *
 from .utils import *
-import bson
 import gdsfactory as gf
 from gdsfactory.cross_section import Section
 from networkx import center

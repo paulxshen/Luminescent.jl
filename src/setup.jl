@@ -10,9 +10,11 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     polarization=:TE,
     transient_duration=0, steady_state_duration=0,
     ϵ=1, μ=1, σ=0, m=0,
+    ϵ3=1,
     F=Float32,
     pml_depths=nothing, pml_ramp_fracs=0.2,
     Courant=0.9,
+    deltas3=deltas,
     kw...)
     @convert F (deltas, mode_deltas, ϵ, μ, σ, m)
     global deltas1 = deltas
@@ -31,6 +33,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
             v
         end
     end
+    ϵ3 = downsample(ϵ3, int(deltas3 / dl))
 
     ϵmin, ϵmax = extrema(geometry.ϵ)
     μmin, μmax = extrema(geometry.μ)
@@ -178,7 +181,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
                 geometry_padvals[:m][i, j] = b.m
 
                 if j == 1
-                    bbox[i, :] .+= b.d
+                    bbox[i, :] .-= b.d
                 end
                 for k = keys(field_sizes)
                     field_sizes[k][i] += npml
@@ -243,7 +246,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     end
     field_lims = merge(values(field_lims)...)
     field_lims = add_current_keys(field_lims)
-    lb = -bbox[:, 1]
+    lb = bbox[:, 1]
 
     field_deltas = [_make_field_deltas(d, N, field_boundvals, field_sizes, i) for (i, d) = enumerate(deltas)]
     field_diffdeltas = [_make_field_deltas(d, N, field_boundvals, field_sizes, i, true) for (i, d) = enumerate(deltas)]
@@ -254,10 +257,10 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     field_spacings = int(field_deltas / dl)
     spacings = int(deltas / dl)
 
-    grid = (; F, N, L, bbox, sz, deltas, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals, geometry_padvals, geometry_padamts, _geometry_padamts, dl, spacings,)
+    grid = (; F, N, L, bbox, sz, deltas, deltas3, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals, geometry_padvals, geometry_padamts, _geometry_padamts, dl, spacings,)
 
-    source_instances = SourceInstance.(sources, (grid,))
-    monitor_instances = MonitorInstance.(monitors, (grid,))
+    source_instances = SourceInstance.(sources, (grid,), (ϵ3,))
+    monitor_instances = MonitorInstance.(monitors, (grid,), (ϵ3,))
 
     dt = nmin / √(sum(dx -> 1 / minimum(dx)^2, deltas)) * Courant
     dt = 1 / ceil(1 / dt) |> F

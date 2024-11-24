@@ -16,7 +16,7 @@ dogpu = true
 F = Float32
 
 # load mode profile and waveguide dimensions from results of external mode solver 
-@load "$(@__DIR__)/modes.bson" modes lb ub λ dx hbase wwg hwg hclad w h ϵbase ϵclad ϵcore
+@load "$(@__DIR__)/modes.json" modes lb ub λ dx hbase wwg hwg hclad w h ϵbase ϵclad ϵcore
 ϵmin = ϵclad
 hbase, wwg, hwg, hclad, w, dx, ub, lb = [hbase, wwg, hwg, hclad, w, dx, ub, lb] / λ
 dx = F(dx)

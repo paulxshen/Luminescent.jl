@@ -2,7 +2,7 @@ import luminescent as lumi
 import gdsfactory as gf
 
 radius = 5
-N = 3
+N = 2
 c = gf.components.bend_circular(radius=radius, allow_min_radius_violation=True)
 c.plot()
 

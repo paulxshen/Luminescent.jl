@@ -32,7 +32,7 @@ model_name = nothing # if load saved model
 We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 ```julia
 
-@load "$(@__DIR__)/layout.bson" static_mask sources ports designs λ dx ϵbase ϵclad ϵcore hbase hwg hclad
+@load "$(@__DIR__)/layout.json" static_mask sources ports designs λ dx ϵbase ϵclad ϵcore hbase hwg hclad
 dx, = [dx,] / λ
 ```
 We initialize a Jello.jl Blob object which will generate geometry of design region. Its parameters will get optimized during adjoint optimization. We initialize it with a straight slab connecting input to output port.
@@ -185,7 +185,7 @@ for i = 1:iterations2d
     Flux.update!(opt_state, model, dldm)
     println(" $l\n")
 end
-@save "$(@__DIR__)/2d_model_$(time()).bson" model
+@save "$(@__DIR__)/2d_model_$(time()).json" model
 # error()
 ```
 We do a simulation movie using optimized geometry
@@ -269,7 +269,7 @@ for i = 1:iterations3d
     Flux.update!(opt_state, model, dldm)
     println("$i $l")
 end
-@save "$(@__DIR__)/3d_model_$(time()).bson" model
+@save "$(@__DIR__)/3d_model_$(time()).json" model
 
 
 record = model -> runsave(model, prob; elevation=70°, azimuth=110°)

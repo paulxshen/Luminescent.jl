@@ -1,10 +1,7 @@
-# import dill
-import math
-import shutil
 from .constants import *
 from .layers import *
 from .utils import *
-import bson
+import json
 import gdsfactory as gf
 from copy import deepcopy
 # from time import time
@@ -148,8 +145,8 @@ def setup(c, study, dx, margin,
     _c << gf.components.bbox(component=c, layer=bbox_layer, **kwargs)
     c0 = _c << c
     c = _c
-    c.plot()
-    c.show()
+    # c.plot()
+    # c.show()
 
     lb = c.bbox_np()[0].tolist()
     center = [c.bbox_np()[0][0], c.bbox_np()[0][1]+w/2, zcenter]
@@ -218,43 +215,6 @@ def setup(c, study, dx, margin,
             s["mode_width"] = wmode
             for wl in s["wavelength_mode_numbers"]:
                 wavelengths.append(wl)
-                duplicate = False
-                mode_numbers = s["wavelength_mode_numbers"][wl]
-                for m in mode_solutions:
-                    if m["wavelength"] == wl and max(mode_numbers) < len(m["modes"]) and m["width"] == s["width"]:
-                        m["ports"].append(s["port"])
-                        duplicate = True
-                if not duplicate:
-                    normal = s["normal"]+[0]
-                    center = list(s["center"])+[zcenter]
-
-                    center = np.array(center)-.001*np.array(normal)
-                    eps = material_slice(
-                        c, dl, center, wmode, hmode, normal, layers, layer_stack, materials)
-                    _modes,  neffs, _modes1D, neffs1D = solve_modes(
-                        eps, λ=wl, dx=dx, neigs=max(mode_numbers)+1, plot=plot)
-
-                    for n in neffs:
-                        if n < neffmin:
-                            neffmin = n
-
-                    modes = [{k: [np.real(mode[k].T).tolist(), np.imag(
-                        mode[k].T).tolist()] for k in mode} for mode in _modes]
-                    modes1D = [{k: [np.real(mode[k]).tolist(), np.imag(
-                        mode[k]).tolist()] for k in mode} for mode in _modes1D]
-
-                    mode_solutions.append({
-                        "modes": modes,
-                        "modes1D": modes1D,
-                        "wavelength": wl,
-                        # "mode_number": mn,
-                        "ports": [s["port"]],
-                        "size": [wmode, hmode],
-                        "eps": eps.tolist(),
-                        "width": s["width"],
-                        "mode_width": wmode,
-                        "zcenter": zcenter,
-                    })
     wavelengths = sorted(set(wavelengths))
     wl = np.median(wavelengths)
     if source_margin == "auto":
