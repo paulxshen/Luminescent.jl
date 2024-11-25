@@ -45,7 +45,7 @@ function mode_decomp(m, u, deltas)
     if p < 0
         m2, m1 = m1, m2
     end
-    @ignore_derivatives_vars m1, m2, deltas
+    # @ignore_derivatives_vars m1, m2, deltas
     inner.((m1, m2), (u,), (deltas,))
 end
 
@@ -105,10 +105,17 @@ function reframe(frame, u, inv=false)
 end
 invreframe(frame, u) = reframe(frame, u, true)
 
+Base.convert(::Type{Float64}, x::ComplexF64) = real(x)
 
 function solvemodes(ϵ, dx, λ, neigs)
+    m = round((size(ϵ, 1) - size(ϵ, 2)) / 2)
+    n = size(ϵ, 1) - size(ϵ, 2) - m
+    ϵ = pad(ϵ, :replicate, [0, m], [0, n])
+
     x = range(dx / 2; step=dx, length=size(ϵ, 1))
     y = range(dx / 2; step=dx, length=size(ϵ, 2))
+    # x = range(0; step=dx, length=size(ϵ, 1) + 1)
+    # y = range(0; step=dx, length=size(ϵ, 2) + 1)
     tol = 1e-8
     boundary = (0, 0, 0, 0)
     f = (x, y) -> begin
@@ -116,12 +123,14 @@ function solvemodes(ϵ, dx, λ, neigs)
         (v, 0, 0, v, v)
     end
     # global _as = ϵ, x, y
-    solver = VectorialModesolver(λ, x, y, boundary, f)
+    solver = VectorModesolver.VectorialModesolver(λ, x, y, boundary, f)
     modes = VectorModesolver.solve(solver, neigs, tol)
     T = transpose
     # plot_mode_fields(modes[1]) |> display
+    # error()
     display(heatmap(ϵ))
     display(heatmap(real(transpose(modes[1].Ex))))
-    display(heatmap(imag(transpose(modes[1].Ex))))
-    [namedtuple([k => transpose(getfield(mode, k)) for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
+    # error()
+    [namedtuple([k => getfield(mode, k)[:, m+1:end-n] for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
+    # [namedtuple([k => transpose(getfield(mode, k)) for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
 end

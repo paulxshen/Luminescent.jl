@@ -70,7 +70,7 @@ def setup(c, study, dx, margin,
     hcore = d.thickness
     zcore = d.zmin
 
-    zmargin1 = 2*hcore
+    zmargin1 = 1.5*hcore
     hmode = hcore+2*zmargin1
     hmode = trim(hmode, 2*dz)
     zmargin1 = (hmode-hcore)/2
@@ -79,7 +79,7 @@ def setup(c, study, dx, margin,
     zcenter = zcore+hcore/2
 
     zmargin2 = 2.5*hcore
-    zmargin2 = trim(zmargin2,  dz)
+    zmargin2 = trim(zmargin2,  2*dz)
     h = hcore+2*(zmargin1+zmargin2)
     zmin = zcore-zmargin2-zmargin1
     zmax = zmin+h

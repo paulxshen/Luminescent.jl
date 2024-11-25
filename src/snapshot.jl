@@ -1,8 +1,8 @@
 function draw_bbox!(ax, bbox)
-    isnothing(bbox) && return
-    x0, y0 = bbox[:, 1]
-    x1, y1 = bbox[:, 2]
-    lines!(ax, [(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)], color=:black)
+    # isnothing(bbox) && return
+    # x0, y0 = bbox[:, 1]
+    # x1, y1 = bbox[:, 2]
+    # lines!(ax, [(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)], color=:black)
 end
 
 ° = π / 180
@@ -45,7 +45,8 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
 
     title0 = "Hz"
     if N == 3
-        ax = fig[1, 1]
+        ax0 = fig[1, 1]
+        ax = ax0[1, 1]
         title = "$title0 (xy slice of 3D array)"
         aspect = l / w
         axis = (; title, aspect, xtickformat, ytickformat)
@@ -54,7 +55,8 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
         draw_bbox!(ax, bbox)
 
         title = "$title0 (yz slice of 3D array)"
-        ax = fig[1, 2]
+        ax0 = fig[1, 2]
+        ax = ax0[1, 1]
         aspect = w / h
         axis = (; title, aspect, xtickformat=ytickformat, ytickformat=ztickformat)
         a = u[round.(Int, size(u, 1) / 2), :, :]
@@ -92,7 +94,8 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
     title0 = "ϵ"
     colormap = [:white, :gray]
     if N == 3
-        ax = fig[2, 1]
+        ax0 = fig[2, 1]
+        ax = ax0[1, 1]
         title = "$title0 (xy slice of 3D array)"
         aspect = l / w
         axis = (; title, aspect, xtickformat, ytickformat)
@@ -101,7 +104,8 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
         draw_bbox!(ax, bbox)
 
         title = "$title0 (yz slice of 3D array)"
-        ax = fig[2, 2]
+        ax0 = fig[2, 2]
+        ax = ax0[1, 1]
         aspect = w / h
         axis = (; title, aspect, xtickformat=ytickformat, ytickformat=ztickformat)
         a = g[round.(Int, size(g, 1) / 2), :, :]

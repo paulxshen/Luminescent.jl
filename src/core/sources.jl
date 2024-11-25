@@ -4,15 +4,15 @@ function resize(a, sz)
 
 end
 
-_augλmodes(sm::Map, N) = reduce(vcat, [zip(fill(λ, length(modes)), _aug.(modes, N)) for (λ, modes) = (pairs(sm))])
 function _aug(mode, N)
     length(mode) == N && return mode
+    T = eltype(mode(1))
     OrderedDict([
         begin
             i = findfirst(keys(mode)) do k
                 endswith(string(k), s)
             end
-            isnothing(i) ? (Symbol("J$s") => 0) : (keys(mode)[i] => mode[keys(mode)[i]])
+            isnothing(i) ? (Symbol("E$s") => T(0)) : (keys(mode)[i] => mode[keys(mode)[i]])
         end for s = "xyz"[1:N]
     ])
 end
@@ -116,54 +116,6 @@ struct SourceInstance
 end
 @functor SourceInstance (sigmodes,)
 
-
-# J = OrderedDict()
-# for k = (:Jx, :Jy, :Jz)
-#     if k in keys(s.mode)
-#         J[k] = ComplexF32.(s.mode[k])
-#     else
-#         J[k] = zeros(ComplexF32, size(s.mode(1)))
-#     end
-# end
-# J = values(J)
-
-# L = ub .- lb
-# d = length(lb)
-# D = length(center) # 2D or 3D
-# if D == 2
-#     zaxis = [normal..., 0]
-#     yaxis = [0, 0, 1]
-#     # xaxis = cross(yaxis, zaxis)
-#     xaxis = cross(yaxis, zaxis)
-# else
-#     zaxis = convert.(F, normal)
-#     xaxis = convert.(F, tangent)
-#     yaxis = cross(zaxis, xaxis)
-# end
-
-# frame = [xaxis, yaxis, zaxis]
-# J = reframe(frame, J)
-# if D == 2
-#     J = [J[:, :, 1] for J in J]
-# end
-# lb = sum(lb .* frame[1:d])[1:D]
-# ub = sum(ub .* frame[1:d])[1:D]
-# L = ub - lb
-
-# Jx, Jy, Jz = J
-# if D == 2
-#     mode = (; Jx, Jy)
-# else
-#     mode = (; Jx, Jy, Jz)
-# end
-# v = zip(lb, ub)
-# lb = minimum.(v)
-# ub = maximum.(v)
-# n = findfirst(abs.(zaxis) .> 0.001)
-# mode = ignore_derivatives() do
-#     mode / deltas[n][1]#[findfirst(>(center[n]), cumsum(deltas[n]))]
-# end
-
 function SourceInstance(s::PlaneWave, g)
     @unpack L = g
     @unpack dims, sigmodes, tags = s
@@ -173,7 +125,7 @@ end
 function SourceInstance(s::Source, g, ϵ=1)
     @unpack center, lb, ub, tags, dimsperm, specs, N, center3, lb3, ub3 = s
     @unpack F, deltas, deltas3, field_sizes, field_lims = g
-
+    C = complex(F)
 
     dx = deltas[1][1]
     @unpack λmodenums, λmodes = specs
@@ -192,11 +144,9 @@ function SourceInstance(s::Source, g, ϵ=1)
         ϵmode = permutedims(ϵmode, dimsperm, 2)
         λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1)[mns+1] for (λ, mns) = pairs(λmodenums)])
         if N == 2
-            λmodes = kmap(v -> collapse_mode.(v, true), λmodes)
+            global λmodes = kmap(v -> collapse_mode.(v, true), λmodes)
         end
     end
-
-    sigmodes = _augλmodes(λmodes, N)
 
     start = v2i(center + lb - g.lb, deltas)
     stop = v2i(center + ub - g.lb, deltas)
@@ -208,6 +158,8 @@ function SourceInstance(s::Source, g, ϵ=1)
     stop -= 0.5sel
 
     o = NamedTuple([k => F.(start - fl[:, 1] + 1) for (k, fl) = pairs(field_lims)])
+    λmodes = fmap(F, λmodes)
+    sigmodes = reduce(vcat, [zip(fill(λ, length(modes)), modes) for (λ, modes) = (pairs(λmodes))])
     sigmodes = [
         begin
             _f = if isa(sig, Number)
@@ -215,15 +167,18 @@ function SourceInstance(s::Source, g, ϵ=1)
             else
                 sig
             end
-            f = x -> convert(complex(F), _f(x))
+            f = x -> convert(C, _f(x))
 
             mode = permutexyz(mode, invperm(dimsperm), N)
+            mode = _aug(mode, N)
             ks = sort(filter(k -> startswith(string(k), "E"), keys(mode)))
             _mode = namedtuple([k => begin
-                a = zeros(ComplexF32, field_sizes[k])
-                # global aaaa = a, mode, o, k
+                a = zeros(C, field_sizes[k])
                 b = mode[k]
-                setindexf!(a, b, range.(o[k], o[k] + size(b) - 1)...)
+                if b != 0
+                    # global aaaa = a, mode, o, k
+                    setindexf!(a, b, range.(o[k], o[k] + size(b) - 1)...)
+                end
                 a
             end for k = ks])
             (f, _mode)
@@ -285,4 +240,53 @@ end
 #     fl = fl .- 1 .+ index(c, deltas) .- round.(Int, (size(g) .- 1) ./ 2)
 #     _mode = place(zeros(F, sz), g, fl)
 #     SourceInstance(f, g, _mode, fl, c, tags)
+# end
+
+
+
+# J = OrderedDict()
+# for k = (:Jx, :Jy, :Jz)
+#     if k in keys(s.mode)
+#         J[k] = ComplexF32.(s.mode[k])
+#     else
+#         J[k] = zeros(ComplexF32, size(s.mode(1)))
+#     end
+# end
+# J = values(J)
+
+# L = ub .- lb
+# d = length(lb)
+# D = length(center) # 2D or 3D
+# if D == 2
+#     zaxis = [normal..., 0]
+#     yaxis = [0, 0, 1]
+#     # xaxis = cross(yaxis, zaxis)
+#     xaxis = cross(yaxis, zaxis)
+# else
+#     zaxis = convert.(F, normal)
+#     xaxis = convert.(F, tangent)
+#     yaxis = cross(zaxis, xaxis)
+# end
+
+# frame = [xaxis, yaxis, zaxis]
+# J = reframe(frame, J)
+# if D == 2
+#     J = [J[:, :, 1] for J in J]
+# end
+# lb = sum(lb .* frame[1:d])[1:D]
+# ub = sum(ub .* frame[1:d])[1:D]
+# L = ub - lb
+
+# Jx, Jy, Jz = J
+# if D == 2
+#     mode = (; Jx, Jy)
+# else
+#     mode = (; Jx, Jy, Jz)
+# end
+# v = zip(lb, ub)
+# lb = minimum.(v)
+# ub = maximum.(v)
+# n = findfirst(abs.(zaxis) .> 0.001)
+# mode = ignore_derivatives() do
+#     mode / deltas[n][1]#[findfirst(>(center[n]), cumsum(deltas[n]))]
 # end

@@ -16,23 +16,28 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     Courant=0.9,
     deltas3=deltas,
     kw...)
-    @convert F (deltas, mode_deltas, ϵ, μ, σ, m)
+    (deltas, mode_deltas, ϵ, μ, σ, m) = F.((deltas, mode_deltas, ϵ, μ, σ, m))
     N = length(deltas)
     L = size(ϵ) * dl
     sz = Tuple([isa(d, Number) ? int(l / d) : length(d) for (d, l) = zip(deltas, L)])
     a = ones(F, Tuple(sz))
     _geometry = (; ϵ, μ, σ, m) |> pairs |> OrderedDict
     geometry = OrderedDict()
+    # global _a = geometry, _geometry, ϵ3
     for (k, v) = pairs(_geometry)
         geometry[k] = if isa(v, AbstractArray)
-            downsample(v, int(deltas / dl))
+            @time downsample(v, int(deltas / dl))
         elseif k ∈ (:σ, :m)
             a * v
         else
             v
         end
     end
-    ϵ3 = downsample(ϵ3, int(deltas3 / dl))
+    ϵ3 = if N == 3
+        geometry.ϵ
+    else
+        downsample(ϵ3, int(deltas3 / dl))
+    end
 
     ϵmin, ϵmax = extrema(geometry.ϵ)
     μmin, μmax = extrema(geometry.μ)

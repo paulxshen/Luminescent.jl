@@ -9,8 +9,8 @@ targets = {
 
 prob = lumi.gcell_problem(
     c, targets, name=name,
-    N=2,   symmetries=[1], lvoid=0.1, lsolid=.1, dx=0.1,
-    eta=.2, iters=50, stoploss=.01, )
+    N=2,   symmetries=[1], lvoid=0.15, lsolid=.15, dx=0.1,
+    eta=.2, iters=50, stoploss=.03, )
 sol = lumi.solve(prob)
 # name = "1x4_splitter"
 # c = lumi.gcells.mimo(west=1, east=4, l=6.0, w=6.0, wwg=.5, taper=.05, )

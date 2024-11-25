@@ -15,7 +15,8 @@ docs/build/
 *.*.pyc
 *.pyo
 _*.py
-temp.png
+# /src/sim
+
 _.png
 /*.mp4
 

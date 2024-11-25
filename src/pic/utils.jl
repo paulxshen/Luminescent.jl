@@ -31,24 +31,18 @@ function write_sparams(runs, run_probs, lb, dl,
     designs=nothing, design_config=nothing, models=nothing;
     alg=nothing, save_memory=false, verbose=false, perturb=nothing, framerate=0, path="", kw...)
     F = run_probs[1].grid.F
-    # if isnothing(models)
-    #     masks = nothing
-    #     lminloss = 0
-    # else
-    #     x = [m(nothing; withloss=true) for m = models]
-    #     masks = getindex.(x, 1)
-    #     lminloss = mean(getindex.(x, 2))
-    #     losssolid = mean(getindex.(x, 3))
-    #     lossvoid = mean(getindex.(x, 4))
-    # end
+
+    # prob = run_probs[1]
+    # return make_geometry(models, lb, dl, prob._geometry, designs, design_config; F, perturb).ϵ |> sum
     sols = [
         begin
             prob[:_geometry] = make_geometry(models, lb, dl, prob._geometry, designs, design_config; F, perturb)
             #@debug typeof(prob.u0.E.Ex), typeof(prob.geometry.ϵ)
-            sol = solve(prob; alg, save_memory, verbose, framerate, path)
+            solve(prob; alg, save_memory, verbose, framerate, path)
         end for (i, prob) in enumerate(run_probs)
         # end for (i, prob) in enumerate(run_probs)
     ]
+    # return sols[1]
     # S = sols[1]("a+", 1) |> abs2
     # return (; S, sols)
 
@@ -94,8 +88,15 @@ function make_geometry(models, lb, dl, geometry, designs, design_config; F=Float
     isnothing(models) && return geometry
     namedtuple([k => begin
         a = geometry[k]
-        if k in keys(design_config.fill)
-            f = design_config.fill[k] |> F
+        k = if k == :ϵ
+            :epsilon
+        else
+            k
+        end
+
+        ks = keys(design_config.fill)
+        if k in ks || string(k) in ks
+            f = design_config.fill(k) |> F
             v = minimum(a)
             if perturb == k
                 f *= convert.(F, 1.001)
@@ -118,6 +119,7 @@ function make_geometry(models, lb, dl, geometry, designs, design_config; F=Float
             end
             copy(b)
         else
+            println("no fill for $k")
             a
         end
     end for k = keys(geometry)])

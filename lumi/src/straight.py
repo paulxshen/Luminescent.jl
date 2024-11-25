@@ -4,7 +4,7 @@ from gdsfactory.generic_tech import LAYER, LAYER_STACK
 import gdsfactory as gf
 import pprint as pp
 
-c = gf.components.straight(length=2, width=0.5, layer=LAYER.WG)
+c = gf.components.straight(length=1, width=0.5, layer=LAYER.WG)
 sol = lumi.write_sparams(c, wavelengths=1.55, keys=["o2@0,o1@0"],  # same as keys=["o2@0,o1@0"]
                          name="straight",
                          core_layer=LAYER.WG,   bbox_layer=LAYER.WAFER,  # defaults

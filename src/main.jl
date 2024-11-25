@@ -1,22 +1,25 @@
-using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, Zygote, CairoMakie, ArrayPadding, Permutations, VectorModesolver
+using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, DataStructures, JSON, Images, BSON, Flux, CUDA, Zygote, CairoMakie, ArrayPadding, Permutations
+import VectorModesolver
 using Porcupine: keys, values, fmap, first, ⊙, trim, round, floor, ceil, invperm, permutedims, dict
 using Flux: mae, Adam, @functor
 using Zygote: withgradient, Buffer, ignore_derivatives, @ignore_derivatives
 using BSON: @save, @load, load
-include("utils.jl")
-include("constants.jl")
-include("modes.jl")
-include("update.jl")
-include("boundaries.jl")
-include("sources.jl")
-include("monitors.jl")
-include("geometry.jl")
-include("setup.jl")
-include("solve.jl")
-include("photonics.jl")
-include("gpu.jl")
+include("core/utils.jl")
+include("core/constants.jl")
+include("core/modes.jl")
+include("core/update.jl")
+include("core/boundaries.jl")
+include("core/sources.jl")
+include("core/monitors.jl")
+include("core/geometry.jl")
+include("core/gpu.jl")
+
+include("sim/setup.jl")
+include("sim/solve.jl")
+
+# include("photonics.jl")
 include("format.jl")
-include("dispersion.jl")
+# include("dispersion.jl")
 # include("c.jl")
 include("snapshot.jl")
 

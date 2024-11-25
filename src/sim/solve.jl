@@ -17,15 +17,12 @@ end
 function solve(prob, ;
     save_memory=false, ulims=(-3, 3), framerate=0, path="",
     kwargs...)
-    @unpack grid,
-    mode_deltas, polarization,
-    dt,
-    u0, geometry, _geometry,
-    source_instances, monitor_instances,
-    transient_duration, steady_state_duration, = prob
-    @unpack F, N, sz, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = grid
+    @unpack mode_deltas, polarization, dt, u0, geometry, _geometry, source_instances, monitor_instances, transient_duration, steady_state_duration, = prob
+    @unpack F, N, sz, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = prob.grid
 
     p = geometry
+    _p = _geometry
+    # return sum(_p.ϵ)
 
     # ϵ = downsample(_geometry.ϵ, int(deltas / dl))
     # p[:ϵ] = ϵ
@@ -33,7 +30,7 @@ function solve(prob, ;
     p = pad_geometry(p, geometry_padvals, geometry_padamts)
     p = apply_subpixel_averaging(p, field_lims)
 
-    _p = pad_geometry(_geometry, geometry_padvals, _geometry_padamts)
+    _p = pad_geometry(_p, geometry_padvals, _geometry_padamts)
     invϵ = tensorinv(_p.ϵ, values(field_lims(r"E.*")), spacings)
 
     p = merge(p, (; invϵ))
@@ -71,7 +68,7 @@ function solve(prob, ;
     else
         (u, mf), = reduce(f2, ts; init)
     end
-
+    # return sum(abs, mf[1][1].Ex + mf[1][1].Ey + mf[1][1].Hz)
     ulims = 0
     # ulims = ignore_derivatives() do
     #     map(vcat(extrema.(leaves(u)), [

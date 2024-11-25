@@ -7,6 +7,10 @@ function picrun(path; kw...)
     io = open(PROB_PATH)
     s = read(io, String)
     global prob = JSON.parse(s)
+    # merge!(prob, kw)
+    for (k, v) = pairs(kw)
+        prob[string(k)] = v
+    end
     @unpack name, N, dtype, xmargin, ymargin, dx0, source_margin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, gpu_backend, magic, framerate, layer_stack, materials, L = prob
     if study == "inverse_design"
         @unpack designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
@@ -105,7 +109,7 @@ function picrun(path; kw...)
                 lsolid = design.lsolid / dl
                 frame = ϵ2
                 frame = frame .>= 0.99maximum(frame)
-                # frame = nothing
+                frame = nothing
                 start = round((bbox[1] - lb) / dl + 1)
                 b = Blob(szd; init, lvoid, lsolid, symmetries, F, frame, start)
                 # display(heatmap(b.frame))
@@ -254,9 +258,13 @@ function picrun(path; kw...)
             else
                 @time global l, (dldm,) = Flux.withgradient(models) do models
                     # sols = get_sols(runs, run_probs,  path, lb, deltas,
-                    @unpack S, sols = write_sparams(runs, run_probs, lb, dl,
+                    res = write_sparams(runs, run_probs, lb, dl,
                         designs, design_config, models;
                         F, img, alg, save_memory)
+                    # l = res
+                    # println("loss: $l")
+                    # return l
+                    @unpack S, sols = res
                     l = 0
                     for k = keys(targets)
                         y = targets[k]
@@ -301,7 +309,7 @@ function picrun(path; kw...)
                     l
                 end
             end
-
+            @assert !isnothing(dldm)
             if !isnothing(stoploss) && l < stoploss
                 println("Loss below threshold, stopping optimization.")
                 stop = true
@@ -341,29 +349,29 @@ function picrun(path; kw...)
             if stop
                 break
             end
-            Flux.update!(opt_state, models, dldm)# |> gpu)
-
-            # da = Inf
-            # α = 1
-            # masks0 = [m() for m in models]
-            # models0 = deepcopy(models)
             # Flux.update!(opt_state, models, dldm)# |> gpu)
-            # models1 = deepcopy(models)
-            # while da > 0.5l
-            #     for (m, m0, m1) = zip(models, models0, models1)
-            #         m.p .= α * m1.p + (1 - α) * m0.p
-            #     end
-            #     masks = [m() for m in models]
-            #     da = sum(masks - masks0) do a
-            #         sum(abs, a)
-            #     end
-            #     da /= sum(masks) do a
-            #         prod(size(a))
-            #     end
-            #     α *= 0.9
-            # end
-            # @show α
-            # println("fractional change in design: $da")
+
+            da = Inf
+            α = 1
+            masks0 = [m() for m in models]
+            models0 = deepcopy(models)
+            Flux.update!(opt_state, models, dldm)# |> gpu)
+            models1 = deepcopy(models)
+            while da > 0.02l
+                for (m, m0, m1) = zip(models, models0, models1)
+                    m.p .= α * m1.p + (1 - α) * m0.p
+                end
+                masks = [m() for m in models]
+                da = sum(masks - masks0) do a
+                    sum(abs, a)
+                end
+                da /= sum(masks) do a
+                    prod(size(a))
+                end
+                α *= 0.9
+            end
+            @show α
+            println("fractional change in design: $da")
         end
         if framerate > 0
             write_sparams(runs, run_probs, lb, dl,

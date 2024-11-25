@@ -1,19 +1,18 @@
 ENV["JULIA_PKG_PRECOMPILE_AUTO"] = 0
 include("main.jl")
-Base.convert(::Type{Float64}, x::ComplexF64) = abs(x)
 # using GLMakie
 
 # picrun(lastrun())#; eta=0.01, iters=20)
 # gfrun(lastrun(); gpu_backend="CUDA")
-# picrun(lastrun(name="1x2_splitter"))
-picrun(lastrun(name="tiny"))
+picrun(lastrun(name="1x2_splitter"))
+# picrun(lastrun(name="tiny"))
 # picrun(lastrun(name="straight");)
 # # # using Pkg
 # # pkg"add Porcupine,Jello,ArrayPadding;up"
 
 # using Pkg
+# pkg"dev C:\Users\pxshe\OneDrive\Desktop\beans\Porcupine.jl;dev C:\Users\pxshe\OneDrive\Desktop\beans\ArrayPadding.jl; dev C:\Users\pxshe\OneDrive\Desktop\beans\Jello.jl;dev C:\Users\pxshe\OneDrive\Desktop\beans\VectorModesolver.jl;up"
 # pkg"add https://github.com/hammy4815/VectorModesolver.jl"
-# pkg"dev C:\Users\pxshe\OneDrive\Desktop\Porcupine.jl;dev C:\Users\pxshe\OneDrive\Desktop\ArrayPadding.jl; dev C:\Users\pxshe\OneDrive\Desktop\Jello.jl;up"
 # pkg"dev ~/Porcupine.jl;dev ~/ArrayPadding.jl; dev ~/Jello.jl;up"
 # 7768519
 # using CairoMakie
