@@ -25,7 +25,6 @@ tol = .001
 
 def arange(a, b, d):
     ret = np.linspace(a, b, round((b-a)/(d))+1).tolist()
-    print(ret)
     return ret
 
 
@@ -115,6 +114,7 @@ def finish(c, name):
 def normal_from_orientation(orientation):
     return [cos(orientation/180*pi), sin(orientation/180*pi)]
 
+
 def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
     stacks = sum([[[v.mesh_order, v.material, tuple(layer), k]
                  for k, v in get_layers(layer_stack, layer, withkey=True)] for layer in layers], [])
@@ -154,6 +154,7 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
                 "origin": origin,
             }
     return layer_stack_info
+
 
 def get_layers(layer_stack, layer, withkey=False):
     r = []

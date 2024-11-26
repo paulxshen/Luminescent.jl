@@ -1,16 +1,15 @@
 
 function julia_main()::Cint
     if !isempty(ARGS)
-        gfrun(ARGS[1])
+        picrun(ARGS[1])
     end
     return 0
 end
 
-function lastrun(; name=nothing, study=nothing, wd="runs")
-    path = joinpath(pwd(), wd)
-    !isnothing(name) && return joinpath(path, name)
+function lastrun(; name=nothing, study=nothing, wd=joinpath(pwd(), "luminescent_runs"))
+    !isnothing(name) && return joinpath(wd, name)
 
-    l = filter(isdir, readdir(path, join=true))
+    l = filter(isdir, readdir(wd, join=true))
     sort!(l, by=p -> Dates.unix2datetime(mtime(p)), rev=true)
 
     if !isnothing(study)
@@ -119,7 +118,7 @@ function make_geometry(models, lb, dl, geometry, designs, design_config; F=Float
             end
             copy(b)
         else
-            println("no fill for $k")
+            # println("no fill for $k")
             a
         end
     end for k = keys(geometry)])

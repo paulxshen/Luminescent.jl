@@ -109,10 +109,10 @@ function picrun(path; kw...)
                 lsolid = design.lsolid / dl
                 frame = ϵ2
                 frame = frame .>= 0.99maximum(frame)
-                frame = nothing
+                # frame = nothing
                 start = round((bbox[1] - lb) / dl + 1)
                 b = Blob(szd; init, lvoid, lsolid, symmetries, F, frame, start)
-                # display(heatmap(b.frame))
+                display(heatmap(b.frame))
 
                 if !isnothing(sol) && !restart
                     println("loading saved design...")
@@ -314,8 +314,6 @@ function picrun(path; kw...)
                 println("Loss below threshold, stopping optimization.")
                 stop = true
             end
-            println("")
-
             if i == 1 || i % 2 == 0 || stop
                 println("saving checkpoint...")
                 ckptpath = joinpath(path, "checkpoints", replace(string(now()), ':' => '_', '.' => '_'))
@@ -331,7 +329,7 @@ function picrun(path; kw...)
 
                 sol = (;
                     sparam_family(S)...,
-                    # optimized_designs=[m() .> 0.5 for m in models],
+                    optimized_designs=[m() .> 0.5 for m in models], dl,
                     params=getfield.(models, :p),
                     designs,
                     design_config, path,
@@ -357,7 +355,7 @@ function picrun(path; kw...)
             models0 = deepcopy(models)
             Flux.update!(opt_state, models, dldm)# |> gpu)
             models1 = deepcopy(models)
-            while da > 0.02l
+            while da > 0.001 + 0.002l
                 for (m, m0, m1) = zip(models, models0, models1)
                     m.p .= α * m1.p + (1 - α) * m0.p
                 end
@@ -368,10 +366,11 @@ function picrun(path; kw...)
                 da /= sum(masks) do a
                     prod(size(a))
                 end
-                α *= 0.9
+                α *= 0.95
             end
-            @show α
+            # @show α
             println("fractional change in design: $da")
+            println("")
         end
         if framerate > 0
             write_sparams(runs, run_probs, lb, dl,

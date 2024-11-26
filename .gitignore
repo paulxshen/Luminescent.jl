@@ -9,14 +9,14 @@
 /.vscode
 docs/build/
 /runs
+/luminescent_runs
 /lumi/dist
 *.lock
 *.pyc
 *.*.pyc
 *.pyo
 _*.py
-# /src/sim
-
+/src/sim
 _.png
 /*.mp4
 

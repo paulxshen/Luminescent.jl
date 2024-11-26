@@ -24,7 +24,7 @@ def setup(c, study, dx, margin,
               DESIGN_LAYER, GUESS], N=3, Courant=None,
           gpu=None, dtype=np.float32,
           plot=False, framerate=0,
-          magic="", wd=os.path.join(os.getcwd(), "runs"), name=None, **kwargs):
+          magic="", wd=os.path.join(os.getcwd(), "luminescent_runs"), name=None, **kwargs):
     prob = dict()
     dx0 = dx
     # dx *= 2

@@ -12,10 +12,11 @@ import os
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 import json
 
+
 def gcell_problem(c,  targets, iters,
                   lvoid=0, lsolid=0, symmetries=[],
                   weights=dict(),
-                  eta=.01, init=1,   stoploss=None,
+                  eta=.4, init=1,   stoploss=None,
                   design_region_layer=DESIGN_LAYER,
                   #    design_guess_layer=LAYER.GUESS,
                   fill_layer=LAYER.WG,
@@ -83,7 +84,7 @@ def gcell_problem(c,  targets, iters,
                            study="inverse_design",
                            keys=keys,
                            N=N, ** kwargs)
-    
+
     prob["restart"] = restart
     prob["weights"] = {**{
         "tparams": 1,

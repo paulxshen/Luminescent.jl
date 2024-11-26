@@ -9,9 +9,10 @@ from .utils import *
 from .layers import *
 from .constants import *
 from .sol import *
+from PIL import Image
 
 
-def lastrun(wd=os.path.join(os.getcwd(), "runs"), name="", study="",  **kwargs):
+def lastrun(wd=os.path.join(os.getcwd(), "luminescent_runs"), name="", study="",  **kwargs):
     if name:
         return os.path.join(wd, name)
     l = [os.path.join(wd, x) for x in os.listdir(wd)]
@@ -58,20 +59,22 @@ def load_solution(show=True, **kwargs):
     elif prob["study"] == "inverse_design":
         l = [np.array(d) for d in sol["optimized_designs"]]
         sol["optimized_designs"] = l
-        for i, a in enumerate(l):
-            name = f"optimized_design_region_{i+1}.png"
-            Image.fromarray(np.flip(np.uint8((1-a)) * 255, 0),
-                            'L').save(os.path.join(path, name))
-            # pic2gds(os.path.join(
-            #     path, name), sol["dx"])
-        c = apply_design(sol["component"],  sol)
+        print(f"loading optimized design regions at resolution {sol['dl']}")
+        # for i, a in enumerate(l):
+        #     name = f"optimized_design_region_{i+1}.png"
+        #     Image.fromarray(np.flip(np.uint8((1-a)) * 255, 0),
+        #                     'L').save(os.path.join(path, name))
+        # pic2gds(os.path.join(
+        #     path, name), sol["dx"])
+        # c = apply_design(sol["component"],  sol)
         # sol["optimized_component"] = copy.deepcopy(c)
-        sol["optimized_component"] = c
+        # sol["optimized_component"] = c
         # c.write_gds(os.path.join(path, "optimized_component.gds"))
 
     if show:
-        # sol = {k: sol[k] for k in ["path", "sparams", "tparams", ]}
-        pprint(sol)
+        _sol = {k: sol[k] for k in ["T", "dB", "S", "phasors", "path", ]}
+        _sol["optimized_designs"] = "[[...]]"
+        pprint(_sol)
 
         i = 1
         while True:

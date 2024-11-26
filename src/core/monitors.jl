@@ -111,7 +111,7 @@ function MonitorInstance(m::Monitor, g, ϵ=1)
         range.(start, stop, int(stop - start + 1)) - lr[:, 1] + 1
     end for (k, lr) = pairs(field_lims)])
     _center = round(v2i(center - g.lb, deltas) + 0.5)
-    @show center, g.lb, _center
+    # @show center, g.lb, _center
 
     MonitorInstance(roi, nothing, dimsperm, deltas, _center, fmap(x -> convert.(complex(F), x), λmodes), tags)
 end
