@@ -20,6 +20,7 @@ docs/build/
 _*.py
 # /src/sim
 
+Manifest.*
 _.png
 /*.mp4
 

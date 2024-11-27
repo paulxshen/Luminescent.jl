@@ -125,18 +125,16 @@ function solvemodes(ϵ, dx, λ, neigs)
     # global _as = ϵ, x, y
     solver = VectorModesolver.VectorialModesolver(λ, x, y, boundary, f)
     modes = VectorModesolver.solve(solver, neigs, tol)
-    T = transpose
     # plot_mode_fields(modes[1]) |> display
     # error()
-    display(heatmap(ϵ))
-    display(heatmap(real(transpose(modes[1].Ex))))
+    # display(heatmap(ϵ))
+    # display(heatmap(real(transpose(modes[1].Ex))))
+    # Ex = modes[1].Ex
+    # e = mean(Ex .* ϵ, dims=2) ./ mean(Ex, dims=2)
+    # display(lines(abs.(vec(e))))
     # error()
     modes = [namedtuple([k => getfield(mode, k)[:, m+1:end-n] for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
 
-    Ex = modes[1].Ex
-    e = mean(Ex .* ϵ, dims=2) ./ mean(Ex, dims=2)
-    display(lines(e))
-    error()
 
     # [namedtuple([k => transpose(getfield(mode, k)) for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
 end
