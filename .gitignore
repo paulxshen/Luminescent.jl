@@ -1,6 +1,4 @@
-/build/precompile_execution/*/temp
-# /build/precompile_execution
-# /build
+/build
 /temp
 */temp
 /_temp
