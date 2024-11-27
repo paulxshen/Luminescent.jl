@@ -1,6 +1,8 @@
-/build/precompile_execution
-/build
+/build/precompile_execution/*/temp
+# /build/precompile_execution
+# /build
 /temp
+*/temp
 /_temp
 /recycle
 /.venv
