@@ -131,6 +131,12 @@ function solvemodes(ϵ, dx, λ, neigs)
     display(heatmap(ϵ))
     display(heatmap(real(transpose(modes[1].Ex))))
     # error()
-    [namedtuple([k => getfield(mode, k)[:, m+1:end-n] for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
+    modes = [namedtuple([k => getfield(mode, k)[:, m+1:end-n] for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
+
+    Ex = modes[1].Ex
+    e = mean(Ex .* ϵ, dims=2) ./ mean(Ex, dims=2)
+    display(lines(e))
+    error()
+
     # [namedtuple([k => transpose(getfield(mode, k)) for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
 end

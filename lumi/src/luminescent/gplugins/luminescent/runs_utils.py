@@ -72,10 +72,6 @@ def load_solution(show=True, **kwargs):
         # c.write_gds(os.path.join(path, "optimized_component.gds"))
 
     if show:
-        _sol = {k: sol[k] for k in ["T", "dB", "S", "phasors", "path", ]}
-        _sol["optimized_designs"] = "[[...]]"
-        pprint(_sol)
-
         i = 1
         while True:
             p = os.path.join(path, f"run_{i}.png")
@@ -89,6 +85,11 @@ def load_solution(show=True, **kwargs):
                 i += 1
             else:
                 break
+
+        _sol = {k: sol[k] for k in ["T", "dB", "S", "phasors", "path", ]}
+        _sol["optimized_designs"] = "[[...]]"
+        pprint(_sol)
+
     return sol
 
 
