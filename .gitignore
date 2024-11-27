@@ -18,7 +18,8 @@ docs/build/
 *.*.pyc
 *.pyo
 _*.py
-# /src/sim
+/src/sim
+/src/pic
 
 Manifest.*
 _.png
