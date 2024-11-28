@@ -1,3 +1,5 @@
+import platform
+import subprocess
 from .constants import *
 from .layers import *
 from .utils import *
@@ -70,7 +72,7 @@ def setup(c, study, dx, margin,
     hcore = d.thickness
     zcore = d.zmin
 
-    zmargin1 = 1.5*hcore
+    zmargin1 = 2.5*hcore
     hmode = hcore+2*zmargin1
     hmode = trim(hmode, 2*dz)
     zmargin1 = (hmode-hcore)/2
@@ -196,6 +198,15 @@ def setup(c, study, dx, margin,
     os.makedirs(temp, exist_ok=True)
     layer_stack_info = material_voxelate(
         c, dl, zmin, zmax, layers, layer_stack, temp)
+    dir = os.path.dirname(os.path.realpath(__file__))
+    print(dir)
+    fn = os.path.join(dir, "solvemodes.py")
+    assert os.path.exists(fn)
+    assert os.path.exists(temp)
+    if platform.system() == "Windows":
+        os.system(f"copy /Y {fn} {temp}")
+    else:
+        subprocess.run(["cp -R", os.path.join(dir, "solvemodes.py"), temp])
     prob["layer_stack"] = layer_stack_info
     prob["materials"] = materials
     prob["study"] = study

@@ -12,7 +12,7 @@ from .sol import *
 from PIL import Image
 
 
-def lastrun(wd=os.path.join(os.getcwd(), "luminescent_runs"), name="", study="",  **kwargs):
+def lastrun(name="", wd=os.path.join(os.getcwd(), "luminescent_runs"), study="",  **kwargs):
     if name:
         return os.path.join(wd, name)
     l = [os.path.join(wd, x) for x in os.listdir(wd)]

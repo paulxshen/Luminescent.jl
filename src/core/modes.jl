@@ -107,36 +107,47 @@ invreframe(frame, u) = reframe(frame, u, true)
 
 Base.convert(::Type{Float64}, x::ComplexF64) = real(x)
 
-function solvemodes(ϵ, dx, λ, neigs)
-    m = round((size(ϵ, 1) - size(ϵ, 2)) / 2)
-    n = size(ϵ, 1) - size(ϵ, 2) - m
-    ϵ = pad(ϵ, :replicate, [0, m], [0, n])
+function solvemodes(ϵ, dx, λ, neigs, spacing, path)
+    # m = round((size(ϵ, 1) - size(ϵ, 2)) / 2)
+    # n = size(ϵ, 1) - size(ϵ, 2) - m
+    # ϵ = pad(ϵ, :replicate, [0, m], [0, n])
 
-    x = range(dx / 2; step=dx, length=size(ϵ, 1))
-    y = range(dx / 2; step=dx, length=size(ϵ, 2))
-    # x = range(0; step=dx, length=size(ϵ, 1) + 1)
-    # y = range(0; step=dx, length=size(ϵ, 2) + 1)
-    tol = 1e-8
-    boundary = (0, 0, 0, 0)
-    f = (x, y) -> begin
-        v = getindexf(ϵ, x / dx + 0.5, y / dx + 0.5)
-        (v, 0, 0, v, v)
-    end
-    # global _as = ϵ, x, y
-    solver = VectorModesolver.VectorialModesolver(λ, x, y, boundary, f)
-    modes = VectorModesolver.solve(solver, 2, tol)
-    # plot_mode_fields(modes[1]) |> display
-    # error()
-    # display(heatmap(ϵ))
-    # display(heatmap(real(transpose(modes[1].Ex))))
-    for i = 1:2
-        Ex = modes[i].Ex
-        e = mean(Ex .* ϵ, dims=2) ./ mean(Ex, dims=2)
-        display(lines(abs.(vec(e))))
-    end
-    error()
-    modes = [namedtuple([k => getfield(mode, k)[:, m+1:end-n] for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
-
-
-    # [namedtuple([k => transpose(getfield(mode, k)) for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
+    npzwrite(joinpath(path, "args.npz"), Dict("eps" => imresize(ϵ, size(ϵ) - 1), "dx" => dx, "wl" => λ, "neigs" => neigs))
+    fn = joinpath(path, "solvemodes.py")
+    run(`python $fn $path`)
+    modes = [npzread(joinpath(path, "mode$(i-1).npz")) for i = 1:neigs]
+    # modes = [NamedTuple([Symbol(k) => v[:, m+1:end-n] for (k, v) in mode]) for mode in modes]
+    display(heatmap(ϵ))
+    display(heatmap(real(modes[1].Ex)))
+    display(heatmap(real(modes[1].Hy)))
+    modes = [NamedTuple([Symbol(k) => downsample(v, spacing) for (k, v) in mode]) for mode in modes]
+    modes
 end
+#     x = range(dx / 2; step=dx, length=size(ϵ, 1))
+#     y = range(dx / 2; step=dx, length=size(ϵ, 2))
+#     # x = range(0; step=dx, length=size(ϵ, 1) + 1)
+#     # y = range(0; step=dx, length=size(ϵ, 2) + 1)
+#     tol = 1e-8
+#     boundary = (0, 0, 0, 0)
+#     f = (x, y) -> begin
+#         v = getindexf(ϵ, x / dx + 0.5, y / dx + 0.5)
+#         (v, 0, 0, v, v)
+#     end
+#     # global _as = ϵ, x, y
+#     solver = VectorModesolver.VectorialModesolver(λ, x, y, boundary, f)
+#     modes = VectorModesolver.solve(solver, neigs, tol)
+#     # plot_mode_fields(modes[1]) |> display
+#     # error()
+#     # display(heatmap(ϵ))
+#     # display(heatmap(real(transpose(modes[1].Ex))))
+#     # for i = 1:2
+#     #     Ex = modes[i].Ex
+#     #     e = mean(Ex .* ϵ, dims=2) ./ mean(Ex, dims=2)
+#     #     display(lines(abs.(vec(e))))
+#     # end
+#     # error()
+#     modes = [namedtuple([k => getfield(mode, k)[:, m+1:end-n] for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
+
+
+#     # [namedtuple([k => transpose(getfield(mode, k)) for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
+# end

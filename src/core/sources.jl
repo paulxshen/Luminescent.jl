@@ -122,27 +122,31 @@ function SourceInstance(s::PlaneWave, g)
     SourceInstance(Source(sigmodes, L / 2, -L / 2, L / 2, getdimsperm(dims), tags), g)
 end
 
-function SourceInstance(s::Source, g, ϵ=1)
+function SourceInstance(s::Source, g, ϵ, temp)
     @unpack center, lb, ub, tags, dimsperm, specs, N, center3, lb3, ub3 = s
-    @unpack F, deltas, deltas3, field_sizes, field_lims = g
+    @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, dl = g
     C = complex(F)
 
     dx = deltas[1][1]
     @unpack λmodenums, λmodes = specs
     if !isnothing(λmodenums)
-        start = v2i(center3 + lb3, deltas3)
-        stop = v2i(center3 + ub3, deltas3)
+        start = int((center3 + lb3) / dl)
+        stop = int((center3 + ub3) / dl)
         start, stop = min.(start, stop), max.(start, stop)
 
-        sel = abs.(stop - start) .>= 1e-3
+        sel = abs.(stop - start) .>= 0.001
         stop[!sel] .= start[!sel]
         start += 0.5sel
         stop -= 0.5sel
+
+        start += 0.5
+        stop += 0.5
         len = int(stop - start + 1)
-        ϵmode = getindexf(ϵ, range.(start + 0.5, stop + 0.5, len)...)
-        # global _a = ϵmode, dimsperm
+        ϵmode = getindexf(ϵ, range.(start, stop, len)...)
         ϵmode = permutedims(ϵmode, dimsperm, 2)
-        λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1)[mns+1] for (λ, mns) = pairs(λmodenums)])
+
+        # global _a = ϵmode, dimsperm
+        λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1, mode_spacing, temp)[mns+1] for (λ, mns) = pairs(λmodenums)])
         if N == 2
             global λmodes = kmap(v -> collapse_mode.(v, true), λmodes)
         end

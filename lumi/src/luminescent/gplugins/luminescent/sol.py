@@ -58,8 +58,8 @@ def solve(prob, dev=False, run=True):
     # subprocess.run()
     # print(f"julia simulation took {time.time()-start_time} seconds")
     print(f"images and results saved in {path}")
-    sol = load_solution(path=path)
-    return sol
+    # sol = load_solution(path=path)
+    # return sol
 
 
 def load_sparams(sparams):

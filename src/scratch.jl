@@ -1,27 +1,30 @@
-# Base.convert(::Type{Float64}, x::ComplexF64) = real(x)
-using VectorModesolver
-
-function ε(x::Float64, y::Float64)
-
-    if (2 < x < 5) && (2 < y < 3)
-        return (4.0, 0.0, 0.0, 4.0, 4.0)
+using Peacock
+# Permittivity
+function epf(x, y)
+    # equation of a circle with radius 0.2a
+    if x^2 + y^2 <= 0.2^2
+        # dielectric inside the circle
+        return 8.9
+    else
+        # air outside the circle
+        return 1
     end
-
-    return (1.0, 0.0, 0.0, 1.0, 1.0)
 end
 
-function main()
-    λ = 1.55
-    x = [i for i in 0:0.05:7]
-    y = [i for i in 0:0.05:5]
-    neigs = 3
-    tol = 1e-8
-    boundary = (0, 0, 0, 0)
-    solver = VectorialModesolver(λ, x, y, boundary, ε)
-    modes = VectorModesolver.solve(solver, neigs, tol)
-
-    plot_mode_fields(modes[1]) |> display
-    plot_mode_fields(modes[2]) |> display
+# Permeability is unity everywhere
+function muf(x, y)
+    return 1
 end
+a1 = [1, 0]  # first lattice vector
+a2 = [0, 1]  # second lattice vector
+d1 = 0.01  # resolution along first lattice vector
+d2 = 0.01  # resolution along second lattice vector
+geometry = Geometry(epf, muf, a1, a2, d1, d2)
+fourier_space_cutoff = 7
+solver = Solver(geometry, fourier_space_cutoff)
 
-main()
+X = BrillouinZoneCoordinate(1 / 2, 0, "X")
+M = BrillouinZoneCoordinate(1 / 2, 1 / 2, "M")
+modes = solve(solver, X, TE)
+0
+re

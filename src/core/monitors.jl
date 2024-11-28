@@ -75,24 +75,29 @@ Base.length(m::MonitorInstance) = 1
 frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
-function MonitorInstance(m::Monitor, g, ϵ=1)
+function MonitorInstance(m::Monitor, g, ϵ, temp)
     @unpack lb, ub, center, dimsperm, specs, N, center3, lb3, ub3, tags = m
-    @unpack deltas, deltas3, field_lims, F = g
+    @unpack deltas, deltas3, field_lims, F, mode_spacing, dl = g
 
     dx = deltas[1][1]
     @unpack λmodenums, λmodes = specs
     if !isnothing(λmodenums)
-        start = v2i(center3 + lb3, deltas3)
-        stop = v2i(center3 + ub3, deltas3)
+        start = int((center3 + lb3) / dl)
+        stop = int((center3 + ub3) / dl)
         start, stop = min.(start, stop), max.(start, stop)
 
-        sel = abs.(stop - start) .>= 1e-3
+        sel = abs.(stop - start) .>= 0.001
         stop[!sel] .= start[!sel]
         start += 0.5sel
         stop -= 0.5sel
-        ϵmode = getindexf(ϵ, range.(start + 0.5, stop + 0.5, int(stop - start + 1))...)
+
+        start += 0.5
+        stop += 0.5
+        len = int(stop - start + 1)
+        ϵmode = getindexf(ϵ, range.(start, stop, len)...)
         ϵmode = permutedims(ϵmode, dimsperm, 2)
-        λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1) for (λ, mns) = pairs(λmodenums)])
+
+        λmodes = OrderedDict([λ => solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp) for (λ, mns) = pairs(λmodenums)])
         if N == 2
             λmodes = kmap(v -> collapse_mode.(v), λmodes)
         end
