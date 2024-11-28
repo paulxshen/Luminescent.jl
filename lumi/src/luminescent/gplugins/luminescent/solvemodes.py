@@ -13,13 +13,11 @@ neigs = data["neigs"]
 
 tol = 1e-4
 m, n = eps.shape
-print(m, n)
 x = np.linspace(0.5*dx, (m-.5)*dx, m+1)
 y = np.linspace(0.5*dx, (n-.5)*dx, n+1)
 
 
 def ϵfunc(x_, y_):
-    print(len(x_), len(y_))
     return eps
     # m, n = len(x_), len(y_)
     # return resize(eps, (m, n))

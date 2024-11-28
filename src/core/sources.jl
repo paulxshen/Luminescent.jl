@@ -173,9 +173,9 @@ function SourceInstance(s::Source, g, ϵ, temp)
             end
             f = x -> convert(C, _f(x))
 
-            mode = permutexyz(mode, invperm(dimsperm), N)
+            mode = NamedTuple([k => v for (k, v) = pairs(mode) if startswith(string(k), "E")])
             mode = _aug(mode, N)
-            ks = sort(filter(k -> startswith(string(k), "E"), keys(mode)))
+            mode = permutexyz(mode, invperm(dimsperm), N)
             _mode = namedtuple([k => begin
                 a = zeros(C, field_sizes[k])
                 b = mode[k]
@@ -184,7 +184,7 @@ function SourceInstance(s::Source, g, ϵ, temp)
                     setindexf!(a, b, range.(o[k], o[k] + size(b) - 1)...)
                 end
                 a
-            end for k = ks])
+            end for k = sort(keys(mode))])
             (f, _mode)
         end for (sig, mode) = sigmodes
     ]

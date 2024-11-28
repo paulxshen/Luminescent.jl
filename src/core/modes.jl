@@ -120,7 +120,7 @@ function solvemodes(ϵ, dx, λ, neigs, spacing, path)
     display(heatmap(ϵ))
     display(heatmap(real(modes[1].Ex)))
     display(heatmap(real(modes[1].Hy)))
-    modes = [NamedTuple([Symbol(k) => downsample(v, spacing) for (k, v) in mode]) for mode in modes]
+    modes = [NamedTuple([Symbol(k) => downsample(mode(k), spacing) for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
     modes
 end
 #     x = range(dx / 2; step=dx, length=size(ϵ, 1))
