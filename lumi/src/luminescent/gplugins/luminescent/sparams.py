@@ -12,10 +12,11 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
 def sparams_problem(c: gf.Component,
+                    wavelengths,
                     margin=None,  # zmargin=None,zlims=None,
                     dx=.05,
                     entries=[],
-                    wavelengths=1.55, center_wavelengths=None, keys=[],
+                    center_wavelengths=None, keys=[],
                     N=3, layer_stack=LAYER_STACK,
                     study="sparams",
                     **kwargs):
@@ -50,31 +51,29 @@ def sparams_problem(c: gf.Component,
     entries.extend(l)
     wavelengths = list(wavelengths)
 
-    wimo = {}
+    imow = {}
     for w, po, mo, pi, mi in entries:
-        if w not in wimo:
-            wimo[w] = {}
-        if pi not in wimo[w]:
-            wimo[w][pi] = {}
-        if mi not in wimo[w][pi]:
-            wimo[w][pi][mi] = {}
+        if pi not in imow:
+            imow[pi] = {}
+        if mi not in imow[pi]:
+            imow[pi][mi] = {}
 
-        if po not in wimo[w][pi][mi]:
-            wimo[w][pi][mi][po] = mo
+        if po not in imow[pi][mi]:
+            imow[pi][mi][po] = mo
         else:
-            wimo[w][pi][mi][po] = max(wimo[w][pi][mi][po], mo)
+            imow[pi][mi][po] = max(imow[pi][mi][po], mo)
 
     runs = []
-    for w in wimo:
-        for i in wimo[w]:
-            for mi in wimo[w][i]:
+    for _w in [1]:
+        for i in imow:
+            for mi in imow[i]:
                 d = {
                     "sources": {
                         i: {
                             "center": (np.array(c.ports[i].center)/1e3).tolist(),
                             "width": (np.array(c.ports[i].width)/1e3).tolist(),
                             "normal": normal_from_orientation(c.ports[i].orientation),
-                            "wavelength_mode_numbers": {w: [mi]},
+                            "wavelength_mode_numbers": {w: [mi] for w in wavelengths},
                             "port": i,
                         }},
                     "monitors": {
@@ -84,8 +83,8 @@ def sparams_problem(c: gf.Component,
                             "center": (np.array(c.ports[o].center)/1e3).tolist(),
                             "width": (np.array(c.ports[o].width)/1e3).tolist(),
                             # "endpoints": extend(c.ports[o].endpoints, margin),
-                            "wavelength_mode_numbers": {w: list(range(wimo[w][i][mi][o]+1))}
-                        } for o in wimo[w][i][mi]}}
+                            "wavelength_mode_numbers": {w: list(range(imow[i][mi][o]+1)) for w in wavelengths},
+                        } for o in imow[i][mi]}}
                 d["sources"] = SortedDict(d["sources"])
                 d["monitors"] = SortedDict(d["monitors"])
                 runs.append(d)
@@ -97,27 +96,27 @@ def sparams_problem(c: gf.Component,
 
     return prob
 
-    # l = [k for k in wimo[w] if port_number(k) == pi]
+    # l = [k for k in imow if port_number(k) == pi]
     # if not l:
-    #     wimo[w][f"o{pi}@{mi}"] = []
+    #     imow[f"o{pi}@{mi}"] = []
     # else:
     #     k = l[0]
     #     mn = max(mode_number(k), mi)
     #     if mn != mode_number(k):
-    #         wimo[w][i] = wimo[w][k]
-    #         del wimo[w][k]
+    #         imow[i] = imow[k]
+    #         del imow[k]
 
-    # l = [k for k in wimo[w][i] if port_number(k) == po]
+    # l = [k for k in imow[i] if port_number(k) == po]
     # if not l:
-    #     wimo[w][f"o{pi}@{mi}"]
+    #     imow[f"o{pi}@{mi}"]
     # else:
     #     k = l[0]
     #     mn = max(mode_number(k), mi)
     #     if mn != mode_number(k):
-    #         wimo[w][f"o{pi}@{mn}"] = wimo[w][k]
-    #         del wimo[w][k]
+    #         imow[f"o{pi}@{mn}"] = imow[k]
+    #         del imow[k]
 
-    # if po not in wimo[w][pi]:
-    #     wimo[w][pi]["o"][po] = mo
+    # if po not in imow[pi]:
+    #     imow[pi]["o"][po] = mo
     # else:
-    #     wimo[w][pi]["o"][po] = max(wimo[w][pi]["o"][po], mo)
+    #     imow[pi]["o"][po] = max(imow[pi]["o"][po], mo)

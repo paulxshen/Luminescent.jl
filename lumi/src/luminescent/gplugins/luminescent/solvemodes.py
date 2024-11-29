@@ -7,20 +7,19 @@ from skimage.transform import resize
 path = sys.argv[1]
 data = np.load(os.path.join(path, "args.npz"))
 eps = data["eps"]
-dx = data["dx"]
+dl = data["dl"]
 λ = data["wl"]
 neigs = data["neigs"]
 
-tol = 1e-4
 m, n = eps.shape
-x = np.linspace(0.5*dx, (m-.5)*dx, m+1)
-y = np.linspace(0.5*dx, (n-.5)*dx, n+1)
+m += 1
+n += 1
+x = np.linspace(0.5*dl, (m-.5)*dl, m)
+y = np.linspace(0.5*dl, (n-.5)*dl, n)
 
 
 def ϵfunc(x_, y_):
     return eps
-    # m, n = len(x_), len(y_)
-    # return resize(eps, (m, n))
 
 
 tol = 1e-6

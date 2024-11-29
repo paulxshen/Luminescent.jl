@@ -107,12 +107,12 @@ invreframe(frame, u) = reframe(frame, u, true)
 
 Base.convert(::Type{Float64}, x::ComplexF64) = real(x)
 
-function solvemodes(ϵ, dx, λ, neigs, spacing, path)
+function solvemodes(ϵ, dl, λ, neigs, spacing, path)
     # m = round((size(ϵ, 1) - size(ϵ, 2)) / 2)
     # n = size(ϵ, 1) - size(ϵ, 2) - m
     # ϵ = pad(ϵ, :replicate, [0, m], [0, n])
-
-    npzwrite(joinpath(path, "args.npz"), Dict("eps" => imresize(ϵ, size(ϵ) - 1), "dx" => dx, "wl" => λ, "neigs" => neigs))
+    @show λ, dl
+    npzwrite(joinpath(path, "args.npz"), Dict("eps" => imresize(ϵ, size(ϵ) - 1), "dl" => dl, "wl" => λ, "neigs" => neigs))
     fn = joinpath(path, "solvemodes.py")
     run(`python $fn $path`)
     modes = [npzread(joinpath(path, "mode$(i-1).npz")) for i = 1:neigs]
@@ -123,14 +123,14 @@ function solvemodes(ϵ, dx, λ, neigs, spacing, path)
     modes = [NamedTuple([Symbol(k) => downsample(mode(k), spacing) for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
     modes
 end
-#     x = range(dx / 2; step=dx, length=size(ϵ, 1))
-#     y = range(dx / 2; step=dx, length=size(ϵ, 2))
-#     # x = range(0; step=dx, length=size(ϵ, 1) + 1)
-#     # y = range(0; step=dx, length=size(ϵ, 2) + 1)
+#     x = range(dl / 2; step=dl, length=size(ϵ, 1))
+#     y = range(dl / 2; step=dl, length=size(ϵ, 2))
+#     # x = range(0; step=dl, length=size(ϵ, 1) + 1)
+#     # y = range(0; step=dl, length=size(ϵ, 2) + 1)
 #     tol = 1e-8
 #     boundary = (0, 0, 0, 0)
 #     f = (x, y) -> begin
-#         v = getindexf(ϵ, x / dx + 0.5, y / dx + 0.5)
+#         v = getindexf(ϵ, x / dl + 0.5, y / dl + 0.5)
 #         (v, 0, 0, v, v)
 #     end
 #     # global _as = ϵ, x, y

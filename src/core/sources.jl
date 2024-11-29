@@ -6,13 +6,13 @@ end
 
 function _aug(mode, N)
     length(mode) == N && return mode
-    T = eltype(mode(1))
     OrderedDict([
         begin
             i = findfirst(keys(mode)) do k
                 endswith(string(k), s)
             end
-            isnothing(i) ? (Symbol("E$s") => T(0)) : (keys(mode)[i] => mode[keys(mode)[i]])
+            @show keys(mode), s, i
+            isnothing(i) ? (Symbol("E$s") => 0) : (keys(mode)[i] => mode[keys(mode)[i]])
         end for s = "xyz"[1:N]
     ])
 end
@@ -146,9 +146,9 @@ function SourceInstance(s::Source, g, ϵ, temp)
         ϵmode = permutedims(ϵmode, dimsperm, 2)
 
         # global _a = ϵmode, dimsperm
-        λmodes = OrderedDict([λ => solvemodes(ϵmode, dx, λ, maximum(mns) + 1, mode_spacing, temp)[mns+1] for (λ, mns) = pairs(λmodenums)])
+        λmodes = OrderedDict([λ => solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp)[mns+1] for (λ, mns) = pairs(λmodenums)])
         if N == 2
-            global λmodes = kmap(v -> collapse_mode.(v, true), λmodes)
+            λmodes = kmap(v -> collapse_mode.(v), λmodes)
         end
     end
 
@@ -163,7 +163,7 @@ function SourceInstance(s::Source, g, ϵ, temp)
 
     o = NamedTuple([k => F.(start - fl[:, 1] + 1) for (k, fl) = pairs(field_lims)])
     λmodes = fmap(F, λmodes)
-    sigmodes = reduce(vcat, [zip(fill(λ, length(modes)), modes) for (λ, modes) = (pairs(λmodes))])
+    sigmodes = reduce(vcat, [collect(zip(fill(λ, length(modes)), modes)) for (λ, modes) = (pairs(λmodes))])
     sigmodes = [
         begin
             _f = if isa(sig, Number)
@@ -174,8 +174,9 @@ function SourceInstance(s::Source, g, ϵ, temp)
             f = x -> convert(C, _f(x))
 
             mode = NamedTuple([k => v for (k, v) = pairs(mode) if startswith(string(k), "E")])
-            mode = _aug(mode, N)
             mode = permutexyz(mode, invperm(dimsperm), N)
+            mode = _aug(mode, N)
+            ks = sort([k for k = keys(mode) if string(k)[end] in "xyz"[1:N]])
             _mode = namedtuple([k => begin
                 a = zeros(C, field_sizes[k])
                 b = mode[k]
@@ -184,7 +185,7 @@ function SourceInstance(s::Source, g, ϵ, temp)
                     setindexf!(a, b, range.(o[k], o[k] + size(b) - 1)...)
                 end
                 a
-            end for k = sort(keys(mode))])
+            end for k = ks])
             (f, _mode)
         end for (sig, mode) = sigmodes
     ]
