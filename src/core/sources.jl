@@ -11,8 +11,8 @@ function _aug(mode, N)
             i = findfirst(keys(mode)) do k
                 endswith(string(k), s)
             end
-            @show keys(mode), s, i
-            isnothing(i) ? (Symbol("E$s") => 0) : (keys(mode)[i] => mode[keys(mode)[i]])
+            # @show keys(mode), s, i
+            isnothing(i) ? (Symbol("D$s") => 0) : (keys(mode)[i] => mode[keys(mode)[i]])
         end for s = "xyz"[1:N]
     ])
 end
@@ -112,6 +112,7 @@ struct SourceInstance
     o
     center
     dimsperm
+    ϵeff
     tags
 end
 @functor SourceInstance (sigmodes,)
@@ -126,7 +127,7 @@ function SourceInstance(s::Source, g, ϵ, temp)
     @unpack center, lb, ub, tags, dimsperm, specs, N, center3, lb3, ub3 = s
     @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, dl = g
     C = complex(F)
-
+    ϵeff = nothing
     dx = deltas[1][1]
     @unpack λmodenums, λmodes = specs
     if !isnothing(λmodenums)
@@ -146,7 +147,15 @@ function SourceInstance(s::Source, g, ϵ, temp)
         ϵmode = permutedims(ϵmode, dimsperm, 2)
 
         # global _a = ϵmode, dimsperm
-        λmodes = OrderedDict([λ => solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp)[mns+1] for (λ, mns) = pairs(λmodenums)])
+        λmodes = OrderedDict([λ => begin
+            modes = solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp)[mns+1]
+            if isnothing(ϵeff)
+                Ex = modes[1].Ex
+                v = real(sum(downsample(ϵmode, mode_spacing) .* Ex, dims=2) ./ sum(Ex, dims=2))
+                ϵeff = v[round(length(v) / 2)]
+            end
+            modes
+        end for (λ, mns) = pairs(λmodenums)])
         if N == 2
             λmodes = kmap(v -> collapse_mode.(v), λmodes)
         end
@@ -173,18 +182,22 @@ function SourceInstance(s::Source, g, ϵ, temp)
             end
             f = x -> convert(C, _f(x))
 
-            mode = NamedTuple([k => v for (k, v) = pairs(mode) if startswith(string(k), "E")])
+            mode = NamedTuple([k => v for (k, v) = pairs(mode) if startswith(string(k), "D")])
+
             mode = permutexyz(mode, invperm(dimsperm), N)
             mode = _aug(mode, N)
             ks = sort([k for k = keys(mode) if string(k)[end] in "xyz"[1:N]])
             _mode = namedtuple([k => begin
+                b = mode(k)
+                k = Symbol("E$(string(k)[end])")
                 a = zeros(C, field_sizes[k])
-                b = mode[k]
-                if b != 0
+                if b == 0
+                    0
+                else
                     # global aaaa = a, mode, o, k
                     setindexf!(a, b, range.(o[k], o[k] + size(b) - 1)...)
+                    a
                 end
-                a
             end for k = ks])
             (f, _mode)
         end for (sig, mode) = sigmodes
@@ -193,7 +206,7 @@ function SourceInstance(s::Source, g, ϵ, temp)
     _center = round(v2i(center - g.lb, deltas) + 0.5)
     # @show center, g.lb, _center
 
-    SourceInstance(sigmodes, o, _center, dimsperm, tags)
+    SourceInstance(sigmodes, o, _center, dimsperm, ϵeff, tags)
 end
 
 # Complex

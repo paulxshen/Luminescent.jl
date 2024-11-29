@@ -6,8 +6,8 @@ from gdsfactory.generic_tech import LAYER
 
 
 name = "tiny"
-lumi.load_solution()
-raise NotImplementedError("This is a stub")
+# lumi.load_solution()
+# raise NotImplementedError("This is a stub")
 c = lumi.gcells.mimo(west=1, east=1, l=1, w=1,  wwg=.5)
 targets = {"tparams": {
     1.55: {

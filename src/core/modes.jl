@@ -60,7 +60,7 @@ function collapse_mode(m, Eonly=false, p=:TE)
     end
     # (; Ex, Hy, Ez), sum(E .* ϵ, dims=2) ./ sum(E, dims=2) |> vec
     if p == :TE
-        Eonly ? (; Ex=m.Ex,) : (; Ex=m.Ex, Hy=m.Hy)
+        (; Ex=m.Ex, Hy=m.Hy, Dx=m.Dx)
         #, maximum.(eachrow(ϵ))
     else
     end
@@ -111,16 +111,17 @@ function solvemodes(ϵ, dl, λ, neigs, spacing, path)
     # m = round((size(ϵ, 1) - size(ϵ, 2)) / 2)
     # n = size(ϵ, 1) - size(ϵ, 2) - m
     # ϵ = pad(ϵ, :replicate, [0, m], [0, n])
-    @show λ, dl
+    # @show λ, dl
     npzwrite(joinpath(path, "args.npz"), Dict("eps" => imresize(ϵ, size(ϵ) - 1), "dl" => dl, "wl" => λ, "neigs" => neigs))
     fn = joinpath(path, "solvemodes.py")
     run(`python $fn $path`)
     modes = [npzread(joinpath(path, "mode$(i-1).npz")) for i = 1:neigs]
+    modes = [merge(mode, Dict(["D$s" => mode["E$s"] .* ϵ for s = "xyz"])) for mode in modes]
     # modes = [NamedTuple([Symbol(k) => v[:, m+1:end-n] for (k, v) in mode]) for mode in modes]
-    display(heatmap(ϵ))
-    display(heatmap(real(modes[1].Ex)))
-    display(heatmap(real(modes[1].Hy)))
-    modes = [NamedTuple([Symbol(k) => downsample(mode(k), spacing) for k = (:Ex, :Ey, :Hx, :Hy)]) for mode in modes]
+    # display(heatmap(ϵ))
+    # display(heatmap(real(modes[1].Ex)))
+    # display(heatmap(real(modes[1].Hy)))
+    modes = [SortedDict([Symbol(k) => downsample(mode(k), spacing) for k = keys(mode) if string(k)[end] in "xy"]) |> pairs |> NamedTuple for mode in modes]
     modes
 end
 #     x = range(dl / 2; step=dl, length=size(ϵ, 1))
