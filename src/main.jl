@@ -1,4 +1,4 @@
-using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, NPZ, DataStructures, JSON, Images, BSON, Flux, CUDA, Zygote, CairoMakie, ArrayPadding, Permutations
+using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, NPZ, DataStructures, JSON, Images, BSON, Flux, Zygote, CairoMakie, ArrayPadding, Permutations
 using Porcupine: keys, values, fmap, first, ⊙, trim, round, floor, ceil, invperm, permutedims, dict
 using Flux: mae, Adam, @functor
 using Zygote: withgradient, Buffer, ignore_derivatives, @ignore_derivatives

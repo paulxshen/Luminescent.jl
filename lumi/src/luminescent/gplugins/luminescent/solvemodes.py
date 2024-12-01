@@ -2,7 +2,6 @@ import numpy as np
 import EMpy
 import os
 import sys
-from skimage.transform import resize
 
 path = sys.argv[1]
 data = np.load(os.path.join(path, "args.npz"))

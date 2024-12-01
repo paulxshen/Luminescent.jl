@@ -206,7 +206,7 @@ def setup(c, study, dx, margin,
     if platform.system() == "Windows":
         os.system(f"copy /Y {fn} {temp}")
     else:
-        subprocess.run(["cp -R", os.path.join(dir, "solvemodes.py"), temp])
+        subprocess.run(["cp", fn, temp])
     prob["layer_stack"] = layer_stack_info
     prob["materials"] = materials
     prob["study"] = study

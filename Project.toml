@@ -6,7 +6,6 @@ version = "0.1.0"
 [deps]
 ArrayPadding = "fe5ef43c-4912-423d-9170-4bd5cb6a013a"
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"

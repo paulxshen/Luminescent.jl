@@ -178,3 +178,12 @@ def get_layers(layer_stack, layer, withkey=False):
                 # print(layer, k, x)
                 r.append(x)
     return r
+
+
+def wavelength_range(center, bandwidth, length=3):
+    f1 = 1/(center+bandwidth/2)
+    f2 = 1/(center-bandwidth/2)
+    hw = (f2-f1)/2
+    f1 = 1/center-hw
+    f2 = 1/center+hw
+    return reversed([1/x for x in np.linspace(f1, f2, length)])

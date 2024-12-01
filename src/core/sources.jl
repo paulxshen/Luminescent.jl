@@ -152,7 +152,7 @@ function SourceInstance(s::Source, g, ϵ, temp)
             if isnothing(ϵeff)
                 Ex = modes[1].Ex
                 v = real(sum(downsample(ϵmode, mode_spacing) .* Ex, dims=2) ./ sum(Ex, dims=2))
-                ϵeff = v[round(length(v) / 2)]
+                ϵeff = maximum(ϵmode) => v[round(length(v) / 2)]
             end
             modes
         end for (λ, mns) = pairs(λmodenums)])
@@ -176,7 +176,7 @@ function SourceInstance(s::Source, g, ϵ, temp)
     sigmodes = [
         begin
             _f = if isa(sig, Number)
-                t -> cispi(2t * sig)
+                t -> cispi(2t / sig)
             else
                 sig
             end
