@@ -36,7 +36,7 @@ def sparams_problem(c: gf.Component,
             wavelengths = [wavelengths]
         else:
             wavelengths = wavelengths
-        wavelengths = sorted(wavelengths)
+        wavelengths = adjust_wavelengths(wavelengths)
         for w in wavelengths:
             for k in keys:
                 entries.append([w, *unpack_sparam_key(k)])

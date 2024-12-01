@@ -1,4 +1,5 @@
 
+import contextlib
 from .constants import *
 import gdsfactory as gf
 from gdsfactory.cross_section import Section
@@ -143,16 +144,17 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
             shutil.rmtree(dir, ignore_errors=True)
 
             os.makedirs(dir, exist_ok=True)
-            stltovoxel.convert_file(
-                os.path.join(path, f'{k}_{l1}_{l2}.stl'), os.path.join(dir, 'output.png'), voxel_size=dl, pad=0)
-            layer_stack_info[k] = {
-                "layer": (l1, l2),
-                "zmin": d.zmin,
-                "thickness": d.thickness,
-                "material": m,
-                "mesh_order": stack[0],
-                "origin": origin,
-            }
+            with contextlib.redirect_stdout(None):
+                stltovoxel.convert_file(
+                    os.path.join(path, f'{k}_{l1}_{l2}.stl'), os.path.join(dir, 'output.png'), voxel_size=dl, pad=0)
+                layer_stack_info[k] = {
+                    "layer": (l1, l2),
+                    "zmin": d.zmin,
+                    "thickness": d.thickness,
+                    "material": m,
+                    "mesh_order": stack[0],
+                    "origin": origin,
+                }
     return layer_stack_info
 
 
@@ -187,3 +189,17 @@ def wavelength_range(center, bandwidth, length=3):
     f1 = 1/center-hw
     f2 = 1/center+hw
     return sorted([1/x for x in np.linspace(f1, f2, length).tolist()])
+
+
+def adjust_wavelengths(wavelengths):
+    if len(wavelengths) == 1:
+        return wavelengths
+    wavelengths = sorted(set(wavelengths), reverse=True)
+    wl = wavelengths[round((len(wavelengths)-1)/2)]
+    freqs = [wl/w for w in wavelengths]
+    nresfreq = round(1/min(np.diff([0]+freqs)))
+    freqs = [round(f*nresfreq)/nresfreq for f in freqs]
+    wavelengths = [wl/f for f in reversed(freqs)]
+    print(
+        f"wavelengths has been adjusted to facilitate simulation:\n{wavelengths}")
+    return wavelengths

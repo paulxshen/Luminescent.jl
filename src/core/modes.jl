@@ -108,7 +108,17 @@ end
 invreframe(frame, u) = reframe(frame, u, true)
 
 
-function solvemodes(ϵ, dl, λ, neigs, spacing, path)
+function solvemodes(ϵ, dl, λ, neigs, spacing, path; mode_solutions=nothing)
+    if !isnothing(mode_solutions)
+        i = findfirst(mode_solutions) do v
+            _ϵ, _dl, _λ, _neigs = v
+            sum(abs, ϵ - _ϵ) / sum(abs, ϵ) < 1e-3 && dl == _dl && λ == _λ && neigs <= _neigs
+        end
+        if !isnothing(i)
+            return mode_solutions[i][end][1:neigs]
+        end
+    end
+
     # m = round((size(ϵ, 1) - size(ϵ, 2)) / 2)
     # n = size(ϵ, 1) - size(ϵ, 2) - m
     # ϵ = pad(ϵ, :replicate, [0, m], [0, n])
@@ -123,6 +133,11 @@ function solvemodes(ϵ, dl, λ, neigs, spacing, path)
     # display(heatmap(real(modes[1].Ex)))
     # display(heatmap(real(modes[1].Hy)))
     modes = [SortedDict([Symbol(k) => downsample(mode(k), spacing) for k = keys(mode) if string(k)[end] in "xy"]) |> pairs |> NamedTuple for mode in modes]
+
+    if !isnothing(mode_solutions)
+        println("saving mode solutions")
+        push!(mode_solutions, (ϵ, dl, λ, neigs, modes))
+    end
     modes
 end
 #     x = range(dl / 2; step=dl, length=size(ϵ, 1))

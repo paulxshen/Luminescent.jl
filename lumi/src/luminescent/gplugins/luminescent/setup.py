@@ -227,7 +227,7 @@ def setup(c, study, dx, margin,
             for wl in s["wavelength_mode_numbers"]:
                 wavelengths.append(wl)
     wavelengths = sorted(set(wavelengths))
-    wl = np.median(wavelengths)
+
     if source_margin == "auto":
         source_margin = 2*dx
     prob["source_margin"] = source_margin

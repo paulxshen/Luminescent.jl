@@ -123,7 +123,7 @@ function SourceInstance(s::PlaneWave, g)
     SourceInstance(Source(sigmodes, L / 2, -L / 2, L / 2, getdimsperm(dims), tags), g)
 end
 
-function SourceInstance(s::Source, g, ϵ, temp)
+function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
     @unpack center, lb, ub, tags, dimsperm, specs, N, center3, lb3, ub3 = s
     @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, dl = g
     C = complex(F)
@@ -148,7 +148,7 @@ function SourceInstance(s::Source, g, ϵ, temp)
 
         # global _a = ϵmode, dimsperm
         λmodes = OrderedDict([λ => begin
-            modes = solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp)[mns+1]
+            modes = solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp; mode_solutions)[mns+1]
             if isnothing(ϵeff)
                 Ex = modes[1].Ex
                 v = real(sum(downsample(ϵmode, mode_spacing) .* Ex, dims=2) ./ sum(Ex, dims=2))

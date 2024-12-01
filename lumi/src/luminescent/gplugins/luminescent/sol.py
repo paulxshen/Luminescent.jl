@@ -23,18 +23,20 @@ def solve(prob, dev=False, run=True):
     path = prob["path"]
     if not os.path.exists(path):
         os.makedirs(path)
-    print(f"""
-          using simulation folder {path}
-          started julia process
-          compiling julia code...
-          """)
+        #   compiling julia code...
+        #   """)
     prob_path = os.path.join(path, "problem.json")
     with open(prob_path, "w") as f:
         # Write the BSON data to the file
         f.write(bson_data)
-
+    print("using simulation folder", path)
     if not run:
         return
+    print("starting julia process...")
+    # print(f"""
+    #       using simulation folder {path}
+    #       starting julia process...
+    #       """)
     start_time = time.time()
 
     def run(cmd):
