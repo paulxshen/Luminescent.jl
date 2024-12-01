@@ -37,7 +37,9 @@ end
 
 
 function mode_decomp(m, u, deltas)
-    p = real(inner(m, m, deltas))
+    p = inner(m, m, deltas)
+    @assert imag(p) < 1e-3
+    p = real(p)
     m1 = m / ignore_derivatives() do
         sqrt(abs(p))
     end
@@ -105,7 +107,6 @@ function reframe(frame, u, inv=false)
 end
 invreframe(frame, u) = reframe(frame, u, true)
 
-Base.convert(::Type{Float64}, x::ComplexF64) = real(x)
 
 function solvemodes(ϵ, dl, λ, neigs, spacing, path)
     # m = round((size(ϵ, 1) - size(ϵ, 2)) / 2)

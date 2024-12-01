@@ -3,12 +3,13 @@ import gdsfactory as gf
 
 N = 2
 
-radius = 2
-wavelengths = 1.1
-name = f"bend_R{radius}__{wavelengths}"
 # radius = 2
-# wavelengths = [1.1, 1.55]
-# name = f"bend_R{radius}_multi"
+# wavelengths = 1.1
+# name = f"bend_R{radius}_{wavelengths}"
+
+radius = 2
+wavelengths = lumi.wavelength_range(center=1.35, bandwidth=.4, length=3)
+name = f"bend_R{radius}_multi"
 
 c = gf.components.bend_circular(radius=radius, allow_min_radius_violation=True)
 c.plot()

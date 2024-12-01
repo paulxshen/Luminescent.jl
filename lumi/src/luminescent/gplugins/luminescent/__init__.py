@@ -31,4 +31,5 @@ __all__ = [
     "make_training_movie",
     "make_simulation_movie",
     "gcells",
+    "wavelength_range",
 ]

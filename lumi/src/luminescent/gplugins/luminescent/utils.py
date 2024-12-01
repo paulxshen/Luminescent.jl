@@ -186,4 +186,4 @@ def wavelength_range(center, bandwidth, length=3):
     hw = (f2-f1)/2
     f1 = 1/center-hw
     f2 = 1/center+hw
-    return reversed([1/x for x in np.linspace(f1, f2, length)])
+    return sorted([1/x for x in np.linspace(f1, f2, length).tolist()])
