@@ -193,7 +193,7 @@ def wavelength_range(center, bandwidth, length=3):
 
 def adjust_wavelengths(wavelengths):
     if len(wavelengths) == 1:
-        return wavelengths
+        return wavelengths, 1
     wavelengths = sorted(set(wavelengths), reverse=True)
     wl = wavelengths[round((len(wavelengths)-1)/2)]
     freqs = [wl/w for w in wavelengths]
@@ -202,4 +202,4 @@ def adjust_wavelengths(wavelengths):
     wavelengths = [wl/f for f in reversed(freqs)]
     print(
         f"wavelengths has been adjusted to facilitate simulation:\n{wavelengths}")
-    return wavelengths
+    return wavelengths, nresfreq

@@ -20,9 +20,6 @@ def sparams_problem(c: gf.Component,
                     N=3, layer_stack=LAYER_STACK,
                     study="sparams",
                     **kwargs):
-
-    d = 2 if N else 3
-    prob = dict()
     ports = [p.name for p in c.get_ports_list(prefix="o")]
 
     if not entries:
@@ -32,11 +29,11 @@ def sparams_problem(c: gf.Component,
                 for o in ports:
                     keys.append(f"o,i")
 
-        if type(wavelengths) not in [list, tuple]:
+        if type(wavelengths) not in [list, tuple, np.ndarray]:
             wavelengths = [wavelengths]
         else:
             wavelengths = wavelengths
-        wavelengths = adjust_wavelengths(wavelengths)
+        wavelengths, T = adjust_wavelengths(wavelengths)
         for w in wavelengths:
             for k in keys:
                 entries.append([w, *unpack_sparam_key(k)])
@@ -93,7 +90,8 @@ def sparams_problem(c: gf.Component,
                  runs=runs, margin=margin,
                  layer_stack=layer_stack, N=N, **kwargs)
     prob["wavelengths"] = wavelengths
-
+    prob["Ttrans"] = None
+    prob["Tss"] = T if len(wavelengths) > 1 else None
     return prob
 
     # l = [k for k in imow if port_number(k) == pi]
