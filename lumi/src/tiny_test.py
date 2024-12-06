@@ -17,4 +17,4 @@ prob = lumi.gcell_problem(
     c, targets, name=name,
     lvoid=0.2, dx=0.1, iters=2,
     N=2, gpu=None,)
-sol = lumi.solve(prob)
+sol = lumi.solve(prob, run=False)

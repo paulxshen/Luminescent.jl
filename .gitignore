@@ -16,8 +16,9 @@ docs/build/
 *.*.pyc
 *.pyo
 _*.py
-/src/sim
-/src/pic
+
+# /src/sim
+# /src/pic
 
 Manifest.*
 _.png

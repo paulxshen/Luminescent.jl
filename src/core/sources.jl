@@ -131,8 +131,8 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
     dx = deltas[1][1]
     @unpack λmodenums, λmodes = specs
     if !isnothing(λmodenums)
-        start = int((center3 + lb3) / dl)
-        stop = int((center3 + ub3) / dl)
+        start = round((center3 + lb3) / dl)
+        stop = round((center3 + ub3) / dl)
         start, stop = min.(start, stop), max.(start, stop)
 
         sel = abs.(stop - start) .>= 0.001
@@ -172,7 +172,21 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
 
     o = NamedTuple([k => F.(start - fl[:, 1] + 1) for (k, fl) = pairs(field_lims)])
     λmodes = fmap(F, λmodes)
-    sigmodes = reduce(vcat, [collect(zip(fill(λ, length(modes)), modes)) for (λ, modes) = (pairs(λmodes))])
+
+    λmodes = sort(λmodes, by=kv -> kv[1])
+    λs = keys(λmodes)
+    modess = values(λmodes)
+    iss = cluster(λs)
+    sigmodes = map(iss) do is
+        f = t -> sum(getindex.((λs,), is)) do λ
+            cispi(2t / λ) |> C
+        end
+        _modess = getindex.((modess,), is)
+        modes = _modess[round(length(_modess) / 2 + 0.1)]
+        f, modes
+    end
+
+    sigmodes = reduce(vcat, [collect(zip(fill(f, length(modes)), modes)) for (f, modes) = sigmodes])
     sigmodes = [
         begin
             _f = if isa(sig, Number)

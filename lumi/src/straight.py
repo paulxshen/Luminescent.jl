@@ -11,5 +11,6 @@ lumi.write_sparams(c, wavelengths=wavelengths, keys=["o2@0,o1@0"],  # same as ke
                    name="straight",
                    #  core_layer=LAYER.WG,   bbox_layer=LAYER.WAFER,  # defaults
                         #  layer_stack=LAYER_STACK, materials=MATERIALS,  # defaults
-                   dx=0.05, N=3,)  # run=False)  # ,  gpu="CUDA",)  # or gpu=None
+                   dx=0.1, N=2, run=False)
+#     dx=0.05, N=3,)  # run=False)  # ,  gpu="CUDA",)  # or gpu=None
 # sol = lumi.lumi_solution()

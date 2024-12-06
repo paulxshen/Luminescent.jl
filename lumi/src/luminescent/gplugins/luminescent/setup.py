@@ -16,25 +16,23 @@ from sortedcontainers import SortedDict, SortedSet
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
-def setup(c, study, dx, margin,
+def setup(c, study, nres, wl,
           bbox_layer=LAYER.WAFER,
           zmargin2=None, zlims=None, core_layer=LAYER.WG,
-          port_source_offset="auto", source_margin="auto",
+          port_source_offset="auto", port_margin="auto",
           runs=[],  sources=[],
           layer_stack=LAYER_STACK, materials=MATERIALS,
           exclude_layers=[
               DESIGN_LAYER, GUESS], N=3, Courant=None,
           gpu=None, dtype=np.float32,
           plot=False, framerate=0,
-          magic="", wd=os.path.join(os.getcwd(), "luminescent_runs"), name=None, **kwargs):
+          magic="", wd=os.path.join(os.getcwd(), "luminescent_runs"), name=None,
+          approx=False,
+          **kwargs):
     prob = dict()
-    dx0 = dx
-    # dx *= 2
     ratio = 6
+    dy = dx = wl/nres
     dl = dx/ratio
-    # dl = .01
-    # ratio = int(dx/dl)
-    dy = dx
     dz = 1 * dx
 
     if not name:
@@ -43,13 +41,12 @@ def setup(c, study, dx, margin,
     path = os.path.join(wd, name)
     prob["path"] = path
     prob["name"] = name
-
+    prob["wl"] = wl
     prob = {**prob, **kwargs}
     prob["dx"] = dx
     prob["dy"] = dy
     prob["dz"] = dz
     prob["dl"] = dl
-    prob["dx0"] = dx0
     prob["ratio"] = ratio
     prob["dtype"] = str(dtype)
     prob["timestamp"] = datetime.datetime.now().isoformat(
@@ -72,7 +69,7 @@ def setup(c, study, dx, margin,
     hcore = d.thickness
     zcore = d.zmin
 
-    zmargin1 = 2.5*hcore
+    zmargin1 = 3*hcore
     hmode = hcore+2*zmargin1
     hmode = trim(hmode, 2*dz)
     zmargin1 = (hmode-hcore)/2
@@ -80,7 +77,7 @@ def setup(c, study, dx, margin,
     zmode = zcore-zmargin1
     zcenter = zcore+hcore/2
 
-    zmargin2 = 2.5*hcore
+    zmargin2 = 2*hcore
     zmargin2 = trim(zmargin2,  2*dz)
     h = hcore+2*(zmargin1+zmargin2)
     zmin = zcore-zmargin2-zmargin1
@@ -102,14 +99,16 @@ def setup(c, study, dx, margin,
     port_width = max([p.width/1e3 for p in c.ports])
     ps = portsides(c)
     xmargin = ymargin = 2*port_width
-    source_port_margin = 6*port_width
+    source_port_margin = port_width if approx else 6*port_width
+    port_margin = 2*dx
     margins = []
     for p in ps:
         if set(p).intersection(source_ports):
-            margins.append(source_port_margin)
-        # elif p:
-            # margins.append(border_margin)
+            margins.append(source_port_margin+port_margin)
+        elif set(p).intersection(nonsource_ports):
+            margins.append(port_margin)
         else:
+            assert not p
             margins.append(xmargin)
     l0, w0 = c.bbox_np()[1]-c.bbox_np()[0]
 
@@ -177,8 +176,11 @@ def setup(c, study, dx, margin,
 
     for run in runs:
         for port in run["sources"]:
-            run["sources"][port]["center"] = (
-                np.array(c0.ports[port].center)/1e3).tolist()
+            s = c0.ports[port]
+            a = pi/180*s.orientation
+            center = np.array(s.center)/1e3 - \
+                np.array([cos(a), sin(a)])*port_margin
+            run["sources"][port]["center"] = center.tolist()
 
     # a = min([min([materials[d.material]["epsilon"] for d in get_layers(
     #     layer_stack, l)]) for l in bbox_layer])
@@ -227,10 +229,6 @@ def setup(c, study, dx, margin,
             for wl in s["wavelength_mode_numbers"]:
                 wavelengths.append(wl)
     wavelengths = sorted(set(wavelengths))
-
-    if source_margin == "auto":
-        source_margin = 2*dx
-    prob["source_margin"] = source_margin
 
     bbox = c.bbox_np()
 

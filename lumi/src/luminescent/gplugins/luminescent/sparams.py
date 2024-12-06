@@ -11,12 +11,9 @@ from gdsfactory.cross_section import Section
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
-def sparams_problem(c: gf.Component,
+def sparams_problem(c: gf.Component, nres,
                     wavelengths,
-                    margin=None,  # zmargin=None,zlims=None,
-                    dx=.05,
-                    entries=[],
-                    center_wavelengths=None, keys=[],
+                    entries=[], keys=[],
                     N=3, layer_stack=LAYER_STACK,
                     study="sparams",
                     **kwargs):
@@ -33,7 +30,7 @@ def sparams_problem(c: gf.Component,
             wavelengths = [wavelengths]
         else:
             wavelengths = wavelengths
-        wavelengths, T = adjust_wavelengths(wavelengths)
+        wavelengths, wl, T = adjust_wavelengths(wavelengths)
         for w in wavelengths:
             for k in keys:
                 entries.append([w, *unpack_sparam_key(k)])
@@ -79,15 +76,14 @@ def sparams_problem(c: gf.Component,
                             "normal": normal_from_orientation(c.ports[o].orientation),
                             "center": (np.array(c.ports[o].center)/1e3).tolist(),
                             "width": (np.array(c.ports[o].width)/1e3).tolist(),
-                            # "endpoints": extend(c.ports[o].endpoints, margin),
                             "wavelength_mode_numbers": {w: list(range(imow[i][mi][o]+1)) for w in wavelengths},
                         } for o in imow[i][mi]}}
                 d["sources"] = SortedDict(d["sources"])
                 d["monitors"] = SortedDict(d["monitors"])
                 runs.append(d)
 
-    prob = setup(c, study=study,  dx=dx,
-                 runs=runs, margin=margin,
+    prob = setup(c, study=study,  nres=nres, wl=wl,
+                 runs=runs,
                  layer_stack=layer_stack, N=N, **kwargs)
     prob["wavelengths"] = wavelengths
     prob["Ttrans"] = None

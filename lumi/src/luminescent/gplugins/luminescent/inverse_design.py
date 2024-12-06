@@ -83,7 +83,7 @@ def gcell_problem(c,  targets, iters,
                            wavelengths=wavelengths,
                            study="inverse_design",
                            keys=keys,
-                           N=N, ** kwargs)
+                           N=N, approx=N == 2, ** kwargs)
 
     prob["restart"] = restart
     prob["weights"] = {**{
@@ -111,10 +111,10 @@ def gcell_problem(c,  targets, iters,
             "bbox": _bbox(p.bbox()),
             "symmetries": s,
             "init": init,
-            "lvoid": lvoid,
-            "lsolid": lsolid,
         } for p, s in zip(list(polys.values())[0], symmetries)
     ]
+    prob["lvoid"] = lvoid
+    prob["lsolid"] = lsolid
     prob["stoploss"] = stoploss
     prob["design_config"] = dict()
     l = get_layers(layer_stack, fill_layer)[0]

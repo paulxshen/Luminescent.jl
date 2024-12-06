@@ -81,3 +81,19 @@ function _make_field_deltas(d, N, field_boundvals, field_sizes, i, isdiff=false)
         reshape(d, Tuple(1 - sel + field_sizes[k][i] * sel))
     end for (k, v) = pairs(field_boundvals)])
 end
+function cluster(v)
+    groups = []
+    group = []
+    for (i, x) = enumerate(v)
+        if isempty(group) || x / v[group[1]] < 1.1
+            push!(group, i)
+        else
+            push!(groups, group)
+            group = [i]
+        end
+    end
+    if !isempty(group)
+        push!(groups, group)
+    end
+    groups
+end

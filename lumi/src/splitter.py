@@ -1,17 +1,18 @@
 from pprint import pprint
 import luminescent as lumi
 
-name = "1x2_splitter"
-c = lumi.gcells.mimo(west=1, east=2, l=4.5, w=2.4, wwg=.5, taper=.05, )
+name = "splitter"
+c = lumi.gcells.mimo(west=1, east=2, l=4.0, w=2.0, wwg=.5, taper=.05, )
 targets = {
     "tparams": {1.55: {"2,1": 0.5}},
 }
 
 prob = lumi.gcell_problem(
     c, targets, name=name,
-    N=2,   symmetries=[1], lvoid=0.15, lsolid=.15, dx=0.1,
-    eta=.2, iters=50, stoploss=.05, )
-sol = lumi.solve(prob)
+    N=2,  nres=15,  symmetries=[1],
+    lvoid=0.15, lsolid=.15,
+    iters=50, stoploss=.05, )
+lumi.solve(prob, run=False)
 # name = "1x4_splitter"
 # c = lumi.gcells.mimo(west=1, east=4, l=6.0, w=6.0, wwg=.5, taper=.05, )
 # targets = {
