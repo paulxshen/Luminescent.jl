@@ -10,6 +10,8 @@ readme = "README.md"
 python = "^3.10"
 gdsfactory = "^8.8.7"
 pillow = "^11.0.0"
+stl-to-voxel = "0.10.0"
+sortedcontainers = "^2.4.0"
 
 [tool.poetry.dev-dependencies]
 
