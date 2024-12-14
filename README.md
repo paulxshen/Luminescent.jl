@@ -19,9 +19,9 @@ Application specific [Python API](https://paulxshen.github.io/Luminescent.jl/lum
 - RF microstrip and patch atennas - please request 
  
  Sister packages include:
-- [Jello.jl](https://paulxshen.github.com/Jello.jl): length scale controlled geometry generator and optimizer
-- [ArrayPadding.jl](https://paulxshen.github.com/ArrayPadding.jl)
-- [Porcupine.jl](https://paulxshen.github.com/Porcupine.jl): collection of Julia hacks optimizing developer happiness and automatic differentiation :)
+- [Jello.jl](https://github.com/paulxshen/Jello.jl): length scale controlled geometry generator and optimizer
+- [ArrayPadding.jl](https://github.com/paulxshen/ArrayPadding.jl)
+- [Porcupine.jl](https://github.com/paulxshen/Porcupine.jl): collection of Julia hacks optimizing developer happiness and automatic differentiation :)
 
 [Follow us](https://www.linkedin.com/company/luminescent-ai/about) on our new Linkedin page for package updates and bug fixes! Feel free to raise an issue. We respond daily. Star us if you like this repo :)
 
