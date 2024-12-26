@@ -36,18 +36,13 @@ function lastrun(name=nothing; study=nothing, wd=joinpath(pwd(), "luminescent_ru
 end
 
 function write_sparams(runs, run_probs, lb, dl,
-    designs=nothing, design_config=nothing, models=nothing;
+    designs=nothing, design_config=nothing, models=nothing; matprops=nothing,
     alg=nothing, save_memory=false, verbose=false, perturb=nothing, framerate=0, path="", kw...)
     F = run_probs[1].grid.F
 
-    # prob = run_probs[1]
-    # return make_geometry(models, lb, dl, prob._geometry, designs, design_config; F, perturb).ϵ |> sum
     if !isnothing(models)
         masks = [m() for m in models]
         lminloss = 0
-        # v = [m(withloss=true) for m in models]
-        # masks = getindex.(v, 1)
-        # lminloss = mean(getindex.(v, 2))
         margins = [m.margin for m in models]
     else
         lminloss = 0
@@ -57,18 +52,11 @@ function write_sparams(runs, run_probs, lb, dl,
             if !isnothing(models)
 
                 @unpack ϵeff, _geometry = prob
-                prob[:_geometry] = make_geometry(masks, margins, lb, dl, _geometry, designs, design_config; F, perturb, ϵeff)
+                prob[:_geometry] = make_geometry(masks, margins, lb, dl, _geometry, designs, design_config, matprops; F, perturb, ϵeff)
             end
             solve(prob; alg, save_memory, verbose, framerate, path)
         end for (i, prob) in enumerate(run_probs)
-        # end for (i, prob) in enumerate(run_probs)
     ]
-    # return sols[1]
-    # S = sols[1]("a+", 1) |> abs2
-    # return (; S, sols)
-
-    ulims = sols[1].ulims
-    # return sol
     coeffs = OrderedDict()
     for (sol, run) in zip(sols, runs)
         sources = values(run.sources)
@@ -108,19 +96,13 @@ function write_sparams(runs, run_probs, lb, dl,
     # end
     return (; S, sols, lminloss)
 end
-function make_geometry(masks, margins, lb, dl, geometry, designs, design_config; ϵeff=nothing, F=Float32, perturb=nothing)
+function make_geometry(masks, margins, lb, dl, geometry, designs, design_config, matprops; ϵeff=nothing, F=Float32, perturb=nothing)
     isnothing(masks) && return geometry
+    mat = design_config.fill.material
     namedtuple([k => begin
         a = geometry[k]
-        k = if k == :ϵ
-            :epsilon
-        else
-            k
-        end
-
-        ks = keys(design_config.fill)
-        if k in ks || string(k) in ks
-            f = design_config.fill(k) |> F
+        if k == :ϵ
+            f = matprops(mat)(k) |> F
             v = minimum(a)
             if perturb == k
                 f *= convert.(F, 1.001)
@@ -159,7 +141,7 @@ function plotsols(sols, probs, path,)
         prob = prob |> cpu
         @unpack monitor_instances, source_instances, λ, = prob
         @unpack deltas, spacings, bbox, dl = prob.grid
-        u = u.Hz
+        u = u.H.Hz
         N = ndims(u)
         # if N == 3
         #     volume(u) |> display
@@ -170,7 +152,7 @@ function plotsols(sols, probs, path,)
         # return
         g = _p.ϵ
         u = upsample(u, spacings)
-        g = imresize(g, size(u))
+        # g = imresize(g, size(u))
         bbox /= dl
         ratio = int(deltas[1] / dl)
 

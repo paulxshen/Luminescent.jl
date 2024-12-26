@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "luminescent"
+version = "0.2.12"
+description = "Lumi FDTD by Luminescent AI is a GPU and automatic differentiation (AD) compatible FDTD package for simulation and inverse design in semiconductor photonics. Create layout in gdsfactory. Then use the Lumi Python plugin for calculating sparams or perform inverse design on Lumi's Julia backend."
+authors = ["Paul Shen"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "luminescent"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+gdsfactory = "^8.8.7"
+pillow = "^11.0.0"
+stl-to-voxel = "^0.10.0"
+tidy3d = "^2.7.8"
+electromagneticpython = "^2.1.5"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

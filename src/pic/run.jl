@@ -12,7 +12,7 @@ function picrun(path; kw...)
     for (k, v) = pairs(kw)
         prob[string(k)] = v
     end
-    @unpack name, N, dtype, wl, xmargin, ymargin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, gpu_backend, magic, framerate, layer_stack, materials, L, Ttrans, Tss = prob
+    @unpack name, N, dtype, wl, xmargin, ymargin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, gpu_backend, magic, framerate, layer_stack, matprops, L, Ttrans, Tss = prob
     if study == "inverse_design"
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end
@@ -67,7 +67,7 @@ function picrun(path; kw...)
         a = a[Base.oneto.(size(a) - overhang)...]
         I = range.(start, start + size(a) - 1)
 
-        ϵ = materials(material).epsilon
+        ϵ = matprops(material).ϵ
         ϵmin = min(ϵ, ϵmin)
         ϵ3[I...] .*= 1 - a
         ϵ3[I...] .+= a .* ϵ
@@ -102,7 +102,7 @@ function picrun(path; kw...)
         end
         models = [
             begin
-                @unpack init, bbox = design
+                @unpack bbox = design
                 L = bbox[2] - bbox[1]
                 szd = Tuple(round.(Int, L / dl)) # design region size
                 symmetries = [Int(s) + 1 for s = design.symmetries]
@@ -111,12 +111,12 @@ function picrun(path; kw...)
                 frame = frame .>= 0.99maximum(frame)
                 # frame = nothing
                 start = round((bbox[1] - lb) / dl + 1)
-                b = Blob(szd; init, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start)
+                b = Blob(szd; solid_frac=0.8, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start)
                 display(heatmap(b.frame))
 
                 if !isnothing(sol) && !restart
                     println("loading saved design...")
-                    b.a .= sol.params[i] |> typeof(b.a)
+                    b.p .= sol.params[i]
                 end
                 b
             end for (i, design) = enumerate(designs)
@@ -200,7 +200,7 @@ function picrun(path; kw...)
         for prob = run_probs
             for k = keys(prob)
                 if k in (:u0, :_geometry, :geometry, :source_instances, :monitor_instances)
-                    prob[k] = prob[k] |> gpu
+                    prob[k] = gpu(cu, prob[k],)
                 end
             end
         end
@@ -227,17 +227,18 @@ function picrun(path; kw...)
                 error("3D inverse design feature must be requested from Luminescent AI info@luminescentai.com")
             end
         end
-        opt = Flux.Adam(eta)
-        opt_state = Flux.setup(opt, models)
+        model = models[1]
+        opt = AreaChangeOptimiser(model)
+        opt_state = Flux.setup(opt, model)
         println("starting optimization... first iter will be slow due to adjoint compilation.")
         img = nothing
-        best = best0 = 0
         println("")
         for i = 1:iters
             println("($i)  ")
             stop = i == iters
             if :phase_shifter == first(keys(targets))
-                @time l, (dldm,) = Flux.withgradient(models) do models
+                @time l, (dldm,) = Flux.withgradient(model) do model
+                    models = [model]
                     @unpack S, sols, lminloss = write_sparams(runs, run_probs, lb, dl,
                         designs, design_config, models;
                         F, img, alg)#(1)(1)
@@ -256,14 +257,11 @@ function picrun(path; kw...)
                     # T * dϕ / π
                 end
             else
-                @time global l, (dldm,) = Flux.withgradient(models) do models
-                    # sols = get_sols(runs, run_probs,  path, lb, deltas,
+                @time global l, (dldm,) = Flux.withgradient(model) do model
+                    models = [model]
                     res = write_sparams(runs, run_probs, lb, dl,
-                        designs, design_config, models;
-                        F, img, alg, save_memory)
-                    # l = res
-                    # println("loss: $l")
-                    # return l
+                        designs, design_config, models, ;
+                        F, img, alg, save_memory, matprops)
                     @unpack S, sols, lminloss = res
                     l = 100lminloss
                     println("lminloss: $l")
@@ -315,11 +313,12 @@ function picrun(path; kw...)
                 println("Loss below threshold, stopping optimization.")
                 stop = true
             end
-            if i == 1 || i % 2 == 0 || stop
+            if true# i == 1 || i % 2 == 0 || stop
                 println("saving checkpoint...")
                 ckptpath = joinpath(path, "checkpoints", replace(string(now()), ':' => '_', '.' => '_'))
 
                 mkpath(ckptpath)
+                models = [model]
                 for (i, (m, design)) = enumerate(zip(models, designs))
                     # a = Gray.(m() .< 0.5)
 
@@ -348,35 +347,10 @@ function picrun(path; kw...)
             if stop
                 break
             end
-            # Flux.update!(opt_state, models, dldm)# |> gpu)
-
-            da = Inf
-            α = 1
-            masks0 = [m() for m in models]
-
-            A = (dl)^2 * sum(masks0) do a
-                prod(size(a))
-            end
-            models0 = deepcopy(models)
-            Flux.update!(opt_state, models, dldm)# |> gpu)
-            models1 = deepcopy(models)
-            while da > max(lvoid^2 / A, 0.001) + 0.002l
-                for (m, m0, m1) = zip(models, models0, models1)
-                    m.p .= α * m1.p + (1 - α) * m0.p
-                end
-                masks = [m() for m in models]
-                da = sum(masks - masks0) do a
-                    sum(abs, a)
-                end
-                da /= sum(masks) do a
-                    prod(size(a))
-                end
-                α *= 0.95
-            end
-            print("debug: ")
-            @show α
-            println("fractional change in design: $da")
-            println("")
+            opt.maxchange = 0.001 + relu.(l - [0.1, 0.3, 0.7]) ⋅ [0.01, 0.01, 0.01]
+            Jello.update_loss!(opt, l)
+            Flux.update!(opt_state, model, dldm)# |> gpu)
+            repair!(model)
         end
         if framerate > 0
             write_sparams(runs, run_probs, lb, dl,

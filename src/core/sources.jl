@@ -1,8 +1,3 @@
-function resize(a, sz)
-    size(a) != Tuple(sz) && @warn "array size $(size(a)) not same as new size $sz. array will be interpolated"
-    imresize(a, sz, method=ImageTransformations.Lanczos4OpenCV())
-
-end
 
 function _aug(mode, N)
     length(mode) == N && return mode
@@ -151,7 +146,7 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
             modes = solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp; mode_solutions)[mns+1]
             if isnothing(ϵeff)
                 Ex = modes[1].Ex
-                v = real(sum(downsample(ϵmode, mode_spacing) .* Ex, dims=2) ./ sum(Ex, dims=2))
+                v = real(sum(downsample(ϵmode, mode_spacing) .* Ex, dims=2) ./ sum(Ex, dims=2)) |> F
                 ϵeff = maximum(ϵmode) => v[round(length(v) / 2)]
             end
             modes
@@ -208,8 +203,9 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
                 if b == 0
                     0
                 else
-                    # global aaaa = a, mode, o, k
-                    setindexf!(a, b, range.(o[k], o[k] + size(b) - 1)...)
+                    I = range.(o[k], o[k] + size(b) - 1, size(b))
+                    global aaaa = a, b, mode, o, k, I
+                    setindexf!(a, b, I...)
                     a
                 end
             end for k = ks])

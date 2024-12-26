@@ -1,4 +1,6 @@
-/build
+temp*
+build
+/build/precompile_*
 /temp
 */temp
 /_temp

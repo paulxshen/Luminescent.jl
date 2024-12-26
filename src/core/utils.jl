@@ -53,23 +53,30 @@ function get_polarization(u)
     end
     nothing
 end
-function add_current_keys(N)
-    N = OrderedDict(pairs(N))
-    add_current_keys!(N)
-end
-function add_current_keys!(N::AbstractDict)
-    for k in keys(N) |> collect
+
+function add_current_keys!(d::AbstractDict)
+    for k in keys(d)
         if startswith(String(k), "E")
-            N[Symbol("J" * String(k)[2:end])] = N[k]
-        end
+            s = String(k)[end]
+            d[Symbol("J$s")] = deepcopy(d[k])
+            d[Symbol("P$s")] = deepcopy(d[k])
 
-        # if startswith(String(k), "H")
-        #     N[Symbol("M" * String(k)[2:end])] = N[k]
-        # end
+        end
     end
-    N
+    d
 end
 
+function groupkeys(d)
+    r = dict()
+    for k in keys(d)
+        pre = String(k)[1] |> Symbol
+        if !haskey(r, pre)
+            r[pre] = dict()
+        end
+        r[pre][k] = d[k]
+    end
+    r
+end
 
 _make_field_deltas(d::Real, a...) = d
 function _make_field_deltas(d, N, field_boundvals, field_sizes, i, isdiff=false)

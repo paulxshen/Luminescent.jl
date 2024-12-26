@@ -1,3 +1,7 @@
+function refactor(d)
+    N = size(d(1), 1)
+    [namedtuple([k => d[k][i, :] for k = sort(keys(d))]) for i = 1:N]
+end
 """
     function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
 
@@ -9,7 +13,7 @@ Args
 function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     polarization=:TE,
     Ttrans=nothing, Tss=nothing,
-    ϵ=1, μ=1, σ=0, m=0,
+    ϵ=1, μ=1, σ=0, m=0, γ=0, β=0,
     ϵ3=1,
     F=Float32,
     pml_depths=nothing, pml_ramp_fracs=0.2,
@@ -17,18 +21,20 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     deltas3=deltas,
     temp="",
     kw...)
-    (deltas, mode_deltas, ϵ, μ, σ, m) = F.((deltas, mode_deltas, ϵ, μ, σ, m))
+
     N = length(deltas)
+    (deltas, mode_deltas, ϵ, μ, σ, m, γ, β) = F.((deltas, mode_deltas, ϵ, μ, σ, m, γ, β))
+
+
     mode_spacing = int(mode_deltas[1] / dl)
     L = size(ϵ) * dl
     sz = Tuple([isa(d, Number) ? int(l / d) : length(d) for (d, l) = zip(deltas, L)])
     a = ones(F, Tuple(sz))
-    _geometry = (; ϵ, μ, σ, m) |> pairs |> OrderedDict
+    _geometry = (; ϵ, μ, σ, m, γ, β) |> pairs |> OrderedDict
     geometry = OrderedDict()
-    # global _a = geometry, _geometry, ϵ3
     for (k, v) = pairs(_geometry)
         geometry[k] = if isa(v, AbstractArray)
-            downsample(v, int(deltas / dl))
+            downsample(v, int(deltas / dl)) |> F
         elseif k ∈ (:σ, :m)
             a * v
         else
@@ -37,24 +43,23 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     end
     _ϵ3 = ϵ3
 
-    ϵmin, ϵmax = extrema(geometry.ϵ)
-    μmin, μmax = extrema(geometry.μ)
+    ϵmin, ϵmax = extrema(abs, geometry.ϵ)
+    μmin, μmax = extrema(abs, geometry.μ)
     nmax = sqrt(ϵmax * μmax)
     nmin = sqrt(ϵmin * μmin)
-    N = length(sz)
-    if isa(pml_depths, Number)
-        pml_depths = fill(pml_depths, N)
-    end
-    # if isa(pml_ramp_fracs, Number)
-    #     pml_ramp_fracs = fill(pml_ramp_fracs, N)
-    # end
+
+    dt = nmin / √(sum(v -> 1 / minimum(v)^2, deltas)) * Courant
+    dt = 1 / ceil(1 / dt) |> F
+
     maxdeltas = maximum.(deltas)
     if isnothing(pml_depths)
-        mpml = σpml = 2.0
-        δ = 5 / nmin / (σpml + mpml)
+        v = min(4, 0.5 / dt)
+        @show σpml = ϵmin * v
+        @show mpml = μmin * v
+        δ = -log(0.001) / nmin / (4v) |> F
         pml_depths = max.([δ, δ, 0.2δ][1:N], maxdeltas)
+        @show pml_depths = trim.(pml_depths, maxdeltas)
     end
-    pml_depths = trim.(pml_depths, maxdeltas)
 
 
 
@@ -79,8 +84,9 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     end
 
     nodes = fill(:U, N, 2)
-    # pml_depths = [xpml, ypml, zpml]
-    # pml_ramp_fracs = [xpml_ramp_frac, ypml_ramp_frac, zpml_ramp_frac]
+    # v=Vector{Any}(fill(nothing, N))
+    # field_boundvals = DefaultDict(() -> [copy(v),copy(v)])
+    # geometry_padvals = DefaultDict(() -> [copy(v),copy(v)])
     db = Any[PML(j * i, pml_depths[i], σpml, mpml) for i = 1:N, j = (-1, 1)]
     field_boundvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
     geometry_padvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
@@ -212,22 +218,21 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     add_current_keys!(field_sizes)
 
     field_sizes = NamedTuple([k => Tuple(field_sizes[k]) for (k) = keys(field_sizes)])
-    fielmaxdeltas = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for (k) = field_names])
     if N == 1
     elseif N == 3
-        u0 = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz, :Jx, :Jy, :Jz)])
+        u0 = dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz, :Jx, :Jy, :Jz)])
     else
         if polarization == :TM
-            u0 = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ez, :Hx, :Hy, :Jz)])
+            u0 = dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ez, :Hx, :Hy, :Jz)])
         else
-            u0 = NamedTuple([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Hz)])
+            u0 = dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Hz)])
         end
     end
+    add_current_keys!(u0)
+    u0 = groupkeys(u0)
 
     geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padamts[k], dims=2) for k = keys(geometry_padamts)])
-    # field_lims = NamedTuple(Pair.(keys(geometry_sizes), Base.oneto.(values(geometry_sizes))))
     field_lims = OrderedDict{Symbol,Any}()
-    field_grimaxdeltas = Dict{Symbol,Any}()
     for k = keys(geometry_sizes)
         if k in (:μ, :m)
             names = Hnames
@@ -246,8 +251,8 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         ])
         field_lims[k] = v
     end
-    field_lims = merge(values(field_lims)...)
-    field_lims = add_current_keys(field_lims)
+    field_lims = dict(merge(values(field_lims)...))
+    add_current_keys!(field_lims)
     lb = bbox[:, 1]
 
     field_deltas = [_make_field_deltas(d, N, field_boundvals, field_sizes, i) for (i, d) = enumerate(deltas)]
@@ -259,6 +264,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     field_spacings = int(field_deltas / dl)
     spacings = int(deltas / dl)
 
+    field_diffpadvals = refactor(field_diffpadvals)
     grid = (; F, N, L, bbox, sz, deltas, deltas3, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals, geometry_padvals, geometry_padamts, _geometry_padamts, dl, spacings, mode_spacing)
 
     mode_solutions = []
@@ -266,8 +272,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     monitor_instances = MonitorInstance.(monitors, (grid,), (_ϵ3,), (temp,), (mode_solutions,))
     ϵeff = source_instances[1].ϵeff
 
-    dt = nmin / √(sum(dx -> 1 / minimum(dx)^2, deltas)) * Courant
-    dt = 1 / ceil(1 / dt) |> F
+
     sz = Tuple(sz)
 
     # geometry_padvals[:invϵ] = geometry_padvals[:ϵ]
@@ -275,6 +280,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     if N == 2
         _geometry[:ϵ] = map(_geometry.ϵ) do x
             k, v = ϵeff
+            k, v = F((k, v))
             abs(x - k) < 0.02 ? x - k + v : x
         end
         geometry[:ϵ] = downsample(_geometry.ϵ, int(deltas / dl))

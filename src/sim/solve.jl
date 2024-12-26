@@ -5,10 +5,11 @@ end
 
 function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (t0, T, monitor_instances)), t)
     u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
-    mf += dt / T * [[
+    mf += [[
         begin
-            # global _b = u
-            namedtuple([k => (field(u, k, m) * cispi(-2(t - t0) / λ)) for k = keys(u)])
+            c = dt / T * cispi(-2(t - t0) / λ)
+            ks = @ignore_derivatives [keys(u.E)..., keys(u.H)...]
+            namedtuple([k => (field(u, k, m) * c) for k = ks])
         end for λ = wavelengths(m)
     ] for m = monitor_instances]
     ((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (t0, T, monitor_instances))
@@ -31,7 +32,7 @@ function solve(prob, ;
     _p = pad_geometry(_p, geometry_padvals, _geometry_padamts)
     invϵ = tensorinv(_p.ϵ, values(field_lims(r"E.*")), spacings)
 
-    p = merge(p, (; invϵ))
+    global p = merge(p, (; invϵ))
     durations = [Ttrans, Tss]
     T = cumsum(durations)
     us0 = (u0,)
@@ -69,39 +70,11 @@ function solve(prob, ;
     end
     # return sum(abs, mf[1][1].Ex + mf[1][1].Ey + mf[1][1].Hz)
     ulims = 0
-    # ulims = ignore_derivatives() do
-    #     map(vcat(extrema.(leaves(u)), [
-    #         begin
-    #             c = maximum(abs.(a))
-    #             (-c, c)
-    #         end for a = leaves(mf)
-    #     ])) do l
-    #         l[1] == l[2] ? convert.(F, (-1, 1)) : l
-    #     end
-    # end
-
+    # @assert all([all(!isnan, a) for a = u])
 
     v = map(mf, monitor_instances) do mf, m
         map(mf, wavelengths(m)) do u, λ
             dftfields = permutexyz(u, m.dimsperm, N)
-            # if N == 2
-            # if polarization == :TE
-            #     Ex, Hy, Ez = invreframe(frame(m), vcat(E, H))
-            #     Ex += 0sum(Ez[1:2])
-            #     Hy += 0sum(Ez[1:2])
-            #     dftfields = (; Ex, Hy, Ez)
-            # else
-            #     Hx, Ey, Hz = invreframe(frame(m), vcat(H, E))
-            #     Hx += 0real(Hz[1])
-            #     Ey += 0real(Hz[1])
-            #     dftfields = (; Hx, Ey, Hz)
-            # end
-            # elseif N == 3
-            #     Ex, Ey, Ez, = invreframe(frame(m), E)
-            #     Hx, Hy, Hz = invreframe(frame(m), H)
-            #     dftfields = (; Ex, Ey, Ez, Hx, Hy, Hz)
-            # end
-            # dftfields = keepxy(dftfields)
             fp = rp = c = nothing
             if !isnothing(m.λmodes)
                 wm = m.λmodes[λ]

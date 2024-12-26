@@ -13,15 +13,12 @@ Features
 - Modal sources, plane waves, Gaussian beams
 - Modal monitors, DFT fields 
 
-Application specific [Python API](https://paulxshen.github.io/Luminescent.jl/luminescent.html) UI and `gdsfactory` integration for simulation and inverse design. General purpose backend API is in Julia and is not documented (unless there's interest).
+Application specific [Python API](https://paulxshen.github.io/Luminescent.jl/luminescent.html) UI and `gdsfactory` integration for simulation and inverse design 
 - Photonic integrated circuits (PIC) - available now
 - Metasurface optics and thin films - please request 
 - RF microstrip and patch atennas - please request 
  
- Sister packages include:
-- [Jello.jl](https://github.com/paulxshen/Jello.jl): length scale controlled geometry generator and optimizer
-- [ArrayPadding.jl](https://github.com/paulxshen/ArrayPadding.jl)
-- [Porcupine.jl](https://github.com/paulxshen/Porcupine.jl): collection of Julia hacks optimizing developer happiness and automatic differentiation :)
+General purpose backend API is in Julia and is not documented (unless there's interest)
 
 [Follow us](https://www.linkedin.com/company/luminescent-ai/about) on our new Linkedin page for package updates and bug fixes! Feel free to raise an issue. We respond daily. Star us if you like this repo :)
 

@@ -1,7 +1,9 @@
-using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, NPZ, DataStructures, JSON, Images, BSON, Flux, Zygote, CairoMakie, ArrayPadding, Permutations
-using Porcupine: keys, values, fmap, first, ⊙, trim, round, floor, ceil, invperm, permutedims, dict
-using Flux: mae, Adam, @functor
+using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, NPZ, DataStructures, JSON, Flux, Zygote, CairoMakie, ArrayPadding, Permutations, Functors, ImageBase, Optimisers, VectorFields
+using Porcupine: keys, values, pairs, fmap, ⊙, trim, round, floor, ceil, invperm, permutedims, dict, cpu, gpu
+using Flux: mae, Adam
 using Zygote: withgradient, Buffer, ignore_derivatives, @ignore_derivatives
+# using CUDA
+
 # using BSON: @save, @load, load
 include("core/utils.jl")
 include("core/constants.jl")
@@ -11,12 +13,10 @@ include("core/boundaries.jl")
 include("core/sources.jl")
 include("core/monitors.jl")
 include("core/geometry.jl")
-include("core/gpu.jl")
 
 include("sim/setup.jl")
 include("sim/solve.jl")
 
-# include("photonics.jl")
 include("format.jl")
 # include("dispersion.jl")
 # include("c.jl")
