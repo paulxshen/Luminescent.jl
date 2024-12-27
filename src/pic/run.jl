@@ -1,4 +1,4 @@
-function picrun(path; kw...)
+function picrun(path; gpuarray=nothing, kw...)
     Random.seed!(1)
     println("setting up simulation...")
     global PROB_PATH = joinpath(path, "problem.json")
@@ -191,20 +191,16 @@ function picrun(path; kw...)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]
 
-    if !isempty(gpu_backend)
-        println("using $gpu_backend backend.")
-        # Flux.gpu_backend!(gpu_backend)
-        if gpu_backend == "CUDA"
-            @assert CUDA.functional()
-        end
+    if !isnothing(gpuarray)
+        _gpu = x -> gpu(gpuarray, x)
         for prob = run_probs
             for k = keys(prob)
                 if k in (:u0, :_geometry, :geometry, :source_instances, :monitor_instances)
-                    prob[k] = gpu(cu, prob[k],)
+                    prob[k] = _gpu(prob[k],)
                 end
             end
         end
-        models = models |> gpu
+        models = models |> _gpu
     else
         println("using CPU backend.")
     end

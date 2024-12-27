@@ -49,10 +49,9 @@ def solve(prob, dev=False, run=True, url=URL, **kwargs):
     print("using simulation folder", path)
     if not run:
         return
-    start_fdtd_server(url)
     print("starting julia process...")
-    prob["action"] = "solve"
-    r = requests.post(f"{url}/local", json=prob)
+    # prob["action"] = "solve"
+    # r = requests.post(f"{url}/local", json=prob)
     1
     # print(f"""
     #       using simulation folder {path}
@@ -60,18 +59,26 @@ def solve(prob, dev=False, run=True, url=URL, **kwargs):
     #       """)
     # start_time = time.time()
 
-    # def run(cmd):
+    def run(cmd):
 
-    #     proc = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #     # proc.wait()
-    #     with proc:
-    #         for line in proc.stdout:
+        proc = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # proc.wait()
+        with proc:
+            for line in proc.stdout:
 
-    #             print(str(line.decode().strip()), flush=True)
-    #         err_message = proc.stderr.read().decode()
-    #         print(err_message)
+                print(str(line.decode().strip()), flush=True)
+            err_message = proc.stderr.read().decode()
+            print(err_message)
     # cmd = ["lumi", path]
-    # run(cmd)
+    gpu_backend = prob["gpu_backend"]
+    if not gpu_backend:
+        cmd = ["julia", "-e", f"using Luminescent;picrun(\"{path}\")"]
+    else:
+        print(f"using {gpu_backend} backend.")
+        if gpu_backend == "CUDA":
+            cmd = ["julia", "-e",
+                   f"using Luminescent,CUDA;@assert CUDA.functional();picrun(\"{path}\";gpuarray=cu)"]
+    run(cmd)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:
     #     if p.stderr is not None:
