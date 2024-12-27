@@ -11,7 +11,7 @@ build
 /.vscode
 docs/build/
 /runs
-/luminescent_runs
+/runs
 /lumi/dist
 *.lock
 *.pyc

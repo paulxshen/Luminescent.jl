@@ -169,11 +169,11 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
     λmodes = fmap(F, λmodes)
 
     λmodes = sort(λmodes, by=kv -> kv[1])
-    λs = keys(λmodes)
+    λs = Array(keys(λmodes))
     modess = values(λmodes)
     iss = cluster(λs)
     sigmodes = map(iss) do is
-        f = t -> sum(getindex.((λs,), is)) do λ
+        f = t -> sum(getindex.((Array(λs),), Array(is))) do λ
             cispi(2t / λ) |> C
         end
         _modess = getindex.((modess,), is)

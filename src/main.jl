@@ -1,4 +1,4 @@
-using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, NPZ, DataStructures, JSON, Flux, Zygote, CairoMakie, ArrayPadding, Permutations, Functors, ImageBase, Optimisers, VectorFields
+using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, NPZ, DataStructures, JSON, Flux, Zygote, CairoMakie, ArrayPadding, Permutations, Functors, ImageBase, Optimisers
 using Porcupine: keys, values, pairs, fmap, ⊙, trim, round, floor, ceil, invperm, permutedims, dict, cpu, gpu
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer, ignore_derivatives, @ignore_derivatives
@@ -26,4 +26,6 @@ include("pic/utils.jl")
 include("pic/run.jl")
 # using AbbreviatedStackTraces
 
+include("ops.jl")
+include("del.jl")
 # include("main.jl")

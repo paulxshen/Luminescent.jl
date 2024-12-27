@@ -74,14 +74,6 @@ function picrun(path; gpuarray=nothing, kw...)
     end
     ϵ3 = max.(ϵmin, ϵ3)
     ϵ2 = ϵ3[:, :, 1+round((zcenter - zmin) / dl)]
-    # heatmap(ϵ2) |> display
-    # GLMakie.volume(ϵ3) |> display
-    # error("stop")
-
-    # s = run_probs[1].source_instances[1]
-    # ab =Functors.functor(s)
-    # a = gpu(s)
-    # aa = gpu(s.g.Jy)
 
     global models = nothing
     lb = components.device.bbox[1]

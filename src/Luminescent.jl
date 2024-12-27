@@ -1,6 +1,6 @@
 module Luminescent
 include("main.jl")
-export run_fdtd_server
+export picrun
 # export Periodic, PML, PEC, PMC, InPad, OutPad
 # export PlaneWave, GaussianBeam, Source, Source, keepxy
 # export Monitor, Monitor, SphereMonitor, power, flux, field, support, sphcoords, inbounds

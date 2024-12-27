@@ -14,3 +14,8 @@ Porcupine = "0.1"
 Random = "1"
 Statistics = "1"
 UnPack = "1"
+
+[source]
+Porcupine={url="https://github.com/paulxshen/Porcupine.jl"}
+Jello={url="https://github.com/paulxshen/Jello.jl"}
+ArrayPadding={url="https://github.com/paulxshen/ArrayPadding.jl"}

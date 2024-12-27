@@ -6,7 +6,7 @@ function julia_main()::Cint
     return 0
 end
 
-function lastrun(name=nothing; study=nothing, wd=joinpath(pwd(), "luminescent_runs"))
+function lastrun(name=nothing; study=nothing, wd=joinpath(pwd(), "runs"))
     if !isnothing(name)
         p = joinpath(wd, name)
         println("using simulation folder $p")

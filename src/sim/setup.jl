@@ -56,7 +56,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         v = min(4, 0.5 / dt)
         @show σpml = ϵmin * v
         @show mpml = μmin * v
-        δ = -log(0.001) / nmin / (4v) |> F
+        δ = -log(0.0001) / nmin / (4v) |> F
         pml_depths = max.([δ, δ, 0.2δ][1:N], maxdeltas)
         @show pml_depths = trim.(pml_depths, maxdeltas)
     end

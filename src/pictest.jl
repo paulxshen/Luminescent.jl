@@ -1,5 +1,5 @@
-ENV["JULIA_PKG_PRECOMPILE_AUTO"] = 0
-include("main.jl")
+# ENV["JULIA_PKG_PRECOMPILE_AUTO"] = 0
+# include("main.jl")
 
 # picrun(lastrun())#; gpu_backend="CUDA")
 
@@ -15,4 +15,6 @@ include("main.jl")
 # picrun(lastrun("simtest2"; wd=joinpath("build", "precompile_execution")))
 # picrun(lastrun("bend"); N=2)
 # picrun(lastrun("splitter");)
-picrun(joinpath("runs", "ubend"))
+
+using CUDA, Luminescent
+picrun(joinpath("runs", "straight"); gpuarray=cu)
