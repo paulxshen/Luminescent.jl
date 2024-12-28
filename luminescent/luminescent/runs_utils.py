@@ -39,6 +39,7 @@ def finetune(iters, **kwargs):
 
 
 def load_prob(path):
+    path = os.path.abspath(path)
     print(f"loading problem from {path}")
     return json.loads(open(os.path.join(path, "problem.json"), "rb").read())
 

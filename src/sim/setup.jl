@@ -297,7 +297,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
             v = Base.round.(v, digits=3)
             v = v |> Set |> collect |> sort |> reverse
             if length(v) == 1
-                Tss = 6
+                Tss = 10
             else
                 Tss = 1 / minimum(diff([0, (1 ./ v)...]))
                 # Tss = ceil(100 / T) * T

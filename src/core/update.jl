@@ -1,5 +1,4 @@
 """
-    function update(u, p, t, field_boundvals, source_instances)
 
 Updates fields. 
 """
@@ -8,6 +7,7 @@ function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instanc
     @unpack E, H = u
     @unpack μ, m, invϵ, = p
 
+    # dispersive material parameters
     poles = @ignore_derivatives sort(Set([k[2:end-1] for k = string.(keys(u)) if startswith(k, "J")]))
 
     Jkeys = Symbol.(("J",) .* poles)

@@ -32,6 +32,7 @@ def start_fdtd_server(url=URL):
 
 
 def solve(path):
+    path = os.path.abspath(path)
     prob = load_prob(path)
 
     print("no fdtd binaries found - starting julia session to compile fdtd code...")
@@ -87,6 +88,7 @@ def load_sparams(sparams):
 
 
 def load_res(path, show=True):
+    path = os.path.abspath(path)
     print(f"loading solution from {path}")
     prob = json.loads(open(os.path.join(path, "problem.json"), "rb").read())
     p = os.path.join(path, "solution.json")
