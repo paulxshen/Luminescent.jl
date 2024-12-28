@@ -78,7 +78,7 @@ function solve(prob, ;
             fp = rp = c = nothing
             if !isnothing(m.λmodes)
                 wm = m.λmodes[λ]
-                c = mode_decomp.(wm, (dftfields,), (mode_deltas,))
+                c = mode_decomp.(wm, (dftfields,), (first.(mode_deltas),))
                 # fp = [abs(v[1])^2 for v = c]
                 # rp = [abs(v[2])^2 for v = c]
             end

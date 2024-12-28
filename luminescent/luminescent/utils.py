@@ -1,4 +1,4 @@
-
+import json
 import contextlib
 from .constants import *
 import gdsfactory as gf
@@ -202,3 +202,20 @@ def adjust_wavelengths(wavelengths):
     print(
         f"wavelengths has been adjusted to facilitate simulation:\n{wavelengths}")
     return wavelengths, wl, nresfreq
+
+
+def save_prob(prob, path):
+    bson_data = json.dumps(prob)
+    # prob["component"] = c0
+
+    path = prob["path"]
+    if not os.path.exists(path):
+        os.makedirs(path)
+        #   compiling julia code...
+        #   """)
+    prob_path = os.path.join(path, "problem.json")
+    print(prob_path)
+    with open(prob_path, "w") as f:
+        # Write the BSON data to the file
+        f.write(bson_data)
+    print("using simulation folder", path)

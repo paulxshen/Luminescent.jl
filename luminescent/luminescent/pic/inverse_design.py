@@ -13,17 +13,17 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 import json
 
 
-def pic_design_problem(c,  targets, iters,
-                       lvoid=0, lsolid=0, symmetries=[],
-                       weights=dict(),
-                       eta=.4, init=1,   stoploss=None,
-                       design_region_layer=DESIGN_LAYER,
-                       #    design_guess_layer=LAYER.GUESS,
-                       fill_layer=LAYER.WG,
-                       void_layer=None,
-                       layer_stack=LAYER_STACK,
-                       plot=False, N=2,
-                       restart=True, save_memory=False, **kwargs):
+def make_pic_inv_prob(path, c,  targets, iters,
+                      lvoid=0, lsolid=0, symmetries=[],
+                      weights=dict(),
+                      eta=.4, init=1,   stoploss=None,
+                      design_region_layer=DESIGN_LAYER,
+                      #    design_guess_layer=LAYER.GUESS,
+                      fill_layer=LAYER.WG,
+                      void_layer=None,
+                      layer_stack=LAYER_STACK,
+                      plot=False, N=2,
+                      restart=True, save_memory=False, **kwargs):
     design_region_layer = tuple(design_region_layer)
     # if not N:
     #     raise NotImplementedError(
@@ -78,12 +78,12 @@ def pic_design_problem(c,  targets, iters,
         print(keys)
         wavelengths = list(wavelengths)
 
-    prob = sparams_problem(c,
-                           layer_stack=layer_stack,
-                           wavelengths=wavelengths,
-                           study="inverse_design",
-                           keys=keys,
-                           N=N, approx=N == 2, ** kwargs)
+    prob = make_pic_sim_prob(c,
+                             layer_stack=layer_stack,
+                             wavelengths=wavelengths,
+                             study="inverse_design",
+                             keys=keys,
+                             N=N, approx=N == 2, ** kwargs)
 
     prob["restart"] = restart
     prob["weights"] = {**{
@@ -137,6 +137,7 @@ def pic_design_problem(c,  targets, iters,
 
     prob["design_config"]["design_region_layer"] = design_region_layer
     prob["iters"] = iters
+    save_prob(prob, path)
     return prob
 
 

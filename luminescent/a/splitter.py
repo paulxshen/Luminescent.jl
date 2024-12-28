@@ -7,7 +7,7 @@ targets = {
     "tparams": {1.55: {"2,1": 0.5}},
 }
 
-prob = lumi.pic_design_problem(
+prob = lumi.make_pic_inv_prob(
     c, targets, name=name,
     N=2,  nres=15,  symmetries=[1],
     lvoid=0.15, lsolid=.15,
@@ -20,7 +20,7 @@ lumi.solve(prob, run=False)
 #     "phasediff": {1.55: {"2,3": 0.0}},
 # }
 
-# prob = lumi.pic_design_problem(
+# prob = lumi.make_pic_inv_prob(
 #     c, targets, name=name,
 #     symmetries=[1], lvoid=0.1, lsolid=0.1, dx=0.1,
 #    N=2, stoploss=.03, iters=40)

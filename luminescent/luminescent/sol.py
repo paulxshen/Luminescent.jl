@@ -2,8 +2,7 @@
 from pprint import pprint
 import os
 import subprocess
-import time
-import json
+from .runs_utils import *
 import json
 import numpy as np
 import requests
@@ -32,24 +31,10 @@ def start_fdtd_server(url=URL):
             print(err_message)
 
 
-def solve(prob, dev=False, run=True, url=URL, **kwargs):
-    bson_data = json.dumps(prob)
-    # prob["component"] = c0
+def solve(path):
+    prob = load_prob(path)
 
-    path = prob["path"]
-    if not os.path.exists(path):
-        os.makedirs(path)
-        #   compiling julia code...
-        #   """)
-    prob_path = os.path.join(path, "problem.json")
-    print(prob_path)
-    with open(prob_path, "w") as f:
-        # Write the BSON data to the file
-        f.write(bson_data)
-    print("using simulation folder", path)
-    if not run:
-        return
-    print("starting julia process...")
+    print("no fdtd binaries found - starting julia session to compile fdtd code...")
     # prob["action"] = "solve"
     # r = requests.post(f"{url}/local", json=prob)
     1
@@ -69,15 +54,17 @@ def solve(prob, dev=False, run=True, url=URL, **kwargs):
                 print(str(line.decode().strip()), flush=True)
             err_message = proc.stderr.read().decode()
             print(err_message)
+    env = r'using Pkg;Pkg.activate(raw"c:\Users\pxshe\OneDrive\Desktop\beans\Luminescent.jl\luminescent");'
+    # env = '0'
     # cmd = ["lumi", path]
     gpu_backend = prob["gpu_backend"]
     if not gpu_backend:
-        cmd = ["julia", "-e", f"using Luminescent;picrun(\"{path}\")"]
+        cmd = ["julia", "-e", f'{env}using Luminescent;picrun(raw"{path}")']
     else:
         print(f"using {gpu_backend} backend.")
         if gpu_backend == "CUDA":
             cmd = ["julia", "-e",
-                   f"using Luminescent,CUDA;@assert CUDA.functional();picrun(\"{path}\";gpuarray=cu)"]
+                   f"{env}using Luminescent,CUDA;@assert CUDA.functional();picrun(\"{path}\";gpuarray=cu)"]
     run(cmd)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:
@@ -88,7 +75,7 @@ def solve(prob, dev=False, run=True, url=URL, **kwargs):
     # subprocess.run()
     # print(f"julia simulation took {time.time()-start_time} seconds")
     # print(f"images and results saved in {path}")
-    # sol = load_solution(path=path)
+    # sol = load_res(path=path)
     # return sol
 
 

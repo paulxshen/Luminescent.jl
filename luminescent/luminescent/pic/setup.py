@@ -17,7 +17,7 @@ from sortedcontainers import SortedDict, SortedSet
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
-def setup(c, study, nres, wl,
+def setup(path, c, study, nres, wl,
           bbox_layer=LAYER.WAFER,
           zmargin2=None, zlims=None, core_layer=LAYER.WG,
           port_source_offset="auto", port_margin="auto",
@@ -36,10 +36,6 @@ def setup(c, study, nres, wl,
     dl = dx/ratio
     dz = 1 * dx
 
-    if not name:
-        l = [prob["timestamp"], study]
-        name = "#".join(l)
-    path = os.path.join(wd, name)
     prob["path"] = path
     prob["name"] = name
     prob["wl"] = wl

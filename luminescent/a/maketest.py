@@ -24,7 +24,7 @@ for (gpu, dtype, ) in itertools.product(
     ["f32"],
     # ["f32", "f16"],
 ):
-    prob = lumi.pic_design_problem(
+    prob = lumi.make_pic_inv_prob(
         c, targets, name="invtest",
         lvoid=0.2, lsolid=.2,  nres=nres, iters=2,
         N=2, gpu=gpu, dtype=dtype,)  # wd=BUILD_RUNS)

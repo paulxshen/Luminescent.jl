@@ -1,10 +1,11 @@
+import os
 import luminescent as lumi
 import gdsfactory as gf
 import numpy as np
 
 N = 3  # 3D or 2D
 keys = ["2,1"]  # same as keys=["o2@0,o1@0"]
-nres = 40
+nres = 30
 
 # radius = 1.5
 # wavelengths = 1.55
@@ -30,7 +31,10 @@ name = f"bend_R{radius}"
 # nres = 20
 # name = f"bend_R{radius}_multi_{N}D"
 
+path = os.path.join("runs", name)
 c = gf.components.bend_circular(radius=radius, allow_min_radius_violation=True)
-lumi.write_sparams(c, name=name, wavelengths=wavelengths,
-                   nres=nres, keys=keys, N=N, run=False)
-# sol = lumi.load_solution(name=name)
+lumi.make_pic_sim_prob(path, c,
+                       wavelengths=wavelengths,
+                       nres=nres, keys=keys, N=N)
+lumi.solve(path)
+sol = lumi.load_res(path)

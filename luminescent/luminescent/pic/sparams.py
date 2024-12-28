@@ -11,12 +11,12 @@ from gdsfactory.cross_section import Section
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
-def sparams_problem(c: gf.Component, nres,
-                    wavelengths,
-                    entries=None, keys=None,
-                    N=3, layer_stack=LAYER_STACK,
-                    study="sparams",
-                    **kwargs):
+def make_pic_sim_prob(path, c: gf.Component, nres,
+                      wavelengths,
+                      entries=None, keys=None,
+                      N=3, layer_stack=LAYER_STACK,
+                      study="sparams",
+                      **kwargs):
     ports = [p.name for p in c.get_ports_list(prefix="o")]
 
     if not entries:
@@ -83,12 +83,13 @@ def sparams_problem(c: gf.Component, nres,
                 d["monitors"] = SortedDict(d["monitors"])
                 runs.append(d)
 
-    prob = setup(c, study=study,  nres=nres, wl=wl,
+    prob = setup(path, c, study=study,  nres=nres, wl=wl,
                  runs=runs,
                  layer_stack=layer_stack, N=N, **kwargs)
     prob["wavelengths"] = wavelengths
     prob["Ttrans"] = None
     prob["Tss"] = T if len(wavelengths) > 1 else None
+    save_prob(prob, path)
     return prob
 
     # l = [k for k in imow if port_number(k) == pi]

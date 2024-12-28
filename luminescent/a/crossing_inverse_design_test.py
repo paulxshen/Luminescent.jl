@@ -9,12 +9,12 @@ targets = {
         "3,1": 1.0
     }}
 
-prob = lumi.pic_design_problem(
+prob = lumi.make_pic_inv_prob(
     c, tparam_targets=targets, symmetries=[0, 1, "diag"], lmin=0.2, dx=0.1,
     stoploss=.03, iters=50, eta=10., N=2)
 sol = lumi.solve(prob)
 
-# sol = lumi.load_solution()
+# sol = lumi.load_res()
 lumi.show_solution()
 print("post optim tparams:")
 pprint(sol["tparams"])

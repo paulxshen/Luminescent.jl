@@ -38,14 +38,14 @@ def finetune(iters, **kwargs):
     return solve(prob, **kwargs)
 
 
-def load_problem(**kwargs):
-    path = lastrun(**kwargs)
+def load_prob(path):
     print(f"loading problem from {path}")
     return json.loads(open(os.path.join(path, "problem.json"), "rb").read())
 
 
-def load_solution(show=True, **kwargs):
-    path = lastrun(**kwargs)
+# def load_res(show=True, **kwargs):
+#     path = lastrun(**kwargs)
+def load_res(path, show=True):
     print(f"loading solution from {path}")
     prob = json.loads(open(os.path.join(path, "problem.json"), "rb").read())
     p = os.path.join(path, "solution.json")
@@ -131,4 +131,4 @@ def make_training_movie(framerate=2, **kwargs):
 
 
 def write_sparams(*args, run=True, **kwargs):
-    return solve(sparams_problem(*args, **kwargs), run=run)
+    return solve(make_pic_sim_prob(*args, **kwargs), run=run)

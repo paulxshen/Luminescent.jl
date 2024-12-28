@@ -15,6 +15,8 @@
 # picrun(lastrun("simtest2"; wd=joinpath("build", "precompile_execution")))
 # picrun(lastrun("bend"); N=2)
 # picrun(lastrun("splitter");)
+ENV["JULIA_SSL_CA_ROOTS_PATH"] = ""
 
 using CUDA, Luminescent
-picrun(joinpath("runs", "straight"); gpuarray=cu)
+# picrun(joinpath("runs", "straight"); gpuarray=cu)
+picrun(joinpath("runs", "bend_R5"))

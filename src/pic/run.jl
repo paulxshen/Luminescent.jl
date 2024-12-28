@@ -16,17 +16,6 @@ function picrun(path; gpuarray=nothing, kw...)
     if study == "inverse_design"
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end
-    # iters = 15
-    # for (k, v) in pairs(kw)
-    #     @show k, v
-    #     @eval $k = $k
-    #     @eval $k = $v
-    # end
-    # @show eta
-    # eta = 0.02
-    # N = 2
-    # heatmap(debug.mask) 
-
     F = Float32
     alg = :spectral
     alg = nothing
@@ -130,11 +119,6 @@ function picrun(path; gpuarray=nothing, kw...)
             sources = []
             for (port, sig) = SortedDict(run.sources) |> pairs
                 @unpack center, wavelength_mode_numbers = sig
-                # i = findfirst(mode_solutions) do v
-                #     abs(_λ - v.wavelength) < 0.001 && string(port) in string.(v.ports)
-                # end
-                # sum(abs.(aa.source_instances[1].g.Jy))
-                # heatmap(abs.(bb.source_instances[1]._g.Jy))
                 n = -sig.normal
                 tangent = [-n[2], n[1]]
                 center = (sig.center - lb) / λ
@@ -208,7 +192,7 @@ function picrun(path; gpuarray=nothing, kw...)
         open(SOL_PATH, "w") do f
             write(f, json(cpu(sol)))
         end
-        println("Done in $(time() - t0) s")
+        println("Done in $(time() - t0) s (including compilation).")
     elseif study == "inverse_design"
         if length(lb) == 3
             if magic != "summersale"
