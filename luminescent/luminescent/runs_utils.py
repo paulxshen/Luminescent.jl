@@ -128,7 +128,3 @@ def make_training_movie(framerate=2, **kwargs):
 
     # cv2.destroyAllWindows()
     # video.release()
-
-
-def make_pic_sim_prob(*args, run=True, **kwargs):
-    return solve(make_pic_sim_prob(*args, **kwargs), run=run)

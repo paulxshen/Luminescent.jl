@@ -1,9 +1,7 @@
 [project]
-path = "luminescent"
+name = "luminescent"
 version = "0.3.1"
 description = "Lumi FDTD by Luminescent AI is a GPU and automatic differentiation (AD) compatible FDTD package for simulation and inverse design in semiconductor photonics. Create layout in gdsfactory. Then use the Lumi Python plugin for calculating sparams or perform inverse design on Lumi's Julia backend."
-authors = ["Paul Shen"]
-license = "MIT"
 readme = "README.md"
 
 dependencies=[
@@ -12,6 +10,7 @@ dependencies=[
         "stl-to-voxel",
         "tidy3d",
         "electromagneticpython",
+        "sortedcontainers",
     ]
 
 [build-system]

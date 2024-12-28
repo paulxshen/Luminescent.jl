@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='luminescent',  # Your package name
-    version='0.3.0',  # Your package version
+    version='0.3.2',  # Your package version
     description='A description of your package',
     author='Paul Shen',
     author_email='pxshen@alumni.stanford.edu',
@@ -13,5 +13,6 @@ setup(
         "stl-to-voxel",
         "tidy3d",
         "electromagneticpython",
+        "sortedcontainers",
     ],
 )
