@@ -35,7 +35,7 @@ function lastrun(name=nothing; study=nothing, wd=joinpath(pwd(), "runs"))
     return p
 end
 
-function write_sparams(runs, run_probs, lb, dl,
+function make_pic_sim_prob(runs, run_probs, lb, dl,
     designs=nothing, design_config=nothing, models=nothing; matprops=nothing,
     alg=nothing, save_memory=false, verbose=false, perturb=nothing, framerate=0, path="", kw...)
     F = run_probs[1].grid.F

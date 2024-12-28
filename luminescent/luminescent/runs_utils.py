@@ -60,7 +60,7 @@ def load_res(path, show=True):
         sol["optimized_designs"] = l
         print(f"loading optimized design regions at resolution {sol['dl']}")
         # for i, a in enumerate(l):
-        #     name = f"optimized_design_region_{i+1}.png"
+        #     path = f"optimized_design_region_{i+1}.png"
         #     Image.fromarray(np.flip(np.uint8((1-a)) * 255, 0),
         #                     'L').save(os.path.join(path, name))
         # pic2gds(os.path.join(
@@ -130,5 +130,5 @@ def make_training_movie(framerate=2, **kwargs):
     # video.release()
 
 
-def write_sparams(*args, run=True, **kwargs):
+def make_pic_sim_prob(*args, run=True, **kwargs):
     return solve(make_pic_sim_prob(*args, **kwargs), run=run)

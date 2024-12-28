@@ -7515,7 +7515,7 @@ all of MD as it is not optimized for dense, information rich UIs.
         }
         if (firstDesc) {
           const caption = document.createElement("figcaption");
-          caption.className = "sr-only";
+          caption.classpath = "sr-only";
           caption.textContent = firstDesc.textContent;
           return [img, caption];
         }
@@ -7531,9 +7531,9 @@ all of MD as it is not optimized for dense, information rich UIs.
         }
 
         const result = document.createElement("details");
-        result.className = 'jp-RenderedMermaid-Details';
+        result.classpath = 'jp-RenderedMermaid-Details';
         const summary = document.createElement("summary");
-        summary.className = 'jp-RenderedMermaid-Summary';
+        summary.classpath = 'jp-RenderedMermaid-Summary';
         const pre = document.createElement("pre");
         const code = document.createElement("code");
         code.innerText = text;
@@ -7720,7 +7720,7 @@ all of MD as it is not optimized for dense, information rich UIs.
 <span class="n">c</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">add_bbox</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="p">[</span><span class="n">LAYER</span><span class="o">.</span><span class="n">WGCLAD</span><span class="p">,</span> <span class="n">LAYER</span><span class="o">.</span><span class="n">BOX</span><span class="p">],</span> <span class="n">nonport_margin</span><span class="o">=</span><span class="n">XMARGIN</span><span class="p">)</span>
 <span class="n">c</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
-<span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">write_sparams</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">wavelengths</span><span class="o">=</span><span class="p">[</span><span class="mf">1.55</span><span class="p">],</span> <span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s2">"2,1"</span><span class="p">],</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">make_pic_sim_prob</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">wavelengths</span><span class="o">=</span><span class="p">[</span><span class="mf">1.55</span><span class="p">],</span> <span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s2">"2,1"</span><span class="p">],</span>
                          <span class="n">dx</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">gpu</span><span class="o">=</span><span class="kc">None</span><span class="p">,)</span>
 <span class="c1"># sol = lumi.load_res()</span>
 <span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
@@ -7902,7 +7902,7 @@ all of MD as it is not optimized for dense, information rich UIs.
             <p>LAYER_STACK, LAYER, MATERIALS corresponding to a SOI node are provided in
               <code>gdsfactory.generic_tech</code> similar to gdsfactory's. They can be customized and passed as
               <code>layer_stack</code>, <code>MATERIALS</code> to
-              <code>write_sparams, gcell_problem</code>
+              <code>make_pic_sim_prob, gcell_problem</code>
             </p>
           </div>
         </div>

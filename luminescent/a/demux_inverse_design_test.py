@@ -2,8 +2,8 @@
 from pprint import pprint
 import luminescent as lumi
 
-name = "demux"
-c = lumi.gcells.mimo(west=1, east=2, l=5.0, w=3.0, wwg=.5, name=name)
+path = "demux"
+c = lumi.gcells.mimo(west=1, east=2, l=5.0, w=3.0, wwg=.5, path)
 targets = {"tparams": {
     1.55: {"2,1": 1.0},
     1.10: {"3,1": 1.0},

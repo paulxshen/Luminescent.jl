@@ -38,9 +38,9 @@ for (N, gpu, dtype, wavelengths) in itertools.product(
     [None, ],
     ["f32"],
         [[1.55], ]):
-    lumi.write_sparams(c, name=f"simtest{i}",
-                       wavelengths=wavelengths, keys=["2,1"], nres=nres,
-                       N=N, gpu=gpu, dtype=dtype,
-                       wd=BUILD_RUNS, run=False)
+    lumi.make_pic_sim_prob(c, name=f"simtest{i}",
+                           wavelengths=wavelengths, keys=["2,1"], nres=nres,
+                           N=N, gpu=gpu, dtype=dtype,
+                           wd=BUILD_RUNS, run=False)
     i += 1
     sleep(1)

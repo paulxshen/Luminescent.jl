@@ -1,7 +1,7 @@
 from pprint import pprint
 import luminescent as lumi
 
-name = "crossing"
+path = "crossing"
 L = 4.0
 c = lumi.gcells.mimo(1, 1, 1, 1, l=L, w=L, wwg=.5)
 targets = {

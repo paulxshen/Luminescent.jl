@@ -13,7 +13,7 @@ using Luminescent, LuminescentVisualization
 ``` 
 Set simulation duration and resolution.  Run on CPU by setting `dogpu = false`. If running on a newer GPU, set `F = Float16`
 ```julia
-name = "periodic_scattering"
+path = "periodic_scattering"
 T = 10 # simulation duration in [periods]
 nx = 20
 dx = 1.0 / nx # pixel resolution in [wavelengths]

@@ -14,7 +14,7 @@ using Luminescent, LuminescentVisualization
 # include("$(pwd())/../LuminescentVisualization.jl/src/main.jl") # hide
 
 Random.seed!
-name = "quarter_wavelength_antenna"
+path = "quarter_wavelength_antenna"
 F = Float32
 dogpu = false
 T = 8.0 # simulation duration in [periods]

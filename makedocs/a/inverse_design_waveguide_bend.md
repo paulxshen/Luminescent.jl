@@ -20,14 +20,14 @@ Random.seed!(1)
 ```
 We skip 3d finetuning as it's 20x more compute and memory intensive than 2d adjoints. If wishing to do 3d finetuning, set `iterations3d`. In any case, 3d forward simulations (without adjoint) only take a few seconds.
 ```julia
-name = "inverse_design_waveguide_bend"
+path = "inverse_design_waveguide_bend"
 iterations2d = 10
 iterations3d = 0
 record2d = true
 record3d = false
 F = Float32
 ongpu = false
-model_name = nothing # if load saved model
+model_path = nothing # if load saved model
 ```
 We load design layout which includes a 2d static_mask of static waveguide geometry as well as variables with locations of ports, sources, design regions and material properties.
 ```julia
@@ -207,7 +207,7 @@ function runsave(model, prob; kw...)
     ϵEy = field(p, :ϵEy)
     dir = @__DIR__
     d = ndims(Hz[1])
-    _name = "$(d)d_$name"
+    _path = "$(d)d_$name"
     # error()
     recordsim("$dir/$(_name).mp4", Hz, ;
         dt,

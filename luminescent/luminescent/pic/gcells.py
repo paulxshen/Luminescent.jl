@@ -21,7 +21,7 @@ def mimo(west=0, east=0, south=0, north=0,
     design = gf.Component()
     c = gf.Component(**kwargs)
     if name:
-        c.name = name
+        c.path = name
     if lwg is None:
         lwg = 4*wwg
     p = [(0, 0), (l, 0), (l, w), (0, w)]
@@ -51,13 +51,13 @@ def mimo(west=0, east=0, south=0, north=0,
         for wwg, v in zip(wwg, d):
             center = (x, y+v) if i in [0, 1] else (x+v, y)
             wwg2 = wwg+2*taper*lwg
-            name = "o"+str(n+1)
-            design.add_port(name=name, center=center, width=wwg2,
+            path = "o"+str(n+1)
+            design.add_port(path, center=center, width=wwg2,
                             orientation=a, layer=wwg_layer)
             wg = c << gf.components.taper(
                 length=lwg, width1=wwg, width2=wwg2, layer=wwg_layer)
             wg.connect("o2", design.ports[name])
-            c.add_port(name=name, port=wg.ports["o1"])
+            c.add_port(path, port=wg.ports["o1"])
             n += 1
 
     design = c << design
@@ -68,7 +68,7 @@ def mimo(west=0, east=0, south=0, north=0,
     #                wavelengths=1.55, dx=0.05,
     #                #    ϵcore=ϵcore, ϵclad=ϵclad,
     #                dir="", init=None, lmin=0.1, LAYER=LAYER, **kwargs):
-    # name = "ubend"
+    # path = "ubend"
     # design = gf.Component("design")
     # device = gf.Component("ubend")
     # λ = wavelength
