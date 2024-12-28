@@ -7828,7 +7828,7 @@ all of MD as it is not optimized for dense, information rich UIs.
     <span class="p">}}</span>
 <span class="n">c</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
-<span class="n">prob</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">gcell_problem</span><span class="p">(</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">make_pic_inv_prob</span><span class="p">(</span>
     <span class="n">c</span><span class="p">,</span> <span class="n">tparam_targets</span><span class="o">=</span><span class="n">targets</span><span class="p">,</span>
     <span class="n">lmin</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">iters</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>
@@ -7902,7 +7902,7 @@ all of MD as it is not optimized for dense, information rich UIs.
             <p>LAYER_STACK, LAYER, MATERIALS corresponding to a SOI node are provided in
               <code>gdsfactory.generic_tech</code> similar to gdsfactory's. They can be customized and passed as
               <code>layer_stack</code>, <code>MATERIALS</code> to
-              <code>make_pic_sim_prob, gcell_problem</code>
+              <code>make_pic_sim_prob, make_pic_inv_prob</code>
             </p>
           </div>
         </div>
