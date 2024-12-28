@@ -1,4 +1,4 @@
-path = "Luminescent"
+name = "Luminescent"
 uuid = "60a98398-2d19-4130-ae20-63172a4a42f2"
 authors = ["Paul Shen <pxshen@alumni.stanford.edu>"]
 version = "1.0.0"

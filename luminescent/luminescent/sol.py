@@ -55,7 +55,7 @@ def solve(path):
             err_message = proc.stderr.read().decode()
             print(err_message)
     env = r'using Pkg;Pkg.activate(raw"c:\Users\pxshe\OneDrive\Desktop\beans\Luminescent.jl\luminescent");'
-    # env = '0'
+    env = '0;'
     # cmd = ["lumi", path]
     gpu_backend = prob["gpu_backend"]
     if not gpu_backend:
