@@ -20,8 +20,8 @@ Application specific [Python API](https://paulxshen.github.io/Luminescent.jl/lum
 - RF microstrip and patch atennas - please request 
  
 General purpose backend API is in Julia and is not documented (unless there's interest). Look at the beauty of Maxwell's equations in our [update loop](https://github.com/paulxshen/Luminescent.jl/blob/master/src/core/update.jl)! Other FDTD packages make it so ugly :(
-    
-[](maxwell.png)
+
+![](maxwell.png)
 
 
 [Follow us](https://www.linkedin.com/company/luminescent-ai/about) on our new Linkedin page for package updates and bug fixes! Feel free to raise an issue. We respond daily. Star us if you like this repo :)
