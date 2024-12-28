@@ -28,14 +28,13 @@ def lastrun(name="", wd=os.path.join(os.getcwd(), "runs"), study="",  **kwargs):
     return l[0]
 
 
-def finetune(iters, **kwargs):
-    path = lastrun(study="inverse_design", **kwargs)
+def finetune(path, iters, **kwargs):
     prob = json.loads(open(os.path.join(path, "problem.json"), "rb").read())
     prob["iters"] = iters
     prob["path"] = path
     prob["restart"] = False
     prob = {**prob, **kwargs}
-    return solve(prob, **kwargs)
+    return solve(path)
 
 
 def load_prob(path):
