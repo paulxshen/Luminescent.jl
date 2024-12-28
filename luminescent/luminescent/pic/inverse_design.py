@@ -13,7 +13,7 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 import json
 
 
-def make_pic_inv_prob(path, c,  targets, iters,
+def make_pic_inv_prob(path, c,  targets, iters=10,
                       lvoid=0, lsolid=0, symmetries=[],
                       weights=dict(),
                       eta=.4, init=1,   stoploss=None,
@@ -78,7 +78,7 @@ def make_pic_inv_prob(path, c,  targets, iters,
         print(keys)
         wavelengths = list(wavelengths)
 
-    prob = make_pic_sim_prob(c,
+    prob = make_pic_sim_prob(path, c,
                              layer_stack=layer_stack,
                              wavelengths=wavelengths,
                              study="inverse_design",

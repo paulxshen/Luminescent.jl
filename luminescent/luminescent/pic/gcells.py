@@ -16,12 +16,9 @@ def mimo(west=0, east=0, south=0, north=0,
          wwg_west=None, wwg_east=None, wwg_south=None, wwg_north=None,
          wwg_layer=LAYER.WG,  # bbox_layer=LAYER.WAFER,
          design_layer=DESIGN_LAYER,
-         name="",
          **kwargs):
     design = gf.Component()
     c = gf.Component(**kwargs)
-    if name:
-        c.path = name
     if lwg is None:
         lwg = 4*wwg
     p = [(0, 0), (l, 0), (l, w), (0, w)]
@@ -51,100 +48,14 @@ def mimo(west=0, east=0, south=0, north=0,
         for wwg, v in zip(wwg, d):
             center = (x, y+v) if i in [0, 1] else (x+v, y)
             wwg2 = wwg+2*taper*lwg
-            path = "o"+str(n+1)
-            design.add_port(path, center=center, width=wwg2,
+            name = "o"+str(n+1)
+            design.add_port(name, center=center, width=wwg2,
                             orientation=a, layer=wwg_layer)
             wg = c << gf.components.taper(
                 length=lwg, width1=wwg, width2=wwg2, layer=wwg_layer)
             wg.connect("o2", design.ports[name])
-            c.add_port(path, port=wg.ports["o1"])
+            c.add_port(name, port=wg.ports["o1"])
             n += 1
 
     design = c << design
     return c
-
-
-# def ubend_template(r, l, wwg, lwg=0,
-    #                wavelengths=1.55, dx=0.05,
-    #                #    ϵcore=ϵcore, ϵclad=ϵclad,
-    #                dir="", init=None, lmin=0.1, LAYER=LAYER, **kwargs):
-    # path = "ubend"
-    # design = gf.Component("design")
-    # device = gf.Component("ubend")
-    # λ = wavelength
-
-    # if lwg == 0:
-    #     lwg = 4*wwg
-
-    # # Extrude the Path and the CrossSection
-    # wg1 = device << gf.path.extrude(gf.path.straight(
-    #     length=lwg), layer=LAYER.WG, width=wwg)
-    # wg2 = device << gf.path.extrude(gf.path.straight(
-    #     length=lwg), layer=LAYER.WG, width=wwg)
-
-    # ld = l
-    # wd = 2*r+wwg
-
-    # design.add_polygon([(0, -wd/2), (ld, -wd/2), (ld, wd/2),
-    #                     (0, wd/2)], layer=DESIGN)
-    # if init is not None:
-    #     xmin = design.xmin
-    #     ymin = design.ymin
-    #     init = design << init
-    #     init.xmin = xmin
-    #     init.ymin = ymin
-    # else:
-    #     init = gf.Component()
-    #     init.add_polygon([(0, -wd/2), (ld, -wd/2), (ld, wd/2),
-    #                       (0, wd/2)], layer=GUESS)
-    #     init = design << init
-
-    # design.add_port(name="o1", center=(0, r), width=wwg,
-    #                 orientation=180, layer=LAYER.PORT)
-    # design.add_port(name="o2", center=(0, -r), width=wwg,
-    #                 orientation=180, layer=LAYER.PORT)
-    # # design = device << design
-
-    # wg1.connect("o2", design.ports["o1"], allow_layer_mismatch=True)
-    # wg2.connect("o2", design.ports["o2"], allow_layer_mismatch=True)
-    # # stub1.connect("o2", wg1.ports["o1"])
-    # # stub2.connect("o2", wg2.ports["o1"])
-
-    # device.add_port("o1", port=wg1.ports["o1"])
-    # device.add_port("o2", port=wg2.ports["o1"])
-
-    # # design = device << design
-    # device.add_ref(design, name="design")
-    # # device << gf.components.re
-    # # device << test
-    # device.show()
-    # # init.show()
-    # sources = {
-    #     "o1": {
-    #         "port": "o1",
-    #         "wavelengths": [λ],
-    #         "mode_numbers": [0],
-    #         "powers": [1],
-    #         "width": wwg,
-    #         "endpoints": device.ports["o1"].endpoints.tolist(),
-    #         "center": (device.ports["o1"].center),
-    #         "orientation": device.ports["o1"].orientation,
-    #     }}
-    # for k in sources:
-    #     a = sources[k]["orientation"]/180*pi
-    #     normal = [cos(a), sin(a)]
-    #     sources[k]["normal"] = normal
-    #     sources[k]["center"] -= .001*np.array(normal)
-    #     sources[k]["center"] = sources[k]["center"].flatten().tolist()
-
-    # monitors = {
-    #     "o2":        {
-    #         "powers": [1],
-    #         "wavelengths": [λ],
-    #         "mode_numbers": [0],
-    #         "port": "o2"},
-    #     # {"power": 1,"wavelength": λ,"port": "o1"},
-    # }
-    # # device.metadata["sources"] = sources
-    # # device.metadata["monitors"] = monitors
-    # return device, sources, monitors, design

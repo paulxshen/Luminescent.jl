@@ -19,3 +19,5 @@ UnPack = "1"
 Porcupine={url="https://github.com/paulxshen/Porcupine.jl"}
 Jello={url="https://github.com/paulxshen/Jello.jl"}
 ArrayPadding={url="https://github.com/paulxshen/ArrayPadding.jl"}
+
+Install CUDA (optional, 10min)

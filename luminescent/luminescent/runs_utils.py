@@ -43,55 +43,6 @@ def load_prob(path):
     return json.loads(open(os.path.join(path, "problem.json"), "rb").read())
 
 
-# def load_res(show=True, **kwargs):
-#     path = lastrun(**kwargs)
-def load_res(path, show=True):
-    print(f"loading solution from {path}")
-    prob = json.loads(open(os.path.join(path, "problem.json"), "rb").read())
-    p = os.path.join(path, "solution.json")
-    # sol = json.loads(p, "rb").read())["sol"]
-    sol = json.loads(open(p).read())
-    sol["S"] = load_sparams(sol["S"])
-    sol["component"] = gf.import_gds(os.path.join(path, "component.gds"))
-    if prob["study"] == "sparams":
-        pass
-    elif prob["study"] == "inverse_design":
-        l = [np.array(d) for d in sol["optimized_designs"]]
-        sol["optimized_designs"] = l
-        print(f"loading optimized design regions at resolution {sol['dl']}")
-        # for i, a in enumerate(l):
-        #     path = f"optimized_design_region_{i+1}.png"
-        #     Image.fromarray(np.flip(np.uint8((1-a)) * 255, 0),
-        #                     'L').save(os.path.join(path, name))
-        # pic2gds(os.path.join(
-        #     path, name), sol["dx"])
-        # c = apply_design(sol["component"],  sol)
-        # sol["optimized_component"] = copy.deepcopy(c)
-        # sol["optimized_component"] = c
-        # c.write_gds(os.path.join(path, "optimized_component.gds"))
-
-    if show:
-        i = 1
-        while True:
-            p = os.path.join(path, f"run_{i}.png")
-            if os.path.exists(p):
-                img = Image.open(p)
-                img.show()
-                try:
-                    display(img)
-                except:
-                    pass
-                i += 1
-            else:
-                break
-
-        _sol = {k: sol[k] for k in ["T", "dB", "S", "phasors", "path", ]}
-        _sol["optimized_designs"] = "[[...]]"
-        pprint(_sol)
-
-    return sol
-
-
 def make_simulation_movie(framerate=30, **kwargs):
     1
     # path = lastrun(**kwargs)
