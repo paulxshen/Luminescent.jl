@@ -205,6 +205,7 @@ def adjust_wavelengths(wavelengths):
 
 
 def save_prob(prob, path):
+    path = os.path.abspath(path)
     bson_data = json.dumps(prob)
     # prob["component"] = c0
 

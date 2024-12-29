@@ -25,6 +25,7 @@ struct Source
     # xaxis
     dimsperm
     N
+    approx_2D_mode
     center3
     lb3
     ub3
@@ -119,7 +120,7 @@ function SourceInstance(s::PlaneWave, g)
 end
 
 function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
-    @unpack center, lb, ub, tags, dimsperm, specs, N, center3, lb3, ub3 = s
+    @unpack center, lb, ub, tags, dimsperm, specs, N, center3, lb3, ub3, approx_2D_mode = s
     @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, dl = g
     C = complex(F)
     ϵeff = nothing
@@ -156,15 +157,14 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
                 #     ϵmin <= x <= ϵmax
                 # end
 
-                ϵeff = maximum(ϵmode) => maximum(ϵ)
-                # ϵeff = maximum(ϵmode) => v[argmax(E)]
+                # ϵeff = maximum(ϵmode) => ϵ[argmax(E)]
                 # ϵeff = maximum(ϵmode) => 0.8ϵmax + 0.2ϵmin
-                # ϵeff = maximum(ϵmode) => ϵmax
+                ϵeff = maximum(ϵmode) => ϵmax
             end
             modes
         end for (λ, mns) = pairs(λmodenums)])
         if N == 2
-            λmodes = kmap(v -> collapse_mode.(v), λmodes)
+            λmodes = kmap(v -> collapse_mode.(v, approx_2D_mode), λmodes)
         end
     end
 
@@ -259,11 +259,11 @@ end
 #     _F(x::Complex) = ComplexF32(x)
 #     f = _F ∘ f
 #     d = length(common_left_pad_amount)
-#     g = Dict([k => _F.(mode[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / deltas for k = keys(mode)])
+#     g = OrderedDict([k => _F.(mode[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / deltas for k = keys(mode)])
 #     o = NamedTuple([k =>
 #         1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? field_sizes[k][i] - 1 : 0 for i = 1:d])
 #                     for k = keys(fl)])
-#     _mode = Dict([k => place(zeros(F, field_sizes[k]), o[k], mode[k],) for k = keys(mode)])
+#     _mode = OrderedDict([k => place(zeros(F, field_sizes[k]), o[k], mode[k],) for k = keys(mode)])
 #     c = first(values(field_sizes)) .÷ 2
 #     SourceInstance(f, g, _mode, o, c,  tags)
 # end

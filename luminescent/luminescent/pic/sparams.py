@@ -14,7 +14,7 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 def make_pic_sim_prob(path, c: gf.Component, nres,
                       wavelengths,
                       entries=None, keys=None,
-                      N=3, layer_stack=LAYER_STACK,
+                      layer_stack=LAYER_STACK,
                       study="sparams",
                       **kwargs):
     ports = [p.name for p in c.get_ports_list(prefix="o")]
@@ -85,7 +85,7 @@ def make_pic_sim_prob(path, c: gf.Component, nres,
 
     prob = setup(path, c, study=study,  nres=nres, wl=wl,
                  runs=runs,
-                 layer_stack=layer_stack, N=N, **kwargs)
+                 layer_stack=layer_stack, **kwargs)
     prob["wavelengths"] = wavelengths
     prob["Ttrans"] = None
     prob["Tss"] = T if len(wavelengths) > 1 else None

@@ -12,7 +12,7 @@ function picrun(path; gpuarray=nothing, kw...)
     for (k, v) = pairs(kw)
         prob[string(k)] = v
     end
-    @unpack name, N, dtype, wl, xmargin, ymargin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, gpu_backend, magic, framerate, layer_stack, matprops, L, Ttrans, Tss = prob
+    @unpack name, N, approx_2D_mode, dtype, wl, xmargin, ymargin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, gpu_backend, magic, framerate, layer_stack, matprops, L, Ttrans, Tss = prob
     if study == "inverse_design"
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end
@@ -131,7 +131,7 @@ function picrun(path; gpuarray=nothing, kw...)
                 end
                 dimsperm = getdimsperm(L3)
                 λmodenums = SortedDict([(F(_λ) / λ) => v for (_λ, v) in pairs(wavelength_mode_numbers)])
-                push!(sources, Source(center, -L / 2, L / 2, dimsperm, N, center3, -L3 / 2, L3 / 2; λmodenums, label="s$(string(port)[2:end])"))
+                push!(sources, Source(center, -L / 2, L / 2, dimsperm, N, approx_2D_mode, center3, -L3 / 2, L3 / 2; λmodenums, label="s$(string(port)[2:end])"))
             end
             sources
         end for run in runs
@@ -156,13 +156,13 @@ function picrun(path; gpuarray=nothing, kw...)
             end
             dimsperm = getdimsperm(L3)
 
-            Monitor(center, -L / 2, L / 2, dimsperm, N, center3, -L3 / 2, L3 / 2; λmodenums, label=port)
+            Monitor(center, -L / 2, L / 2, dimsperm, N, approx_2D_mode, center3, -L3 / 2, L3 / 2; λmodenums, label=port)
         end for (port, m) = SortedDict(run.monitors) |> pairs] for run in runs]
 
     global run_probs =
         [
             begin
-                setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ;
+                setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ; approx_2D_mode,
                     F, ϵ, ϵ3, deltas3=deltas / λ, λ, temp, Ttrans, Tss)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]

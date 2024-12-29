@@ -22,7 +22,6 @@ def make_pic_inv_prob(path, c,  targets, iters=10,
                       fill_layer=LAYER.WG,
                       void_layer=None,
                       layer_stack=LAYER_STACK,
-                      plot=False, N=2,
                       restart=True, save_memory=False, **kwargs):
     design_region_layer = tuple(design_region_layer)
     # if not N:
@@ -78,12 +77,13 @@ def make_pic_inv_prob(path, c,  targets, iters=10,
         print(keys)
         wavelengths = list(wavelengths)
 
+    wavelengths0 = deepcopy(wavelengths)
     prob = make_pic_sim_prob(path, c,
                              layer_stack=layer_stack,
                              wavelengths=wavelengths,
                              study="inverse_design",
-                             keys=keys,
-                             N=N, approx=N == 2, ** kwargs)
+                             keys=keys, ** kwargs)
+    wavelengths = prob["wavelengths"]
 
     prob["restart"] = restart
     prob["weights"] = {**{
@@ -92,6 +92,15 @@ def make_pic_inv_prob(path, c,  targets, iters=10,
         "phasediff": 1,
     }, **weights}
     prob["save_memory"] = save_memory
+
+    _targets = {}
+    for k in targets:
+        if k in ["sparams", "tparams"]:
+            _targets[k] = {}
+            for (w, w0) in zip(wavelengths, wavelengths0):
+                _targets[k][w] = targets[k][w0]
+    targets = _targets
+
     prob["targets"] = targets
     prob["wavelengths"] = wavelengths
     # prob["init"] = init

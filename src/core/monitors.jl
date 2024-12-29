@@ -20,6 +20,7 @@ struct Monitor <: AbstractMonitor
     ub
     dimsperm
     N
+    approx_2D_mode
     center3
     lb3
     ub3
@@ -76,7 +77,7 @@ frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
 function MonitorInstance(m::Monitor, g, ϵ, temp, mode_solutions=nothing)
-    @unpack lb, ub, center, dimsperm, specs, N, center3, lb3, ub3, tags = m
+    @unpack lb, ub, center, dimsperm, specs, N, center3, lb3, ub3, approx_2D_mode, tags = m
     @unpack deltas, deltas3, field_lims, F, mode_spacing, dl = g
 
     dx = deltas[1][1]
@@ -99,7 +100,7 @@ function MonitorInstance(m::Monitor, g, ϵ, temp, mode_solutions=nothing)
 
         λmodes = OrderedDict([λ => solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp; mode_solutions) for (λ, mns) = pairs(λmodenums)])
         if N == 2
-            λmodes = kmap(v -> collapse_mode.(v), λmodes)
+            λmodes = kmap(v -> collapse_mode.(v, approx_2D_mode), λmodes)
         end
     end
 

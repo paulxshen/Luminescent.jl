@@ -24,13 +24,18 @@ def setup(path, c, study, nres, wl,
           runs=[],  sources=[],
           layer_stack=LAYER_STACK, material_library=material_library,
           exclude_layers=[
-              DESIGN_LAYER, GUESS], N=3, Courant=None,
+              DESIGN_LAYER, GUESS], Courant=None,
           gpu=None, dtype=np.float32,
           plot=False, framerate=0,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None,
-          approx=False,
-          **kwargs):
+          approx_2D_mode=False):
     prob = dict()
+    if approx_2D_mode:
+        N = 2
+        prob["approx_2D_mode"] = approx_2D_mode
+    else:
+        N = 3
+        prob["approx_2D_mode"] = None
     ratio = 6
     dy = dx = wl/nres
     dl = dx/ratio
@@ -39,7 +44,6 @@ def setup(path, c, study, nres, wl,
     prob["path"] = path
     prob["name"] = name
     prob["wl"] = wl
-    prob = {**prob, **kwargs}
     prob["dx"] = dx
     prob["dy"] = dy
     prob["dz"] = dz
@@ -96,7 +100,7 @@ def setup(path, c, study, nres, wl,
     port_width = max([p.width/1e3 for p in c.ports])
     ps = portsides(c)
     xmargin = ymargin = 2*port_width
-    source_port_margin = port_width if approx else 6*port_width
+    source_port_margin = port_width if N == 2 else 6*port_width
     port_margin = 2*dx
     margins = []
     for p in ps:

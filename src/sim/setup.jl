@@ -3,15 +3,15 @@ function refactor(d)
     [namedtuple([k => d[k][i, :] for k = sort(keys(d))]) for i = 1:N]
 end
 """
-    function setup(boundaries, sources, monitors, L, dx, polarization=nothing; F=Float32)
+    function setup(boundaries, sources, monitors, L, dx,                      approx_2D_mode=nothing; F=Float32)
 
 Args
 ...
 - L: vector of lengths in wavelengths of simulation domain
-- polarization: only applies to 2d which can be :TM (Ez, Hx, Hy) or :TE (Hz, Ex, Ey)
+-                      approx_2D_mode: only applies to 2d which can be :TM (Ez, Hx, Hy) or :TE (Hz, Ex, Ey)
 """
 function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
-    polarization=:TE,
+    approx_2D_mode=:TE,
     Ttrans=nothing, Tss=nothing,
     ϵ=1, μ=1, σ=0, m=0, γ=0, β=0,
     ϵ3=1,
@@ -21,7 +21,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     deltas3=deltas,
     temp="",
     kw...)
-
+    approx_2D_mode = Symbol(approx_2D_mode)
     N = length(deltas)
     (deltas, mode_deltas, ϵ, μ, σ, m, γ, β) = F.((deltas, mode_deltas, ϵ, μ, σ, m, γ, β))
 
@@ -65,19 +65,19 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
 
     if N == 1
         field_names = (:Ez, :Hy)
-        polarization = nothing
+        approx_2D_mode = nothing
     elseif N == 2
-        if polarization == :TM
+        if approx_2D_mode == :TM
             Enames = (:Ez,)
             Hnames = (:Hx, :Hy)
             field_names = (:Ez, :Hx, :Hy)
-        elseif polarization == :TE
+        elseif approx_2D_mode == :TE
             Enames = (:Ex, :Ey)
             Hnames = (:Hz,)
             field_names = (:Ex, :Ey, :Hz)
         end
     else
-        polarization = nothing
+        approx_2D_mode = nothing
         Enames = (:Ex, :Ey, :Ez)
         Hnames = (:Hx, :Hy, :Hz)
         field_names = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz)
@@ -92,11 +92,11 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     geometry_padvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
     geometry_padamts = DefaultDict(() -> zeros(Int, N, 2))
     _geometry_padamts = DefaultDict(() -> zeros(Int, N, 2))
-    is_field_on_lb = Dict([k => zeros(Int, N) for k = field_names])
-    is_field_on_ub = Dict([k => zeros(Int, N) for k = field_names])
+    is_field_on_lb = OrderedDict([k => zeros(Int, N) for k = field_names])
+    is_field_on_ub = OrderedDict([k => zeros(Int, N) for k = field_names])
     bbox = zeros(F, N, 2)
     bbox[:, 2] .= L
-    field_sizes = Dict([k => collect(sz) for k = field_names])
+    field_sizes = OrderedDict([k => collect(sz) for k = field_names])
 
     for b = boundaries
         for i = b.dims
@@ -222,7 +222,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     elseif N == 3
         u0 = dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz, :Jx, :Jy, :Jz)])
     else
-        if polarization == :TM
+        if approx_2D_mode == :TM
             u0 = dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ez, :Hx, :Hy, :Jz)])
         else
             u0 = dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Hz)])
@@ -311,7 +311,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
                      grid,
                      source_instances, monitor_instances, field_names,
                      mode_deltas,
-                     polarization, Courant,
+                     approx_2D_mode, Courant,
                      Ttrans, Tss,
                      geometry, _geometry, nmax, nmin, ϵeff,
                      is_field_on_lb, is_field_on_ub,

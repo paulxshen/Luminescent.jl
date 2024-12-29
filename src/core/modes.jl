@@ -41,7 +41,8 @@ function mode_decomp(m, u, deltas)
 end
 
 
-function collapse_mode(m, Eonly=false, p=:TE)
+function collapse_mode(m, p=:TE)
+    p = Symbol(p)
     # @unpack Ex, Ey, Ez, Hx, Hy, Hz = m
     # Ex, Ey, Ez, Hx, Hy, Hz = map([Ex, Ey, Ez, Hx, Hy, Hz]) do a
     #     mean(a, dims=2) |> vec
@@ -52,8 +53,10 @@ function collapse_mode(m, Eonly=false, p=:TE)
     # (; Ex, Hy, Ez), sum(E .* ϵ, dims=2) ./ sum(E, dims=2) |> vec
     if p == :TE
         (; Ex=m.Ex, Hy=m.Hy, Dx=m.Dx)
-        #, maximum.(eachrow(ϵ))
+    elseif p == :TM
+        (; Ey=m.Ey, Hx=m.Hx, Dy=m.Dy)
     else
+        error("invalid polarization")
     end
 end
 
@@ -120,8 +123,8 @@ function solvemodes(ϵ, dl, λ, neigs, spacing, path; mode_solutions=nothing)
     fn = joinpath(path, "solvemodes.py")
     run(`python $fn $path`)
     modes = [npzread(joinpath(path, "mode$(i-1).npz")) for i = 1:neigs]
-    modes = [merge(mode, Dict(["D$s" => mode["E$s"] .* ϵ for s = "xyz"])) for mode in modes]
-    modes = [SortedDict([Symbol(k) => downsample(mode(k), spacing) for k = keys(mode) if string(k)[end] in "xy"]) |> pairs |> NamedTuple for mode in modes]
+    modes = [merge(mode, OrderedDict(["D$s" => mode["E$s"] .* ϵ for s = "xy"])) for mode in modes]
+    global modes = [SortedDict([Symbol(k) => downsample(mode(k), spacing) for k = keys(mode) if string(k)[end] in "xy"]) |> pairs |> NamedTuple for mode in modes]
 
     if !isnothing(mode_solutions)
         println("saving mode solutions")
