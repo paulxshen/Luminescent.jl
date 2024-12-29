@@ -17,7 +17,9 @@ function inner(u, v, deltas)
     p -= conj(u(:Ey, 0)) ⊙ v(:Hx, 0)
     p += conj(u(:Hy, 0)) ⊙ v(:Ex, 0)
     p -= conj(u(:Hx, 0)) ⊙ v(:Ey, 0)
-    sum(p) * prod(deltas) / 2
+    sum(reduce(deltas; init=p) do a, v
+        a .* v
+    end)
 end
 
 

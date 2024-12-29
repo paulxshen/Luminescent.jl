@@ -9,7 +9,7 @@ c = gf.components.straight(length=1, width=0.5, layer=LAYER.WG)
 wavelengths = np.linspace(1.45, 1.65, 5)
 wavelengths = 1.55
 path = os.path.join("runs", "straight")
-lumi.make_pic_sim_prob(path, c, wavelengths=wavelengths, keys=["o2@0,o1@0"],
-                       nres=15, N=2)
-lumi.solve(path)
+lumi.make_pic_sim_prob(path, c, wavelengths=wavelengths, keys=["o2@1,o1@1"],
+                       nres=30, N=3)
+# lumi.solve(path)
 # sol = lumi.lumi_solution()

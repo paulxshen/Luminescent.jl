@@ -145,9 +145,21 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
         λmodes = OrderedDict([λ => begin
             modes = solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp; mode_solutions)[mns+1]
             if isnothing(ϵeff)
-                Ex = modes[1].Ex
-                v = real(sum(downsample(ϵmode, mode_spacing) .* Ex, dims=2) ./ sum(Ex, dims=2)) |> F
-                ϵeff = maximum(ϵmode) => v[round(length(v) / 2)]
+                @unpack Ex, Ey = modes[1]
+                E = sqrt.(abs2.(Ex) + abs2.(Ey))
+                ϵ = downsample(ϵmode, mode_spacing)
+                D = sum(ϵ .* E, dims=2)
+                E = sum(E, dims=2)
+                ϵ = D ./ E
+                ϵmin, ϵmax = extrema(ϵmode)
+                # v = filter(v) do x
+                #     ϵmin <= x <= ϵmax
+                # end
+
+                ϵeff = maximum(ϵmode) => maximum(ϵ)
+                # ϵeff = maximum(ϵmode) => v[argmax(E)]
+                # ϵeff = maximum(ϵmode) => 0.8ϵmax + 0.2ϵmin
+                # ϵeff = maximum(ϵmode) => ϵmax
             end
             modes
         end for (λ, mns) = pairs(λmodenums)])
