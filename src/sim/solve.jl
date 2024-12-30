@@ -1,6 +1,6 @@
 function tidy(t, dt)
     if round(t) > round(t - dt)
-        println("simulation time = $t, took $(timepassed()) seconds")
+        ENV["autodiff"] == "0" && println("simulation time = $t, took $(timepassed()) seconds")
     end
 end
 

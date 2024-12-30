@@ -1,5 +1,6 @@
 function picrun(path; gpuarray=nothing, kw...)
     Random.seed!(1)
+    ENV["autodiff"] = "0"
     println("setting up simulation...")
     global PROB_PATH = joinpath(path, "problem.json")
     SOL_PATH = joinpath(path, "solution.json")
@@ -195,6 +196,7 @@ function picrun(path; gpuarray=nothing, kw...)
         end
         println("Done in $(time() - t0) s (including compilation).")
     elseif study == "inverse_design"
+        ENV["autodiff"] = "1"
         if length(lb) == 3
             if magic != "summersale"
                 error("3D inverse design feature must be requested from Luminescent AI info@luminescentai.com")
