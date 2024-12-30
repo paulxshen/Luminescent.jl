@@ -29,3 +29,5 @@ include("pic/run.jl")
 include("ops.jl")
 include("del.jl")
 # include("main.jl")
+
+include("gpu.jl")

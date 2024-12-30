@@ -59,6 +59,7 @@ def solve(path):
     env = '0;'
     # cmd = ["lumi", path]
     gpu_backend = prob["gpu_backend"]
+    run(["julia", "-e", f'println(Base.active_project())'])
     if not gpu_backend:
         cmd = ["julia", "-e", f'{env}using Luminescent;picrun(raw"{path}")']
     else:

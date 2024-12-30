@@ -1,10 +1,18 @@
+function tidy(t, dt)
+    if round(t) > round(t - dt)
+        println("simulation time = $t, took $(timepassed()) seconds")
+    end
+end
+
 function f1(((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances)), t)
-    u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
+    tidy(t, dt)
+    @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
     ((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances))
 end
 
 function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (t0, T, monitor_instances)), t)
-    u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
+    tidy(t, dt)
+    @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
     mf += [[
         begin
             c = dt / T * cispi(-2(t - t0) / λ)
@@ -39,10 +47,12 @@ function solve(prob, ;
     init = (us0, p, (dt, field_diffdeltas, field_diffpadvals, source_instances))
 
     ts = 0:dt:T[1]-F(0.001)
+    nt = -1
     if save_memory
         (u,), = adjoint_reduce(f1, ts, init, ulims)
     else
         (u,), = reduce(ts; init) do us, t
+
             ignore() do
                 if framerate > 0 && t > 0
                     if t % (1 / framerate) < dt
@@ -63,6 +73,7 @@ function solve(prob, ;
     ts = ts[end]+dt:dt:T[2]-F(0.001)
     init = ((u, 0), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (T[2], durations[2], monitor_instances))
 
+    println("accumulating dft fields")
     if save_memory
         (u, mf), = adjoint_reduce(f2, ts, init, ulims)
     else

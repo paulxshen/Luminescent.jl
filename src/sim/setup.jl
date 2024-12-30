@@ -316,7 +316,6 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
                      geometry, _geometry, nmax, nmin, ϵeff,
                      is_field_on_lb, is_field_on_ub,
                      u0, dt, kw...) |> pairs |> OrderedDict
-
 end
 update = update
 setup = setup

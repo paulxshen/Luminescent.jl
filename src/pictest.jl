@@ -7,6 +7,8 @@ ENV["JULIA_PKG_PRECOMPILE_AUTO"] = 0
 # picrun(joinpath("runs", "straight");)# gpuarray=cu)
 # picrun(joinpath("runs", "bend_R5"))
 # picrun(joinpath("runs", "mode_converter"))
-picrun(joinpath("runs", "demux"))
+# picrun(joinpath("runs", "demux"))
 # picrun(joinpath("runs", "splitter"))
 
+using CUDA
+picrun(joinpath("runs", "tiny"); gpuarray=cu)

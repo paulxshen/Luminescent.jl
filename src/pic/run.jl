@@ -92,7 +92,7 @@ function picrun(path; gpuarray=nothing, kw...)
                 frame = frame .>= 0.99maximum(frame)
                 # frame = nothing
                 start = round((bbox[1] - lb) / dl + 1)
-                b = Blob(szd; solid_frac=0.95, morph=false, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start)
+                b = Blob(szd; solid_frac=0.99, morph=false, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start)
                 display(heatmap(b.frame))
 
                 if !isnothing(sol) && !restart
@@ -182,8 +182,9 @@ function picrun(path; gpuarray=nothing, kw...)
     end
     t0 = time()
     lb3 = (lb..., zmin)
+    # error("not implemented")
+    println("compiling simulation code...")
     if study == "sparams"
-        println("simulating...")
         @unpack S, sols = make_pic_sim_prob(runs, run_probs, lb, dl;
             F, verbose=true, framerate, path)
         plotsols(sols, run_probs, path)

@@ -11,6 +11,7 @@ function diffpad(a, vl, vr=vl; dims=1, diff=diff)
     r = !isnothing(vr)
 
     sz = Tuple(size(a) + (l + r - 1) * sel)
+    # b = similar(a, sz)
     b = Buffer(a, sz)
     b[range.(l * sel + 1, sz - r * sel)...] = diff(a; dims)
     pad!(b, vl, l * sel, 0)
