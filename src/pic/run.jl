@@ -92,7 +92,7 @@ function picrun(path; gpuarray=nothing, kw...)
                 frame = frame .>= 0.99maximum(frame)
                 # frame = nothing
                 start = round((bbox[1] - lb) / dl + 1)
-                b = Blob(szd; solid_frac=0.8, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start)
+                b = Blob(szd; solid_frac=0.95, morph=false, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start)
                 display(heatmap(b.frame))
 
                 if !isnothing(sol) && !restart

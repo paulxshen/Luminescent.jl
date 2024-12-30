@@ -32,31 +32,31 @@ def make_pic_inv_prob(path, c,  targets, iters=10,
         keys = ["o2@0,o1@0"]
         wavelengths = [targets["phase_shifter"]]
     else:
-        if "tparams" in targets:
-            for wl in targets["tparams"]:
-                d = {}
-                for k in targets["tparams"][wl]:
-                    po, mo, pi, mi = unpack_sparam_key(k)
-                    if mo == 0:
-                        _mo = 1
-                    elif mo == 1:
-                        _mo = 0
-                    else:
-                        mo = None
+        # if "tparams" in targets:
+        #     for wl in targets["tparams"]:
+        #         d = {}
+        #         for k in targets["tparams"][wl]:
+        #             po, mo, pi, mi = unpack_sparam_key(k)
+        #             if mo == 0:
+        #                 _mo = 1
+        #             elif mo == 1:
+        #                 _mo = 0
+        #             else:
+        #                 mo = None
 
-                    if mo is not None:
-                        _k = f"{po}@{_mo},{pi}@{mi}"
-                        if _k not in targets["tparams"][wl]:
-                            d[_k] = 0
+        #             if mo is not None:
+        #                 _k = f"{po}@{_mo},{pi}@{mi}"
+        #                 if _k not in targets["tparams"][wl]:
+        #                     d[_k] = 0
 
-                    # _k = f"o{pi}@0,o{pi}@{mi}"
-                    # if _k not in targets["tparams"][wl]:
-                    #     d[_k] = 0
-                    # _k = f"o{pi}@1,o{pi}@{mi}"
-                    # if _k not in targets["tparams"][wl]:
-                    #     d[_k] = 0
-                targets["tparams"][wl].update(d)
-        print(targets)
+        #             # _k = f"o{pi}@0,o{pi}@{mi}"
+        #             # if _k not in targets["tparams"][wl]:
+        #             #     d[_k] = 0
+        #             # _k = f"o{pi}@1,o{pi}@{mi}"
+        #             # if _k not in targets["tparams"][wl]:
+        #             #     d[_k] = 0
+        #         targets["tparams"][wl].update(d)
+        # print(targets)
 
         targets1 = {}
         keys = SortedSet()
