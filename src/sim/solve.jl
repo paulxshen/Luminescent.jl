@@ -6,13 +6,15 @@ end
 
 function f1(((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances)), t)
     tidy(t, dt)
-    @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
+    # @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
+    u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
     ((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances))
 end
 
 function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (t0, T, monitor_instances)), t)
     tidy(t, dt)
-    @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
+    # @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
+    u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
     mf += [[
         begin
             c = dt / T * cispi(-2(t - t0) / λ)
