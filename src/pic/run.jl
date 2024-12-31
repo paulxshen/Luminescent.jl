@@ -203,7 +203,7 @@ function picrun(path; gpuarray=nothing, kw...)
             end
         end
         model = models[1]
-        opt = AreaChangeOptimiser(model)
+        opt = AreaChangeOptimiser(model; minchange=0.001)
         opt_state = Flux.setup(opt, model)
         println("starting optimization... first iter will be slow due to adjoint compilation.")
         img = nothing
@@ -232,7 +232,7 @@ function picrun(path; gpuarray=nothing, kw...)
                     # T * dϕ / π
                 end
             else
-                @time global l, (dldm,) = Flux.withgradient(model) do model
+                function f(model)
                     models = [model]
                     res = make_pic_sim_prob(runs, run_probs, lb, dl,
                         designs, design_config, models, ;
@@ -282,6 +282,9 @@ function picrun(path; gpuarray=nothing, kw...)
                     println("    weighted total loss $l")
                     l
                 end
+
+                @time global l, (dldm,) = Flux.withgradient(f, model)
+
             end
             @assert !isnothing(dldm)
             if !isnothing(stoploss) && l < stoploss
@@ -325,7 +328,6 @@ function picrun(path; gpuarray=nothing, kw...)
             opt.maxchange = 0.001 + relu.(l - [0.1, 0.3, 0.7]) ⋅ [0.01, 0.01, 0.01]
             Jello.update_loss!(opt, l)
             Flux.update!(opt_state, model, dldm)# |> gpu)
-            repair!(model)
         end
         if framerate > 0
             make_pic_sim_prob(runs, run_probs, lb, dl,
