@@ -2,6 +2,9 @@ function tidy(t, dt)
     if round(t) > round(t - dt)
         ENV["autodiff"] == "0" && println("simulation time = $t, took $(timepassed()) seconds")
     end
+    if !haskey(ENV, "t0")
+        ENV["t0"] = time()
+    end
 end
 
 function f1(((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances)), t)
@@ -49,7 +52,7 @@ function solve(prob, ;
     init = (us0, p, (dt, field_diffdeltas, field_diffpadvals, source_instances))
 
     ts = 0:dt:T[1]-F(0.001)
-    nt = -1
+    delete!(ENV, "t0")
     if save_memory
         (u,), = adjoint_reduce(f1, ts, init, ulims)
     else
@@ -81,6 +84,10 @@ function solve(prob, ;
     else
         (u, mf), = reduce(f2, ts; init)
     end
+
+    t0 = parse(Float64, ENV["t0"])
+    println("simulation done in $(time() - t0) s.")
+
     # return sum(abs, mf[1][1].Ex + mf[1][1].Ey + mf[1][1].Hz)
     ulims = 0
     # @assert all([all(!isnan, a) for a = u])

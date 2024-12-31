@@ -93,7 +93,7 @@ function picrun(path; gpuarray=nothing, kw...)
                 frame = frame .>= 0.99maximum(frame)
                 # frame = nothing
                 start = round((bbox[1] - lb) / dl + 1)
-                b = Blob(szd; solid_frac=0.99, morph=false, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start)
+                b = Blob(szd; solid_frac=0.99, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start)
                 display(heatmap(b.frame))
 
                 if !isnothing(sol) && !restart
@@ -194,7 +194,6 @@ function picrun(path; gpuarray=nothing, kw...)
         open(SOL_PATH, "w") do f
             write(f, json(cpu(sol)))
         end
-        println("Done in $(time() - t0) s (including compilation).")
     elseif study == "inverse_design"
         ENV["autodiff"] = "1"
         if length(lb) == 3
