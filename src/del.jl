@@ -3,7 +3,7 @@ function cdiff(a; dims=1)
     selectdim(a, dims, 3:n) - selectdim(a, dims, 1:n-2)
 end
 
-function diffpad(a, vl, vr=vl; dims=1, diff=diff)
+function diffpad(a, vl, vr=vl; dims=1, diff=diff, autodiff=true)
     # @assert all(!isnan, a)
 
     sel = 1:ndims(a) .== dims
@@ -11,12 +11,31 @@ function diffpad(a, vl, vr=vl; dims=1, diff=diff)
     r = !isnothing(vr)
 
     sz = Tuple(size(a) + (l + r - 1) * sel)
-    # b = similar(a, sz)
-    b = Buffer(a, sz)
+
+    # if vl ∈ (0, nothing) && vr ∈ (0, nothing)
+    if autodiff
+        b = Buffer(a, sz)
+    else
+        b = similar(a, sz)
+    end
+
+    # @time b[range.(l * sel + 1, sz - r * sel)...] = diff(a; dims)
+    # @time pad!(b, vl, l * sel, 0)
+    # @time pad!(b, vr, 0, r * sel)
+    # println()
     b[range.(l * sel + 1, sz - r * sel)...] = diff(a; dims)
     pad!(b, vl, l * sel, 0)
     pad!(b, vr, 0, r * sel)
-    copy(b)
+
+    if autodiff
+        copy(b)
+    else
+        b
+    end
+    # else
+    # a = diff(a; dims)
+    # a = pad(a, vl, l * sel, 0)
+    # a = pad(a, vr, 0, r * sel)
 end
 
 struct Del
@@ -45,7 +64,10 @@ function LinearAlgebra.cross(m::Del, v)
 end
 
 function delcross(diff, Δs, ps, as)
-    _diffpad(a, p, dims) = diffpad(a, p...; dims, diff)
+    autodiff = !haskey(ENV, "autodiff") || ENV["autodiff"] == "1"
+
+
+    _diffpad(a, p, dims) = diffpad(a, p...; dims, diff, autodiff)
     N = ndims(as(1))
     if N == 2
         dx, dy = [Δs(i) for i = 1:2]
