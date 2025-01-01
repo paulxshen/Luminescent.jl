@@ -176,6 +176,7 @@ function picrun(path; gpuarray=nothing, kw...)
                     prob[k] = _gpu(prob[k],)
                 end
             end
+            prob.grid[:field_diffdeltas] = _gpu(prob.grid[:field_diffdeltas],)
         end
         models = models |> _gpu
     else

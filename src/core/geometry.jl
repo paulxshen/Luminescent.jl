@@ -35,15 +35,16 @@ end
 
 _size(s::Real, n) = int(s * n)
 _size(s, _) = int(sum(s))
-function tensorinv(a, lims, spacings)
+function tensorinv(a::T, lims, spacings) where {T}
     N = ndims(a)
-    T = typeof(a)
     F = eltype(a)
+    a = cpu(a)
+    spacings = cpu(spacings)
+    lims = cpu(lims)
+
     spacings = _downvec.(spacings, size(a))
     margin = [spacings[i][1] for i = 1:N]
     _a = pad(a, :replicate, margin)
-    # A = cpu(A)
-
     v = [[
         begin
             li, ri = eachcol(lims[i])

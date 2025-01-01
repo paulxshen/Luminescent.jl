@@ -265,7 +265,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     spacings = int(deltas / dl)
 
     field_diffpadvals = refactor(field_diffpadvals)
-    grid = (; F, N, L, bbox, sz, deltas, deltas3, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals, geometry_padvals, geometry_padamts, _geometry_padamts, dl, spacings, mode_spacing)
+    grid = (; F, N, L, bbox, sz, deltas, deltas3, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals, geometry_padvals, geometry_padamts, _geometry_padamts, dl, spacings, mode_spacing) |> dict
 
     mode_solutions = []
     source_instances = SourceInstance.(sources, (grid,), (_ϵ3,), (temp,), (mode_solutions,))

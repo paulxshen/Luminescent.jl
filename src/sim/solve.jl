@@ -42,10 +42,10 @@ function solve(prob, ;
 
 
     p = pad_geometry(p, geometry_padvals, geometry_padamts)
-    p = apply_subpixel_averaging(p, field_lims)
+    @time p = apply_subpixel_averaging(p, field_lims)
 
     _p = pad_geometry(_p, geometry_padvals, _geometry_padamts)
-    invϵ = tensorinv(_p.ϵ, values(field_lims(r"E.*")), spacings)
+    @time invϵ = tensorinv(_p.ϵ, values(field_lims(r"E.*")), spacings)
 
     global p = merge(p, (; invϵ))
     durations = [Ttrans, Tss]
