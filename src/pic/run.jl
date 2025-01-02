@@ -1,4 +1,4 @@
-function picrun(path; gpuarray=nothing, kw...)
+function picrun(path; array=Array, kw...)
     Random.seed!(1)
     ENV["autodiff"] = "0"
     println("setting up simulation...")
@@ -168,20 +168,7 @@ function picrun(path; gpuarray=nothing, kw...)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]
 
-    if !isnothing(gpuarray)
-        _gpu = x -> gpu(gpuarray, x)
-        for prob = run_probs
-            for k = keys(prob)
-                if k in (:u0, :_geometry, :geometry, :source_instances, :monitor_instances)
-                    prob[k] = _gpu(prob[k],)
-                end
-            end
-            prob.grid[:field_diffdeltas] = _gpu(prob.grid[:field_diffdeltas],)
-        end
-        models = models |> _gpu
-    else
-        println("using CPU backend.")
-    end
+
     t0 = time()
     lb3 = (lb..., zmin)
     # error("not implemented")
@@ -203,7 +190,7 @@ function picrun(path; gpuarray=nothing, kw...)
             end
         end
         model = models[1]
-        opt = AreaChangeOptimiser(model; minchange=0.001)
+        opt = AreaChangeOptimiser(model; opt=Momentum(1, 0.6), minchange=0.001)
         opt_state = Flux.setup(opt, model)
         println("starting optimization... first iter will be slow due to adjoint compilation.")
         img = nothing

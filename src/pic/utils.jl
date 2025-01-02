@@ -39,9 +39,10 @@ function make_pic_sim_prob(runs, run_probs, lb, dl,
     designs=nothing, design_config=nothing, models=nothing; matprops=nothing,
     alg=nothing, save_memory=false, verbose=false, perturb=nothing, framerate=0, path="", kw...)
     F = run_probs[1].grid.F
+    array = run_probs[1].array
 
     if !isnothing(models)
-        masks = [m() for m in models]
+        masks = [m() |> array for m in models]
         lminloss = 0
         margins = [m.margin for m in models]
     else

@@ -19,8 +19,10 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     pml_depths=nothing, pml_ramp_fracs=0.2,
     Courant=0.9,
     deltas3=deltas,
+    array=Array,
     temp="",
     kw...)
+
     approx_2D_mode = Symbol(approx_2D_mode)
     N = length(deltas)
     (deltas, mode_deltas, ϵ, μ, σ, m, γ, β) = F.((deltas, mode_deltas, ϵ, μ, σ, m, γ, β))
@@ -307,15 +309,30 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     # Tss *= 4
     @show Ttrans, Tss
     Ttrans, Tss = convert.(F, (Ttrans, Tss))
-    global res = (;
-                     grid,
-                     source_instances, monitor_instances, field_names,
-                     mode_deltas,
-                     approx_2D_mode, Courant,
-                     Ttrans, Tss,
-                     geometry, _geometry, nmax, nmin, ϵeff,
-                     is_field_on_lb, is_field_on_ub,
-                     u0, dt, kw...) |> pairs |> OrderedDict
+    global prob = (;
+                      grid,
+                      source_instances, monitor_instances, field_names,
+                      mode_deltas,
+                      approx_2D_mode, Courant,
+                      Ttrans, Tss,
+                      geometry, _geometry, nmax, nmin, ϵeff,
+                      is_field_on_lb, is_field_on_ub,
+                      u0, dt, array, kw...) |> pairs |> OrderedDict
+
+    _gpu = x -> gpu(array, x)
+    if array == Array
+        println("using CPU backend.")
+    else
+        println("using GPU backend.")
+    end
+    for k = keys(prob)
+        if k in (:u0, :_geometry, :geometry, :source_instances, :monitor_instances)
+            prob[k] = _gpu(prob[k],)
+        end
+    end
+    prob.grid[:field_diffdeltas] = _gpu(prob.grid[:field_diffdeltas])
+
+    prob
 end
 update = update
 setup = setup

@@ -58,5 +58,6 @@ function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instanc
     @ignore_derivatives gc()
     # @ignore_derivatives unsafe_free!.((Js, dEdt, dHdt))
     # (; E, H, (Jkeys .=> Jm)..., (Pkeys .=> Pm)...)
-    namedtuple([:E => E, :H => H, (Jkeys .=> Jm)..., (Pkeys .=> Pm)...])
+    # namedtuple([:E => E, :H => H, (Jkeys .=> Jm)..., (Pkeys .=> Pm)...])
+    namedtuple(vcat([:E => E, :H => H], Jkeys .=> Jm, Pkeys .=> Pm))
 end

@@ -66,7 +66,7 @@ def solve(path):
         print(f"using {gpu_backend} backend.")
         if gpu_backend == "CUDA":
             cmd = ["julia", "-e",
-                   f"{env}using Luminescent,CUDA;@assert CUDA.functional();picrun(\"{path}\";gpuarray=cu)"]
+                   f"{env}using Luminescent,CUDA;@assert CUDA.functional();picrun(\"{path}\";array=cu)"]
     run(cmd)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:
