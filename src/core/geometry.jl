@@ -50,33 +50,26 @@ function tensorinv(a::T, lims, spacings) where {T}
             l = min.(li, lj) - 0.5
             _l = max.(li, lj) + 0.5
             Δ = _l - l
+
             start = round((l + 1) * margin) + 1
-            downsample_by_range(_a[range.(start, start + sum.(spacings) + int((Δ - 1) * last.(spacings)) - 1)...], [[range(cum - space + 1, int(Δi .* space) + cum - space) for (cum, space) = zip(cumsum(spacing), spacing)] for (Δi, spacing) = zip(Δ, spacings)]) do a
-                # n = ignore_derivatives() do
-                n = if maximum(a) == minimum(a)
-                    zeros(F, N)
-                else
-                    n = mean.([diff(a; dims) for dims in 1:N])
-                    Z = norm(n)
-                    if Z != 0
-                        # if Z > 1e-2
-                        n / Z
-                    else
-                        zeros(F, N)
-                    end
-                end
-                # end
-                P = n * n'
-                P * mean(1 ./ a) + (I - P) / mean(a)
+            stop = start + sum.(spacings) + int((Δ - 1) * last.(spacings)) - 1
+            __a = _a[range.(start, stop)...]
+            Is = [[range(cum - space + 1, int(Δi .* space) + cum - space) for (cum, space) = zip(cumsum(spacing), spacing)] for (Δi, spacing) = zip(Δ, spacings)]
+
+
+            As = downsample_by_range(identity, __a, Is)
+            M = mean.(As)
+            invM = map(As) do a
+                mean(1 ./ a)
             end
+            V = [sum.(diff.(As; dims)) for dims in 1:N]
+            Z = sqrt.(sum([a .^ 2 for a in V])) + F(0.001)
+            V = V ⊘ [Z]
+
+            Pij = V[i] .* V[j]
+            Pij .* invM + ((i == j) - Pij) ./ M
         end for j = 1:i
     ] for i = 1:N]
-    ([
-        begin
-            if j > i
-                j, i = i, j
-            end
-            getindex.(v[i][j], i, j)
-        end for i = 1:N, j = 1:N
-    ])
+
+    T.([j <= i ? v[i][j] : v[j][i] for i = 1:N, j = 1:N])
 end

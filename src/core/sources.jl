@@ -181,7 +181,7 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
     λmodes = fmap(F, λmodes)
 
     λmodes = sort(λmodes, by=kv -> kv[1])
-    λs = Array(keys(λmodes))
+    λs = @ignore_derivatives Array(keys(λmodes))
     modess = values(λmodes)
     iss = cluster(λs)
     sigmodes = map(iss) do is

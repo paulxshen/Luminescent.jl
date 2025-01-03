@@ -35,7 +35,7 @@ def solve(path, dev=False):
     path = os.path.abspath(path)
     prob = load_prob(path)
 
-    print("no fdtd binaries found - starting julia session to compile fdtd code...")
+    print("no fdtd binaries found - starting julia session to compile fdtd code - will take 5mins - let's take a break :) ...")
     # prob["action"] = "solve"
     # r = requests.post(f"{url}/local", json=prob)
     1
