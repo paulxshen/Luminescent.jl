@@ -20,7 +20,12 @@ function picrun(path; array=Array, kw...)
     F = Float32
     alg = :spectral
     alg = nothing
-    if contains(dtype, "16")
+    dtype = lowercase(dtype)
+    if contains(dtype, "16") && contains(dtype, "bf")
+        F = BFloat16
+        println("BFloat16 selected. make sure your GPU supports it. otherwise will be emulated and very slow.")
+
+    elseif contains(dtype, "16")
         F = Float16
         println("Float16 selected. make sure your cpu or GPU supports it. otherwise will be emulated and very slow.")
     end
@@ -93,7 +98,7 @@ function picrun(path; array=Array, kw...)
                 frame = frame .>= 0.99maximum(frame)
                 # frame = nothing
                 start = round((bbox[1] - lb) / dl + 1)
-                b = Blob(szd; solid_frac=0.99, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start)
+                b = Blob(szd; solid_frac=0.95, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start, morph=true)
                 display(heatmap(b.frame))
 
                 if !isnothing(sol) && !restart
@@ -168,7 +173,7 @@ function picrun(path; array=Array, kw...)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]
 
-
+    # error("not implemented")
     t0 = time()
     lb3 = (lb..., zmin)
     # error("not implemented")
@@ -190,8 +195,16 @@ function picrun(path; array=Array, kw...)
             end
         end
         model = models[1]
-        opt = AreaChangeOptimiser(model; opt=Momentum(1, 0.6), minchange=0.001)
+        minchange0 = 0.001
+        maxchange0 = max(4minchange0, 1.2jump(model) / prod(size(model)))
+        opt = AreaChangeOptimiser(model;
+            minchange=minchange0,
+            maxchange=maxchange0,
+            # opt=Adam(1, (0.8, 0.9)), 
+            opt=Momentum(1, 0.8),
+        )
         opt_state = Flux.setup(opt, model)
+        # error("not implemented")
         println("starting optimization... first iter will be slow due to adjoint compilation.")
         img = nothing
         println("")
@@ -201,7 +214,7 @@ function picrun(path; array=Array, kw...)
             if :phase_shifter == first(keys(targets))
                 @time l, (dldm,) = Flux.withgradient(model) do model
                     models = [model]
-                    @unpack S, sols, lminloss = make_pic_sim_prob(runs, run_probs, lb, dl,
+                    @unpack S, sols = make_pic_sim_prob(runs, run_probs, lb, dl,
                         designs, design_config, models;
                         F, img, alg)#(1)(1)
                     k = keys(S) |> first
@@ -215,7 +228,7 @@ function picrun(path; array=Array, kw...)
                     T = abs2(s)
                     dϕ = angle(s_ / s)
                     println("T: $T, dϕ: $dϕ")
-                    (exp(T - 1) * dϕ / π) + lminloss
+                    (exp(T - 1) * dϕ / π)
                     # T * dϕ / π
                 end
             else
@@ -224,9 +237,8 @@ function picrun(path; array=Array, kw...)
                     res = make_pic_sim_prob(runs, run_probs, lb, dl,
                         designs, design_config, models, ;
                         F, img, alg, save_memory, matprops)
-                    @unpack S, sols, lminloss = res
-                    l = 100lminloss
-                    println("lminloss: $l")
+                    @unpack S, sols = res
+                    l = 0
                     for k = keys(targets)
                         y = targets[k]
                         err = -
@@ -266,7 +278,7 @@ function picrun(path; array=Array, kw...)
                         println("$(k) loss: $_l ")
                         l += _l
                     end
-                    println("    weighted total loss $l")
+                    println("    weighted total loss $l\n")
                     l
                 end
 
@@ -275,7 +287,7 @@ function picrun(path; array=Array, kw...)
             end
             @assert !isnothing(dldm)
             if !isnothing(stoploss) && l < stoploss
-                println("Loss below threshold, stopping optimization.")
+                println("\nLoss below threshold, stopping optimization.")
                 stop = true
             end
             if true# i == 1 || i % 2 == 0 || stop
@@ -312,9 +324,11 @@ function picrun(path; array=Array, kw...)
             if stop
                 break
             end
-            opt.maxchange = 0.001 + relu.(l - [0.1, 0.3, 0.7]) ⋅ [0.01, 0.01, 0.01]
+            opt.minchange = minchange0 * (1 + l)
+            opt.maxchange = maxchange0 * (1 + l)
             Jello.update_loss!(opt, l)
             Flux.update!(opt_state, model, dldm)# |> gpu)
+            GC.gc()
         end
         if framerate > 0
             make_pic_sim_prob(runs, run_probs, lb, dl,

@@ -38,9 +38,7 @@ _size(s, _) = int(sum(s))
 function tensorinv(a::T, lims, spacings) where {T}
     N = ndims(a)
     F = eltype(a)
-    a = cpu(a)
-    spacings = cpu(spacings)
-    lims = cpu(lims)
+
 
     spacings = _downvec.(spacings, size(a))
     margin = [spacings[i][1] for i = 1:N]
@@ -73,7 +71,7 @@ function tensorinv(a::T, lims, spacings) where {T}
             end
         end for j = 1:i
     ] for i = 1:N]
-    T.([
+    ([
         begin
             if j > i
                 j, i = i, j

@@ -31,7 +31,7 @@ def start_fdtd_server(url=URL):
             print(err_message)
 
 
-def solve(path):
+def solve(path, dev=False):
     path = os.path.abspath(path)
     prob = load_prob(path)
 
@@ -55,18 +55,20 @@ def solve(path):
                 print(str(line.decode().strip()), flush=True)
             err_message = proc.stderr.read().decode()
             print(err_message)
-    env = r'using Pkg;Pkg.activate(raw"c:\Users\pxshe\OneDrive\Desktop\beans\Luminescent.jl\luminescent");'
-    env = '0;'
+    # if dev:
+    #     env = r'using Pkg;Pkg.activate(raw"c:\Users\pxshe\OneDrive\Desktop\beans\Luminescent.jl\luminescent");'
+    # else:
+    #     env = '0;'
     # cmd = ["lumi", path]
     gpu_backend = prob["gpu_backend"]
     run(["julia", "-e", f'println(Base.active_project())'])
     if not gpu_backend:
-        cmd = ["julia", "-e", f'{env}using Luminescent;picrun(raw"{path}")']
+        cmd = ["julia", "-e", f'using Luminescent;picrun(raw"{path}")']
     else:
         print(f"using {gpu_backend} backend.")
         if gpu_backend == "CUDA":
             cmd = ["julia", "-e",
-                   f"{env}using Luminescent,CUDA;@assert CUDA.functional();picrun(\"{path}\";array=cu)"]
+                   f'using Luminescent,CUDA;@assert CUDA.functional();picrun(raw"{path}";array=cu)']
     run(cmd)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:

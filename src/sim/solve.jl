@@ -33,7 +33,7 @@ end
 function solve(prob, ;
     save_memory=false, ulims=(-3, 3), framerate=0, path="",
     kwargs...)
-    @unpack mode_deltas, approx_2D_mode, dt, u0, geometry, _geometry, source_instances, monitor_instances, Ttrans, Tss, ϵeff = prob
+    @unpack mode_deltas, approx_2D_mode, dt, u0, geometry, _geometry, source_instances, monitor_instances, Ttrans, Tss, ϵeff, array = prob
     @unpack F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = prob.grid
 
     p = geometry
@@ -45,7 +45,8 @@ function solve(prob, ;
     p = apply_subpixel_averaging(p, field_lims)
 
     _p = pad_geometry(_p, geometry_padvals, _geometry_padamts)
-    invϵ = tensorinv(_p.ϵ, values(field_lims(r"E.*")), spacings)
+
+    invϵ = tensorinv(_p.ϵ |> cpu, values(field_lims(r"E.*")) |> cpu, spacings |> cpu) .|> array
 
     global p = merge(p, (; invϵ))
     durations = [Ttrans, Tss]

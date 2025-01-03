@@ -10,7 +10,8 @@ targets = {"tparams": {
     1.55: {
         "2,1": 1.0
     }}}
-prob = lumi.make_pic_inv_prob(
+lumi.make_pic_inv_prob(
     path,  c, targets,
     lvoid=0.2, iters=2, nres=15,
     approx_2D_mode="TE", gpu="CUDA",)
+lumi.solve(path, dev=True)

@@ -22,7 +22,7 @@ _*.py
 # /src/sim
 # /src/pic
 
-# Manifest.*
+Manifest.*
 _.png
 /*.mp4
 
