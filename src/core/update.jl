@@ -19,7 +19,7 @@ function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instanc
     γm = [p("γ$k") for k = poles]
     βm = [p("β$k") for k = poles]
 
-    @ignore_derivatives t, dt, field_diffdeltas, field_diffpadvals, source_instances, μ, m = t, dt, field_diffdeltas, field_diffpadvals, source_instances, μ, m
+    @nogradvars t, dt, field_diffdeltas, field_diffpadvals, source_instances, μ, m
     N = ndims(E(1))
 
     # staggered grid housekeeping
