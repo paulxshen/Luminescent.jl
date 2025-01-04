@@ -1,6 +1,6 @@
 function tidy(t, dt)
     ignore_derivatives() do
-        if round(t) > round(t - dt)
+        if floor(t) > floor(t - dt)
             ENV["autodiff"] == "0" && println("simulation time = $t, took $(timepassed()) seconds")
         end
         if !haskey(ENV, "t0")
@@ -90,7 +90,7 @@ function solve(prob, ;
 
     ignore_derivatives() do
         t0 = parse(Float64, ENV["t0"])
-        println("simulation done in $(time() - t0) s.")
+        println("simulation done in $(time() - t0) s (includes compilation time).")
     end
 
     # return sum(abs, mf[1][1].Ex + mf[1][1].Ey + mf[1][1].Hz)
