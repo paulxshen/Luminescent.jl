@@ -1,7 +1,7 @@
 function tidy(t, dt)
     ignore_derivatives() do
         if floor(t) > floor(t - dt)
-            ENV["autodiff"] == "0" && println("simulation time = $t, took $(timepassed()) seconds")
+            ENV["autodiff"] == "0" && println("simulation period $t, took $(timepassed()) seconds")
         end
         if !haskey(ENV, "t0")
             ENV["t0"] = time()
@@ -56,6 +56,8 @@ function solve(prob, ;
 
     ts = 0:dt:T[1]-F(0.001)
     @ignore_derivatives delete!(ENV, "t0")
+
+    println("propagating transient fields...")
     if save_memory
         (u,), = adjoint_reduce(f1, ts, init, ulims)
     else
@@ -81,7 +83,7 @@ function solve(prob, ;
     ts = ts[end]+dt:dt:T[2]-F(0.001)
     init = ((u, 0), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (T[2], durations[2], monitor_instances))
 
-    println("accumulating dft fields")
+    println("accumulating dft fields...")
     if save_memory
         (u, mf), = adjoint_reduce(f2, ts, init, ulims)
     else
@@ -90,7 +92,7 @@ function solve(prob, ;
 
     ignore_derivatives() do
         t0 = parse(Float64, ENV["t0"])
-        println("simulation done in $(time() - t0) s (includes compilation time).")
+        println("simulation done in $(time() - t0) seconds (includes some JIT compilation time).")
     end
 
     # return sum(abs, mf[1][1].Ex + mf[1][1].Ey + mf[1][1].Hz)
