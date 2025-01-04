@@ -102,6 +102,8 @@ function make_geometry(masks, margins, lb, dl, geometry, designs, design_config,
     mat = design_config.fill.material
     namedtuple([k => begin
         a = geometry[k]
+        T = typeof(a)
+        a = cpu(a)
         if k == :ϵ
             f = matprops(mat)(k) |> F
             v = minimum(a)
@@ -126,7 +128,7 @@ function make_geometry(masks, margins, lb, dl, geometry, designs, design_config,
                 # b[range.(o, o .+ size(mask) .- 1)...] = mask
                 b[[i:j for (i, j) = zip(o, o .+ size(mask) .- 1)]...] = mask
             end
-            copy(b)
+            copy(b) |> T
         else
             # println("no fill for $k")
             a

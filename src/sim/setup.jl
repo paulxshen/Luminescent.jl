@@ -331,6 +331,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         end
     end
     prob.grid[:field_diffdeltas] = _gpu.(prob.grid[:field_diffdeltas])
+    prob._geometry[:ϵ] = cpu(prob._geometry.ϵ)
 
     prob
 end

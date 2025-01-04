@@ -5,7 +5,7 @@ Updates fields.
 function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances; alg=nothing)
     # unpack fields and geometry
     @unpack E, H = u
-    @unpack μ, m, invϵ, = p
+    @unpack μ, m, invϵ = p
 
     # dispersive material parameters
     poles = @ignore_derivatives sort(Set([k[2:end-1] for k = string.(keys(u)) if startswith(k, "J")]))
@@ -48,6 +48,7 @@ function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instanc
 
     # first update E
     # tensor subpixel smoothing
+    # dEdt = (∇ × H - Js - sum(Jm)) ⊘ ϵ
     dEdt = invϵ * (∇ × H - Js - sum(Jm))
     E += dEdt * dt
 
