@@ -1,4 +1,4 @@
-function tidy(t, dt)
+function bell(t, dt)
     ignore_derivatives() do
         if floor(t) > floor(t - dt)
             ENV["autodiff"] == "0" && println("simulation period $t, took $(timepassed()) seconds")
@@ -10,14 +10,14 @@ function tidy(t, dt)
 end
 
 function f1(((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances)), t)
-    tidy(t, dt)
+    bell(t, dt)
     # @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
     u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
     ((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances))
 end
 
 function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (t0, T, monitor_instances)), t)
-    tidy(t, dt)
+    bell(t, dt)
     # @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
     u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
     mf += [[
@@ -44,9 +44,14 @@ function solve(prob, ;
     p = pad_geometry(p, geometry_padvals, geometry_padamts)
     p = apply_subpixel_averaging(p, field_lims)
 
-    _p = pad_geometry(_p, geometry_padvals, _geometry_padamts)
+    global _p = pad_geometry(_p, geometry_padvals, _geometry_padamts)
 
+    # ignore_derivatives() do
+    #     @show typeof(_p.ϵ)
+    # end
     invϵ = tensorinv(_p.ϵ |> cpu, values(field_lims(r"E.*")) |> cpu, spacings |> cpu) .|> array
+    # @ignore_derivatives @show typeof(invϵ)
+    # return sum(invϵ) |> sum
 
     global p = merge(p, (; invϵ))
     durations = [Ttrans, Tss]
@@ -89,6 +94,7 @@ function solve(prob, ;
     else
         (u, mf), = reduce(f2, ts; init)
     end
+    # return (u.E.Ex + u.H.Hz + u.E.Ey) .|> abs |> sum
 
     ignore_derivatives() do
         t0 = parse(Float64, ENV["t0"])

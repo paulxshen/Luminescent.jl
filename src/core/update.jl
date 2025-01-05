@@ -31,7 +31,8 @@ function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instanc
     # update time dependent polarization and displacement fields for dispersive materials
     Jm = [
         if all(==(0), γ)
-            J = 0J + E ⊙ σ
+            # J = 0J + E ⊙ σ
+            J = values(E ⊙ σ)
         else
             dJdt = γ ⊙ (E ⊙ σ - J - β ⊙ P)
             J += dJdt * dt

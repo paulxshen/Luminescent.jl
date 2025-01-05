@@ -179,7 +179,7 @@ function picrun(path; array=Array, kw...)
     # error("not implemented")
     println("compiling simulation code...")
     if study == "sparams"
-        @unpack S, sols = make_pic_sim_prob(runs, run_probs, lb, dl;
+        @unpack S, sols = calc_sparams(runs, run_probs, lb, dl;
             F, verbose=true, framerate, path)
         plotsols(sols, run_probs, path)
         sol = (; sparam_family(S)...,
@@ -234,9 +234,10 @@ function picrun(path; array=Array, kw...)
             else
                 function f(model)
                     models = [model]
-                    res = make_pic_sim_prob(runs, run_probs, lb, dl,
+                    res = calc_sparams(runs, run_probs, lb, dl,
                         designs, design_config, models, ;
                         F, img, alg, save_memory, matprops)
+                    # return res
                     @unpack S, sols = res
                     l = 0
                     for k = keys(targets)

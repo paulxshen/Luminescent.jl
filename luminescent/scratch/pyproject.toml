@@ -8,7 +8,6 @@ dependencies=[
         "gdsfactory",
         "pillow",
         "stl-to-voxel",
-        "tidy3d",
         "electromagneticpython",
         "sortedcontainers",
     ]

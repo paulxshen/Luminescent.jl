@@ -16,6 +16,14 @@ import numpy as np
 from sortedcontainers import SortedDict, SortedSet
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
+material_library = {
+    "cSi": 3.48**2,
+    "SiO2": 1.44**2,
+    "SiN": 2.0**2,
+    "Ge": 4.0**2,
+    "Si": 3.48**2,
+}
+
 
 def setup(path, c, study, nres, wl,
           bbox_layer=LAYER.WAFER,
@@ -203,7 +211,8 @@ def setup(path, c, study, nres, wl,
     prob["layer_stack"] = layer_stack_info
     materials = set([v["material"] for v in layer_stack_info.values()])
     d = {
-        k: material_library[k].medium.eps_model(C_0/wl) for k in materials}
+        k: material_library[k] for k in materials
+    }
     prob["study"] = study
     mateps = {k: np.real(v) for k, v in d.items()}
     matprops = {

@@ -10,12 +10,12 @@ function diffpad(a, vl, vr=vl; dims=1, diff=diff, autodiff=true)
     l = !isnothing(vl)
     r = !isnothing(vr)
 
-    sz = Tuple(size(a) + (l + r - 1) * sel)
 
-    # if vl ∈ (0, nothing) && vr ∈ (0, nothing)
     if autodiff
-        b = Buffer(a, sz)
+        # b = Buffer(a, sz)
+        b = diff(a; dims)
     else
+        sz = Tuple(size(a) + (l + r - 1) * sel)
         b = similar(a, sz)
     end
 
@@ -23,15 +23,23 @@ function diffpad(a, vl, vr=vl; dims=1, diff=diff, autodiff=true)
     # @time pad!(b, vl, l * sel, 0)
     # @time pad!(b, vr, 0, r * sel)
     # println()
-    b[range.(l * sel + 1, sz - r * sel)...] = diff(a; dims)
-    pad!(b, vl, l * sel, 0)
-    pad!(b, vr, 0, r * sel)
 
+    # if vl ∈ (0, nothing) && vr ∈ (0, nothing)
     if autodiff
-        copy(b)
+        b = pad(b, vl, l * sel, 0)
+        b = pad(b, vr, 0, r * sel)
     else
-        b
+        b[range.(l * sel + 1, sz - r * sel)...] = diff(a; dims)
+        pad!(b, vl, l * sel, 0)
+        pad!(b, vr, 0, r * sel)
     end
+    @assert typeof(b) == typeof(a)
+    b
+    # if autodiff
+    #     copy(b)
+    # else
+    #     b
+    # end
     # else
     # a = diff(a; dims)
     # a = pad(a, vl, l * sel, 0)

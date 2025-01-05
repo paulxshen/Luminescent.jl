@@ -35,14 +35,14 @@ function lastrun(name=nothing; study=nothing, wd=joinpath(pwd(), "runs"))
     return p
 end
 
-function make_pic_sim_prob(runs, run_probs, lb, dl,
+function calc_sparams(runs, run_probs, lb, dl,
     designs=nothing, design_config=nothing, models=nothing; matprops=nothing,
     alg=nothing, save_memory=false, verbose=false, perturb=nothing, framerate=0, path="", kw...)
     F = run_probs[1].grid.F
     array = run_probs[1].array
 
     if !isnothing(models)
-        masks = [m() |> array for m in models]
+        masks = [m() for m in models]
         lminloss = 0
         margins = [m.margin for m in models]
     else
@@ -58,6 +58,8 @@ function make_pic_sim_prob(runs, run_probs, lb, dl,
             solve(prob; alg, save_memory, verbose, framerate, path)
         end for (i, prob) in enumerate(run_probs)
     ]
+
+    # return sols[1]
     coeffs = OrderedDict()
     for (sol, run) in zip(sols, runs)
         sources = values(run.sources)
@@ -103,10 +105,9 @@ function make_geometry(masks, margins, lb, dl, geometry, designs, design_config,
     namedtuple([k => begin
         a = geometry[k]
         T = typeof(a)
-        a = cpu(a)
         if k == :ϵ
-            f = matprops(mat)(k) |> F
-            v = minimum(a)
+            f = @ignore_derivatives matprops(mat)(k) |> F
+            v = @ignore_derivatives minimum(a)
             if perturb == k
                 f *= convert.(F, 1.001)
             end
@@ -121,14 +122,14 @@ function make_geometry(masks, margins, lb, dl, geometry, designs, design_config,
                     o = [o..., 1 + round(Int, (zcore - zmin) / dl)]
                     mask = stack(fill(mask, round(Int, thickness / dl)))
                 else
-                    f = ϵeff[2] |> F
+                    # f = ϵeff[2] |> F
                 end
                 o -= margin
                 mask = mask * (f - v) + v
                 # b[range.(o, o .+ size(mask) .- 1)...] = mask
                 b[[i:j for (i, j) = zip(o, o .+ size(mask) .- 1)]...] = mask
             end
-            copy(b) |> T
+            copy(b) |> constructor(T)
         else
             # println("no fill for $k")
             a
