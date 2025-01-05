@@ -58,7 +58,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         v = min(4, 0.5 / dt)
         @show σpml = ϵmin * v
         @show mpml = μmin * v
-        δ = -log(1e-6) / nmin / (4v) |> F
+        δ = -log(1e-8) / nmin / (4v) |> F
         pml_depths = max.([δ, δ, 0.2δ][1:N], maxdeltas)
         @show pml_depths = trim.(pml_depths, maxdeltas)
     end
@@ -187,8 +187,8 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
                 for k = (:ϵ, :μ)
                     geometry_padvals[k][i, j] = :replicate
                 end
-                geometry_padvals[:σ][i, j] = b.σ
-                geometry_padvals[:m][i, j] = b.m
+                geometry_padvals[:σ][i, j] = TanhRamp(b.σ)
+                geometry_padvals[:m][i, j] = TanhRamp(b.m)
 
                 if j == 1
                     bbox[i, :] .-= b.d

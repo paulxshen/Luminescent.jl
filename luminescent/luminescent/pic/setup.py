@@ -35,6 +35,7 @@ def setup(path, c, study, nres, wl,
               DESIGN_LAYER, GUESS], Courant=None,
           gpu=None, dtype=np.float32,
           plot=False, framerate=0,
+          ratio=4,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None,
           approx_2D_mode=False):
     prob = dict()
@@ -44,7 +45,6 @@ def setup(path, c, study, nres, wl,
     else:
         N = 3
         prob["approx_2D_mode"] = None
-    ratio = 4
     dy = dx = wl/nres
     dl = dx/ratio
     dz = 1 * dx

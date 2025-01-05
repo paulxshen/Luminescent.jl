@@ -16,7 +16,12 @@ def make_pic_sim_prob(path, c: gf.Component, nres,
                       entries=None, keys=None,
                       layer_stack=LAYER_STACK,
                       study="sparams",
+
+                      wavelength=None,
                       **kwargs):
+    if wavelength:
+        raise ValueError("wavelength is deprecated, use wavelengths instead")
+
     ports = [p.name for p in c.get_ports_list(prefix="o")]
 
     if not entries:

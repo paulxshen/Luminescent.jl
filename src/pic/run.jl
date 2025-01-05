@@ -201,7 +201,7 @@ function picrun(path; array=Array, kw...)
             minchange=minchange0,
             maxchange=maxchange0,
             # opt=Adam(1, (0.8, 0.9)), 
-            opt=Momentum(1, 0.8),
+            opt=Momentum(1, 0.5),
         )
         opt_state = Flux.setup(opt, model)
         # error("not implemented")
@@ -275,7 +275,9 @@ function picrun(path; array=Array, kw...)
                             y = flatten(y)
                             Z = sum(abs, y)
                         end
-                        _l = sum(abs, err.(yhat, y),) * weights(k) / Z
+                        _l = sum(err.(yhat, y) / Z,) do x
+                            abs2(x) + abs(x)
+                        end
                         println("$(k) loss: $_l ")
                         l += _l
                     end
