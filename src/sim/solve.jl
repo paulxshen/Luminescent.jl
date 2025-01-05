@@ -1,6 +1,6 @@
 function bell(t, dt)
     ignore_derivatives() do
-        if floor(t) > floor(t - dt)
+        if floor(t + 0.001) > floor(t - dt + 0.001)
             ENV["autodiff"] == "0" && println("simulation period $t, took $(timepassed()) seconds")
         end
         if !haskey(ENV, "t0")
