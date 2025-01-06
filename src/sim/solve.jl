@@ -96,7 +96,7 @@ function solve(prob, ;
     end
     ts = ts[end]+dt:dt:T[2]-F(0.001)
     init = ((u, 0), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (T[2], durations[2], monitor_instances))
-    @nogradvars init, ts
+    @nogradvars ts
 
 
     println("accumulating dft fields...")
@@ -136,3 +136,33 @@ function solve(prob, ;
     am = [[isnothing(v[2]) ? nothing : getindex.(v[2], 2) for v = v] for v in v]
     return Solution(u, p, _p, ulims, um, ap, am)
 end
+
+
+struct Solution
+    u
+    p
+    _p
+    ulims
+    um
+    ap
+    am
+end
+@functor Solution
+
+function (s::Solution)(k, m, w=1, mn=0)
+    @unpack u, ulims, um, ap, am = s
+    if k == "a+"
+        return s.ap[m][w][mn+1]
+    elseif k == "a-"
+        return s.am[m][w][mn+1]
+    elseif k == "P_TE"
+        return flux(um[m][w], :TE)
+    elseif k == "P_TM"
+        return flux(um[m][w], :TM)
+    elseif k == "P"
+        return flux(um[m][w])
+    elseif k == "um"
+        return um[m][w]
+    end
+end
+# heatmap(___p.invϵ[1, 1])

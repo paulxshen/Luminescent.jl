@@ -71,7 +71,7 @@ function picrun(path; array=Array, kw...)
         ϵ3[I...] .+= a .* ϵ
     end
     ϵ3 = max.(ϵmin, ϵ3)
-    @show eltype(ϵ3)
+    # @show eltype(ϵ3)
     @assert eltype(ϵ3) == Nf
     GC.gc(true)
 

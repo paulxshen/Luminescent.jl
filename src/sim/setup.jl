@@ -11,7 +11,7 @@ Args
 -                      approx_2D_mode: only applies to 2d which can be :TM (Ez, Hx, Hy) or :TE (Hz, Ex, Ey)
 """
 function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
-    approx_2D_mode=:TE,
+    approx_2D_mode=nothing,
     Ttrans=nothing, Tss=nothing,
     ϵ=1, μ=1, σ=0, m=0, γ=0, β=0,
     ϵ3=1,
@@ -23,7 +23,9 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     temp="",
     kw...)
 
-    approx_2D_mode = Symbol(approx_2D_mode)
+    if !isnothing(approx_2D_mode)
+        approx_2D_mode = Symbol(approx_2D_mode)
+    end
     N = length(deltas)
     (deltas, mode_deltas, ϵ, μ, σ, m, γ, β) = F.((deltas, mode_deltas, ϵ, μ, σ, m, γ, β))
 
@@ -67,7 +69,6 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
 
     if N == 1
         field_names = (:Ez, :Hy)
-        approx_2D_mode = nothing
     elseif N == 2
         if approx_2D_mode == :TM
             Enames = (:Ez,)
@@ -79,7 +80,6 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
             field_names = (:Ex, :Ey, :Hz)
         end
     else
-        approx_2D_mode = nothing
         Enames = (:Ex, :Ey, :Ez)
         Hnames = (:Hx, :Hy, :Hz)
         field_names = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz)
@@ -288,6 +288,11 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         geometry[:ϵ] = downsample(_geometry.ϵ, int(deltas / dl))
     end
 
+    Tssmin = if N == 3
+        40
+    else
+        10
+    end
     if Ttrans == nothing
         Ttrans = sum(L * nmax)
     end
@@ -299,25 +304,26 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
             v = Base.round.(v, digits=3)
             v = v |> Set |> collect |> sort |> reverse
             if length(v) == 1
-                Tss = 10
+                Tss = 1
             else
                 Tss = 1 / minimum(diff([0, (1 ./ v)...]))
                 # Tss = ceil(100 / T) * T
             end
+            Tss *= ceil(Tssmin / Tss)
         end
     end
     # Tss *= 4
     @show Ttrans, Tss
     Ttrans, Tss = convert.(F, (Ttrans, Tss))
-    global prob = (;
-                      grid,
-                      source_instances, monitor_instances, field_names,
-                      mode_deltas,
-                      approx_2D_mode, Courant,
-                      Ttrans, Tss,
-                      geometry, _geometry, nmax, nmin, ϵeff,
-                      is_field_on_lb, is_field_on_ub,
-                      u0, dt, array, kw...) |> pairs |> OrderedDict
+    prob = (;
+               grid,
+               source_instances, monitor_instances, field_names,
+               mode_deltas,
+               approx_2D_mode, Courant,
+               Ttrans, Tss,
+               geometry, _geometry, nmax, nmin, ϵeff,
+               is_field_on_lb, is_field_on_ub,
+               u0, dt, array, kw...) |> pairs |> OrderedDict
 
     _gpu = x -> gpu(array, x)
     if array == Array

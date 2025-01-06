@@ -43,7 +43,7 @@ def setup(path, c, study, nres, wl,
         N = 2
         prob["approx_2D_mode"] = approx_2D_mode
     else:
-        ratio = 6
+        ratio = 4
         N = 3
         prob["approx_2D_mode"] = None
     dy = dx = wl/nres
