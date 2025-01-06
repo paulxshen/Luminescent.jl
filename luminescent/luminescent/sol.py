@@ -1,4 +1,5 @@
 # import dill
+import GPUtil
 from pprint import pprint
 import os
 import subprocess
@@ -60,6 +61,13 @@ def solve(path, dev=False):
     #     env = '0;'
     # cmd = ["lumi", path]
     gpu_backend = prob["gpu_backend"]
+    if gpu_backend:
+        try:
+            subprocess.check_output('nvidia-smi')
+            print('Nvidia GPU detected!')
+        except Exception:  # this command not being found can raise quite a few different errors depending on the configuration
+            print("GPU selected but is not available. using CPU instead.")
+            gpu_backend = None
     if not gpu_backend:
         cmd = ["julia", "-e", f'using Luminescent;picrun(raw"{path}")']
     else:

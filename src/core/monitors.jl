@@ -112,6 +112,8 @@ function MonitorInstance(m::Monitor, g, ϵ, temp, mode_solutions=nothing)
     stop[!sel] .= start[!sel]
     start += 0.5sel
     stop -= 0.5sel
+    start = F(start)
+    stop = F(stop)
 
     roi = dict([k => begin
         range.(start, stop, int(stop - start + 1)) - lr[:, 1] + 1
@@ -141,7 +143,7 @@ Args
 """
 function field(a::AbstractArray, k, m)
     @nogradvars k, m
-    getindexf(a, m.roi[k]...)
+    getindexf(a, m.roi[k]...)#; approx=true)
     # permutedims(getindexf(a, m.roi[k]...), p)
 end
 

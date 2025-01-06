@@ -29,6 +29,7 @@ function picrun(path; array=Array, kw...)
         F = Float16
         println("Float16 selected. make sure your cpu or GPU supports it. otherwise will be emulated and very slow.")
     end
+    println("using $F")
     λ = wl
     ticks = [
         begin

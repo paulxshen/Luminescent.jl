@@ -13,6 +13,6 @@ using CUDA
 # picrun(joinpath("runs", "splitter"); array=cu)
 # picrun(joinpath("runs", "splitter"))
 
-# picrun(joinpath("runs", "tiny"); array=cu)
-picrun(joinpath("runs", "back");)# array=cu)
+picrun(joinpath("runs", "tiny"); array=cu)
+# picrun(joinpath("runs", "back");)# array=cu)
 # models[1]()

@@ -288,7 +288,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         geometry[:ϵ] = downsample(_geometry.ϵ, int(deltas / dl))
     end
 
-    Tssmin = if N == 3
+    Tssmin = if N == 3 && (F == Float16 || F == BFloat16)
         40
     else
         10

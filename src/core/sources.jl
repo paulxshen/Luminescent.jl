@@ -138,8 +138,11 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
 
         start += 0.5
         stop += 0.5
+        start = F(start)
+        stop = F(stop)
         len = int(stop - start + 1)
-        ϵmode = getindexf(ϵ, range.(start, stop, len)...)
+
+        ϵmode = getindexf(ϵ, range.(start, stop, len)...;)
         ϵmode = permutedims(ϵmode, dimsperm, 2)
 
         # global _a = ϵmode, dimsperm
