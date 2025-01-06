@@ -45,12 +45,15 @@ function picrun(path; array=Array, kw...)
 
     ϵ2 = nothing
     sz = round.(L / dl)
-    ϵ3 = zeros(F, Tuple(sz))
+
+    GC.gc(true)
+    Nf = Float16
+    ϵ3 = zeros(Nf, Tuple(sz))
     layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2].mesh_order) |> OrderedDict
-    ϵmin = Inf
+    ϵmin = 100
     for (k, v) = pairs(layer_stack)
         a = stack(map(sort(collect(readdir(joinpath(temp, string(k)), join=true)))) do file
-            a = F.(Gray.(FileIO.load(file)))
+            a = Nf.(Gray.(FileIO.load(file)))
             reverse(a', dims=2)
         end)
         # a = a[Base.OneTo.(min.(size(a), sz))...]
@@ -62,12 +65,16 @@ function picrun(path; array=Array, kw...)
         a = a[Base.oneto.(size(a) - overhang)...]
         I = range.(start, start + size(a) - 1)
 
-        ϵ = matprops(material).ϵ
-        ϵmin = min(ϵ, ϵmin)
-        ϵ3[I...] .*= 1 - a
+        ϵ = matprops(material).ϵ |> Nf
+        ϵmin = min(ϵ, ϵmin) |> Nf
+        ϵ3[I...] .*= 1N4f4 - a
         ϵ3[I...] .+= a .* ϵ
     end
     ϵ3 = max.(ϵmin, ϵ3)
+    @show eltype(ϵ3)
+    @assert eltype(ϵ3) == Nf
+    GC.gc(true)
+
     ϵ2 = ϵ3[:, :, 1+round((zcenter - zmin) / dl)]
 
     global models = nothing

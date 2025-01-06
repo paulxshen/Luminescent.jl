@@ -49,7 +49,11 @@ function solve(prob, ;
     # ignore_derivatives() do
     #     @show typeof(_p.ϵ)
     # end
-    invϵ = tensorinv(_p.ϵ |> cpu, values(field_lims(r"E.*")) |> cpu, spacings |> cpu) .|> array
+    @ignore_derivatives GC.gc(true)
+    global invϵ = tensorinv(_p.ϵ |> cpu, values(field_lims(r"E.*")) |> cpu, spacings |> cpu, F)
+    @assert eltype(eltype(invϵ)) == F
+    invϵ = invϵ .|> array
+    @ignore_derivatives GC.gc(true)
     # @ignore_derivatives @show typeof(invϵ)
     # return sum(invϵ) |> sum
 

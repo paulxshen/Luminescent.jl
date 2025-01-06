@@ -35,7 +35,6 @@ def solve(path, dev=False):
     path = os.path.abspath(path)
     prob = load_prob(path)
 
-    print("no fdtd binaries found - starting julia session to compile fdtd code - will take 5mins - let's take a break :) ...")
     # prob["action"] = "solve"
     # r = requests.post(f"{url}/local", json=prob)
     1
@@ -61,7 +60,6 @@ def solve(path, dev=False):
     #     env = '0;'
     # cmd = ["lumi", path]
     gpu_backend = prob["gpu_backend"]
-    run(["julia", "-e", f'println(Base.active_project())'])
     if not gpu_backend:
         cmd = ["julia", "-e", f'using Luminescent;picrun(raw"{path}")']
     else:
@@ -69,6 +67,10 @@ def solve(path, dev=False):
         if gpu_backend == "CUDA":
             cmd = ["julia", "-e",
                    f'using Luminescent,CUDA;@assert CUDA.functional();picrun(raw"{path}";array=cu)']
+
+    run(["julia", "-e", f'println(Base.active_project())'])
+    print("no fdtd binaries found - starting julia session to compile fdtd code - will take 5 mins - can take a break and come back :) ...")
+
     run(cmd)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:

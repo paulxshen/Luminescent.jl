@@ -80,7 +80,7 @@ _size(s, _) = int(sum(s))
 # end
 
 # function tensorinv(a::S{T}, lims, spacings) where {S<:AbstractArray,T<:Real}
-function tensorinv(a::AbstractArray{T}, lims, spacings) where {T}
+function tensorinv(a::AbstractArray, lims, spacings, T=eltype(a))
     N = ndims(a)
     spacings = _downvec.(spacings, size(a))
     margin = [spacings[i][1] for i = 1:N]
@@ -94,7 +94,7 @@ function tensorinv(a::AbstractArray{T}, lims, spacings) where {T}
             _l = max.(li, lj) + 0.5
             Δ = _l - l
             start = round((l + 1) * margin) + 1
-            downsample_by_range(_a[range.(start, start + sum.(spacings) + int((Δ - 1) * last.(spacings)) - 1)...], [[range(cum - space + 1, int(Δi .* space) + cum - space) for (cum, space) = zip(cumsum(spacing), spacing)] for (Δi, spacing) = zip(Δ, spacings)]) do a
+            downsample_by_range(T, _a[range.(start, start + sum.(spacings) + int((Δ - 1) * last.(spacings)) - 1)...], [[range(cum - space + 1, int(Δi .* space) + cum - space) for (cum, space) = zip(cumsum(spacing), spacing)] for (Δi, spacing) = zip(Δ, spacings)]) do a
                 p, q = extrema(a)
                 Pij = if p == q
                     T(0)
