@@ -35,14 +35,15 @@ def setup(path, c, study, nres, wl,
               DESIGN_LAYER, GUESS], Courant=None,
           gpu=None, dtype=np.float32,
           plot=False, framerate=0,
-          ratio=8,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None,
           approx_2D_mode=False):
     prob = dict()
     if approx_2D_mode:
+        ratio = 4
         N = 2
         prob["approx_2D_mode"] = approx_2D_mode
     else:
+        ratio = 6
         N = 3
         prob["approx_2D_mode"] = None
     dy = dx = wl/nres
@@ -108,7 +109,9 @@ def setup(path, c, study, nres, wl,
     port_width = max([p.width/1e3 for p in c.ports])
     ps = portsides(c)
     xmargin = ymargin = 2*port_width
+
     source_port_margin = port_width if N == 2 else 6*port_width
+
     port_margin = 2*dx
     margins = []
     for p in ps:
