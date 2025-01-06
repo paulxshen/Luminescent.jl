@@ -195,13 +195,13 @@ function picrun(path; array=Array, kw...)
             end
         end
         model = models[1]
-        minchange0 = 0.001
-        maxchange0 = max(4minchange0, 1.2jump(model) / prod(size(model)))
-        opt = AreaChangeOptimiser(model;
-            minchange=minchange0,
-            maxchange=maxchange0,
+        minchange = 0.001
+        maxchange = max(5minchange, 1.2jump(model) / prod(size(model)))
+        global opt = AreaChangeOptimiser(model;
+            minchange,
+            maxchange,
             # opt=Adam(1, (0.8, 0.9)), 
-            opt=Momentum(1, 0.7),
+            opt=Momentum(1, 0.5),
         )
         opt_state = Flux.setup(opt, model)
         # error("not implemented")
@@ -281,7 +281,8 @@ function picrun(path; array=Array, kw...)
                         println("$(k) loss: $_l ")
                         l += _l
                     end
-                    println("$l\n")
+                    # println("$l\n")
+                    println()
                     l
                 end
 
@@ -328,12 +329,12 @@ function picrun(path; array=Array, kw...)
             if stop
                 break
             end
-            opt.minchange = minchange0 * (1 + 3l)
-            opt.maxchange = maxchange0 * (1 + 3l)
+            opt.minchange = minchange * (1 + 1l)
+            opt.maxchange = maxchange * (1 + 4l)
             Jello.update_loss!(opt, l)
             Flux.update!(opt_state, model, dldm)# |> gpu)
             GC.gc()
-            println("====")
+            println("====\n")
 
         end
         if framerate > 0
