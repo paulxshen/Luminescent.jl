@@ -201,7 +201,7 @@ function picrun(path; array=Array, kw...)
             minchange=minchange0,
             maxchange=maxchange0,
             # opt=Adam(1, (0.8, 0.9)), 
-            opt=Momentum(1, 0.5),
+            opt=Momentum(1, 0.7),
         )
         opt_state = Flux.setup(opt, model)
         # error("not implemented")
@@ -209,7 +209,7 @@ function picrun(path; array=Array, kw...)
         img = nothing
         println("")
         for i = 1:iters
-            println("($i)  ")
+            println("====($i)  ")
             stop = i == iters
             if :phase_shifter == first(keys(targets))
                 @time l, (dldm,) = Flux.withgradient(model) do model
@@ -276,12 +276,12 @@ function picrun(path; array=Array, kw...)
                             Z = sum(abs, y)
                         end
                         _l = sum(err.(yhat, y) / Z,) do x
-                            abs2(x) + abs(x)
+                            abs(x)
                         end
                         println("$(k) loss: $_l ")
                         l += _l
                     end
-                    println("    weighted total loss $l\n")
+                    println("$l\n")
                     l
                 end
 
@@ -323,15 +323,18 @@ function picrun(path; array=Array, kw...)
                 open(joinpath(path, "solution.json"), "w") do f
                     write(f, json(cpu(sol)))
                 end
+                println(json(sol.T, 4))
             end
             if stop
                 break
             end
-            opt.minchange = minchange0 * (1 + l)
-            opt.maxchange = maxchange0 * (1 + l)
+            opt.minchange = minchange0 * (1 + 3l)
+            opt.maxchange = maxchange0 * (1 + 3l)
             Jello.update_loss!(opt, l)
             Flux.update!(opt_state, model, dldm)# |> gpu)
             GC.gc()
+            println("====")
+
         end
         if framerate > 0
             make_pic_sim_prob(runs, run_probs, lb, dl,

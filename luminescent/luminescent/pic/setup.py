@@ -35,7 +35,7 @@ def setup(path, c, study, nres, wl,
               DESIGN_LAYER, GUESS], Courant=None,
           gpu=None, dtype=np.float32,
           plot=False, framerate=0,
-          ratio=4,
+          ratio=8,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None,
           approx_2D_mode=False):
     prob = dict()
