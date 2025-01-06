@@ -24,6 +24,7 @@ function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instan
         begin
             c = dt / T * cispi(-2(t - t0) / λ)
             ks = @ignore_derivatives [keys(u.E)..., keys(u.H)...]
+            @nogradvars c, ks
             namedtuple([k => (field(u, k, m) * c) for k = ks])
         end for λ = wavelengths(m)
     ] for m = monitor_instances]
@@ -36,6 +37,8 @@ function solve(prob, ;
     @unpack mode_deltas, approx_2D_mode, dt, u0, geometry, _geometry, source_instances, monitor_instances, Ttrans, Tss, ϵeff, array = prob
     @unpack F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = prob.grid
 
+    @nogradvars mode_deltas, dt, u0, source_instances, monitor_instances, Ttrans, Tss, ϵeff, F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts
+
     p = geometry
     _p = _geometry
     # return sum(_p.ϵ)
@@ -44,26 +47,28 @@ function solve(prob, ;
     p = pad_geometry(p, geometry_padvals, geometry_padamts)
     p = apply_subpixel_averaging(p, field_lims)
 
-    global _p = pad_geometry(_p, geometry_padvals, _geometry_padamts)
+    _p = pad_geometry(_p, geometry_padvals, _geometry_padamts)
 
     # ignore_derivatives() do
     #     @show typeof(_p.ϵ)
     # end
     @ignore_derivatives GC.gc(true)
-    global invϵ = tensorinv(_p.ϵ |> cpu, values(field_lims(r"E.*")) |> cpu, spacings |> cpu, F)
+    invϵ = tensorinv(_p.ϵ |> cpu, values(field_lims(r"E.*")) |> cpu, spacings |> cpu, F)
     @assert eltype(eltype(invϵ)) == F
     invϵ = invϵ .|> array
     @ignore_derivatives GC.gc(true)
     # @ignore_derivatives @show typeof(invϵ)
     # return sum(invϵ) |> sum
 
-    global p = merge(p, (; invϵ))
+    p = merge(p, (; invϵ))
     durations = [Ttrans, Tss]
     T = cumsum(durations)
     us0 = (u0,)
     init = (us0, p, (dt, field_diffdeltas, field_diffpadvals, source_instances))
 
     ts = 0:dt:T[1]-F(0.001)
+    @nogradvars init, ts
+
     @ignore_derivatives delete!(ENV, "t0")
 
     println("propagating transient fields...")
@@ -91,6 +96,8 @@ function solve(prob, ;
     end
     ts = ts[end]+dt:dt:T[2]-F(0.001)
     init = ((u, 0), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (T[2], durations[2], monitor_instances))
+    @nogradvars init, ts
+
 
     println("accumulating dft fields...")
     if save_memory
@@ -109,6 +116,7 @@ function solve(prob, ;
     ulims = 0
     # @assert all([all(!isnan, a) for a = u])
 
+    @nogradvars monitor_instances
     v = map(mf, monitor_instances) do mf, m
         map(mf, wavelengths(m)) do u, λ
             dftfields = permutexyz(u, m.dimsperm, N)
@@ -128,32 +136,3 @@ function solve(prob, ;
     am = [[isnothing(v[2]) ? nothing : getindex.(v[2], 2) for v = v] for v in v]
     return Solution(u, p, _p, ulims, um, ap, am)
 end
-
-struct Solution
-    u
-    p
-    _p
-    ulims
-    um
-    ap
-    am
-end
-@functor Solution
-
-function (s::Solution)(k, m, w=1, mn=0)
-    @unpack u, ulims, um, ap, am = s
-    if k == "a+"
-        return s.ap[m][w][mn+1]
-    elseif k == "a-"
-        return s.am[m][w][mn+1]
-    elseif k == "P_TE"
-        return flux(um[m][w], :TE)
-    elseif k == "P_TM"
-        return flux(um[m][w], :TM)
-    elseif k == "P"
-        return flux(um[m][w])
-    elseif k == "um"
-        return um[m][w]
-    end
-end
-# heatmap(___p.invϵ[1, 1])

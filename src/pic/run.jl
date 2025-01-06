@@ -47,7 +47,7 @@ function picrun(path; array=Array, kw...)
     sz = round.(L / dl)
 
     GC.gc(true)
-    Nf = Float16
+    Nf = study == "inverse_design" ? F : Float16
     ϵ3 = zeros(Nf, Tuple(sz))
     layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2].mesh_order) |> OrderedDict
     ϵmin = 100
