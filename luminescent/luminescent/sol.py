@@ -1,5 +1,4 @@
 # import dill
-import GPUtil
 from pprint import pprint
 import os
 import subprocess

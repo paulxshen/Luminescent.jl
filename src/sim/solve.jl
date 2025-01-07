@@ -20,14 +20,18 @@ function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instan
     bell(t, dt)
     # @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
     u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
-    mf += [[
+    ks = @ignore_derivatives [keys(u.E)..., keys(u.H)...]
+    mf += [
         begin
-            c = dt / T * cispi(-2(t - t0) / λ)
-            ks = @ignore_derivatives [keys(u.E)..., keys(u.H)...]
-            @nogradvars c, ks
-            namedtuple([k => (field(u, k, m) * c) for k = ks])
-        end for λ = wavelengths(m)
-    ] for m = monitor_instances]
+            um = namedtuple(ks .=> field.((u,), ks, (m,)))
+            [
+                begin
+                    c = dt / T * cispi(-2(t - t0) / λ)
+                    @nogradvars c
+                    c * um
+                end for λ = wavelengths(m)
+            ]
+        end for m = monitor_instances]
     ((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (t0, T, monitor_instances))
 end
 

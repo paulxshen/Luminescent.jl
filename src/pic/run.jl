@@ -55,6 +55,7 @@ function picrun(path; array=Array, kw...)
     for (k, v) = pairs(layer_stack)
         a = stack(map(sort(collect(readdir(joinpath(temp, string(k)), join=true)))) do file
             a = Nf.(Gray.(FileIO.load(file)))
+            a = downsample(a, 2)
             reverse(a', dims=2)
         end)
         # a = a[Base.OneTo.(min.(size(a), sz))...]
