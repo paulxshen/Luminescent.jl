@@ -58,6 +58,7 @@ function picrun(path; array=Array, kw...)
             a = downsample(a, 2)
             reverse(a', dims=2)
         end)
+        a = downsample(a, (1, 1, 2))
         # a = a[Base.OneTo.(min.(size(a), sz))...]
         @unpack material, thickness = v
 
@@ -69,7 +70,7 @@ function picrun(path; array=Array, kw...)
 
         ϵ = matprops(material).ϵ |> Nf
         ϵmin = min(ϵ, ϵmin) |> Nf
-        ϵ3[I...] .*= 1N4f4 - a
+        ϵ3[I...] .*= 1 - a
         ϵ3[I...] .+= a .* ϵ
     end
     ϵ3 = max.(ϵmin, ϵ3)
