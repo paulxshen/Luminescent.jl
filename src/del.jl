@@ -10,15 +10,6 @@ function diffpad(a, vl, vr=vl; dims=1, diff=diff, autodiff=true)
     l = !isnothing(vl)
     r = !isnothing(vr)
 
-
-    if autodiff
-        # b = Buffer(a, sz)
-        b = diff(a; dims)
-    else
-        sz = Tuple(size(a) + (l + r - 1) * sel)
-        b = similar(a, sz)
-    end
-
     # @time b[range.(l * sel + 1, sz - r * sel)...] = diff(a; dims)
     # @time pad!(b, vl, l * sel, 0)
     # @time pad!(b, vr, 0, r * sel)
@@ -26,12 +17,13 @@ function diffpad(a, vl, vr=vl; dims=1, diff=diff, autodiff=true)
 
     # if vl ∈ (0, nothing) && vr ∈ (0, nothing)
     if autodiff
-        b = pad(b, vl, l * sel, 0)
-        b = pad(b, vr, 0, r * sel)
+        b = diff(a; dims)
+        b = pad(b, vl, vr, l * sel, r * sel)
     else
+        sz = Tuple(size(a) + (l + r - 1) * sel)
+        b = similar(a, sz)
         b[range.(l * sel + 1, sz - r * sel)...] = diff(a; dims)
-        pad!(b, vl, l * sel, 0)
-        pad!(b, vr, 0, r * sel)
+        pad!(b, vl, vr, l * sel, r * sel)
     end
     @assert typeof(b) == typeof(a)
     b
@@ -72,7 +64,7 @@ function LinearAlgebra.cross(m::Del, v)
 end
 
 function delcross(diff, Δs, ps, as)
-    autodiff = !haskey(ENV, "autodiff") || ENV["autodiff"] == "1"
+    autodiff = AUTODIFF()
 
 
     _diffpad(a, p, dims) = diffpad(a, p...; dims, diff, autodiff)

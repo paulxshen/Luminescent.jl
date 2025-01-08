@@ -127,8 +127,8 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
     dx = deltas[1][1]
     @unpack λmodenums, λmodes = specs
     if !isnothing(λmodenums)
-        start = round((center3 + lb3) / dl)
-        stop = round((center3 + ub3) / dl)
+        start = round((center3 + lb3) / dl + 0.001)
+        stop = round((center3 + ub3) / dl + 0.001)
         start, stop = min.(start, stop), max.(start, stop)
 
         sel = abs.(stop - start) .>= 0.001

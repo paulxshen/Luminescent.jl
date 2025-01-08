@@ -48,19 +48,37 @@ function picrun(path; array=Array, kw...)
     sz = round.(L / dl)
 
     GC.gc(true)
-    Nf = study == "inverse_design" ? F : Float16
+    if AUTODIFF()
+        Nf = F
+    else
+        # Nf = [Bool, UInt8][findfirst(>=(length(enum), 2 .^ [1, 8]))]
+        Nf = Float16
+    end
+    enum = [matprops(v.material).ϵ |> F for v = values(layer_stack)] |> unique |> sort
+    ϵmin = minimum(enum) |> Nf
+    # if AUTODIFF()
     ϵ3 = zeros(Nf, Tuple(sz))
+    # else
+    #     ϵ3 = SparseArrays.zeros(Nf, Tuple(sz))
+    # end
+    # @show Nf
     layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2].mesh_order) |> OrderedDict
-    ϵmin = 100
     for (k, v) = pairs(layer_stack)
+        @unpack material, thickness = v
+        ϵ = matprops(material).ϵ |> Nf
+        # if AUTODIFF() || ϵ != ϵmin
         a = stack(map(sort(collect(readdir(joinpath(temp, string(k)), join=true)))) do file
-            a = Nf.(Gray.(FileIO.load(file)))
+            a = Nf.(Bool.(FileIO.load(file)))
             a = downsample(a, 2)
-            reverse(a', dims=2)
+            a = reverse(a', dims=2)
+            # if !AUTODIFF()
+            #     a = sparse(a)
+            # end
+            a
         end)
         a = downsample(a, (1, 1, 2))
+        # @show typeof(a)
         # a = a[Base.OneTo.(min.(size(a), sz))...]
-        @unpack material, thickness = v
 
         start = 1 + round.([(v.origin / dl)..., (v.zmin - zmin) / dl])
         I = range.(start, start + size(a) - 1)
@@ -68,14 +86,14 @@ function picrun(path; array=Array, kw...)
         a = a[Base.oneto.(size(a) - overhang)...]
         I = range.(start, start + size(a) - 1)
 
-        ϵ = matprops(material).ϵ |> Nf
-        ϵmin = min(ϵ, ϵmin) |> Nf
         ϵ3[I...] .*= 1 - a
         ϵ3[I...] .+= a .* ϵ
+        # end
     end
     ϵ3 = max.(ϵmin, ϵ3)
     # @show eltype(ϵ3)
     @assert eltype(ϵ3) == Nf
+    # @show typeof(ϵ3)
     GC.gc(true)
 
     ϵ2 = ϵ3[:, :, 1+round((zcenter - zmin) / dl)]

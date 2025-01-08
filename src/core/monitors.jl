@@ -80,17 +80,40 @@ function MonitorInstance(m::Monitor, g, ϵ, temp, mode_solutions=nothing)
     @unpack lb, ub, center, dimsperm, specs, N, center3, lb3, ub3, approx_2D_mode, tags = m
     @unpack deltas, deltas3, field_lims, F, mode_spacing, dl = g
 
+    start = v2i(center + lb - g.lb, deltas)
+    stop = v2i(center + ub - g.lb, deltas)
+    start, stop = min.(start, stop), max.(start, stop)
+
+    sel = abs.(stop - start) .>= 1e-3
+    stop[!sel] .= start[!sel]
+    start += 0.5sel
+    stop -= 0.5sel
+    start = F(start)
+    stop = F(stop)
+    len = int(stop - start + 1)
+
+    roi = dict([k => begin
+        range.(start, stop, len) - lr[:, 1] + 1
+    end for (k, lr) = pairs(field_lims)])
+    _center = round(v2i(center - g.lb, deltas) + 0.5)
+    #  center, g.lb, _center
+
+
     dx = deltas[1][1]
+
     @unpack λmodenums, λmodes = specs
     if !isnothing(λmodenums)
-        start = round((center3 + lb3) / dl)
-        stop = round((center3 + ub3) / dl)
+        start = round((center3 + lb3) / dl + 0.001)
+        stop = round((center3 + ub3) / dl + 0.001)
         start, stop = min.(start, stop), max.(start, stop)
 
         sel = abs.(stop - start) .>= 0.001
-        stop[!sel] .= start[!sel]
         start += 0.5sel
         stop -= 0.5sel
+
+        ratio = int(dx / dl)
+        stop[1:N] = sel[1:N] .* (ratio * len - 1) + start[1:N]
+        start, stop
 
         start += 0.5
         stop += 0.5
@@ -103,23 +126,6 @@ function MonitorInstance(m::Monitor, g, ϵ, temp, mode_solutions=nothing)
             λmodes = kmap(v -> collapse_mode.(v, approx_2D_mode), λmodes)
         end
     end
-
-    start = v2i(center + lb - g.lb, deltas)
-    stop = v2i(center + ub - g.lb, deltas)
-    start, stop = min.(start, stop), max.(start, stop)
-
-    sel = abs.(stop - start) .>= 1e-3
-    stop[!sel] .= start[!sel]
-    start += 0.5sel
-    stop -= 0.5sel
-    start = F(start)
-    stop = F(stop)
-
-    roi = dict([k => begin
-        range.(start, stop, int(stop - start + 1)) - lr[:, 1] + 1
-    end for (k, lr) = pairs(field_lims)])
-    _center = round(v2i(center - g.lb, deltas) + 0.5)
-    # @show center, g.lb, _center
 
     MonitorInstance(roi, nothing, dimsperm, deltas, _center, fmap(x -> convert.(complex(F), x), λmodes), tags)
 end

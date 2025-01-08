@@ -11,6 +11,7 @@ dl = data["dl"]
 neigs = data["neigs"]
 
 m, n = eps.shape
+# print(m, n)
 m += 1
 n += 1
 x = np.linspace(0.5*dl, (m-.5)*dl, m)
@@ -29,4 +30,5 @@ modes = [{k: m.get_field(k, x, y) for k in [
     "Ex", "Ey", "Ez", "Hx", "Hy", "Hz"]} for m in solver.modes]
 neffs = [np.real(m.neff) for m in solver.modes]
 for i, mode in enumerate(modes):
+    # print(mode["Ex"].shape)
     np.savez(os.path.join(path, f'mode{i}.npz'), **modes[i])

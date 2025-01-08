@@ -312,7 +312,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
             Tss *= ceil(Tssmin / Tss)
         end
     end
-    # Tss *= 4
+    Tss = max(Tss, Tssmin)
     @show Ttrans, Tss
     Ttrans, Tss = convert.(F, (Ttrans, Tss))
     prob = (;
