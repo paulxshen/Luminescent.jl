@@ -71,7 +71,7 @@ function solve(prob, ;
     init = (us0, p, (dt, field_diffdeltas, field_diffpadvals, source_instances))
 
     ts = 0:dt:T[1]-F(0.001)
-    @nogradvars init, ts
+    @nogradvars ts
 
     @ignore_derivatives delete!(ENV, "t0")
 
