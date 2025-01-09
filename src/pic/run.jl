@@ -126,7 +126,7 @@ function picrun(path; array=Array, kw...)
                 frame = frame .>= 0.99maximum(frame)
                 # frame = nothing
                 start = round((bbox[1] - lb) / dl + 1)
-                b = Blob(szd; solid_frac=0.95, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start)
+                b = Blob(szd; solid_frac=1.0, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start, morph=false)
                 display(heatmap(b.frame))
 
                 if !isnothing(sol) && !restart
@@ -224,12 +224,12 @@ function picrun(path; array=Array, kw...)
         end
         model = models[1]
         minchange = 0.001
-        maxchange = max(5minchange, 1.2jump(model) / prod(size(model)))
+        maxchange = max(4minchange, holesize(model) / prod(size(model)))
         global opt = AreaChangeOptimiser(model;
             minchange,
             maxchange,
             # opt=Adam(1, (0.8, 0.9)), 
-            opt=Momentum(1, 0.5),
+            opt=Momentum(1, 0),
         )
         opt_state = Flux.setup(opt, model)
         # error("not implemented")
@@ -358,7 +358,7 @@ function picrun(path; array=Array, kw...)
                 break
             end
             opt.minchange = minchange * (1 + 1l)
-            opt.maxchange = maxchange * (1 + 4l)
+            opt.maxchange = maxchange * (1 + 2l)
             Jello.update_loss!(opt, l)
             Flux.update!(opt_state, model, dldm)# |> gpu)
             GC.gc()
