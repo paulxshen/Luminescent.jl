@@ -92,7 +92,6 @@ def make_pic_sim_prob(path, c: gf.Component, nres,
                  runs=runs,
                  layer_stack=layer_stack, **kwargs)
     prob["wavelengths"] = wavelengths
-    prob["Ttrans"] = None
     prob["Tss"] = T if len(wavelengths) > 1 else None
     save_prob(prob, path)
     return prob

@@ -30,7 +30,7 @@ function picrun(path; array=Array, kw...)
         println("Float16 selected. make sure your cpu or GPU supports it. otherwise will be emulated and very slow.")
     end
     println("using $F")
-    λ = wl
+    @show λ = wl
     ticks = [
         begin
             round((v - v[1]) / dl)
@@ -126,7 +126,7 @@ function picrun(path; array=Array, kw...)
                 frame = frame .>= 0.99maximum(frame)
                 # frame = nothing
                 start = round((bbox[1] - lb) / dl + 1)
-                b = Blob(szd; solid_frac=1.0, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start, morph=false)
+                b = Blob(szd; solid_frac=1, lsolid=lsolid / dl, lvoid=lvoid / dl, symmetries, F, frame, start, morph=false)
                 display(heatmap(b.frame))
 
                 if !isnothing(sol) && !restart
@@ -223,13 +223,14 @@ function picrun(path; array=Array, kw...)
             end
         end
         model = models[1]
-        minchange = 0.001
-        maxchange = max(4minchange, holesize(model) / prod(size(model)))
-        global opt = AreaChangeOptimiser(model;
-            minchange,
-            maxchange,
+        # minchange = 0.001
+        # maxchange = max(4minchange, holesize(model) / prod(size(model)))
+        global opt = AreaChangeOptimiser(
+            model;
+            # minchange,
+            # maxchange,
             # opt=Adam(1, (0.8, 0.9)), 
-            opt=Momentum(1, 0),
+            opt=Momentum(1, 0.7),
         )
         opt_state = Flux.setup(opt, model)
         # error("not implemented")
@@ -270,7 +271,7 @@ function picrun(path; array=Array, kw...)
                     l = 0
                     for k = keys(targets)
                         y = targets[k]
-                        err = -
+                        err = (x, y) -> abs(x - y)
                         if :phasediff == k
                             yhat = namedtuple([
                                 _λ => namedtuple([
@@ -300,16 +301,20 @@ function picrun(path; array=Array, kw...)
                             # global a1 = S, y
                             yhat = [[yhat(_λ)(k) for k = keys(y[_λ])] for _λ = keys(y)]
                             yhat = flatten(yhat)
+                            # println("yhat: $yhat")
                             y = flatten(y)
+                            # println("y: $y")
                             Z = sum(abs, y)
                         end
-                        _l = sum(err.(yhat, y) / Z,) do x
-                            abs(x)
-                        end
-                        println("$(k) loss: $_l ")
-                        l += _l
+                        # _l = sum(,) do x
+                        #     (x) + x^2
+                        # end
+                        v = err.(yhat, y) / Z
+                        println("$(k) losses: $v ")
+                        # v = v .* @ignore_derivatives softmax(20v) * length(v)
+                        l += sum(v)
                     end
-                    # println("$l\n")
+                    println("modified total loss: $l\n")
                     println()
                     l
                 end
@@ -357,8 +362,9 @@ function picrun(path; array=Array, kw...)
             if stop
                 break
             end
-            opt.minchange = minchange * (1 + 1l)
-            opt.maxchange = maxchange * (1 + 2l)
+            # opt.minchange = i == 1 ? 0.1 : 0.001
+            opt.minchange = max(0.001, 0.02l^2)
+            # opt.maxchange = maxchange * (1 + 2l)
             Jello.update_loss!(opt, l)
             Flux.update!(opt_state, model, dldm)# |> gpu)
             GC.gc()

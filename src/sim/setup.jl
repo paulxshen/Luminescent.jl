@@ -293,26 +293,27 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     else
         10
     end
-    if Ttrans == nothing
-        Ttrans = sum(L * nmax)
+    if !isa(Ttrans, Real)
+        if endswith(string(Ttrans), "x")
+            Ttrans = parse(F, Ttrans[1:end-1])
+        else
+            Ttrans = 1
+        end
+        Ttrans *= sum(L * nmax)
     end
     if Tss == nothing
-        if isempty(monitors)
+        v = reduce(vcat, wavelengths.(monitor_instances))
+        v = Base.round.(v, digits=3)
+        v = v |> Set |> collect |> sort |> reverse
+        @show v
+        if length(v) == 1
             Tss = 1
         else
-            v = reduce(vcat, wavelengths.(monitor_instances))
-            v = Base.round.(v, digits=3)
-            v = v |> Set |> collect |> sort |> reverse
-            if length(v) == 1
-                Tss = 1
-            else
-                Tss = 1 / minimum(diff([0, (1 ./ v)...]))
-                # Tss = ceil(100 / T) * T
-            end
-            Tss *= ceil(Tssmin / Tss)
+            Tss = 1 / minimum(diff([0, (1 ./ v)...]))
+            # Tss = ceil(100 / T) * T
         end
     end
-    Tss = max(Tss, Tssmin)
+    Tss *= Base.ceil(Int, Tssmin / Tss)
     @show Ttrans, Tss
     Ttrans, Tss = convert.(F, (Ttrans, Tss))
     prob = (;
@@ -338,7 +339,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     end
     prob.grid[:field_diffdeltas] = _gpu.(prob.grid[:field_diffdeltas])
     prob._geometry[:ϵ] = cpu(prob._geometry.ϵ)
-
+    global _prob = prob
     prob
 end
 update = update

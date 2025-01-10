@@ -36,6 +36,7 @@ def setup(path, c, study, nres, wl,
           gpu=None, dtype=np.float32,
           plot=False, framerate=0,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None,
+          Ttrans=None,
           approx_2D_mode=False):
     prob = dict()
     if approx_2D_mode:
@@ -50,6 +51,7 @@ def setup(path, c, study, nres, wl,
     dl = dx/ratio
     dz = 1 * dx
 
+    prob["Ttrans"] = Ttrans
     prob["path"] = path
     prob["name"] = name
     prob["wl"] = wl

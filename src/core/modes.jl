@@ -45,14 +45,9 @@ end
 
 function collapse_mode(m, p=:TE)
     p = Symbol(p)
-    # @unpack Ex, Ey, Ez, Hx, Hy, Hz = m
-    # Ex, Ey, Ez, Hx, Hy, Hz = map([Ex, Ey, Ez, Hx, Hy, Hz]) do a
-    #     mean(a, dims=2) |> vec
-    # end
     m = kmap(m) do a
         mean(a, dims=2) |> vec
     end
-    # (; Ex, Hy, Ez), sum(E .* ϵ, dims=2) ./ sum(E, dims=2) |> vec
     if p == :TE
         (; Ex=m.Ex, Hy=m.Hy, Dx=m.Dx)
     elseif p == :TM
