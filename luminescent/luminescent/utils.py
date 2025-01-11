@@ -145,7 +145,7 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
             os.makedirs(dir, exist_ok=True)
             with contextlib.redirect_stdout(None):
                 stltovoxel.convert_file(
-                    os.path.join(path, f'{k}_{l1}_{l2}.stl'), os.path.join(dir, 'output.png'), voxel_size=dl/2, pad=0)
+                    os.path.join(path, f'{k}_{l1}_{l2}.stl'), os.path.join(dir, 'output.png'), voxel_size=dl, pad=0)
                 layer_stack_info[k] = {
                     "layer": (l1, l2),
                     "zmin": d.zmin,

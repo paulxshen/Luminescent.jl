@@ -69,14 +69,14 @@ function picrun(path; array=Array, kw...)
         # if AUTODIFF() || ϵ != ϵmin
         a = stack(map(sort(collect(readdir(joinpath(temp, string(k)), join=true)))) do file
             a = Nf.(Bool.(FileIO.load(file)))
-            a = downsample(a, 2)
+            # a = downsample(a, 2)
             a = reverse(a', dims=2)
             # if !AUTODIFF()
             #     a = sparse(a)
             # end
             a
         end)
-        a = downsample(a, (1, 1, 2))
+        # a = downsample(a, (1, 1, 2))
         # @show typeof(a)
         # a = a[Base.OneTo.(min.(size(a), sz))...]
 
@@ -367,7 +367,7 @@ function picrun(path; array=Array, kw...)
             # opt.maxchange = maxchange * (1 + 2l)
             Jello.update_loss!(opt, l)
             Flux.update!(opt_state, model, dldm)# |> gpu)
-            GC.gc()
+            GC.gc(true)
             println("====\n")
 
         end

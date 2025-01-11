@@ -40,15 +40,13 @@ def setup(path, c, study, nres, wl,
           approx_2D_mode=False):
     prob = dict()
     if approx_2D_mode:
-        ratio = 4
         N = 2
         prob["approx_2D_mode"] = approx_2D_mode
     else:
-        ratio = 4
         N = 3
         prob["approx_2D_mode"] = None
     dy = dx = wl/nres
-    dl = dx/ratio
+    dl = dx/4
     dz = 1 * dx
 
     prob["Ttrans"] = Ttrans
@@ -59,7 +57,8 @@ def setup(path, c, study, nres, wl,
     prob["dy"] = dy
     prob["dz"] = dz
     prob["dl"] = dl
-    prob["ratio"] = ratio
+    # ratio =
+    # prob["ratio"] = ratio
     prob["dtype"] = str(dtype)
     prob["timestamp"] = datetime.datetime.now().isoformat(
         timespec="seconds").replace(":", "-")

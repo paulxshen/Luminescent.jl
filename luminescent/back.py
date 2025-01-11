@@ -13,5 +13,4 @@ targets = {"tparams": {
 lumi.make_pic_inv_prob(
     path,  c, targets,
     lvoid=0.2, iters=2, nres=15,
-    approx_2D_mode="TE", gpu="CUDA",)
-lumi.solve(path, dev=True)
+    approx_2D_mode="TE")
