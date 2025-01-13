@@ -7,7 +7,8 @@ function diffpad(a, vl, vr=vl; dims=1, diff=diff, autodiff=true)
     # @assert all(!isnan, a)
 
     sel = 1:ndims(a) .== dims
-
+    l = !isnothing(vl)
+    r = !isnothing(vr)
     # @time b[range.(l * sel + 1, sz - r * sel)...] = diff(a; dims)
     # @time pad!(b, vl, l * sel, 0)
     # @time pad!(b, vr, 0, r * sel)
