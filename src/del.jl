@@ -14,8 +14,8 @@ function diffpad(a, vl, vr=vl; dims=1, diff=diff, autodiff=true)
     # println()
 
     if autodiff
-        vl ∈ (0, nothing) && @nogradvars vl
-        vr ∈ (0, nothing) && @nogradvars vr
+        vl ∈ (0, nothing) && @nograd vl
+        vr ∈ (0, nothing) && @nograd vr
         b = diff(a; dims)
         b = pad(b, vl, vr, l * sel, r * sel)
     else
