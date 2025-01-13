@@ -145,3 +145,15 @@ def load_res(path, show=True):
         pprint(_sol)
 
     return sol
+
+
+def finetune(path, iters, **kwargs):
+    fn = os.path.join(path, "problem.json")
+    prob = json.loads(open(fn, "rb").read())
+    prob["iters"] = iters
+    prob["path"] = path
+    prob["restart"] = False
+    prob = {**prob, **kwargs}
+    with open(fn, 'w') as f:
+        json.dump(prob, f)
+    return solve(path)

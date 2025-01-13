@@ -190,15 +190,22 @@ def wavelength_range(center, bandwidth, length=3):
     return sorted([1/x for x in np.linspace(f1, f2, length).tolist()])
 
 
-def adjust_wavelengths(wavelengths):
+def adjust_wavelengths(wavelengths, wl_res=.05):
+    wavelengths0 = copy.deepcopy(wavelengths)
     if len(wavelengths) == 1:
         return wavelengths, wavelengths[0], 1
     wavelengths = sorted(set(wavelengths), reverse=True)
-    wl = wavelengths[round((len(wavelengths)-1)/2)]
+    wl = wavelengths[round((len(wavelengths)-1)/2-.1)]
     freqs = [wl/w for w in wavelengths]
     nresfreq = round(1/min(np.diff([0]+freqs)))
-    freqs = [round(f*nresfreq)/nresfreq for f in freqs]
-    wavelengths = [wl/f for f in reversed(freqs)]
+
+    while True:
+        freqs = [round(f*nresfreq)/nresfreq for f in freqs]
+
+        wavelengths = [wl/f for f in reversed(freqs)]
+        if max([abs(w-w0) for w, w0 in zip(wavelengths, wavelengths0)]) <= wl_res:
+            break
+        nresfreq += 1
     print(
         f"wavelengths has been adjusted to facilitate simulation:\n{wavelengths}")
     return wavelengths, wl, nresfreq

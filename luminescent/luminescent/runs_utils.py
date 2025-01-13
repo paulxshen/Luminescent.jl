@@ -28,15 +28,6 @@ def lastrun(name="", wd=os.path.join(os.getcwd(), "runs"), study="",  **kwargs):
     return l[0]
 
 
-def finetune(path, iters, **kwargs):
-    prob = json.loads(open(os.path.join(path, "problem.json"), "rb").read())
-    prob["iters"] = iters
-    prob["path"] = path
-    prob["restart"] = False
-    prob = {**prob, **kwargs}
-    return solve(path)
-
-
 def load_prob(path):
     path = os.path.abspath(path)
     print(f"loading problem from {path}")

@@ -7,16 +7,15 @@ function diffpad(a, vl, vr=vl; dims=1, diff=diff, autodiff=true)
     # @assert all(!isnan, a)
 
     sel = 1:ndims(a) .== dims
-    l = !isnothing(vl)
-    r = !isnothing(vr)
 
     # @time b[range.(l * sel + 1, sz - r * sel)...] = diff(a; dims)
     # @time pad!(b, vl, l * sel, 0)
     # @time pad!(b, vr, 0, r * sel)
     # println()
 
-    # if vl ∈ (0, nothing) && vr ∈ (0, nothing)
     if autodiff
+        vl ∈ (0, nothing) && @nogradvars vl
+        vr ∈ (0, nothing) && @nogradvars vr
         b = diff(a; dims)
         b = pad(b, vl, vr, l * sel, r * sel)
     else
@@ -65,7 +64,7 @@ end
 
 function delcross(diff, Δs, ps, as)
     autodiff = AUTODIFF()
-
+    @nograd Δs
 
     _diffpad(a, p, dims) = diffpad(a, p...; dims, diff, autodiff)
     N = ndims(as(1))

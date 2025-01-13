@@ -148,7 +148,7 @@ Args
 - `m`
 """
 function field(a::AbstractArray, k, m)
-    @nogradvars k, m
+    @nograd k, m
     getindexf(a, m.roi[k]...)#; approx=true)
     # permutedims(getindexf(a, m.roi[k]...), p)
 end

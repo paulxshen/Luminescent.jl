@@ -12,7 +12,7 @@ mirror_mode(m) = namedtuple([k =>
 
 # function normalize_mode(m, deltas)
 function inner(u, v, deltas)
-    @nogradvars deltas
+    @nograd deltas
     p = 0
     p += conj(u(:Ex, 0)) ⊙ v(:Hy, 0)
     p -= conj(u(:Ey, 0)) ⊙ v(:Hx, 0)
@@ -30,7 +30,7 @@ end
 
 
 function mode_decomp(m, u, deltas)
-    @nogradvars deltas, m
+    @nograd deltas, m
     p = inner(m, m, deltas)
     @assert imag(p) < 1e-3
     p = real(p)

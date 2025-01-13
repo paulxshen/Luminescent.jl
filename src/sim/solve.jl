@@ -27,7 +27,7 @@ function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instan
             [
                 begin
                     c = dt / T * cispi(-2(t - t0) / λ)
-                    @nogradvars c
+                    @nograd c
                     c * um
                 end for λ = wavelengths(m)
             ]
@@ -41,7 +41,7 @@ function solve(prob, ;
     @unpack mode_deltas, approx_2D_mode, dt, u0, geometry, _geometry, source_instances, monitor_instances, Ttrans, Tss, ϵeff, array = prob
     @unpack F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = prob.grid
 
-    @nogradvars mode_deltas, dt, u0, source_instances, monitor_instances, Ttrans, Tss, ϵeff, F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts
+    @nograd mode_deltas, dt, u0, source_instances, monitor_instances, Ttrans, Tss, ϵeff, F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts
 
     p = geometry
     _p = _geometry
@@ -71,7 +71,7 @@ function solve(prob, ;
     init = (us0, p, (dt, field_diffdeltas, field_diffpadvals, source_instances))
 
     ts = 0:dt:T[1]-F(0.001)
-    @nogradvars ts
+    @nograd ts
 
     @ignore_derivatives delete!(ENV, "t0")
 
@@ -100,7 +100,7 @@ function solve(prob, ;
     end
     ts = ts[end]+dt:dt:T[2]-F(0.001)
     init = ((u, 0), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (T[2], durations[2], monitor_instances))
-    @nogradvars ts
+    @nograd ts
 
 
     println("accumulating dft fields...")
@@ -120,7 +120,7 @@ function solve(prob, ;
     ulims = 0
     # @assert all([all(!isnan, a) for a = u])
 
-    @nogradvars monitor_instances
+    @nograd monitor_instances
     v = map(mf, monitor_instances) do mf, m
         map(mf, wavelengths(m)) do u, λ
             dftfields = permutexyz(u, m.dimsperm, N)

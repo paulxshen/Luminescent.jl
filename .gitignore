@@ -1,9 +1,10 @@
-temp*
+# temp*
 build
-/build/precompile_*
+# /build/precompile_*
+dump
 /temp
-*/temp
-/_temp
+# */temp
+# /_temp
 /recycle
 /.venv
 /*.gif
