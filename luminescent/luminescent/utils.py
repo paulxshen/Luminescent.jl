@@ -1,5 +1,6 @@
 import json
 import contextlib
+from statistics import median
 from .constants import *
 import gdsfactory as gf
 from gdsfactory.cross_section import Section
@@ -195,7 +196,7 @@ def adjust_wavelengths(wavelengths, wl_res=.05):
     if len(wavelengths) == 1:
         return wavelengths, wavelengths[0], 1
     wavelengths = sorted(set(wavelengths), reverse=True)
-    wl = wavelengths[round((len(wavelengths)-1)/2-.1)]
+    wl = median(wavelengths)
     freqs = [wl/w for w in wavelengths]
     nresfreq = round(1/min(np.diff([0]+freqs)))
 
