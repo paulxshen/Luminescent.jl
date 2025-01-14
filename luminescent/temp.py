@@ -55,19 +55,19 @@
 # sol = lumi.load_res(path)
 
 
+# 30G RAM
 import os
 import luminescent as lumi
 
-path = os.path.join("runs", "splitter")
-c = lumi.mimo(west=1, east=2, l=4.0, w=2.0, wwg=.5, taper=.05, )
-targets = {
-    "tparams": {1.55: {"2,1": 0.5}},
-}
+path = os.path.join("runs", "demux")
+c = lumi.mimo(west=1, east=1, south=1, l=4.0, w=4.0, wwg=.5, taper=0.05)
+targets = {"tparams": {
+    1.2: {"3,1": 1.0},
+    1.80: {"2,1": 1.0},
+}}
 
 lumi.make_pic_inv_prob(
     path, c, targets,
-    nres=15,  symmetries=[1],
-    lvoid=0.2, lsolid=.1,
-    iters=50, stoploss=.05,
-    approx_2D_mode="TE")  # ,dtype="float16")#,gpu="CUDA")
+    lvoid=0.15, lsolid=0.1, nres=30,
+    approx_2D_mode="TE", stoploss=.1, iters=200, dtype="float16")  # ,gpu="CUDA")
 lumi.solve(path)

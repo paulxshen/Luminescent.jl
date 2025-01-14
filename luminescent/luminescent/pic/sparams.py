@@ -18,6 +18,7 @@ def make_pic_sim_prob(path, c: gf.Component, nres,
                       study="sparams",
 
                       wavelength=None,
+                      wl_res=.01,
                       **kwargs):
     if wavelength:
         raise ValueError("wavelength is deprecated, use wavelengths instead")
@@ -36,7 +37,7 @@ def make_pic_sim_prob(path, c: gf.Component, nres,
             wavelengths = [wavelengths]
         else:
             wavelengths = wavelengths
-        wavelengths, wl, T = adjust_wavelengths(wavelengths)
+        wavelengths, wl, T = adjust_wavelengths(wavelengths, wl_res)
         for w in wavelengths:
             for k in keys:
                 entries.append([w, *unpack_sparam_key(k)])
