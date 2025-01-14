@@ -1,3 +1,4 @@
+using CUDA
 function picrun(path)
     PROB_PATH = joinpath(path, "problem.json")
     prob = JSON.parse(read(open(PROB_PATH), String); dicttype=OrderedDict)
