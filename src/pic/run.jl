@@ -1,4 +1,18 @@
-function picrun(path; array=Array, kw...)
+function picrun(path)
+    PROB_PATH = joinpath(path, "problem.json")
+    prob = JSON.parse(read(open(PROB_PATH), String); dicttype=OrderedDict)
+    gpu_backend = prob["gpu_backend"]
+    array = if isnothing(gpu_backend)
+        println("using CPU")
+        Array
+    else
+        println("using $gpu_backend")
+        cu
+    end
+    picrun(path, array)
+end
+
+function picrun(path, array; kw...)
     Random.seed!(1)
     ENV["autodiff"] = "0"
     println("setting up simulation...")
@@ -13,7 +27,7 @@ function picrun(path; array=Array, kw...)
     for (k, v) = pairs(kw)
         prob[string(k)] = v
     end
-    @unpack name, N, approx_2D_mode, dtype, wl, xmargin, ymargin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, gpu_backend, magic, framerate, layer_stack, matprops, L, Ttrans, Tss = prob
+    @unpack name, N, approx_2D_mode, dtype, wl, xmargin, ymargin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, magic, framerate, layer_stack, matprops, L, Ttrans, Tss = prob
     if study == "inverse_design"
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end

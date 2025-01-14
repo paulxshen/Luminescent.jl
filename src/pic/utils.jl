@@ -1,10 +1,16 @@
 
-function julia_main()::Cint
+function lumi()::Cint
     if !isempty(ARGS)
         picrun(ARGS[1])
     end
     return 0
 end
+# function lumicu()::Cint
+#     if !isempty(ARGS)
+#         picrun(ARGS[1]; array=cu)
+#     end
+#     return 0
+# end
 
 function lastrun(name=nothing; study=nothing, wd=joinpath(pwd(), "runs"))
     if !isnothing(name)

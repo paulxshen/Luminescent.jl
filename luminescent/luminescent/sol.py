@@ -59,26 +59,14 @@ def solve(path, dev=False):
     # else:
     #     env = '0;'
     # cmd = ["lumi", path]
-    gpu_backend = prob["gpu_backend"]
-    if gpu_backend:
-        try:
-            subprocess.check_output('nvidia-smi')
-            print('Nvidia GPU detected!')
-        except Exception:  # this command not being found can raise quite a few different errors depending on the configuration
-            print("GPU selected but is not available. using CPU instead.")
-            gpu_backend = None
-    if not gpu_backend:
-        cmd = ["julia", "-e", f'using Luminescent;picrun(raw"{path}")']
-    else:
-        print(f"using {gpu_backend} backend.")
-        if gpu_backend == "CUDA":
-            cmd = ["julia", "-e",
-                   f'using Luminescent,CUDA;@assert CUDA.functional();picrun(raw"{path}";array=cu)']
-
-    run(["julia", "-e", f'println(Base.active_project())'])
-    print("no fdtd binaries found - starting julia session to compile fdtd code - will take 5 mins - can take a break and come back :) ...")
-
-    run(cmd)
+    try:
+        run(["lumi", path])
+    except:
+        a = ['juila', '-e', ]
+        run(["julia", "-e", f'println(Base.active_project())'])
+        print("no fdtd binaries found - starting julia session to compile fdtd code - will take 5 mins - can take a break and come back :) ...")
+        b = [f'using Luminescent;picrun(raw"{path}")']
+        run(a+b)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:
     #     if p.stderr is not None:

@@ -12,9 +12,10 @@ Random.seed!(1234)
 # picrun(joinpath("runs", "splitter"); array=cu)
 # picrun(joinpath("runs", "splitter"))
 
-# picrun(joinpath("runs", "tiny"); array=cu)
+picrun(joinpath("build", "precompile_execution", "tiny"))
+picrun(joinpath("build", "precompile_execution", "tinycu"))
 # picrun(joinpath("runs", "tiny3"))
-picrun(joinpath("runs", "back"))# array=cu)
+# picrun(joinpath("runs", "back"))# array=cu)
 # models[1]()
 
 # picrun(joinpath("runs", "demux"))
