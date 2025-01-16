@@ -4,11 +4,7 @@ ENV["JULIA_SSL_CA_ROOTS_PATH"] = ""
 create_app(".", "../LuminescentAI",
     executables=[
         "lumi" => "lumi",
-        # "lumicu" => "lumicu",
-        #     "_1" => "julia_main1",
-        #     "_2" => "julia_main2",
     ],
     precompile_execution_file="build/precompile_app.jl",
-    # include_transitive_dependencies=false,
     force=true
 )
