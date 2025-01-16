@@ -24,6 +24,9 @@ function diffpad(a, vl, vr=vl; dims=1, diff=diff, autodiff=true)
         b = similar(a, sz)
         b[range.(l * sel + 1, sz - r * sel)...] = diff(a; dims)
         pad!(b, vl, vr, l * sel, r * sel)
+        # @time b[range.(l * sel + 1, sz - r * sel)...] = diff(a; dims)
+        # @time pad!(b, vl, vr, l * sel, r * sel)
+        # println()
     end
     @assert typeof(b) == typeof(a)
     b
