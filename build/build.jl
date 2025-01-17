@@ -7,5 +7,5 @@ create_app(".", "../LuminescentAI",
     ],
     precompile_execution_file="build/precompile_app.jl",
     force=true,
-    incremental=false,
+    # incremental=false,
 )
