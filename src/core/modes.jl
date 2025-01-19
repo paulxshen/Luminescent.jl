@@ -118,7 +118,11 @@ function solvemodes(ϵ, dl, λ, neigs, spacing, path; mode_solutions=nothing)
         end,
         "dl" => dl, "wl" => λ, "neigs" => neigs))
     fn = joinpath(path, "solvemodes.py")
-    run(`python $fn $path`)
+    try
+        run(`python $fn $path`)
+    catch e
+        run(`python3 $fn $path`)
+    end
     modes = [npzread(joinpath(path, "mode$(i-1).npz")) for i = 1:neigs]
     modes = [merge(mode, OrderedDict(["J$s" => mode["E$s"] .* ϵ for s = "xy"])) for mode in modes]
     global modes = [SortedDict([Symbol(k) => downsample(mode(k), spacing) for k = keys(mode) if string(k)[end] in "xy"]) |> pairs |> NamedTuple for mode in modes]
