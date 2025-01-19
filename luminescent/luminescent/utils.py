@@ -1,5 +1,6 @@
+import time
+import pymeshfix
 import json
-import contextlib
 from statistics import median
 from .constants import *
 import gdsfactory as gf
@@ -10,6 +11,7 @@ try:
     from IPython.display import display
 except ImportError:
     pass
+import pyvista as pv
 
 # from .picToGDS import main
 
@@ -17,7 +19,6 @@ from math import cos, pi, sin, tan
 import matplotlib.pyplot as plt
 import numpy as np
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
-import stltovoxel
 import copy
 import shutil
 # from gdsfactory import LAYER_VIEWS
@@ -117,12 +118,40 @@ def normal_from_orientation(orientation):
     return [cos(orientation/180*pi), sin(orientation/180*pi)]
 
 
+def stl_to_array(mesh: pv.PolyData, dl: float, bbox):
+    # x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
+    x_min,  y_min, z_min = bbox[0]
+    x_max, y_max, z_max = bbox[1]
+    x = np.linspace(x_min+dl/2, x_max-dl/2, round((x_max-x_min)/dl))
+    y = np.linspace(y_min+dl/2, y_max-dl/2, round((y_max-y_min)/dl))
+    z = np.linspace(z_min+dl/2, z_max-dl/2, round((z_max-z_min)/dl))
+    x, y, z = np.meshgrid(x, y, z)
+
+    # Create unstructured grid from the structured grid
+    grid = pv.StructuredGrid(x, y, z)
+    ugrid = pv.UnstructuredGrid(grid)
+
+    # Get part of the mesh within the mesh's bounding surface.
+    selection = ugrid.select_enclosed_points(
+        mesh.extract_surface(),
+        tolerance=dl/10,
+        check_surface=False,
+    )
+    mask = selection['SelectedPoints'].view(bool)
+    mask = mask.reshape(x.shape, order='F')
+    mask = np.array(mask)
+    return mask
+
+
 def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
     stacks = sum([[[v.mesh_order, v.material, tuple(layer), k]
                  for k, v in get_layers(layer_stack, layer, withkey=True)] for layer in layers], [])
 
     stacks = sorted(stacks, key=lambda x: -x[0])
     layer_stack_info = dict()
+    lb, ub = c.bbox_np()
+    # bbox = [[**lb, zmin], [**ub, zmax]]
+    bbox = [[lb[0], lb[1], zmin], [ub[0], ub[1], zmax]]
     for i, stack in enumerate(stacks):
         m = stack[1]
         l1, l2 = layer = stack[2]
@@ -138,23 +167,35 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
             d.thickness = min(zmax-d.zmin, d.thickness)
             # _d.bounds = (_d.zmin, _d.zmin+_d.thickness)
             origin = (c.extract([layer]).bbox_np()-c.bbox_np())[0].tolist()
-            gf.export.to_stl(c, os.path.join(
-                path, f"{k}.stl"), layer_stack=_layer_stack)
-            dir = os.path.join(path, k)
-            shutil.rmtree(dir, ignore_errors=True)
+            stlpath = os.path.abspath(os.path.join(path, f"{k}.stl"))
+            gf.export.to_stl(c, stlpath, layer_stack=_layer_stack,
+                             hull_invalid_polygons=True)
+            stlpath = os.path.join(path, f'{k}_{l1}_{l2}.stl')
 
-            os.makedirs(dir, exist_ok=True)
-            with contextlib.redirect_stdout(None):
-                stltovoxel.convert_file(
-                    os.path.join(path, f'{k}_{l1}_{l2}.stl'), os.path.join(dir, 'output.png'), voxel_size=dl, pad=0)
-                layer_stack_info[k] = {
-                    "layer": (l1, l2),
-                    "zmin": d.zmin,
-                    "thickness": d.thickness,
-                    "material": matname(m),
-                    "mesh_order": stack[0],
-                    "origin": origin,
-                }
+            pymeshfix.clean_from_file(stlpath, stlpath)
+            # # Load the STL file
+            # mesh = pymeshfix.PyTMesh()
+            # mesh.load_file(stlpath)
+
+            # # Repair the mesh
+            # mesh.fill_small_boundaries()
+            # mesh.clean()
+
+            # # Save the repaired mesh
+            # mesh.save_file(stlpath)
+
+            mesh = pv.read(stlpath)
+            im = stl_to_array(mesh, dl, bbox)
+            np.save(os.path.join(path, f'{k}.npy'), im)
+
+            layer_stack_info[k] = {
+                "layer": (l1, l2),
+                "zmin": d.zmin,
+                "thickness": d.thickness,
+                "material": matname(m),
+                "mesh_order": stack[0],
+                "origin": origin,
+            }
     return layer_stack_info
 
 

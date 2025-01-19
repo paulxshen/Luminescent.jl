@@ -7,7 +7,7 @@ function _aug(mode, N)
                 endswith(string(k), s)
             end
             # @show keys(mode), s, i
-            isnothing(i) ? (Symbol("D$s") => 0) : (keys(mode)[i] => mode[keys(mode)[i]])
+            isnothing(i) ? (Symbol("J$s") => 0) : (keys(mode)[i] => mode[keys(mode)[i]])
         end for s = "xyz"[1:N]
     ])
 end
@@ -15,10 +15,13 @@ end
 """
 """
 struct Source
-    specs
+    λmodenums
+    λsmode
+
+    λmodes
+
     center
-    lb
-    ub
+    L
     # normal
     # tangent
     # zaxis
@@ -27,8 +30,7 @@ struct Source
     N
     approx_2D_mode
     center3
-    lb3
-    ub3
+    L3
     tags
     # function Source(sigmodes, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; tags...)
     #     new(f, center, lb, ub, normal, tangent, E2J(mode), tags)
@@ -38,7 +40,8 @@ struct Source
     # end
 
 end
-Source(args...; λmodenums=nothing, λmodes=nothing, tags...) = Source((; λmodenums, λmodes), args..., tags)
+Source(args...; λmodenums=nothing, λmodes=nothing, λsmode=nothing, tags...) = Source(λmodenums, λmodes, λsmode, args..., tags)
+
 """
     function PlaneWave(f, dims; mode...)
 
@@ -105,10 +108,9 @@ Args
 
 struct SourceInstance
     sigmodes
-    o
+    # o
     center
-    dimsperm
-    ϵeff
+    # dimsperm
     tags
 end
 @functor SourceInstance (sigmodes,)
@@ -120,70 +122,13 @@ function SourceInstance(s::PlaneWave, g)
 end
 
 function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
-    @unpack center, lb, ub, tags, dimsperm, specs, N, center3, lb3, ub3, approx_2D_mode = s
-    @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, dl = g
+    @unpack dimsperm, N, tags = s
+    @unpack F, field_sizes = g
     C = complex(F)
     ϵeff = nothing
-    dx = deltas[1][1]
-    @unpack λmodenums, λmodes = specs
-    if !isnothing(λmodenums)
-        start = round((center3 + lb3) / dl + 0.001)
-        stop = round((center3 + ub3) / dl + 0.001)
-        start, stop = min.(start, stop), max.(start, stop)
+    λmodes, roi, _center = _get_λmodes(s, ϵ, temp, mode_solutions, g)
 
-        sel = abs.(stop - start) .>= 0.001
-        stop[!sel] .= start[!sel]
-        start += 0.5sel
-        stop -= 0.5sel
 
-        start += 0.5
-        stop += 0.5
-        start = F(start)
-        stop = F(stop)
-        len = int(stop - start + 1)
-
-        ϵmode = getindexf(ϵ, range.(start, stop, len)...;)
-        ϵmode = permutedims(ϵmode, dimsperm, 2)
-
-        # global _a = ϵmode, dimsperm
-        λmodes = OrderedDict([λ => begin
-            modes = solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp; mode_solutions)[mns+1]
-            if isnothing(ϵeff)
-                @unpack Ex, Ey = modes[1]
-                E = sqrt.(abs2.(Ex) + abs2.(Ey))
-                ϵ = downsample(ϵmode, mode_spacing)
-                D = sum(ϵ .* E, dims=2)
-                E = sum(E, dims=2)
-                ϵ = D ./ E
-                ϵmin, ϵmax = extrema(ϵmode)
-                # v = filter(v) do x
-                #     ϵmin <= x <= ϵmax
-                # end
-
-                # ϵeff = maximum(ϵmode) => ϵ[argmax(E)]
-                # ϵeff = maximum(ϵmode) => 0.8ϵmax + 0.2ϵmin
-                ϵeff = maximum(ϵmode) => ϵmax
-            end
-            modes
-        end for (λ, mns) = pairs(λmodenums)])
-        if N == 2
-            λmodes = kmap(v -> collapse_mode.(v, approx_2D_mode), λmodes)
-        end
-    end
-
-    start = v2i(center + lb - g.lb, deltas)
-    stop = v2i(center + ub - g.lb, deltas)
-    start, stop = min.(start, stop), max.(start, stop)
-
-    sel = abs.(stop - start) .>= 0.001
-    stop[!sel] .= start[!sel]
-    start += 0.5sel
-    stop -= 0.5sel
-
-    o = NamedTuple([k => F.(start - fl[:, 1] + 1) for (k, fl) = pairs(field_lims)])
-    λmodes = fmap(F, λmodes)
-
-    λmodes = sort(λmodes, by=kv -> kv[1])
     λs = @ignore_derivatives Array(keys(λmodes))
     modess = values(λmodes)
     iss = cluster(λs)
@@ -206,7 +151,7 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
             end
             f = x -> convert(C, _f(x))
 
-            mode = NamedTuple([k => v for (k, v) = pairs(mode) if startswith(string(k), "D")])
+            mode = NamedTuple([k => v for (k, v) = pairs(mode) if startswith(string(k), "J")])
 
             mode = permutexyz(mode, invperm(dimsperm), N)
             mode = _aug(mode, N)
@@ -218,8 +163,8 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
                 if b == 0
                     0
                 else
-                    I = range.(o[k], o[k] + size(b) - 1, size(b))
-                    global aaaa = a, b, mode, o, k, I
+                    I = roi[k]
+                    global aaaa = a, b, mode, k, I
                     setindexf!(a, b, I...)
                     a
                 end
@@ -227,11 +172,9 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
             (f, _mode)
         end for (sig, mode) = sigmodes
     ]
-    # error("stop")
-    _center = round(v2i(center - g.lb, deltas) + 0.5)
     # @show center, g.lb, _center
 
-    SourceInstance(sigmodes, o, _center, dimsperm, ϵeff, tags)
+    SourceInstance(sigmodes, _center, tags)
 end
 
 # Complex
@@ -251,85 +194,93 @@ end
 function EH2JM(d::T) where {T}
     dict(Pair.(replace(keys(d), :Ex => :Jx, :Ey => :Jy, :Ez => :Jz, :Hx => :Mx, :Hy => :My, :Hz => :Mz), values(d)))
 end
-# function EH2JM(d::NamedTuple)
-#     NamedTuple((d) |> pairs |> OrderedDict |> EH2JM |> pairs)
-# end
 
+function _get_λmodes(s, ϵ, temp, mode_solutions, g)
+    @unpack center, L, tags, dimsperm, N, center3, L3, approx_2D_mode, λmodenums, λmodes, λsmode = s
+    @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, dl = g
+    dx = deltas[1][1]
 
-# function SourceInstance(s::PlaneWave, deltas, field_sizes, common_left_pad_amount, fl, sz0; F=Float32)
-#     @unpack sigmodes, dims,  tags = s
-#     _F(x::Real) = F(x)
-#     _F(x::Complex) = ComplexF32(x)
-#     f = _F ∘ f
-#     d = length(common_left_pad_amount)
-#     g = OrderedDict([k => _F.(mode[k]) * ones([i == abs(dims) ? 1 : sz0[i] for i = 1:d]...) / deltas for k = keys(mode)])
-#     o = NamedTuple([k =>
-#         1 .+ fl[k] .+ (dims < 0 ? 0 : [i == abs(dims) ? field_sizes[k][i] - 1 : 0 for i = 1:d])
-#                     for k = keys(fl)])
-#     _mode = OrderedDict([k => place(zeros(F, field_sizes[k]), o[k], mode[k],) for k = keys(mode)])
-#     c = first(values(field_sizes)) .÷ 2
-#     SourceInstance(f, g, _mode, o, c,  tags)
-# end
+    start = v2i(center - L / 2 - g.lb, deltas)
+    stop = v2i(center + L / 2 - g.lb, deltas)
+    start, stop = min.(start, stop), max.(start, stop)
 
-# function SourceInstance(s::GaussianBeam, deltas, field_sizes, fl, stop; F=Float32)
-#     _F(x::Real) = F(x)
-#     _F(x::Complex) = ComplexF32(x)
-#     f = _F ∘ f
-#     @unpack f, σ, mode, c, dims = s
-#     n = round(Int, 2σ / deltas)
-#     r = n * deltas
-#     r = [i == abs(dims) ? (0:0) : range(-r, r, length=(2n + 1)) for i = 1:length(c)]
-#     g = [gaussian(norm(F.(collect(v)))) for v = Iterators.product(r...)] / deltas
-#     fl = fl .- 1 .+ index(c, deltas) .- round.(Int, (size(g) .- 1) ./ 2)
-#     _mode = place(zeros(F, sz), g, fl)
-#     SourceInstance(f, g, _mode, fl, c, tags)
-# end
+    sel = abs.(start - stop) .> 1e-3
+    start += 0.5sel
+    stop -= 0.5sel
+    len = int(stop - start + 1)
 
+    start = F(start)
+    stop = F(stop)
 
+    roi = dict([k => begin
+        range.(start, stop, len) - lr[:, 1] + 1
+    end for (k, lr) = pairs(field_lims)])
+    _center = round(v2i(center - g.lb, deltas) + 0.5)
 
-# J = OrderedDict()
-# for k = (:Jx, :Jy, :Jz)
-#     if k in keys(s.mode)
-#         J[k] = ComplexF32.(s.mode[k])
-#     else
-#         J[k] = zeros(ComplexF32, size(s.mode(1)))
-#     end
-# end
-# J = values(J)
+    # 
+    if !isnothing(λmodenums)
 
-# L = ub .- lb
-# d = length(lb)
-# D = length(center) # 2D or 3D
-# if D == 2
-#     zaxis = [normal..., 0]
-#     yaxis = [0, 0, 1]
-#     # xaxis = cross(yaxis, zaxis)
-#     xaxis = cross(yaxis, zaxis)
-# else
-#     zaxis = convert.(F, normal)
-#     xaxis = convert.(F, tangent)
-#     yaxis = cross(zaxis, xaxis)
-# end
+        start3 = round((center3 - L3 / 2) / dl + 0.001)
+        stop3 = round((center3 + L3 / 2) / dl + 0.001)
+        start3, stop3 = min.(start3, stop3), max.(start3, stop3)
 
-# frame = [xaxis, yaxis, zaxis]
-# J = reframe(frame, J)
-# if D == 2
-#     J = [J[:, :, 1] for J in J]
-# end
-# lb = sum(lb .* frame[1:d])[1:D]
-# ub = sum(ub .* frame[1:d])[1:D]
-# L = ub - lb
+        sel3 = start3 .!= stop3
+        start3 += 0.5sel3
+        stop3 -= 0.5sel3
 
-# Jx, Jy, Jz = J
-# if D == 2
-#     mode = (; Jx, Jy)
-# else
-#     mode = (; Jx, Jy, Jz)
-# end
-# v = zip(lb, ub)
-# lb = minimum.(v)
-# ub = maximum.(v)
-# n = findfirst(abs.(zaxis) .> 0.001)
-# mode = ignore_derivatives() do
-#     mode / deltas[n][1]#[findfirst(>(center[n]), cumsum(deltas[n]))]
-# end
+        ratio = int(dx / dl)
+        stop3[1:N] = sel3[1:N] .* (ratio * len[1:N] - 1) + start3[1:N]
+        len3 = int(stop3 - start3 + 1)
+
+        start3 += 0.5
+        stop3 += 0.5
+
+        start3 = F(start3)
+        stop3 = F(stop3)
+
+        ϵmode = getindexf(ϵ, range.(start3, stop3, len3)...;)
+        global _a = ϵmode, start3, stop3, len3, dimsperm
+        ϵmode = permutedims(ϵmode, dimsperm, 2)
+
+        # global _a = ϵmode, dimsperm
+        λmodes = OrderedDict([λ => begin
+            modes = solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp; mode_solutions)[mns+1]
+            # if isnothing(ϵeff)
+            #     @unpack Ex, Ey = modes[1]
+            #     E = sqrt.(abs2.(Ex) + abs2.(Ey))
+            #     ϵ = downsample(ϵmode, mode_spacing)
+            #     J = sum(ϵ .* E, dims=2)
+            #     E = sum(E, dims=2)
+            #     ϵ = J ./ E
+            #     ϵmin, ϵmax = extrema(ϵmode)
+            #     # v = filter(v) do x
+            #     #     ϵmin <= x <= ϵmax
+            #     # end
+
+            #     # ϵeff = maximum(ϵmode) => ϵ[argmax(E)]
+            #     # ϵeff = maximum(ϵmode) => 0.8ϵmax + 0.2ϵmin
+            #     ϵeff = maximum(ϵmode) => ϵmax
+            # end
+            modes
+        end for (λ, mns) = pairs(λmodenums)])
+        if N == 2
+            λmodes = kmap(v -> collapse_mode.(v, approx_2D_mode), λmodes)
+        end
+    elseif !isnothing(λsmode)
+        λs, mode = λsmode
+        mode = OrderedDict([
+            begin
+                if isa(v, Number)
+                    v = v * ones(F, len)
+                end
+                k => v
+            end for (k, v) = pairs(mode)
+        ])
+        λmodes = OrderedDict([λ => mode for λ = λs])
+    end
+    λmodes = fmap(F, λmodes)
+
+    λmodes = sort(λmodes, by=kv -> kv[1])
+
+    λmodes, roi, _center
+end

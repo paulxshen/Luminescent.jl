@@ -7,7 +7,7 @@ import gdsfactory as gf
 dir = os.path.join("build", "precompile_execution")
 
 c = gf.components.straight(length=.1, width=0.5,)
-wavelengths = 1.55
+wavelengths = 1.5
 
 for N, dtype, gpu in itertools.product([2, 3], ["float32"], [None, "CUDA"]):
     path = os.path.join(dir, f"tiny_{N}_{dtype}_{gpu}")
@@ -20,7 +20,7 @@ for N, dtype, gpu in itertools.product([2, 3], ["float32"], [None, "CUDA"]):
 # raise NotImplementedError("This is a stub")
 c = lumi.mimo(west=1, east=1, l=.5, w=.5,  wwg=.5)
 targets = {"tparams": {
-    1.55: {
+    1.5: {
         "2,1": 1.0
     }}}
 for dtype in ["float32", 'float16']:

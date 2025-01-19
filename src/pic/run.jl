@@ -60,7 +60,7 @@ function picrun(path, array; kw...)
 
 
     ϵ2 = nothing
-    sz = round.(L / dl)
+    global sz = round.(L / dl)
 
     GC.gc(true)
     if AUTODIFF()
@@ -72,7 +72,8 @@ function picrun(path, array; kw...)
     enum = [matprops(v.material).ϵ |> F for v = values(layer_stack)] |> unique |> sort
     ϵmin = minimum(enum) |> Nf
     # if AUTODIFF()
-    ϵ3 = zeros(Nf, Tuple(sz))
+    # ϵ3 = zeros(Nf, Tuple(sz))
+    ϵ3 = nothing
     # else
     #     ϵ3 = SparseArrays.zeros(Nf, Tuple(sz))
     # end
@@ -82,27 +83,19 @@ function picrun(path, array; kw...)
         @unpack material, thickness = v
         ϵ = matprops(material).ϵ |> Nf
         # if AUTODIFF() || ϵ != ϵmin
-        a = stack(map(sort(collect(readdir(joinpath(temp, string(k)), join=true)))) do file
-            a = Nf.(Bool.(FileIO.load(file)))
-            # a = downsample(a, 2)
-            a = reverse(a', dims=2)
-            # if !AUTODIFF()
-            #     a = sparse(a)
-            # end
-            a
-        end)
+        global a = npzread(joinpath(temp, "$k.npy"))
+        # error("not implemented")
+        a = permutedims(a, [2, 1, 3])
         # a = downsample(a, (1, 1, 2))
         # @show typeof(a)
+        @show size(a)
         # a = a[Base.OneTo.(min.(size(a), sz))...]
 
-        start = 1 + round.([(v.origin / dl)..., (v.zmin - zmin) / dl])
-        I = range.(start, start + size(a) - 1)
-        overhang = max.(last.(I) .- sz, 0)
-        a = a[Base.oneto.(size(a) - overhang)...]
-        I = range.(start, start + size(a) - 1)
-
-        ϵ3[I...] .*= 1 - a
-        ϵ3[I...] .+= a .* ϵ
+        if isnothing(ϵ3)
+            ϵ3 = zeros(Nf, size(a))
+        end
+        ϵ3 .*= 1 - a
+        ϵ3 .+= a .* ϵ
         # end
     end
     ϵ3 = max.(ϵmin, ϵ3)
@@ -180,7 +173,7 @@ function picrun(path, array; kw...)
                 end
                 dimsperm = getdimsperm(L3)
                 λmodenums = SortedDict([(F(_λ) / λ) => v for (_λ, v) in pairs(wavelength_mode_numbers)])
-                push!(sources, Source(center, -L / 2, L / 2, dimsperm, N, approx_2D_mode, center3, -L3 / 2, L3 / 2; λmodenums, label="s$(string(port)[2:end])"))
+                push!(sources, Source(center, L, dimsperm, N, approx_2D_mode, center3, L3; λmodenums, label="s$(string(port)[2:end])"))
             end
             sources
         end for run in runs
@@ -205,7 +198,7 @@ function picrun(path, array; kw...)
             end
             dimsperm = getdimsperm(L3)
 
-            Monitor(center, -L / 2, L / 2, dimsperm, N, approx_2D_mode, center3, -L3 / 2, L3 / 2; λmodenums, label=port)
+            Monitor(center, L, dimsperm, N, approx_2D_mode, center3, L3; λmodenums, label=port)
         end for (port, m) = SortedDict(run.monitors) |> pairs] for run in runs]
 
     global run_probs =

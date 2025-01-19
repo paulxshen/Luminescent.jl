@@ -272,7 +272,8 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     mode_solutions = []
     source_instances = SourceInstance.(sources, (grid,), (_ϵ3,), (temp,), (mode_solutions,))
     monitor_instances = MonitorInstance.(monitors, (grid,), (_ϵ3,), (temp,), (mode_solutions,))
-    ϵeff = source_instances[1].ϵeff
+    ϵeff = nothing
+    # ϵeff = source_instances[1].ϵeff
 
 
     sz = Tuple(sz)
@@ -280,11 +281,11 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     # geometry_padvals[:invϵ] = geometry_padvals[:ϵ]
 
     if N == 2
-        _geometry[:ϵ] = map(_geometry.ϵ) do x
-            k, v = ϵeff
-            k, v = F((k, v))
-            abs(x - k) < 0.02 ? x - k + v : x
-        end
+        # _geometry[:ϵ] = map(_geometry.ϵ) do x
+        #     k, v = ϵeff
+        #     k, v = F((k, v))
+        #     abs(x - k) < 0.02 ? x - k + v : x
+        # end
         geometry[:ϵ] = downsample(_geometry.ϵ, int(deltas / dl))
     end
 

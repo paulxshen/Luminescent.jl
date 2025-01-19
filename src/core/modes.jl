@@ -49,9 +49,9 @@ function collapse_mode(m, p=:TE)
         mean(a, dims=2) |> vec
     end
     if p == :TE
-        (; Ex=m.Ex, Hy=m.Hy, Dx=m.Dx)
+        (; Ex=m.Ex, Hy=m.Hy, Jx=m.Jx)
     elseif p == :TM
-        (; Ey=m.Ey, Hx=m.Hx, Dy=m.Dy)
+        (; Ey=m.Ey, Hx=m.Hx, Jy=m.Jy)
     else
         error("invalid polarization")
     end
@@ -120,7 +120,7 @@ function solvemodes(ϵ, dl, λ, neigs, spacing, path; mode_solutions=nothing)
     fn = joinpath(path, "solvemodes.py")
     run(`python $fn $path`)
     modes = [npzread(joinpath(path, "mode$(i-1).npz")) for i = 1:neigs]
-    modes = [merge(mode, OrderedDict(["D$s" => mode["E$s"] .* ϵ for s = "xy"])) for mode in modes]
+    modes = [merge(mode, OrderedDict(["J$s" => mode["E$s"] .* ϵ for s = "xy"])) for mode in modes]
     global modes = [SortedDict([Symbol(k) => downsample(mode(k), spacing) for k = keys(mode) if string(k)[end] in "xy"]) |> pairs |> NamedTuple for mode in modes]
 
     if !isnothing(mode_solutions)

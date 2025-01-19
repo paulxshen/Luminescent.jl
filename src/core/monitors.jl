@@ -1,29 +1,17 @@
 abstract type AbstractMonitor end
-"""
-    function Monitor(center, L; normal=nothing, label="")
-    function Monitor(center, lb, ub; normal=nothing, label="")
 
-Constructs monitor which can span a point, line, surface, volume or point cloud monitoring fields or power. 
-
-Args
-- center: origin or center of monitor
-- L: physical dimensions of monitor
-- lb: lower bounds wrt to center
-- ub: upper bounds wrt to center
-
-- normal: flux monitor direction (eg normal to flux surface)
-"""
 struct Monitor <: AbstractMonitor
-    specs
+    λmodenums
+    λsmode
+
+    λmodes
     center
-    lb
-    ub
+    L
     dimsperm
     N
     approx_2D_mode
     center3
-    lb3
-    ub3
+    L3
     # tangent
 
     tags
@@ -37,7 +25,7 @@ struct Monitor <: AbstractMonitor
     #     new(a...)
     # end
 end
-Monitor(args...; λmodenums=nothing, λmodes=nothing, tags...) = Monitor((; λmodenums, λmodes), args..., tags)
+Monitor(args...; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) = Monitor(λmodenums, λsmode, λmodes, args..., tags)
 
 struct PlaneMonitor <: AbstractMonitor
     dims
@@ -54,9 +42,6 @@ end
 
 
 wavelengths(m::Monitor) = keys(m.λmodes)
-# Base.string(m::Monitor) =
-#     """
-#     $(m.label): $(count((m.ub.-m.lb).!=0))-dimensional monitor, centered at $(m.center|>d2), physical size of $((m.ub-m.lb)|>d2) relative to center, flux normal towards $(normal(m)|>d2)"""
 
 abstract type AbstractMonitorInstance end
 struct MonitorInstance <: AbstractMonitorInstance
@@ -77,57 +62,8 @@ frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
 function MonitorInstance(m::Monitor, g, ϵ, temp, mode_solutions=nothing)
-    @unpack lb, ub, center, dimsperm, specs, N, center3, lb3, ub3, approx_2D_mode, tags = m
-    @unpack deltas, deltas3, field_lims, F, mode_spacing, dl = g
-
-    start = v2i(center + lb - g.lb, deltas)
-    stop = v2i(center + ub - g.lb, deltas)
-    start, stop = min.(start, stop), max.(start, stop)
-
-    sel = abs.(stop - start) .>= 1e-3
-    stop[!sel] .= start[!sel]
-    start += 0.5sel
-    stop -= 0.5sel
-    start = F(start)
-    stop = F(stop)
-    len = int(stop - start + 1)
-
-    roi = dict([k => begin
-        range.(start, stop, len) - lr[:, 1] + 1
-    end for (k, lr) = pairs(field_lims)])
-    _center = round(v2i(center - g.lb, deltas) + 0.5)
-    #  center, g.lb, _center
-
-
-    dx = deltas[1][1]
-
-    @unpack λmodenums, λmodes = specs
-    if !isnothing(λmodenums)
-        start = round((center3 + lb3) / dl + 0.001)
-        stop = round((center3 + ub3) / dl + 0.001)
-        start, stop = min.(start, stop), max.(start, stop)
-
-        sel = abs.(stop - start) .>= 0.001
-        start += 0.5sel
-        stop -= 0.5sel
-
-        ratio = int(dx / dl)
-        stop[1:N] = sel[1:N] .* (ratio * len - 1) + start[1:N]
-        start, stop
-
-        start += 0.5
-        stop += 0.5
-        len = int(stop - start + 1)
-        ϵmode = getindexf(ϵ, range.(start, stop, len)...)
-        ϵmode = permutedims(ϵmode, dimsperm, 2)
-
-        λmodes = OrderedDict([λ => solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp; mode_solutions) for (λ, mns) = pairs(λmodenums)])
-        if N == 2
-            λmodes = kmap(v -> collapse_mode.(v, approx_2D_mode), λmodes)
-        end
-    end
-
-    MonitorInstance(roi, nothing, dimsperm, deltas, _center, fmap(x -> convert.(complex(F), x), λmodes), tags)
+    λmodes, roi, _center, = _get_λmodes(m, ϵ, temp, mode_solutions, g)
+    MonitorInstance(roi, nothing, m.dimsperm, g.deltas, _center, fmap(x -> convert.(complex(g.F), x), λmodes), m.tags)
 end
 
 function MonitorInstance(m::PlaneMonitor, g)
@@ -231,21 +167,3 @@ function monitors_on_box(center, L)
         Monitor([ox, oy, oz + rz], [lx, ly, 0,], [0, 0, 1,]),
     ]
 end
-
-# n, lb, ub, center, tangent = [convert.(F, a) for a = (n, lb, ub, center, tangent)]
-# L = ub - lb
-# D = length(center)
-# d = length(lb)
-# A = isempty(L) ? 0 : prod(L,)
-# if D == 2
-#     frame = [[-n[2], n[1], 0], [0, 0, 1], [n..., 0]]
-
-# elseif D == 3
-#     frame = [tangent, n × tangent, n]
-# end
-# lb = sum(lb .* frame[1:d])[1:D]
-# ub = sum(ub .* frame[1:d])[1:D]
-# v = zip(lb, ub)
-# lb = minimum.(v)
-# ub = maximum.(v)
-# L = ub - lb

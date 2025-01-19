@@ -58,8 +58,9 @@ function calc_sparams(runs, run_probs, lb, dl,
         begin
             if !isnothing(models)
 
-                @unpack ϵeff, _geometry = prob
-                prob[:_geometry] = make_geometry(masks, margins, lb, dl, _geometry, designs, design_config, matprops; F, perturb, ϵeff)
+                # @unpack ϵeff, _geometry = prob
+                @unpack _geometry = prob
+                prob[:_geometry] = make_geometry(masks, margins, lb, dl, _geometry, designs, design_config, matprops; F, perturb,)# ϵeff)
             end
             solve(prob; alg, save_memory, verbose, framerate, path)
         end for (i, prob) in enumerate(run_probs)
