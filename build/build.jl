@@ -7,5 +7,6 @@ create_app(".", "../LuminescentAI",
     ],
     precompile_execution_file="build/precompile_app.jl",
     force=true,
-    incremental=false, include_lazy_artifacts=true, include_transitive_dependencies=true
+    incremental=true,
+    # include_lazy_artifacts=true, include_transitive_dependencies=true
 )
