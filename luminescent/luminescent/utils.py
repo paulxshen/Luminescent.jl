@@ -146,9 +146,11 @@ def stl_to_array(mesh: pv.PolyData, dl: float, bbox):
 def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
     stacks = sum([[[v.mesh_order, v.material, tuple(layer), k]
                  for k, v in get_layers(layer_stack, layer, withkey=True)] for layer in layers], [])
-
+    c.flatten()
     stacks = sorted(stacks, key=lambda x: -x[0])
     layer_stack_info = dict()
+    # c.show()
+    # raise NotImplementedError("This is a stub")
     lb, ub = c.bbox_np()
     # bbox = [[**lb, zmin], [**ub, zmax]]
     bbox = [[lb[0], lb[1], zmin], [ub[0], ub[1], zmax]]
@@ -166,10 +168,9 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
             d.zmin = max(zmin, d.zmin)
             d.thickness = min(zmax-d.zmin, d.thickness)
             # _d.bounds = (_d.zmin, _d.zmin+_d.thickness)
-            origin = (c.extract([layer]).bbox_np()-c.bbox_np())[0].tolist()
+            # origin = (c.extract([layer]).bbox_np()-c.bbox_np())[0].tolist()
             stlpath = os.path.abspath(os.path.join(path, f"{k}.stl"))
-            gf.export.to_stl(c, stlpath, layer_stack=_layer_stack,
-                             hull_invalid_polygons=True)
+            gf.export.to_stl(c, stlpath, layer_stack=_layer_stack)
             stlpath = os.path.join(path, f'{k}_{l1}_{l2}.stl')
 
             pymeshfix.clean_from_file(stlpath, stlpath)
@@ -194,7 +195,7 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
                 "thickness": d.thickness,
                 "material": matname(m),
                 "mesh_order": stack[0],
-                "origin": origin,
+                # "origin": origin,
             }
     return layer_stack_info
 

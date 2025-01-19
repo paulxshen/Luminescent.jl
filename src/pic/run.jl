@@ -88,7 +88,7 @@ function picrun(path, array; kw...)
         a = permutedims(a, [2, 1, 3])
         # a = downsample(a, (1, 1, 2))
         # @show typeof(a)
-        @show size(a)
+        # @show size(a)
         # a = a[Base.OneTo.(min.(size(a), sz))...]
 
         if isnothing(ϵ3)
@@ -131,6 +131,8 @@ function picrun(path, array; kw...)
                 symmetries = [Int(s) + 1 for s = design.symmetries]
 
                 frame = ϵ2
+                # display(heatmap(frame))
+                # error("not implemented")
                 frame = frame .>= 0.99maximum(frame)
                 # frame = nothing
                 start = round((bbox[1] - lb) / dl + 1)

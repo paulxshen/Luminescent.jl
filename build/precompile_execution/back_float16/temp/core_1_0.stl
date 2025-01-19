@@ -1,147 +1,21 @@
 solid T_MESH
  facet normal 0.000000 0.000000 -1.000000
   outer loop
-   vertex 0.000000 0.500000 0.000000
-   vertex 0.500000 0.000000 0.000000
-   vertex 0.000000 0.000000 0.000000
-  endloop
- endfacet
- facet normal -0.000000 -0.000000 -1.000000
-  outer loop
-   vertex 0.500000 0.000000 0.000000
-   vertex 0.000000 0.500000 0.000000
-   vertex 0.500000 0.500000 0.000000
-  endloop
- endfacet
- facet normal -0.000000 0.000000 1.000000
-  outer loop
-   vertex 0.500000 0.000000 0.220000
-   vertex 0.000000 0.500000 0.220000
-   vertex 0.000000 0.000000 0.220000
-  endloop
- endfacet
- facet normal 0.000000 0.000000 1.000000
-  outer loop
-   vertex 0.000000 0.500000 0.220000
-   vertex 0.500000 0.000000 0.220000
-   vertex 0.500000 0.500000 0.220000
-  endloop
- endfacet
- facet normal 0.000000 1.000000 0.000000
-  outer loop
-   vertex 0.000000 0.500000 0.000000
-   vertex 0.000000 0.500000 0.220000
-   vertex 0.500000 0.500000 0.220000
-  endloop
- endfacet
- facet normal -0.000000 1.000000 0.000000
-  outer loop
-   vertex 0.500000 0.500000 0.000000
-   vertex 0.000000 0.500000 0.000000
-   vertex 0.500000 0.500000 0.220000
-  endloop
- endfacet
- facet normal 1.000000 -0.000000 0.000000
-  outer loop
-   vertex 0.500000 0.500000 0.000000
-   vertex 0.500000 0.500000 0.220000
-   vertex 0.500000 0.000000 0.220000
-  endloop
- endfacet
- facet normal 1.000000 0.000000 0.000000
-  outer loop
-   vertex 0.500000 0.000000 0.000000
-   vertex 0.500000 0.500000 0.000000
-   vertex 0.500000 0.000000 0.220000
-  endloop
- endfacet
- facet normal 0.000000 -1.000000 0.000000
-  outer loop
-   vertex 0.500000 0.000000 0.000000
-   vertex 0.500000 0.000000 0.220000
-   vertex 0.000000 0.000000 0.220000
-  endloop
- endfacet
- facet normal -0.000000 -1.000000 -0.000000
-  outer loop
-   vertex 0.000000 0.000000 0.000000
-   vertex 0.500000 0.000000 0.000000
-   vertex 0.000000 0.000000 0.220000
-  endloop
- endfacet
- facet normal 0.000000 0.000000 -1.000000
-  outer loop
-   vertex -2.000000 0.500000 0.000000
-   vertex 0.000000 0.000000 0.000000
-   vertex -2.000000 0.000000 0.000000
-  endloop
- endfacet
- facet normal -0.000000 -0.000000 -1.000000
-  outer loop
-   vertex 0.000000 0.000000 0.000000
-   vertex -2.000000 0.500000 0.000000
-   vertex 0.000000 0.500000 0.000000
-  endloop
- endfacet
- facet normal -0.000000 0.000000 1.000000
-  outer loop
-   vertex 0.000000 0.000000 0.220000
-   vertex -2.000000 0.500000 0.220000
-   vertex -2.000000 0.000000 0.220000
-  endloop
- endfacet
- facet normal 0.000000 0.000000 1.000000
-  outer loop
-   vertex -2.000000 0.500000 0.220000
-   vertex 0.000000 0.000000 0.220000
-   vertex 0.000000 0.500000 0.220000
-  endloop
- endfacet
- facet normal 0.000000 1.000000 0.000000
-  outer loop
-   vertex -2.000000 0.500000 0.000000
-   vertex -2.000000 0.500000 0.220000
-   vertex 0.000000 0.500000 0.220000
-  endloop
- endfacet
- facet normal -0.000000 1.000000 0.000000
-  outer loop
-   vertex 0.000000 0.500000 0.000000
-   vertex -2.000000 0.500000 0.000000
-   vertex 0.000000 0.500000 0.220000
-  endloop
- endfacet
- facet normal 0.000000 -1.000000 0.000000
-  outer loop
-   vertex 0.000000 0.000000 0.000000
-   vertex 0.000000 0.000000 0.220000
-   vertex -2.000000 0.000000 0.220000
-  endloop
- endfacet
- facet normal -0.000000 -1.000000 -0.000000
-  outer loop
-   vertex -2.000000 0.000000 0.000000
-   vertex 0.000000 0.000000 0.000000
-   vertex -2.000000 0.000000 0.220000
-  endloop
- endfacet
- facet normal 0.000000 0.000000 -1.000000
-  outer loop
    vertex -2.700000 0.500000 0.000000
-   vertex -2.000000 0.000000 0.000000
+   vertex 2.700000 0.000000 0.000000
    vertex -2.700000 0.000000 0.000000
   endloop
  endfacet
  facet normal -0.000000 -0.000000 -1.000000
   outer loop
-   vertex -2.000000 0.000000 0.000000
+   vertex 2.700000 0.000000 0.000000
    vertex -2.700000 0.500000 0.000000
-   vertex -2.000000 0.500000 0.000000
+   vertex 2.700000 0.500000 0.000000
   endloop
  endfacet
  facet normal -0.000000 0.000000 1.000000
   outer loop
-   vertex -2.000000 0.000000 0.220000
+   vertex 2.700000 0.000000 0.220000
    vertex -2.700000 0.500000 0.220000
    vertex -2.700000 0.000000 0.220000
   endloop
@@ -149,22 +23,36 @@ solid T_MESH
  facet normal 0.000000 0.000000 1.000000
   outer loop
    vertex -2.700000 0.500000 0.220000
-   vertex -2.000000 0.000000 0.220000
-   vertex -2.000000 0.500000 0.220000
+   vertex 2.700000 0.000000 0.220000
+   vertex 2.700000 0.500000 0.220000
   endloop
  endfacet
  facet normal 0.000000 1.000000 0.000000
   outer loop
    vertex -2.700000 0.500000 0.000000
    vertex -2.700000 0.500000 0.220000
-   vertex -2.000000 0.500000 0.220000
+   vertex 2.700000 0.500000 0.220000
   endloop
  endfacet
  facet normal -0.000000 1.000000 0.000000
   outer loop
-   vertex -2.000000 0.500000 0.000000
+   vertex 2.700000 0.500000 0.000000
    vertex -2.700000 0.500000 0.000000
-   vertex -2.000000 0.500000 0.220000
+   vertex 2.700000 0.500000 0.220000
+  endloop
+ endfacet
+ facet normal 1.000000 -0.000000 0.000000
+  outer loop
+   vertex 2.700000 0.500000 0.000000
+   vertex 2.700000 0.500000 0.220000
+   vertex 2.700000 0.000000 0.220000
+  endloop
+ endfacet
+ facet normal 1.000000 0.000000 0.000000
+  outer loop
+   vertex 2.700000 0.000000 0.000000
+   vertex 2.700000 0.500000 0.000000
+   vertex 2.700000 0.000000 0.220000
   endloop
  endfacet
  facet normal -1.000000 -0.000000 -0.000000
@@ -183,15 +71,15 @@ solid T_MESH
  endfacet
  facet normal 0.000000 -1.000000 0.000000
   outer loop
-   vertex -2.000000 0.000000 0.000000
-   vertex -2.000000 0.000000 0.220000
+   vertex 2.700000 0.000000 0.000000
+   vertex 2.700000 0.000000 0.220000
    vertex -2.700000 0.000000 0.220000
   endloop
  endfacet
  facet normal -0.000000 -1.000000 -0.000000
   outer loop
    vertex -2.700000 0.000000 0.000000
-   vertex -2.000000 0.000000 0.000000
+   vertex 2.700000 0.000000 0.000000
    vertex -2.700000 0.000000 0.220000
   endloop
  endfacet
