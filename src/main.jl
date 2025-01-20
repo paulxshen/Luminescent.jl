@@ -31,3 +31,10 @@ include("del.jl")
 # include("main.jl")
 
 include("gpu.jl")
+
+function julia_main()::Cint
+    if !isempty(ARGS)
+        picrun(ARGS[1])
+    end
+    return 0
+end

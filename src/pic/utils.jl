@@ -1,10 +1,5 @@
 
-function lumi()::Cint
-    if !isempty(ARGS)
-        picrun(ARGS[1])
-    end
-    return 0
-end
+
 # function lumicu()::Cint
 #     if !isempty(ARGS)
 #         picrun(ARGS[1]; array=cu)
