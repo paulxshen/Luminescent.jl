@@ -9,6 +9,7 @@ eps = data["eps"]
 dl = data["dl"]
 λ = data["wl"]
 neigs = data["neigs"]
+name = data["name"]
 
 m, n = eps.shape
 # print(m, n)
@@ -31,4 +32,4 @@ modes = [{k: m.get_field(k, x, y) for k in [
 neffs = [np.real(m.neff) for m in solver.modes]
 for i, mode in enumerate(modes):
     # print(mode["Ex"].shape)
-    np.savez(os.path.join(path, f'mode{i}.npz'), **modes[i])
+    np.savez(os.path.join(path, f'{name}_mode_{i}.npz'), **modes[i])

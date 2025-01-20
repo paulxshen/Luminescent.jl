@@ -13,10 +13,14 @@ Random.seed!(1234)
 
 # picrun(joinpath("build", "precompile_execution", "tiny_2_float32_CUDA"))
 # picrun(joinpath("build", "precompile_execution", "tiny_3_float32_None"))
-picrun(joinpath("build", "precompile_execution", "back_float32"))
+# picrun(joinpath("build", "precompile_execution", "back_float32"))
 # picrun(joinpath("runs", "tiny3"))
 # picrun(joinpath("runs", "back"))# array=cu)
 # models[1]()
 
 # picrun(joinpath("runs", "demux"))
 # picrun(joinpath("runs", "straight"))
+
+for p = readdir("build/precompile_execution", join=true)
+    picrun(p)
+end
