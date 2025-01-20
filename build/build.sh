@@ -6,7 +6,7 @@ julia -e 'using Pkg;pkg"up"'
 pip install -U luminescent &> /dev/null
 
 rm -rf Luminescent.jl
-git clone https://paulxshen@github.com/paulxshen/Luminescent.jl
+git clone https://paulxshen@github.com/paulxshen/Luminescent.jl &> /dev/null
 cd Luminescent.jl
 
 export PATH=~/LuminescentAI/bin:$PATH
