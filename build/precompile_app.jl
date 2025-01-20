@@ -6,6 +6,6 @@ for p = readdir("build/precompile_execution", join=true)
     #     p = joinpath("runs", p)
 
     push!(ARGS, p)
-    Luminescent.lumi()
+    Luminescent.julia_main()
     pop!(ARGS)
 end
