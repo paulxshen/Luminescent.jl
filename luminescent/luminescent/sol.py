@@ -59,14 +59,14 @@ def solve(path, dev=False):
     # else:
     #     env = '0;'
     # cmd = ["lumi", path]
-    try:
-        run(["lumi", path])
-    except:
-        a = ['juila', '-e', ]
-        run(["julia", "-e", f'println(Base.active_project())'])
-        print("no fdtd binaries found - starting julia session to compile fdtd code - will take 5 mins - can take a break and come back :) ...")
-        b = [f'using Luminescent;picrun(raw"{path}")']
-        run(a+b)
+    # try:
+    run(["Luminescent", path])
+    # except:
+    #     a = ['juila', '-e', ]
+    #     run(["julia", "-e", f'println(Base.active_project())'])
+    #     print("no fdtd binaries found - starting julia session to compile fdtd code - will take 5 mins - can take a break and come back :) ...")
+    #     b = [f'using Luminescent;picrun(raw"{path}")']
+    #     run(a+b)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:
     #     if p.stderr is not None:

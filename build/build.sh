@@ -9,5 +9,6 @@ rm -rf Luminescent.jl
 git clone https://paulxshen@github.com/paulxshen/Luminescent.jl 
 cd Luminescent.jl
 
-export PATH=~/LuminescentAI/bin:$PATH
 julia "build/build.jl"
+export PATH=~/LuminescentAI/bin:$PATH
+tar czf /Luminescent.tar.gz LuminescentAI
