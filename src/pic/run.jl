@@ -239,7 +239,7 @@ function picrun(path, array; kw...)
             # minchange,
             # maxchange,
             # opt=Adam(1, (0.8, 0.9)), 
-            opt=Momentum(1, 0.7),
+            opt=Optimisers.Momentum(1, 0.7),
         )
         opt_state = Flux.setup(opt, model)
         # error("not implemented")
