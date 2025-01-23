@@ -18,7 +18,7 @@ function genrun(path, array; kw...)
     println("setting up simulation...")
     PROB = joinpath(path, "problem.json")
     SOL = joinpath(path, "solution.json")
-    TEMP = joinpath(path, "TEMP")
+    GEOMETRY = joinpath(path, "geometry")
 
     io = open(PROB)
     s = read(io, String)
@@ -73,7 +73,7 @@ function genrun(path, array; kw...)
     for (k, v) = pairs(layer_stack)
         @unpack material = v
         ϵ = materials(material).epsilon |> Nf
-        a = npzread(joinpath(TEMP, "$k.npy"))
+        a = npzread(joinpath(GEOMETRY, "$k.npy"))
         a = permutedims(a, [2, 1, 3])
 
         if isnothing(ϵ3)
@@ -88,12 +88,12 @@ function genrun(path, array; kw...)
 
     sources = map(enumerate(sources)) do (i, s)
         λsmode = (λs, s.mode)
-        mask = npzread(joinpath(TEMP, "source$i.npy"))
+        mask = npzread(joinpath(GEOMETRY, "source$i.npy"))
         Source(mask; λsmode)
     end
     monitors = map(enumerate(monitors)) do (i, s)
         λsmode = (λs, s.mode)
-        mask = npzread(joinpath(TEMP, "monitor$i.npy"))
+        mask = npzread(joinpath(GEOMETRY, "monitor$i.npy"))
         Monitor(mask; λsmode)
     end
 
@@ -101,7 +101,7 @@ function genrun(path, array; kw...)
     ϵ = ϵ3
     N = 3
     prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ; array,
-        F, ϵ, deltas3=deltas / λ, λ, TEMP, Ttrans, Tss)
+        F, ϵ, deltas3=deltas / λ, λ, GEOMETRY, Ttrans, Tss)
 
 
     sol = solve(prob; path)

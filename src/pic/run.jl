@@ -18,7 +18,7 @@ function picrun(path, array; kw...)
     println("setting up simulation...")
     global PROB = joinpath(path, "problem.json")
     SOL = joinpath(path, "solution.json")
-    TEMP = joinpath(path, "TEMP")
+    TEMP = joinpath(path, "geometry")
 
     io = open(PROB)
     s = read(io, String)

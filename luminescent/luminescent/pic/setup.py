@@ -22,7 +22,7 @@ def setup(path, c, study, nres, center_wavelength,
           zmargin2=None, zlims=None, core_layer=LAYER.WG,
           port_source_offset="auto", port_margin="auto",
           runs=[],  sources=[],
-          layer_stack=LAYER_STACK, materials={},
+          layer_stack=LAYER_STACK, materials=dict(),
           exclude_layers=[
               DESIGN_LAYER, GUESS], Courant=None,
           gpu=None, dtype=np.float32,
@@ -202,7 +202,7 @@ def setup(path, c, study, nres, center_wavelength,
 
     normal = [1, 0, 0]
 
-    temp = os.path.join(path, "temp")
+    temp = os.path.join(path, "geometry")
     os.makedirs(temp, exist_ok=True)
     layer_stack_info = material_voxelate(
         c, dl, zmin, zmax, layers, layer_stack, temp)
@@ -216,17 +216,17 @@ def setup(path, c, study, nres, center_wavelength,
     else:
         subprocess.run(["cp", fn, temp])
     prob["layer_stack"] = layer_stack_info
-    materials = set([v["material"] for v in layer_stack_info.values()])
-    d = {
-        k: materials[k] for k in materials
-    }
+    # materials = set([v["material"] for v in layer_stack_info.values()])
+    # d = {
+    #     k: materials[k] for k in materials
+    # }
     prob["study"] = study
-    mateps = {k: np.real(v) for k, v in d.items()}
-    materials = {
-        k: {} for k in materials
-    }
-    for k, v in mateps.items():
-        materials[k]["epsilon"] = v
+    # mateps = {k: np.real(v) for k, v in d.items()}
+    # materials = {
+    #     k: {} for k in materials
+    # }
+    # for k, v in mateps.items():
+    #     materials[k]["epsilon"] = v
     prob["materials"] = materials
 
     prob["N"] = N

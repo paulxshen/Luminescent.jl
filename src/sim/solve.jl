@@ -88,7 +88,7 @@ function solve(prob, ;
                         a = u.Hz
                         g = p.ϵxx
 
-                        _path = joinpath(path, "TEMP")
+                        _path = joinpath(path, "geometry")
                         mkpath(_path)
                         CairoMakie.save(joinpath(_path, "$t.png"), quickie(a, g; monitor_instances, source_instances, ulims),)
                         # quickie(a, g; monitor_instances, source_instances)

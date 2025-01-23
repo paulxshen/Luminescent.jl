@@ -1,4 +1,7 @@
 # temp*
+phantom*
+phantom.*
+phantom.py
 # build
 # *.ipynb
 # /build/precompile_*

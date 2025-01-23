@@ -29,7 +29,6 @@ def make_sim_prob(
         Ttrans=None,
         wl_res=.01,
         # Tss=None,
-        materials={},
 ):
 
     materials = {**MATERIALS, **materials}
@@ -70,11 +69,11 @@ def make_sim_prob(
 
     L = (bbox[1][0]-bbox[0][0], bbox[1][1]-bbox[0][1], bbox[1][2]-bbox[0][2])
     xs = np.linspace(bbox[0][0], bbox[1][0], 1 +
-                     round((bbox[1][0]-bbox[0][0])/dl))
+                     round((bbox[1][0]-bbox[0][0])/dl)).tolist()
     ys = np.linspace(bbox[0][1], bbox[1][1], 1 +
-                     round((bbox[1][1]-bbox[0][1])/dl))
+                     round((bbox[1][1]-bbox[0][1])/dl)).tolist()
     zs = np.linspace(bbox[0][2], bbox[1][2], 1 +
-                     round((bbox[1][2]-bbox[0][2])/dl))
+                     round((bbox[1][2]-bbox[0][2])/dl)).tolist()
 #  dtype, center_wavelength, dl, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, wavelengths
     prob = {
         "sources": sources,
@@ -95,6 +94,9 @@ def make_sim_prob(
     prob["wavelengths"] = wavelengths
     prob["Ttrans"] = None
     prob["Tss"] = T if len(wavelengths) > 1 else None
+    PROB = os.path.join(path, "problem.json")
+    with open(PROB, 'w') as f:
+        json.dump(prob, f)
     return prob
 
     # l = [k for k in imow if port_number(k) == pi]

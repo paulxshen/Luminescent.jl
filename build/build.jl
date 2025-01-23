@@ -1,9 +1,9 @@
 using PackageCompiler
 # ENV["JULIA_SSL_CA_ROOTS_PATH"] = ""
 
-# create_app(".", "../Luminescent",
-# create_app("dummy", "../Luminescent",
-create_app("dummy", "../Luminescent550",
+create_app(".", "../Luminescent",
+    # create_app("dummy", "../Luminescent",
+    # create_app("dummy", "../Luminescent550",
     # executables=[
     #     "lumi" => "lumi",
     # ],

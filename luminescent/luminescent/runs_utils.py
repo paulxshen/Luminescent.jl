@@ -38,7 +38,7 @@ def make_simulation_movie(framerate=30, **kwargs):
     1
     # path = lastrun(**kwargs)
 
-    # f = os.path.join(path, "temp")
+    # f = os.path.join(path, "geometry")
     # imgs = sorted(os.listdir(f), key=lambda x: float(x[0:-4]))
     # frame = cv2.imread(os.path.join(f, imgs[0]))
     # height, width, layers = frame.shape
