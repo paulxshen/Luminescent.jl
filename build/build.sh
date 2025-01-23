@@ -10,5 +10,7 @@ git clone https://paulxshen@github.com/paulxshen/Luminescent.jl
 cd Luminescent.jl
 
 julia "build/build.jl"
+../Luminescent/bin/Luminescent
 export PATH=~/LuminescentAI/bin:$PATH
-tar czf /Luminescent.tar.gz LuminescentAI
+tar czf Luminescent.tar.gz Luminescent
+split -b 1.5G Luminescent.tar.gz "Luminescent.tar.gz.part"
