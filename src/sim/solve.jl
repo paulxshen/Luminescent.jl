@@ -38,8 +38,8 @@ end
 function solve(prob, ;
     save_memory=false, ulims=(-3, 3), framerate=0, path="",
     kwargs...)
-    @unpack mode_deltas, approx_2D_mode, dt, u0, geometry, _geometry, source_instances, monitor_instances, Ttrans, Tss, ϵeff, array = prob
-    @unpack F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = prob.grid
+    @unpack approx_2D_mode, dt, u0, geometry, _geometry, source_instances, monitor_instances, Ttrans, Tss, ϵeff, array = prob
+    @unpack mode_deltas, F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = prob.grid
 
     @nograd mode_deltas, dt, u0, source_instances, monitor_instances, Ttrans, Tss, ϵeff, F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts
 
@@ -88,7 +88,7 @@ function solve(prob, ;
                         a = u.Hz
                         g = p.ϵxx
 
-                        _path = joinpath(path, "temp")
+                        _path = joinpath(path, "TEMP")
                         mkpath(_path)
                         CairoMakie.save(joinpath(_path, "$t.png"), quickie(a, g; monitor_instances, source_instances, ulims),)
                         # quickie(a, g; monitor_instances, source_instances)
@@ -124,20 +124,22 @@ function solve(prob, ;
     v = map(mf, monitor_instances) do mf, m
         map(mf, wavelengths(m)) do u, λ
             dftfields = permutexyz(u, m.dimsperm, N)
-            fp = rp = c = nothing
+            ap = am = nothing
             if !isnothing(m.λmodes)
-                wm = m.λmodes[λ]
-                c = mode_decomp.(wm, (dftfields,), (first.(mode_deltas),))
-                # fp = [abs(v[1])^2 for v = c]
-                # rp = [abs(v[2])^2 for v = c]
+                md = first.(mode_deltas)
+                modes = m.λmodes[λ]
+                _modes = m._λmodes[λ]
+                @nograd modes, _modes, md
+                ap = inner.(modes, (dftfields,), (md,))
+                am = inner.(_modes, (dftfields,), (md,))
             end
 
-            dftfields, c
+            dftfields, ap, am
         end
     end
     um = [[v[1] for v = v] for v in v]
-    ap = [[isnothing(v[2]) ? nothing : getindex.(v[2], 1) for v = v] for v in v]
-    am = [[isnothing(v[2]) ? nothing : getindex.(v[2], 2) for v = v] for v in v]
+    ap = [[v[2] for v = v] for v in v]
+    am = [[v[3] for v = v] for v in v]
     return Solution(u, p, _p, ulims, um, ap, am)
 end
 

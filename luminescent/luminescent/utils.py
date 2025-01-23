@@ -169,23 +169,12 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
             d.thickness = min(zmax-d.zmin, d.thickness)
             # _d.bounds = (_d.zmin, _d.zmin+_d.thickness)
             # origin = (c.extract([layer]).bbox_np()-c.bbox_np())[0].tolist()
-            stlpath = os.path.abspath(os.path.join(path, f"{k}.stl"))
-            gf.export.to_stl(c, stlpath, layer_stack=_layer_stack)
-            stlpath = os.path.join(path, f'{k}_{l1}_{l2}.stl')
+            STL = os.path.abspath(os.path.join(path, f"{k}.stl"))
+            gf.export.to_stl(c, STL, layer_stack=_layer_stack)
+            STL = os.path.join(path, f'{k}_{l1}_{l2}.stl')
 
-            pymeshfix.clean_from_file(stlpath, stlpath)
-            # # Load the STL file
-            # mesh = pymeshfix.PyTMesh()
-            # mesh.load_file(stlpath)
-
-            # # Repair the mesh
-            # mesh.fill_small_boundaries()
-            # mesh.clean()
-
-            # # Save the repaired mesh
-            # mesh.save_file(stlpath)
-
-            mesh = pv.read(stlpath)
+            pymeshfix.clean_from_file(STL, STL)
+            mesh = pv.read(STL)
             im = stl_to_array(mesh, dl, bbox)
             np.save(os.path.join(path, f'{k}.npy'), im)
 
@@ -238,19 +227,19 @@ def adjust_wavelengths(wavelengths, wl_res=.01):
         return wavelengths, wavelengths[0], 1
     wavelengths = sorted(set(wavelengths))
     wavelengths0 = copy.deepcopy(wavelengths)
-    wl = median(wavelengths)
-    freqs0 = [wl/w for w in reversed(wavelengths)]
+    center_wavelength = median(wavelengths)
+    freqs0 = [center_wavelength/w for w in reversed(wavelengths)]
     nresfreq = round(1/min(np.diff([0]+freqs0)))
 
     while True:
         freqs = [round(f*nresfreq)/nresfreq for f in freqs0]
-        wavelengths = [wl/f for f in reversed(freqs)]
-        if max([abs(w-w0) for w, w0 in zip(wavelengths, wavelengths0)]) <= wl_res:
+        wavelengths = [center_wavelength/f for f in reversed(freqs)]
+        if max([abs(w-w0)/center_wavelength for w, w0 in zip(wavelengths, wavelengths0)]) <= wl_res:
             break
         nresfreq += 1
     print(
         f"wavelengths has been adjusted within `wl_res` to facilitate simulation:\n{wavelengths}")
-    return wavelengths, wl, nresfreq
+    return wavelengths, center_wavelength, nresfreq
 
 
 def save_prob(prob, path):

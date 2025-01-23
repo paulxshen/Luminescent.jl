@@ -37,7 +37,8 @@ def make_pic_sim_prob(path, c: gf.Component, nres,
             wavelengths = [wavelengths]
         else:
             wavelengths = wavelengths
-        wavelengths, wl, T = adjust_wavelengths(wavelengths, wl_res)
+        wavelengths, center_wavelength, T = adjust_wavelengths(
+            wavelengths, wl_res)
         for w in wavelengths:
             for k in keys:
                 entries.append([w, *unpack_sparam_key(k)])
@@ -89,7 +90,7 @@ def make_pic_sim_prob(path, c: gf.Component, nres,
                 d["monitors"] = SortedDict(d["monitors"])
                 runs.append(d)
 
-    prob = setup(path, c, study=study,  nres=nres, wl=wl,
+    prob = setup(path, c, study=study,  nres=nres, center_wavelength=center_wavelength,
                  runs=runs,
                  layer_stack=layer_stack, **kwargs)
     prob["wavelengths"] = wavelengths

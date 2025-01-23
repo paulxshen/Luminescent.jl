@@ -29,18 +29,18 @@ end
 # end
 
 
-function mode_decomp(m, u, deltas)
-    @nograd deltas, m
-    p = inner(m, m, deltas)
-    @assert imag(p) < 1e-3
-    p = real(p)
-    m1 = m / sqrt(abs(p))
-    m2 = mirror_mode(m1)
-    if p < 0
-        m2, m1 = m1, m2
-    end
-    inner.((m1, m2), (u,), (deltas,))
-end
+# function mode_decomp(m, u, deltas)
+#     @nograd deltas, m
+#     p = inner(m, m, deltas)
+#     @assert imag(p) < 1e-3
+#     p = real(p)
+#     m1 = m / sqrt(abs(p))
+#     m2 = mirror_mode(m1)
+#     if p < 0
+#         m2, m1 = m1, m2
+#     end
+#     inner.((m1, m2), (u,), (deltas,))
+# end
 
 
 function collapse_mode(m, p=:TE)
@@ -119,7 +119,7 @@ function solvemodes(ϵ, dl, λ, neigs, spacing, path; mode_solutions=nothing)
                 ϵ1 = (ϵ[1:end-1, :] + ϵ[2:end, :]) / 2
                 (ϵ1[:, 1:end-1] + ϵ1[:, 2:end]) / 2
             end,
-            "dl" => dl, "wl" => λ, "neigs" => neigs, "name" => name))
+            "dl" => dl, "center_wavelength" => λ, "neigs" => neigs, "name" => name))
         fn = joinpath(path, "solvemodes.py")
         try
             run(`python $fn $path`)

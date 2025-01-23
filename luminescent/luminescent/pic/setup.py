@@ -16,21 +16,13 @@ import numpy as np
 from sortedcontainers import SortedDict, SortedSet
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
-material_library = {
-    "cSi": 3.48**2,
-    "SiO2": 1.44**2,
-    "SiN": 2.0**2,
-    "Ge": 4.0**2,
-    "Si": 3.48**2,
-}
 
-
-def setup(path, c, study, nres, wl,
+def setup(path, c, study, nres, center_wavelength,
           bbox_layer=LAYER.WAFER,
           zmargin2=None, zlims=None, core_layer=LAYER.WG,
           port_source_offset="auto", port_margin="auto",
           runs=[],  sources=[],
-          layer_stack=LAYER_STACK, material_library=material_library,
+          layer_stack=LAYER_STACK, materials={},
           exclude_layers=[
               DESIGN_LAYER, GUESS], Courant=None,
           gpu=None, dtype=np.float32,
@@ -38,6 +30,7 @@ def setup(path, c, study, nres, wl,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None,
           Ttrans=None,
           approx_2D_mode=False):
+    materials = {**MATERIALS, **materials}
     prob = dict()
     if approx_2D_mode:
         N = 2
@@ -45,14 +38,14 @@ def setup(path, c, study, nres, wl,
     else:
         N = 3
         prob["approx_2D_mode"] = None
-    dy = dx = wl/nres
+    dy = dx = center_wavelength/nres
     dl = dx/4
     dz = 1 * dx
 
     prob["Ttrans"] = Ttrans
     prob["path"] = path
     prob["name"] = name
-    prob["wl"] = wl
+    prob["center_wavelength"] = center_wavelength
     prob["dx"] = dx
     prob["dy"] = dy
     prob["dz"] = dz
@@ -225,16 +218,16 @@ def setup(path, c, study, nres, wl,
     prob["layer_stack"] = layer_stack_info
     materials = set([v["material"] for v in layer_stack_info.values()])
     d = {
-        k: material_library[k] for k in materials
+        k: materials[k] for k in materials
     }
     prob["study"] = study
     mateps = {k: np.real(v) for k, v in d.items()}
-    matprops = {
+    materials = {
         k: {} for k in materials
     }
     for k, v in mateps.items():
-        matprops[k]["ϵ"] = v
-    prob["matprops"] = matprops
+        materials[k]["epsilon"] = v
+    prob["materials"] = materials
 
     prob["N"] = N
 
@@ -249,8 +242,8 @@ def setup(path, c, study, nres, wl,
     for run in runs:
         for s in list(run["sources"].values())+list(run["monitors"].values()):
             s["mode_width"] = wmode
-            for wl in s["wavelength_mode_numbers"]:
-                wavelengths.append(wl)
+            for center_wavelength in s["wavelength_mode_numbers"]:
+                wavelengths.append(center_wavelength)
     wavelengths = sorted(set(wavelengths))
 
     bbox = c.bbox_np()

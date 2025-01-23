@@ -3,15 +3,16 @@ abstract type AbstractMonitor end
 struct Monitor <: AbstractMonitor
     λmodenums
     λsmode
-
     λmodes
+
     center
     L
-    dimsperm
-    N
-    approx_2D_mode
     center3
     L3
+    mask
+
+    dimsperm
+    approx_2D_mode
     # tangent
 
     tags
@@ -25,7 +26,14 @@ struct Monitor <: AbstractMonitor
     #     new(a...)
     # end
 end
-Monitor(args...; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) = Monitor(λmodenums, λsmode, λmodes, args..., tags)
+
+Monitor(center, L, dimsperm, center3=center, L3=L, approx_2D_mode=nothing; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
+    Monitor(λmodenums, λsmode, λmodes, center, L, center3, L3, nothing, dimsperm, approx_2D_mode, tags)
+
+Monitor(mask; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
+    Monitor(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, nothing, tags)
+
+Base.ndims(m::Monitor) = length(m.center)
 
 struct PlaneMonitor <: AbstractMonitor
     dims
@@ -45,15 +53,18 @@ wavelengths(m::Monitor) = keys(m.λmodes)
 
 abstract type AbstractMonitorInstance end
 struct MonitorInstance <: AbstractMonitorInstance
-    roi
+    inds
+    masks
+
     frame
     dimsperm
     deltas
     center
     λmodes
+    _λmodes
     tags
 end
-@functor MonitorInstance (λmodes, deltas)
+@functor MonitorInstance (λmodes, _λmodes, masks, deltas)
 Base.ndims(m::MonitorInstance) = m.d
 area(m::MonitorInstance) = m.v
 wavelengths(m::MonitorInstance) = keys(m.λmodes)
@@ -61,9 +72,27 @@ Base.length(m::MonitorInstance) = 1
 frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
-function MonitorInstance(m::Monitor, g, ϵ, temp, mode_solutions=nothing)
-    λmodes, roi, _center, = _get_λmodes(m, ϵ, temp, mode_solutions, g)
-    MonitorInstance(roi, nothing, m.dimsperm, g.deltas, _center, fmap(x -> convert.(complex(g.F), x), λmodes), m.tags)
+function MonitorInstance(m::Monitor, g, ϵ, TEMP, mode_solutions=nothing)
+    λmodes, inds, masks, labelpos, = _get_λmodes(m, ϵ, TEMP, mode_solutions, g)
+    C = complex(g.F)
+    md = first.(g.mode_deltas)
+    λmodes = kmap(λmodes) do modes
+        map(modes) do m
+            m = kmap(x -> C.(x), m)
+            p = inner(m, m, md)
+            @assert imag(p) < 1e-3
+            p = real(p)
+            m = m / sqrt(abs(p))
+            if p < 0
+                mirror_mode(m)
+            else
+                m
+            end
+        end
+    end
+
+    _λmodes = kmap(v -> mirror_mode.(v), λmodes)
+    MonitorInstance(inds, masks, nothing, m.dimsperm, g.deltas, labelpos, λmodes, _λmodes, m.tags)
 end
 
 function MonitorInstance(m::PlaneMonitor, g)
@@ -73,24 +102,30 @@ function MonitorInstance(m::PlaneMonitor, g)
 end
 
 
-"""
-    function field(u, k, m)
-    
-queries field, optionally at monitor instance `m`
+# """
+#     function field(u, k, m)
 
-Args
-- `u`: state
-- `k`: symbol or str of Ex, Ey, Ez, Hx, Hy, Hz, |E|, |E|2, |H|, |H|2
-- `m`
-"""
-function field(a::AbstractArray, k, m)
-    @nograd k, m
-    getindexf(a, m.roi[k]...)#; approx=true)
-    # permutedims(getindexf(a, m.roi[k]...), p)
-end
+# queries field, optionally at monitor instance `m`
+
+# Args
+# - `u`: state
+# - `k`: symbol or str of Ex, Ey, Ez, Hx, Hy, Hz, |E|, |E|2, |H|, |H|2
+# - `m`
+# """
+# function field(a::AbstractArray, k, m)
+
+#     # permutedims(getindexf(a, m.inds[k]...), p)
+# end
 
 function field(u::Map, k, m)
-    field(u(k), k, m)
+    @unpack inds, masks = m
+    @nograd k, m, inds, masks
+    a = u(k)
+    if !isnothing(masks)
+        a .* masks(k)
+    else
+        getindexf(a, m.inds[k]...)#; approx=true)
+    end
 end
 
 #     if k == "|E|2"
@@ -111,9 +146,9 @@ end
 #         # if isnothing(m)
 #         #     return a
 #         # elseif isa(m, MonitorInstance)
-#         #     return sum([w * a[i...] for (w, i) = m.roi[k]])
+#         #     return sum([w * a[i...] for (w, i) = m.inds[k]])
 #         # elseif isa(m, PointCloudMonitorInstance)
-#         #     return [a[v...] for v = eachcol(m.roi[k])]
+#         #     return [a[v...] for v = eachcol(m.inds[k])]
 #         # end
 #     end
 # end

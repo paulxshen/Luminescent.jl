@@ -17,20 +17,19 @@ end
 struct Source
     λmodenums
     λsmode
-
     λmodes
 
     center
     L
+    center3
+    L3
+    mask
     # normal
     # tangent
     # zaxis
     # xaxis
     dimsperm
-    N
     approx_2D_mode
-    center3
-    L3
     tags
     # function Source(sigmodes, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; tags...)
     #     new(f, center, lb, ub, normal, tangent, E2J(mode), tags)
@@ -40,7 +39,14 @@ struct Source
     # end
 
 end
-Source(args...; λmodenums=nothing, λmodes=nothing, λsmode=nothing, tags...) = Source(λmodenums, λmodes, λsmode, args..., tags)
+
+Source(center, L, dimsperm, center3=center, L3=L, approx_2D_mode=nothing; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
+    Source(λmodenums, λsmode, λmodes, center, L, center3, L3, nothing, dimsperm, approx_2D_mode, tags)
+
+Source(mask; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
+    Source(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, nothing, tags)
+
+Base.ndims(m::Source) = length(m.center)
 
 """
     function PlaneWave(f, dims; mode...)
@@ -121,12 +127,13 @@ function SourceInstance(s::PlaneWave, g)
     SourceInstance(Source(sigmodes, L / 2, -L / 2, L / 2, getdimsperm(dims), tags), g)
 end
 
-function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
-    @unpack dimsperm, N, tags = s
+function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
+    @unpack dimsperm, tags = s
     @unpack F, field_sizes = g
     C = complex(F)
+    N = ndims(s)
     ϵeff = nothing
-    λmodes, roi, _center = _get_λmodes(s, ϵ, temp, mode_solutions, g)
+    λmodes, inds, masks, labelpos = _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
 
 
     λs = @ignore_derivatives Array(keys(λmodes))
@@ -159,22 +166,27 @@ function SourceInstance(s::Source, g, ϵ, temp, mode_solutions=nothing)
             _mode = namedtuple([k => begin
                 b = mode(k)
                 k = Symbol("E$(string(k)[end])")
-                a = zeros(C, field_sizes[k])
                 if b == 0
                     0
                 else
-                    I = roi[k]
-                    global aaaa = a, b, mode, k, I
-                    setindexf!(a, b, I...)
-                    a
+                    if !isnothing(inds)
+                        a = zeros(C, field_sizes[k])
+
+                        I = inds[k]
+                        # global aaaa = a, b, mode, k, I
+                        setindexf!(a, b, I...)
+                        a
+                    else
+                        b * masks[k]
+                    end
                 end
             end for k = ks])
             (f, _mode)
         end for (sig, mode) = sigmodes
     ]
-    # @show center, g.lb, _center
+    # @show center, g.lb, labelpos
 
-    SourceInstance(sigmodes, _center, tags)
+    SourceInstance(sigmodes, labelpos, tags)
 end
 
 # Complex
@@ -195,27 +207,40 @@ function EH2JM(d::T) where {T}
     dict(Pair.(replace(keys(d), :Ex => :Jx, :Ey => :Jy, :Ez => :Jz, :Hx => :Mx, :Hy => :My, :Hz => :Mz), values(d)))
 end
 
-function _get_λmodes(s, ϵ, temp, mode_solutions, g)
-    @unpack center, L, tags, dimsperm, N, center3, L3, approx_2D_mode, λmodenums, λmodes, λsmode = s
+function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
+    @unpack mask, center, L, tags, dimsperm, center3, L3, approx_2D_mode, λmodenums, λmodes, λsmode = s
     @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, dl = g
-    dx = deltas[1][1]
+    N = ndims(s)
 
-    start = v2i(center - L / 2 - g.lb, deltas)
-    stop = v2i(center + L / 2 - g.lb, deltas)
-    start, stop = min.(start, stop), max.(start, stop)
+    inds = masks = labelpos = nothing
+    if !isnothing(mask)
+        masks = dict([k => begin
+            start = lr[:, 1]
+            stop = lr[:, 2]
+            len = round.(stop - start + 1)
+            I = range.(start + 0.5, stop + 0.5, len)
+            getindexf(mask, I...)
+        end for (k, lr) = pairs(field_lims)])
+    else
+        dx = deltas[1][1]
 
-    sel = abs.(start - stop) .> 1e-3
-    start += 0.5sel
-    stop -= 0.5sel
-    len = int(stop - start + 1)
+        start = v2i(center - L / 2 - g.lb, deltas)
+        stop = v2i(center + L / 2 - g.lb, deltas)
+        start, stop = min.(start, stop), max.(start, stop)
 
-    start = F(start)
-    stop = F(stop)
+        sel = abs.(start - stop) .> 1e-3
+        start += 0.5sel
+        stop -= 0.5sel
+        len = int(stop - start + 1)
 
-    roi = dict([k => begin
-        range.(start, stop, len) - lr[:, 1] + 1
-    end for (k, lr) = pairs(field_lims)])
-    _center = round(v2i(center - g.lb, deltas) + 0.5)
+        start = F(start)
+        stop = F(stop)
+
+        inds = dict([k => begin
+            range.(start, stop, len) - lr[:, 1] + 1
+        end for (k, lr) = pairs(field_lims)])
+        labelpos = round(v2i(center - g.lb, deltas) + 0.5)
+    end
 
     # 
     if !isnothing(λmodenums)
@@ -244,7 +269,7 @@ function _get_λmodes(s, ϵ, temp, mode_solutions, g)
 
         # global _a = ϵmode, dimsperm
         λmodes = OrderedDict([λ => begin
-            modes = solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, temp; mode_solutions)[mns+1]
+            modes = solvemodes(ϵmode, dl, λ, maximum(mns) + 1, mode_spacing, TEMP; mode_solutions)[mns+1]
             # if isnothing(ϵeff)
             #     @unpack Ex, Ey = modes[1]
             #     E = sqrt.(abs2.(Ex) + abs2.(Ey))
@@ -268,6 +293,7 @@ function _get_λmodes(s, ϵ, temp, mode_solutions, g)
         end
     elseif !isnothing(λsmode)
         λs, mode = λsmode
+        mode = kmap(Symbol, identity, mode)
         mode = OrderedDict([
             begin
                 if isa(v, Number)
@@ -282,5 +308,5 @@ function _get_λmodes(s, ϵ, temp, mode_solutions, g)
 
     λmodes = sort(λmodes, by=kv -> kv[1])
 
-    λmodes, roi, _center
+    λmodes, inds, masks, labelpos
 end

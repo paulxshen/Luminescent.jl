@@ -83,8 +83,8 @@ def solve(path, dev=False):
 def load_sparams(sparams):
     if "re" in list(sparams.values())[0]:
         return {k: v["re"]+1j*v["im"] for k, v in sparams.items()}
-    return {wl: {k: (v["re"]+1j*v["im"])
-                 for k, v in d.items()} for wl, d in sparams.items()}
+    return {center_wavelength: {k: (v["re"]+1j*v["im"])
+                                for k, v in d.items()} for center_wavelength, d in sparams.items()}
 
 
 def load_res(path, show=True):

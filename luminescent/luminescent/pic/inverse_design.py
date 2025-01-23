@@ -33,9 +33,9 @@ def make_pic_inv_prob(path, c,  targets, iters=10,
         wavelengths = [targets["phase_shifter"]]
     else:
         if "tparams" in targets:
-            for wl in targets["tparams"]:
+            for center_wavelength in targets["tparams"]:
                 d = {}
-                # for k in targets["tparams"][wl]:
+                # for k in targets["tparams"][center_wavelength]:
                 #     po, mo, pi, mi = unpack_sparam_key(k)
                 #     # if mo == 0:
                 #     #     _mo = 1
@@ -46,16 +46,16 @@ def make_pic_inv_prob(path, c,  targets, iters=10,
 
                 #     # if mo is not None:
                 #     #     _k = f"{po}@{_mo},{pi}@{mi}"
-                #     #     if _k not in targets["tparams"][wl]:
+                #     #     if _k not in targets["tparams"][center_wavelength]:
                 #     #         d[_k] = 0
 
                 #     _k = f"{pi}@{mi},{pi}@{mi}"
-                #     if _k not in targets["tparams"][wl]:
+                #     if _k not in targets["tparams"][center_wavelength]:
                 #         d[_k] = 0
                 #     # _k = f"o{pi}@1,o{pi}@{mi}"
-                #     # if _k not in targets["tparams"][wl]:
+                #     # if _k not in targets["tparams"][center_wavelength]:
                 #     #     d[_k] = 0
-                # targets["tparams"][wl].update(d)
+                # targets["tparams"][center_wavelength].update(d)
         print(targets)
 
         targets1 = {}
@@ -63,15 +63,15 @@ def make_pic_inv_prob(path, c,  targets, iters=10,
         wavelengths = SortedSet()
         for k, d in targets.items():
             d = {
-                wl: {
+                center_wavelength: {
                     long_sparam_key(k): v for k, v in d.items()
-                } for wl, d in d.items()}
+                } for center_wavelength, d in d.items()}
             targets1[k] = d
             if k in ["sparams", "tparams"]:
                 for s in sum([list(d.keys()) for d in d.values()], []):
                     keys.add(s)
-            for wl in d:
-                wavelengths.add(wl)
+            for center_wavelength in d:
+                wavelengths.add(center_wavelength)
         targets = targets1
         keys = list(keys)
         print(keys)
@@ -137,11 +137,11 @@ def make_pic_inv_prob(path, c,  targets, iters=10,
     #     d = {"thickness": l.thickness, "material": l.material, "zmin": l.zmin}
     #     d["layer"] = void_layer
     #     d["epsilon"] = materials[d["material"]]["epsilon"]
-    #     d["ϵ"] = d["epsilon"]
+    #     d["epsilon"] = d["epsilon"]
     # else:
     #     d = copy.deepcopy(d)
     #     d["epsilon"] = epsmin
-    #     d["ϵ"] = d["epsilon"]
+    #     d["epsilon"] = d["epsilon"]
     # prob["design_config"]["void"] = d
 
     prob["design_config"]["design_region_layer"] = design_region_layer

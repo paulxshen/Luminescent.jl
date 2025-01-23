@@ -108,7 +108,7 @@ function make_geometry(masks, margins, lb, dl, geometry, designs, design_config,
         a = geometry[k]
         T = typeof(a)
         if k == :ϵ
-            f = @ignore_derivatives materials(mat)(:epsilon) |> F
+            f = @ignore_derivatives materials(mat)(k) |> F
             v = @ignore_derivatives minimum(a)
             if perturb == k
                 f *= convert.(F, 1.001)

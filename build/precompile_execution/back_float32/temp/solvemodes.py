@@ -7,7 +7,7 @@ path = sys.argv[1]
 data = np.load(os.path.join(path, "args.npz"))
 eps = data["eps"]
 dl = data["dl"]
-λ = data["wl"]
+λ = data["center_wavelength"]
 neigs = data["neigs"]
 name = data["name"]
 

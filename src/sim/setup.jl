@@ -14,13 +14,13 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     approx_2D_mode=nothing,
     Ttrans=nothing, Tss=nothing,
     ϵ=1, μ=1, σ=0, m=0, γ=0, β=0,
-    ϵ3=1,
+    ϵ3=ϵ,
     F=Float32,
     pml_depths=nothing, pml_ramp_fracs=0.2,
     Courant=0.9,
     deltas3=deltas,
     array=Array,
-    temp="",
+    TEMP="",
     kw...)
 
     if !isnothing(approx_2D_mode)
@@ -267,11 +267,11 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     spacings = int(deltas / dl)
 
     field_diffpadvals = refactor(field_diffpadvals)
-    grid = (; F, N, L, bbox, sz, deltas, deltas3, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals, geometry_padvals, geometry_padamts, _geometry_padamts, dl, spacings, mode_spacing) |> dict
+    grid = (; F, N, L, bbox, sz, deltas, deltas3, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals, geometry_padvals, geometry_padamts, _geometry_padamts, dl, spacings, mode_spacing, mode_deltas,) |> dict
 
     mode_solutions = []
-    source_instances = SourceInstance.(sources, (grid,), (_ϵ3,), (temp,), (mode_solutions,))
-    monitor_instances = MonitorInstance.(monitors, (grid,), (_ϵ3,), (temp,), (mode_solutions,))
+    source_instances = SourceInstance.(sources, (grid,), (_ϵ3,), (TEMP,), (mode_solutions,))
+    monitor_instances = MonitorInstance.(monitors, (grid,), (_ϵ3,), (TEMP,), (mode_solutions,))
     ϵeff = nothing
     # ϵeff = source_instances[1].ϵeff
 
@@ -289,7 +289,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         geometry[:ϵ] = downsample(_geometry.ϵ, int(deltas / dl))
     end
 
-    Tssmin = if N == 3 && (F == Float16 || F == BFloat16)
+    Tssmin = if N == 3 && (F == Float16)# || F == BFloat16)
         40
     else
         10
@@ -319,9 +319,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     Ttrans, Tss = convert.(F, (Ttrans, Tss))
     prob = (;
                grid,
-               source_instances, monitor_instances, field_names,
-               mode_deltas,
-               approx_2D_mode, Courant,
+               source_instances, monitor_instances, field_names, approx_2D_mode, Courant,
                Ttrans, Tss,
                geometry, _geometry, nmax, nmin, ϵeff,
                is_field_on_lb, is_field_on_ub,

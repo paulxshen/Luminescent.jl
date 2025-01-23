@@ -3,7 +3,7 @@ using PackageCompiler
 
 # create_app(".", "../Luminescent",
 # create_app("dummy", "../Luminescent",
-create_app("dummy", "../Luminescent_",
+create_app("dummy", "../Luminescent550",
     # executables=[
     #     "lumi" => "lumi",
     # ],

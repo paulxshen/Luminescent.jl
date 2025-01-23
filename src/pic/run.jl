@@ -1,6 +1,6 @@
 function picrun(path)
-    PROB_PATH = joinpath(path, "problem.json")
-    prob = JSON.parse(read(open(PROB_PATH), String); dicttype=OrderedDict)
+    PROB = joinpath(path, "problem.json")
+    prob = JSON.parse(read(open(PROB), String); dicttype=OrderedDict)
     gpu_backend = prob["gpu_backend"]
     array = if isnothing(gpu_backend)
         println("using CPU")
@@ -16,18 +16,18 @@ function picrun(path, array; kw...)
     Random.seed!(1)
     ENV["autodiff"] = "0"
     println("setting up simulation...")
-    global PROB_PATH = joinpath(path, "problem.json")
-    SOL_PATH = joinpath(path, "solution.json")
-    temp = joinpath(path, "temp")
+    global PROB = joinpath(path, "problem.json")
+    SOL = joinpath(path, "solution.json")
+    TEMP = joinpath(path, "TEMP")
 
-    io = open(PROB_PATH)
+    io = open(PROB)
     s = read(io, String)
     global prob = JSON.parse(s; dicttype=OrderedDict)
     # merge!(prob, kw)
     for (k, v) = pairs(kw)
         prob[string(k)] = v
     end
-    @unpack name, N, approx_2D_mode, dtype, wl, xmargin, ymargin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, magic, framerate, layer_stack, matprops, L, Ttrans, Tss = prob
+    @unpack name, N, approx_2D_mode, dtype, center_wavelength, xmargin, ymargin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, magic, framerate, layer_stack, materials, L, Ttrans, Tss = prob
     if study == "inverse_design"
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end
@@ -44,7 +44,7 @@ function picrun(path, array; kw...)
         println("Float16 selected. make sure your cpu or GPU supports it. otherwise will be emulated and very slow.")
     end
     println("using $F")
-    @show λ = wl
+    @show λ = center_wavelength
     ticks = [
         begin
             round((v - v[1]) / dl)
@@ -68,7 +68,7 @@ function picrun(path, array; kw...)
         # Nf = [Bool, UInt8][findfirst(>=(length(enum), 2 .^ [1, 8]))]
         Nf = Float16
     end
-    enum = [matprops(v.material).ϵ |> F for v = values(layer_stack)] |> unique |> sort
+    enum = [materials(v.material).epsilon |> F for v = values(layer_stack)] |> unique |> sort
     ϵmin = minimum(enum) |> Nf
     # if AUTODIFF()
     # ϵ3 = zeros(Nf, Tuple(sz))
@@ -80,9 +80,9 @@ function picrun(path, array; kw...)
     layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2].mesh_order) |> OrderedDict
     for (k, v) = pairs(layer_stack)
         @unpack material, thickness = v
-        ϵ = matprops(material).ϵ |> Nf
+        ϵ = materials(material).epsilon |> Nf
         # if AUTODIFF() || ϵ != ϵmin
-        global a = npzread(joinpath(temp, "$k.npy"))
+        global a = npzread(joinpath(TEMP, "$k.npy"))
         # error("not implemented")
         a = permutedims(a, [2, 1, 3])
         # a = downsample(a, (1, 1, 2))
@@ -115,8 +115,8 @@ function picrun(path, array; kw...)
     if study == "inverse_design"
         targets = fmap(F, targets)
         # targets = sortkeys(targets)
-        if isfile(SOL_PATH)
-            sol = open(SOL_PATH, "r") do f
+        if isfile(SOL)
+            sol = open(SOL, "r") do f
                 JSON.parse(f)
             end
         else
@@ -174,7 +174,7 @@ function picrun(path, array; kw...)
                 end
                 dimsperm = getdimsperm(L3)
                 λmodenums = SortedDict([(F(_λ) / λ) => v for (_λ, v) in pairs(wavelength_mode_numbers)])
-                push!(sources, Source(center, L, dimsperm, N, approx_2D_mode, center3, L3; λmodenums, label="s$(string(port)[2:end])"))
+                push!(sources, Source(center, L, dimsperm, center3, L3, approx_2D_mode, ; λmodenums, label="s$(string(port)[2:end])"))
             end
             sources
         end for run in runs
@@ -199,14 +199,14 @@ function picrun(path, array; kw...)
             end
             dimsperm = getdimsperm(L3)
 
-            Monitor(center, L, dimsperm, N, approx_2D_mode, center3, L3; λmodenums, label=port)
+            Monitor(center, L, dimsperm, center3, L3, approx_2D_mode, ; λmodenums, label=port)
         end for (port, m) = SortedDict(run.monitors) |> pairs] for run in runs]
 
     global run_probs =
         [
             begin
                 setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ; approx_2D_mode, array,
-                    F, ϵ, ϵ3, deltas3=deltas / λ, λ, temp, Ttrans, Tss)
+                    F, ϵ, ϵ3, deltas3=deltas / λ, λ, TEMP, Ttrans, Tss)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]
 
@@ -221,7 +221,7 @@ function picrun(path, array; kw...)
         plotsols(sols, run_probs, path)
         sol = (; sparam_family(S)...,
             path, study)
-        open(SOL_PATH, "w") do f
+        open(SOL, "w") do f
             write(f, json(cpu(sol)))
         end
     elseif study == "inverse_design"
@@ -274,7 +274,7 @@ function picrun(path, array; kw...)
                     models = [model]
                     res = calc_sparams(runs, run_probs, lb, dl,
                         designs, design_config, models, ;
-                        F, img, alg, save_memory, matprops)
+                        F, img, alg, save_memory, materials)
                     # return res
                     @unpack S, sols = res
                     l = 0

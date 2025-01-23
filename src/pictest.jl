@@ -22,5 +22,8 @@ Random.seed!(1234)
 # picrun(joinpath("runs", "straight"))
 
 for p = readdir("build/precompile_execution", join=true)
-    picrun(p)
+    # if !contains(string(p), "16") && !contains(string(p), "back")
+    if !contains(string(p), "16")# && contains(string(p), "back")
+        picrun(p)
+    end
 end
