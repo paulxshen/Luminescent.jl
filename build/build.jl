@@ -7,7 +7,7 @@ create_app(".", "../Luminescent",
     # executables=[
     #     "lumi" => "lumi",
     # ],
-    # precompile_execution_file="build/precompile_app.jl",
+    precompile_execution_file="build/precompile_app.jl",
     force=true,
     # incremental=true,
     # include_lazy_artifacts=true, 
