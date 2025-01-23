@@ -10,7 +10,7 @@ create_app(".", "../Luminescent",
     precompile_execution_file="build/precompile_app.jl",
     force=true,
     # incremental=true,
-    # include_lazy_artifacts=true, 
+    include_lazy_artifacts=true,
     # include_transitive_dependencies=false
 )
 

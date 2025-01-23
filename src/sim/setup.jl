@@ -33,6 +33,9 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     mode_spacing = int(mode_deltas[1] / dl)
     L = size(ϵ) * dl
     sz = Tuple([isa(d, Number) ? int(l / d) : length(d) for (d, l) = zip(deltas, L)])
+
+    # @show sz,prod(sz)
+
     a = ones(F, Tuple(sz))
     _geometry = (; ϵ, μ, σ, m, γ, β) |> pairs |> OrderedDict
     geometry = OrderedDict()

@@ -13,4 +13,4 @@ julia "build/build.jl"
 ../Luminescent/bin/Luminescent
 export PATH=~/LuminescentAI/bin:$PATH
 tar czf Luminescent.tar.gz Luminescent
-split -b 1.5G Luminescent.tar.gz "Luminescent.tar.gz.part"
+split -b 1500M Luminescent.tar.gz "Luminescent.tar.gz.part"

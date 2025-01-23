@@ -33,7 +33,7 @@ def start_fdtd_server(url=URL):
 
 def solve(path, dev=False):
     path = os.path.abspath(path)
-    prob = load_prob(path)
+    # prob = load_prob(path)
 
     # prob["action"] = "solve"
     # r = requests.post(f"{url}/local", json=prob)
