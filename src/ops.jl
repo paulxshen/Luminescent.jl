@@ -1,5 +1,8 @@
 for T = (:Map, :(AbstractVector{<:AbstractArray}))
-    @eval Base.:*(A::AbstractMatrix{<:AbstractArray}, v::$T) = [sum([a .* v for (a, v) = zip(r, values(v))]) for r in eachrow(A)]
+    @eval Base.:*(A::AbstractMatrix{S}, v::$T) where {S<:Union{Number,AbstractArray}} =
+        map(eachrow(A)) do r
+            sum(r .⊙ values(v))
+        end
 end
 Base.:*(A::AbstractMatrix{<:AbstractArray}, B::AbstractMatrix{<:AbstractArray}) = [sum([a .* b for (a, b) = zip(r, c)]) for r = eachrow(A), c = eachcol(B)]
 

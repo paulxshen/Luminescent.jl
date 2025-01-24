@@ -11,7 +11,10 @@ struct Monitor <: AbstractMonitor
     L3
     mask
 
+
     dimsperm
+    frame
+
     approx_2D_mode
     # tangent
 
@@ -28,10 +31,10 @@ struct Monitor <: AbstractMonitor
 end
 
 Monitor(center, L, dimsperm, center3=center, L3=L, approx_2D_mode=nothing; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
-    Monitor(λmodenums, λsmode, λmodes, center, L, center3, L3, nothing, dimsperm, approx_2D_mode, tags)
+    Monitor(λmodenums, λsmode, λmodes, center, L, center3, L3, nothing, dimsperm, nothing, approx_2D_mode, tags)
 
-Monitor(mask; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
-    Monitor(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, nothing, tags)
+Monitor(mask, frame; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
+    Monitor(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, frame, nothing, tags)
 
 Base.ndims(m::Monitor) = length(m.center)
 
@@ -73,7 +76,7 @@ frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
 function MonitorInstance(m::Monitor, g, ϵ, TEMP, mode_solutions=nothing)
-    λmodes, inds, masks, labelpos, = _get_λmodes(m, ϵ, TEMP, mode_solutions, g)
+    λmodes, _λmodes, inds, masks, labelpos, = _get_λmodes(m, ϵ, TEMP, mode_solutions, g)
     C = complex(g.F)
     md = first.(g.mode_deltas)
     λmodes = kmap(λmodes) do modes
@@ -91,7 +94,6 @@ function MonitorInstance(m::Monitor, g, ϵ, TEMP, mode_solutions=nothing)
         end
     end
 
-    _λmodes = kmap(v -> mirror_mode.(v), λmodes)
     MonitorInstance(inds, masks, nothing, m.dimsperm, g.deltas, labelpos, λmodes, _λmodes, m.tags)
 end
 

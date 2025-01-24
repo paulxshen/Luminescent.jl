@@ -27,7 +27,7 @@ _*.py
 # /src/sim
 # /src/pic
 
-# Manifest.*
+Manifest.toml
 _.png
 /*.mp4
 

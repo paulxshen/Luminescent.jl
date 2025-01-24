@@ -26,7 +26,8 @@ include("snapshot.jl")
 
 include("pic/utils.jl")
 include("pic/run.jl")
-# using AbbreviatedStackTraces
+
+include("gen/run.jl")
 
 include("ops.jl")
 include("del.jl")

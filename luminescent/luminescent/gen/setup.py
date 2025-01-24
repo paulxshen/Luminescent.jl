@@ -29,6 +29,7 @@ def make_sim_prob(
         Ttrans=None,
         wl_res=.01,
         # Tss=None,
+        gpu=None,
 ):
 
     materials = {**MATERIALS, **materials}
@@ -83,13 +84,14 @@ def make_sim_prob(
         'dtype': dtype,
         'center_wavelength': center_wavelength,
         'dl': dl,
+        'dx': dx,
         'xs': xs,
         'ys': ys,
         'zs': zs,
         'layer_stack': layer_stack,
         'materials': materials,
         'L': L,
-
+        'gpu_backend': gpu,
     }
     prob["wavelengths"] = wavelengths
     prob["Ttrans"] = None

@@ -29,6 +29,8 @@ struct Source
     # zaxis
     # xaxis
     dimsperm
+    frame
+
     approx_2D_mode
     tags
     # function Source(sigmodes, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; tags...)
@@ -43,8 +45,8 @@ end
 Source(center, L, dimsperm, center3=center, L3=L, approx_2D_mode=nothing; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
     Source(λmodenums, λsmode, λmodes, center, L, center3, L3, nothing, dimsperm, approx_2D_mode, tags)
 
-Source(mask; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
-    Source(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, nothing, tags)
+Source(mask, frame; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
+    Source(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, frame, nothing, tags)
 
 Base.ndims(m::Source) = length(m.center)
 
@@ -133,7 +135,7 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
     C = complex(F)
     N = ndims(s)
     ϵeff = nothing
-    λmodes, inds, masks, labelpos = _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
+    λmodes, _, inds, masks, labelpos = _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
 
 
     λs = @ignore_derivatives Array(keys(λmodes))
@@ -208,7 +210,7 @@ function EH2JM(d::T) where {T}
 end
 
 function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
-    @unpack mask, center, L, tags, dimsperm, center3, L3, approx_2D_mode, λmodenums, λmodes, λsmode = s
+    @unpack mask, center, L, tags, dimsperm, frame, center3, L3, approx_2D_mode, λmodenums, λmodes, λsmode = s
     @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, dl = g
     N = ndims(s)
 
@@ -302,11 +304,29 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
                 k => v
             end for (k, v) = pairs(mode)
         ])
-        λmodes = OrderedDict([λ => mode for λ = λs])
-    end
-    λmodes = fmap(F, λmodes)
+        _mode = mirror_mode(mode)
 
+        mode = packxyz(mode)
+        mode = kmap(mode) do v
+            frame * v
+        end
+        mode = unpackxyz(mode)
+
+        _mode = packxyz(_mode)
+        _mode = kmap(_mode) do v
+            frame * v
+        end
+        _mode = unpackxyz(_mode)
+
+        λmodes = OrderedDict([λ => mode for λ = λs])
+        _λmodes = OrderedDict([λ => _mode for λ = λs])
+    end
+
+    λmodes = fmap(F, λmodes)
     λmodes = sort(λmodes, by=kv -> kv[1])
 
-    λmodes, inds, masks, labelpos
+    _λmodes = fmap(F, _λmodes)
+    _λmodes = sort(_λmodes, by=kv -> kv[1])
+
+    λmodes, _λmodes, inds, masks, labelpos
 end

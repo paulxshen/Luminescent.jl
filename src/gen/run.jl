@@ -9,7 +9,7 @@ function genrun(path)
         println("using $gpu_backend")
         cu
     end
-    picrun(path, array)
+    genrun(path, array)
 end
 
 function genrun(path, array; kw...)
@@ -25,7 +25,7 @@ function genrun(path, array; kw...)
     global prob = JSON.parse(s; dicttype=OrderedDict)
 
 
-    @unpack dtype, center_wavelength, dl, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, wavelengths = prob
+    @unpack dtype, center_wavelength, dl, dx, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, wavelengths = prob
     if study == "inverse_design"
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end
@@ -51,10 +51,9 @@ function genrun(path, array; kw...)
     spacings = diff.(ticks)
     x = spacings[1][1]
     spacings = [x, x, spacings[3]]
-    dx = x * dl
     popfirst!.(ticks)
     deltas = spacings * dl
-
+    mode_deltas = [dx, dx, dx]
 
     # global sz = round.(L / dl)
 
@@ -89,12 +88,12 @@ function genrun(path, array; kw...)
     sources = map(enumerate(sources)) do (i, s)
         λsmode = (λs, s.mode)
         mask = npzread(joinpath(GEOMETRY, "source$i.npy"))
-        Source(mask; λsmode)
+        Source(mask, stack(s.frame); λsmode)
     end
     monitors = map(enumerate(monitors)) do (i, s)
         λsmode = (λs, s.mode)
         mask = npzread(joinpath(GEOMETRY, "monitor$i.npy"))
-        Monitor(mask; λsmode)
+        Monitor(mask, stack(s.frame); λsmode)
     end
 
     boundaries = []
