@@ -60,13 +60,19 @@ def solve(path, dev=False):
     #     env = '0;'
     # cmd = ["lumi", path]
     # try:
-    run(["Luminescent", path])
+    # run(["Luminescent", path])
     # except:
-    #     a = ['juila', '-e', ]
+    a = ['juila', '-e', ]
     #     run(["julia", "-e", f'println(Base.active_project())'])
     #     print("no fdtd binaries found - starting julia session to compile fdtd code - will take 5 mins - can take a break and come back :) ...")
-    #     b = [f'using Luminescent;picrun(raw"{path}")']
-    #     run(a+b)
+
+    prob = json.loads(open(os.path.join(path, "problem.json"), "rb").read())
+    gpu_backend = prob["gpu_backend"]
+    if gpu_backend:
+        b = [f'using Luminescent,CUDA;picrun(raw"{path}",cu)']
+    else:
+        b = [f'using Luminescent;picrun(raw"{path}")']
+    run(a+b)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:
     #     if p.stderr is not None:

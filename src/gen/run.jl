@@ -100,7 +100,7 @@ function genrun(path, array; kw...)
     ϵ = ϵ3
     N = 3
     global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ; array,
-        F, ϵ, deltas3=deltas / λ, λ, GEOMETRY, Ttrans=1, Tss)
+        F, ϵ, deltas3=deltas / λ, λ, GEOMETRY, Ttrans=1, Tss=1)
 
 
     sol = solve(prob; path)

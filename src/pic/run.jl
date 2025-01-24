@@ -1,18 +1,18 @@
-function picrun(path)
-    PROB = joinpath(path, "problem.json")
-    prob = JSON.parse(read(open(PROB), String); dicttype=OrderedDict)
-    gpu_backend = prob["gpu_backend"]
-    array = if isnothing(gpu_backend)
-        println("using CPU")
-        Array
-    else
-        println("using $gpu_backend")
-        cu
-    end
-    picrun(path, array)
-end
+# function picrun(path)
+#     PROB = joinpath(path, "problem.json")
+#     prob = JSON.parse(read(open(PROB), String); dicttype=OrderedDict)
+#     gpu_backend = prob["gpu_backend"]
+#     array = if isnothing(gpu_backend)
+#         println("using CPU")
+#         Array
+#     else
+#         println("using $gpu_backend")
+#         cu
+#     end
+#     picrun(path, array)
+# end
 
-function picrun(path, array; kw...)
+function picrun(path, array=Array; kw...)
     Random.seed!(1)
     ENV["autodiff"] = "0"
     println("setting up simulation...")

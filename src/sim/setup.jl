@@ -292,11 +292,6 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         geometry[:ϵ] = downsample(_geometry.ϵ, int(deltas / dl))
     end
 
-    Tssmin = if N == 3 && (F == Float16)# || F == BFloat16)
-        40
-    else
-        10
-    end
     if !isa(Ttrans, Real)
         if endswith(string(Ttrans), "x")
             Ttrans = parse(F, Ttrans[1:end-1])
@@ -305,7 +300,15 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         end
         Ttrans *= sum(L * nmax)
     end
+
     if Tss == nothing
+
+        Tssmin = if N == 3 && (F == Float16)# || F == BFloat16)
+            40
+        else
+            10
+        end
+
         v = reduce(vcat, wavelengths.(monitor_instances))
         v = Base.round.(v, digits=3)
         v = v |> Set |> collect |> sort |> reverse
@@ -316,8 +319,9 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
             Tss = 1 / minimum(diff([0, (1 ./ v)...]))
             # Tss = ceil(100 / T) * T
         end
+        Tss *= Base.ceil(Int, Tssmin / Tss)
     end
-    Tss *= Base.ceil(Int, Tssmin / Tss)
+
     @show Ttrans, Tss
     Ttrans, Tss = convert.(F, (Ttrans, Tss))
     prob = (;
