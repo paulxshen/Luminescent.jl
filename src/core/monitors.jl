@@ -77,22 +77,6 @@ normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
 function MonitorInstance(m::Monitor, g, ϵ, TEMP, mode_solutions=nothing)
     λmodes, _λmodes, inds, masks, labelpos, = _get_λmodes(m, ϵ, TEMP, mode_solutions, g)
-    C = complex(g.F)
-    md = first.(g.mode_deltas)
-    λmodes = kmap(λmodes) do modes
-        map(modes) do m
-            m = kmap(x -> C.(x), m)
-            p = inner(m, m, md)
-            @assert imag(p) < 1e-3
-            p = real(p)
-            m = m / sqrt(abs(p))
-            if p < 0
-                mirror_mode(m)
-            else
-                m
-            end
-        end
-    end
 
     MonitorInstance(inds, masks, nothing, m.dimsperm, g.deltas, labelpos, λmodes, _λmodes, m.tags)
 end

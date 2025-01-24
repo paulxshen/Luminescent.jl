@@ -139,6 +139,36 @@ function make_geometry(masks, margins, lb, dl, geometry, designs, design_config,
     end for k = keys(geometry)])
 end
 # using GLMakie: volume
+function vis(sol, prob, path=nothing)
+    @unpack u, p, _p = sol |> cpu
+    prob = prob |> cpu
+    @unpack monitor_instances, source_instances, λ, = prob
+    @unpack deltas, spacings, bbox, dl = prob.grid
+    u = u.H.Hz
+    N = ndims(u)
+    # if N == 3
+    #     volume(u) |> display
+    #     heatmap(u[:, :, round(Int, size(u, 3) / 2)]) |> display
+    # else
+    #     heatmap(u) |> display
+    # end
+    # return
+    g = _p.ϵ
+    u = upsample(u, spacings)
+    # g = imresize(g, size(u))
+    bbox /= dl
+    ratio = int(deltas[1] / dl)
+
+    plt = quickie(u, g; dl, λ, monitor_instances, ratio, source_instances, bbox)
+    display(plt)
+
+    try
+        CairoMakie.save(joinpath(path, "run.png"), plt,)
+    catch e
+        println("save plot failed")
+        println(e)
+    end
+end
 function plotsols(sols, probs, path,)
     # try
     for (i, (prob, sol)) in enumerate(zip(probs, sols))

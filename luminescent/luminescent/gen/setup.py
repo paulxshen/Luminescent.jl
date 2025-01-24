@@ -30,6 +30,7 @@ def make_sim_prob(
         wl_res=.01,
         # Tss=None,
         gpu=None,
+        margins=[[0, 0, 0], [0, 0, 0]],
 ):
 
     materials = {**MATERIALS, **materials}
@@ -59,6 +60,7 @@ def make_sim_prob(
             for (i, v, w) in zip(range(3), bbox[1], mesh.bounds[3:6]):
                 if v is None or w > v:
                     bbox[1][i] = w
+    bbox = [(np.array(b)-np.array(m)).tolist() for b, m in zip(bbox, margins)]
 
     for fn in os.listdir(GEOMETRY):
         if fn.lower().endswith(".stl"):

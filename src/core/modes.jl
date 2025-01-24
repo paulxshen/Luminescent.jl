@@ -23,7 +23,16 @@ function inner(u, v, deltas)
     end)
 end
 
-
+function normalize_mode(m, deltas)
+    p = inner(m, m, deltas)
+    p = real(p)
+    m = m / sqrt(abs(p))
+    if p < 0
+        mirror_mode(m)
+    else
+        m
+    end
+end
 # function keepxy(mode)
 #     namedtuple([k => mode[k] for k in keys(mode) if any(endswith.((string(k),), ("x", "y")))])
 # end

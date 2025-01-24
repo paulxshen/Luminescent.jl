@@ -22,7 +22,7 @@ function genrun(path, array; kw...)
 
     io = open(PROB)
     s = read(io, String)
-    global prob = JSON.parse(s; dicttype=OrderedDict)
+    prob = JSON.parse(s; dicttype=OrderedDict)
 
 
     @unpack dtype, center_wavelength, dl, dx, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, wavelengths = prob
@@ -99,9 +99,10 @@ function genrun(path, array; kw...)
     boundaries = []
     ϵ = ϵ3
     N = 3
-    prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ; array,
-        F, ϵ, deltas3=deltas / λ, λ, GEOMETRY, Ttrans, Tss)
+    global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ; array,
+        F, ϵ, deltas3=deltas / λ, λ, GEOMETRY, Ttrans=1, Tss)
 
 
     sol = solve(prob; path)
+    prob, sol
 end

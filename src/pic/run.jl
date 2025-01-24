@@ -16,13 +16,13 @@ function picrun(path, array; kw...)
     Random.seed!(1)
     ENV["autodiff"] = "0"
     println("setting up simulation...")
-    global PROB = joinpath(path, "problem.json")
+    PROB = joinpath(path, "problem.json")
     SOL = joinpath(path, "solution.json")
     TEMP = joinpath(path, "geometry")
 
     io = open(PROB)
     s = read(io, String)
-    global prob = JSON.parse(s; dicttype=OrderedDict)
+    prob = JSON.parse(s; dicttype=OrderedDict)
     # merge!(prob, kw)
     for (k, v) = pairs(kw)
         prob[string(k)] = v

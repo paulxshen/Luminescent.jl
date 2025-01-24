@@ -43,7 +43,7 @@ struct Source
 end
 
 Source(center, L, dimsperm, center3=center, L3=L, approx_2D_mode=nothing; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
-    Source(λmodenums, λsmode, λmodes, center, L, center3, L3, nothing, dimsperm, approx_2D_mode, tags)
+    Source(λmodenums, λsmode, λmodes, center, L, center3, L3, nothing, dimsperm, nothing, approx_2D_mode, tags)
 
 Source(mask, frame; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
     Source(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, frame, nothing, tags)
@@ -214,6 +214,9 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
     @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, dl = g
     N = ndims(s)
 
+    C = complex(g.F)
+    md = first.(g.mode_deltas)
+
     inds = masks = labelpos = nothing
     if !isnothing(mask)
         masks = dict([k => begin
@@ -221,6 +224,7 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
             stop = lr[:, 2]
             len = round.(stop - start + 1)
             I = range.(start + 0.5, stop + 0.5, len)
+            mask = F.(mask)
             getindexf(mask, I...)
         end for (k, lr) = pairs(field_lims)])
     else
@@ -233,7 +237,7 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
         sel = abs.(start - stop) .> 1e-3
         start += 0.5sel
         stop -= 0.5sel
-        len = int(stop - start + 1)
+        len = Tuple(int(stop - start + 1))
 
         start = F(start)
         stop = F(stop)
@@ -266,7 +270,7 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
         stop3 = F(stop3)
 
         ϵmode = getindexf(ϵ, range.(start3, stop3, len3)...;)
-        global _a = ϵmode, start3, stop3, len3, dimsperm
+        # global _a = ϵmode, start3, stop3, len3, dimsperm
         ϵmode = permutedims(ϵmode, dimsperm, 2)
 
         # global _a = ϵmode, dimsperm
@@ -293,17 +297,25 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
         if N == 2
             λmodes = kmap(v -> collapse_mode.(v, approx_2D_mode), λmodes)
         end
+
+        λmodes = kmap(λmodes) do modes
+            normalize_mode.(modes, (md,))
+        end
+        _λmodes = kmap(λmodes) do modes
+            mirror_mode.(modes)
+        end
     elseif !isnothing(λsmode)
         λs, mode = λsmode
         mode = kmap(Symbol, identity, mode)
         mode = OrderedDict([
             begin
                 if isa(v, Number)
-                    v = v * ones(F, len)
+                    v = v * ones(F, size(masks[k]))
                 end
                 k => v
             end for (k, v) = pairs(mode)
         ])
+        mode = normalize_mode(mode, md)
         _mode = mirror_mode(mode)
 
         mode = packxyz(mode)
@@ -327,6 +339,7 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
 
     _λmodes = fmap(F, _λmodes)
     _λmodes = sort(_λmodes, by=kv -> kv[1])
+    # m = kmap(x -> C.(x), m)
 
     λmodes, _λmodes, inds, masks, labelpos
 end
