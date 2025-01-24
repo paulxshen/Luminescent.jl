@@ -12,5 +12,6 @@ cd Luminescent.jl
 julia "build/build.jl"
 # ../Luminescent/bin/Luminescent
 # export PATH=~/LuminescentAI/bin:$PATH
+# export PATH=Luminescent/bin:$PATH
 tar czf Luminescent.tar.gz Luminescent
 # split -b 1500M Luminescent.tar.gz "Luminescent.tar.gz.part"
