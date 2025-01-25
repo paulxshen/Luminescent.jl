@@ -150,6 +150,7 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
         modes = _modess[round(length(_modess) / 2 + 0.1)]
         f, modes
     end
+    global _a1 = sigmodes
 
     sigmodes = reduce(vcat, [collect(zip(fill(f, length(modes)), modes)) for (f, modes) = sigmodes])
     sigmodes = [

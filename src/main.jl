@@ -2,7 +2,10 @@ using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, 
 using Porcupine: keys, values, pairs, fmap, ⊙, trim, round, floor, ceil, invperm, permutedims, dict, cpu, gpu
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer, ignore_derivatives, @ignore_derivatives
-
+using Pkg
+pkgadd = Pkg.add
+pkgrm = Pkg.rm
+pkgup = Pkg.update
 # using BSON: @save, @load, load
 include("core/utils.jl")
 include("core/constants.jl")
