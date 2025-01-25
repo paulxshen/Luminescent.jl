@@ -73,37 +73,64 @@ function insert(a, i, v)
         [a[1:i-1]..., v, a[i:end]...]
     end
 end
-function reframe(frame, u, inv=false)
-    # p = = 0
-    d = ndims(u[1]) + 1
-    p = findfirst.(x -> abs(1 - abs(x)) < 1.0f-3, frame)
-    signs = sign.(getindex.(frame, p))
-    invdims = findall(isequal(-1), signs) |> Tuple
-    if inv
-        sz = size(u[1])
-        sz = insert(sz, p[3], 1)
-        if d == 2
-            sz = insert(sz, p[2], 1)
-            # (@assert p[2] == 3)
-        end
-        sz = Tuple(sz)
 
-        u = [reshape(a, sz) for a in u]
-        u = permutedims.(u, (p,))
-        u = u[p]
-
-        u = [s * reverse(a, dims=invdims) for (s, a) in zip(signs, u)]
-        u = dropdims.(u, dims=Tuple(d:3))
-        # p = invperm(p)
+function localframe(u, monitor)
+    N = ndims(monitor)
+    if !isnothing(monitor.dimsperm)
+        permutexyz(u, monitor.dimsperm, N)
     else
-        u = [reshape(a, size(a)..., fill(1, 3 - ndims(a))...) for a in u]
-        # invpermute!(u, perm)
-        u = [s * reverse(a, dims=invdims) for (s, a) in zip(signs, u)]
-        u = [u[i] for i = invperm(p)]
-        u = permutedims.(u, (invperm(p),))
+        u = packxyz(u)
+        u = kmap(u) do v
+            inv(monitor.frame) * v
+        end
+        u = unpackxyz(u)
     end
 end
-invreframe(frame, u) = reframe(frame, u, true)
+
+function globalframe(mode, monitor)
+    @unpack dimsperm, frame = monitor
+    N = ndims(monitor)
+    if !isnothing(dimsperm)
+        permutexyz(mode, invperm(dimsperm), N)
+    else
+        mode = packxyz(mode)
+        mode = kmap(mode) do v
+            frame * v
+        end
+        mode = unpackxyz(mode)
+    end
+end
+# function localframe(frame, u, inv=false)
+#     # p = = 0
+#     d = ndims(u[1]) + 1
+#     p = findfirst.(x -> abs(1 - abs(x)) < 1.0f-3, frame)
+#     signs = sign.(getindex.(frame, p))
+#     invdims = findall(isequal(-1), signs) |> Tuple
+#     if inv
+#         sz = size(u[1])
+#         sz = insert(sz, p[3], 1)
+#         if d == 2
+#             sz = insert(sz, p[2], 1)
+#             # (@assert p[2] == 3)
+#         end
+#         sz = Tuple(sz)
+
+#         u = [reshape(a, sz) for a in u]
+#         u = permutedims.(u, (p,))
+#         u = u[p]
+
+#         u = [s * reverse(a, dims=invdims) for (s, a) in zip(signs, u)]
+#         u = dropdims.(u, dims=Tuple(d:3))
+#         # p = invperm(p)
+#     else
+#         u = [reshape(a, size(a)..., fill(1, 3 - ndims(a))...) for a in u]
+#         # invpermute!(u, perm)
+#         u = [s * reverse(a, dims=invdims) for (s, a) in zip(signs, u)]
+#         u = [u[i] for i = invperm(p)]
+#         u = permutedims.(u, (invperm(p),))
+#     end
+# end
+# invlocalframe(frame, u) = localframe(frame, u, true)
 
 
 function solvemodes(ϵ, dl, λ, neigs, spacing, path; mode_solutions=nothing)

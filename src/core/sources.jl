@@ -122,6 +122,7 @@ struct SourceInstance
     tags
 end
 @functor SourceInstance (sigmodes,)
+Base.ndims(m::SourceInstance) = length(m.center)
 
 function SourceInstance(s::PlaneWave, g)
     @unpack L = g
@@ -162,7 +163,7 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
 
             mode = NamedTuple([k => v for (k, v) = pairs(mode) if startswith(string(k), "J")])
 
-            mode = permutexyz(mode, invperm(dimsperm), N)
+            mode = globalframe(mode, s)
             mode = _aug(mode, N)
             ks = sort([k for k = keys(mode) if string(k)[end] in "xyz"[1:N]])
             _mode = namedtuple([k => begin
@@ -225,7 +226,7 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
             len = round.(stop - start + 1)
             I = range.(start + 0.5, stop + 0.5, len)
             mask = F.(mask)
-            getindexf(mask, I...)
+            getindexf(mask, I...;)
         end for (k, lr) = pairs(field_lims)])
     else
         dx = deltas[1][1]
@@ -317,18 +318,6 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
         ])
         mode = normalize_mode(mode, md)
         _mode = mirror_mode(mode)
-
-        mode = packxyz(mode)
-        mode = kmap(mode) do v
-            frame * v
-        end
-        mode = unpackxyz(mode)
-
-        _mode = packxyz(_mode)
-        _mode = kmap(_mode) do v
-            frame * v
-        end
-        _mode = unpackxyz(_mode)
 
         λmodes = OrderedDict([λ => mode for λ = λs])
         _λmodes = OrderedDict([λ => _mode for λ = λs])

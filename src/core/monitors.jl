@@ -68,7 +68,7 @@ struct MonitorInstance <: AbstractMonitorInstance
     tags
 end
 @functor MonitorInstance (λmodes, _λmodes, masks, deltas)
-Base.ndims(m::MonitorInstance) = m.d
+Base.ndims(m::MonitorInstance) = length(m.center)
 area(m::MonitorInstance) = m.v
 wavelengths(m::MonitorInstance) = keys(m.λmodes)
 Base.length(m::MonitorInstance) = 1

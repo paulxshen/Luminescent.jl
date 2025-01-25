@@ -123,7 +123,7 @@ function solve(prob, ;
     @nograd monitor_instances
     v = map(mf, monitor_instances) do mf, m
         map(mf, wavelengths(m)) do u, λ
-            dftfields = permutexyz(u, m.dimsperm, N)
+            dftfields = localframe(u, m)
             ap = am = nothing
             if !isnothing(m.λmodes)
                 md = first.(mode_deltas)
