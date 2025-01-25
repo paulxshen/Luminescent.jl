@@ -11,7 +11,7 @@ git clone https://paulxshen@github.com/paulxshen/Luminescent.jl
 cd Luminescent.jl
 julia "build/build.jl"
 cd ..
-mv Luminescent/bin/julia Luminescent/bin/lumijulia
+alias julia='julia -J/usr/local/
 # ../Luminescent/bin/Luminescent
 # export PATH=~/LuminescentAI/bin:$PATH
 export PATH=Luminescent/bin:$PATH
