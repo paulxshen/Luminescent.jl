@@ -137,7 +137,7 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
     N = ndims(s)
     ϵeff = nothing
     λmodes, _, inds, masks, labelpos = _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
-
+    global _a = λmodes
 
     λs = @ignore_derivatives Array(keys(λmodes))
     modess = values(λmodes)
@@ -319,8 +319,8 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
         mode = normalize_mode(mode, md)
         _mode = mirror_mode(mode)
 
-        λmodes = OrderedDict([λ => mode for λ = λs])
-        _λmodes = OrderedDict([λ => _mode for λ = λs])
+        λmodes = OrderedDict([λ => [mode] for λ = λs])
+        _λmodes = OrderedDict([λ => [_mode] for λ = λs])
     end
 
     λmodes = fmap(F, λmodes)

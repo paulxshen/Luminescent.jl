@@ -18,6 +18,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 NPZ = "15e1cf62-19b3-5cfa-8e77-841668bca605"
 Optimisers = "3bd65402-5787-11e9-1adc-39752487f4e2"
 Permutations = "2ae35dd2-176d-5d53-8349-f30d82d94d4f"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Porcupine = "3b53a3d7-3f34-4bba-8df2-4717a8b1e972"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
@@ -26,4 +27,4 @@ UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
-Zygote="0.6"
+Zygote = "0.6"

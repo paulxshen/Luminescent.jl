@@ -21,7 +21,8 @@ def make_sim_prob(
     center_frequency=None,
         sources=[],
         monitors=[],
-        nres=30,
+        nres=None,
+        dx=None,
         layer_stack={},
         materials={},
         study="simulation",
@@ -44,7 +45,8 @@ def make_sim_prob(
     wavelengths, center_wavelength, T = adjust_wavelengths(
         wavelengths, wl_res)
 
-    dx = center_wavelength/nres
+    if nres:
+        dx = center_wavelength/nres
     dl = dx/4
 
     GEOMETRY = os.path.join(path, "geometry")
