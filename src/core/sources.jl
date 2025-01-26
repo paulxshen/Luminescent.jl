@@ -1,13 +1,18 @@
 
-function _aug(mode, N)
-    length(mode) == N && return mode
+function completexyz(mode, N)
+    # length(mode) == N && return mode
     OrderedDict([
         begin
             i = findfirst(keys(mode)) do k
                 endswith(string(k), s)
             end
+            F = first(string(first(keys(mode))))
             # @show keys(mode), s, i
-            isnothing(i) ? (Symbol("J$s") => 0) : (keys(mode)[i] => mode[keys(mode)[i]])
+            if isnothing(i)
+                (Symbol("$F$s") => 0)
+            else
+                (keys(mode)[i] => mode[keys(mode)[i]])
+            end
         end for s = "xyz"[1:N]
     ])
 end
@@ -48,7 +53,14 @@ Source(center, L, dimsperm, center3=center, L3=L, approx_2D_mode=nothing; λmode
 Source(mask, frame; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
     Source(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, frame, nothing, tags)
 
-Base.ndims(m::Source) = length(m.center)
+function Base.ndims(m::Source)
+    v = m.center
+    if !isnothing(v)
+        length(v)
+    else
+        ndims(m.mask)
+    end
+end
 
 """
     function PlaneWave(f, dims; mode...)
@@ -136,6 +148,7 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
     C = complex(F)
     N = ndims(s)
     ϵeff = nothing
+
     λmodes, _, inds, masks, labelpos = _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
     global _a = λmodes
 
@@ -153,6 +166,7 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
     global _a1 = sigmodes
 
     sigmodes = reduce(vcat, [collect(zip(fill(f, length(modes)), modes)) for (f, modes) = sigmodes])
+
     sigmodes = [
         begin
             _f = if isa(sig, Number)
@@ -165,29 +179,30 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
             mode = NamedTuple([k => v for (k, v) = pairs(mode) if startswith(string(k), "J")])
 
             mode = globalframe(mode, s)
-            mode = _aug(mode, N)
-            ks = sort([k for k = keys(mode) if string(k)[end] in "xyz"[1:N]])
-            _mode = namedtuple([k => begin
-                b = mode(k)
-                k = Symbol("E$(string(k)[end])")
-                if b == 0
-                    0
-                else
-                    if !isnothing(inds)
-                        a = zeros(C, field_sizes[k])
+            mode = completexyz(mode, N)
+            # ks = sort([k for k = keys(mode) if string(k)[end] in "xyz"[1:N]])
+            # println(ks)
 
-                        I = inds[k]
-                        # global aaaa = a, b, mode, k, I
-                        setindexf!(a, b, I...)
-                        a
+            mode = namedtuple([
+                begin
+                    v = mode(k)
+                    if all(iszero, v)
+                        v = 0
                     else
-                        b * masks[k]
+                        if !isnothing(inds)
+                            kE = Symbol("E$(string(k)[end])")
+                            a = zeros(C, field_sizes[kE])
+                            I = inds[kE]
+                            # global aaaa = a, b, mode, k, I
+                            setindexf!(a, v, I...)
+                            v = a
+                        end
                     end
-                end
-            end for k = ks])
-            (f, _mode)
-        end for (sig, mode) = sigmodes
-    ]
+                    k => v
+                end for k = sort(keys(mode))])
+
+            (f, mode)
+        end for (sig, mode) = sigmodes]
     # @show center, g.lb, labelpos
 
     SourceInstance(sigmodes, labelpos, tags)
@@ -219,7 +234,8 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
     C = complex(g.F)
     md = first.(g.mode_deltas)
 
-    inds = masks = labelpos = nothing
+    inds = masks = nothing
+    labelpos = zeros(F, N)
     if !isnothing(mask)
         masks = dict([k => begin
             start = lr[:, 1]
@@ -312,12 +328,15 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
         mode = OrderedDict([
             begin
                 if isa(v, Number)
-                    v = v * ones(F, size(masks[k]))
+                    v = v * masks[k]
                 end
                 k => v
             end for (k, v) = pairs(mode)
         ])
-        mode = normalize_mode(mode, md)
+
+        if isa(s, Monitor)
+            mode = normalize_mode(mode, md)
+        end
         _mode = mirror_mode(mode)
 
         λmodes = OrderedDict([λ => [mode] for λ = λs])

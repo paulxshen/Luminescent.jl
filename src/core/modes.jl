@@ -88,6 +88,7 @@ function localframe(u, monitor)
 end
 
 function globalframe(mode, monitor)
+    global _gf1 = mode, monitor
     @unpack dimsperm, frame = monitor
     N = ndims(monitor)
     if !isnothing(dimsperm)
@@ -97,7 +98,10 @@ function globalframe(mode, monitor)
         mode = kmap(mode) do v
             frame * v
         end
+
         mode = unpackxyz(mode)
+        # global _gf2 = mode, monitor
+        # error("stop")
     end
 end
 # function localframe(frame, u, inv=false)

@@ -42,7 +42,7 @@ _size(s, _) = int(sum(s))
 
 #     spacings = _downvec.(spacings, size(a))
 #     margin = [spacings[i][1] for i = 1:N]
-#     _a = pad(a, :replicate, margin)
+#     ap = pad(a, :replicate, margin)
 #     v = [[
 #         begin
 #             li, ri = eachcol(lims[i])
@@ -53,7 +53,7 @@ _size(s, _) = int(sum(s))
 
 #             start = round((l + 1) * margin) + 1
 #             stop = start + sum.(spacings) + int((Δ - 1) * last.(spacings)) - 1
-#             __a = _a[range.(start, stop)...]
+#             __a = ap[range.(start, stop)...]
 #             Is = [[range(cum - space + 1, int(Δi .* space) + cum - space) for (cum, space) = zip(cumsum(spacing), spacing)] for (Δi, spacing) = zip(Δ, spacings)]
 
 
@@ -84,7 +84,7 @@ function tensorinv(a::AbstractArray, lims, spacings, T=eltype(a))
     N = ndims(a)
     spacings = _downvec.(spacings, size(a))
     margin = [spacings[i][1] for i = 1:N]
-    _a = pad(a, :replicate, margin)
+    ap = pad(a, :replicate, margin)
     # z = zeros(F, N)
     v = [[
         begin
@@ -94,7 +94,16 @@ function tensorinv(a::AbstractArray, lims, spacings, T=eltype(a))
             _l = max.(li, lj) + 0.5
             Δ = _l - l
             start = round((l + 1) * margin) + 1
-            downsample_by_range(T, _a[range.(start, start + sum.(spacings) + int((Δ - 1) * last.(spacings)) - 1)...], [[range(cum - space + 1, int(Δi .* space) + cum - space) for (cum, space) = zip(cumsum(spacing), spacing)] for (Δi, spacing) = zip(Δ, spacings)]) do a
+
+            # global _d = Δ, spacings, lims
+
+            api = ap[range.(start, start + sum.(spacings) + int((Δ - 1) * last.(spacings)) - 1)...]
+            ranges = [[
+                range(cum - space + 1, int(Δi .* space) + cum - space)
+                for (cum, space) = zip(cumsum(spacing), spacing)
+            ] for (Δi, spacing) = zip(Δ, spacings)]
+
+            downsample_by_range(T, api, ranges) do a
                 p, q = extrema(a)
                 Pij = if p == q
                     T(0)

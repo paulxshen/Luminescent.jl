@@ -134,7 +134,7 @@ def stl_to_array(mesh: pv.PolyData, dl: float, bbox):
     # Get part of the mesh within the mesh's bounding surface.
     selection = ugrid.select_enclosed_points(
         mesh.extract_surface(),
-        tolerance=dl/10,
+        tolerance=0,
         check_surface=False,
     )
     mask = selection['SelectedPoints'].view(bool)

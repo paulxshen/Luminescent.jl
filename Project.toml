@@ -12,6 +12,7 @@ Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Functors = "d9f16b24-f501-4c13-a1f2-28368ffc5196"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 Jello = "6872b481-e419-48a0-81d2-be4ee5684529"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -27,4 +28,5 @@ UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
+GLMakie = "0.11.2"
 Zygote = "0.6"

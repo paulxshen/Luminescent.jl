@@ -68,8 +68,6 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         pml_depths = trim.(pml_depths, maxdeltas)
     end
 
-
-
     if N == 1
         field_names = (:Ez, :Hy)
     elseif N == 2

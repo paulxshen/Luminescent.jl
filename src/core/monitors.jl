@@ -36,7 +36,14 @@ Monitor(center, L, dimsperm, center3=center, L3=L, approx_2D_mode=nothing; λmod
 Monitor(mask, frame; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
     Monitor(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, frame, nothing, tags)
 
-Base.ndims(m::Monitor) = length(m.center)
+function Base.ndims(m::Monitor)
+    v = m.center
+    if !isnothing(v)
+        length(v)
+    else
+        ndims(m.mask)
+    end
+end
 
 struct PlaneMonitor <: AbstractMonitor
     dims
@@ -78,7 +85,7 @@ normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 function MonitorInstance(m::Monitor, g, ϵ, TEMP, mode_solutions=nothing)
     λmodes, _λmodes, inds, masks, labelpos, = _get_λmodes(m, ϵ, TEMP, mode_solutions, g)
 
-    MonitorInstance(inds, masks, nothing, m.dimsperm, g.deltas, labelpos, λmodes, _λmodes, m.tags)
+    MonitorInstance(inds, masks, m.frame, m.dimsperm, g.deltas, labelpos, λmodes, _λmodes, m.tags)
 end
 
 function MonitorInstance(m::PlaneMonitor, g)

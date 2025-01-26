@@ -84,7 +84,7 @@ function quickie(u, g=nothing; dl=1, monitor_instances=[], source_instances=[], 
     end
     for (pos, text) in labels
         ax = fig[1, 1][1, 1]
-        text!(ax, pos..., ; text, align=(:center, :center))
+        !isnothing(pos) && text!(ax, pos..., ; text, align=(:center, :center))
         # annotate!(g[1, 1], pos, text; fontsize=10, color=:black)
     end
     if isnothing(g)

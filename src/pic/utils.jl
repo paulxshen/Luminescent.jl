@@ -139,12 +139,12 @@ function make_geometry(masks, margins, lb, dl, geometry, designs, design_config,
     end for k = keys(geometry)])
 end
 # using GLMakie: volume
-function vis(sol, prob, path=nothing)
+function vis(sol, prob, field=:Hz, path=".")
     @unpack u, p, _p = sol |> cpu
     prob = prob |> cpu
     @unpack monitor_instances, source_instances, λ, = prob
     @unpack deltas, spacings, bbox, dl = prob.grid
-    u = u.H.Hz
+    u = u(field)
     N = ndims(u)
     # if N == 3
     #     volume(u) |> display

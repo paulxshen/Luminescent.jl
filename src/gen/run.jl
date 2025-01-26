@@ -30,6 +30,7 @@ function genrun(path, array; kw...)
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end
 
+    ratio = int(dx / dl)
     F = Float32
     dtype = lowercase(dtype)
     if contains(dtype, "16") && contains(dtype, "bf")
@@ -65,42 +66,62 @@ function genrun(path, array; kw...)
         Nf = Float16
     end
     enum = [materials(v.material).epsilon |> F for v = values(layer_stack)] |> unique |> sort
-    ϵmin = minimum(enum) |> Nf
-    ϵ3 = nothing
+    # ϵmin = minimum(enum) |> Nf
+    global ϵ3 = nothing
 
     # layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2].mesh_order) |> OrderedDict
-    for (k, v) = pairs(layer_stack)
-        @unpack material = v
-        ϵ = materials(material).epsilon |> Nf
-        a = npzread(joinpath(GEOMETRY, "$k.npy"))
-        a = permutedims(a, [2, 1, 3])
+    # for (k, v) = pairs(layer_stack)
+    for material = readdir(GEOMETRY)
+        if string(material) ∉ ["sources", "monitors"]
+            ϵ = materials(material).epsilon |> Nf
+            am = false
+            for fn = readdir(joinpath(GEOMETRY, material))
+                if endswith(lowercase(fn), "npy")
+                    a = npzread(joinpath(GEOMETRY, material, "$fn"))
+                    a = permutedims(a, [2, 1, 3])
+                    am = a .|| am
+                end
+            end
+            # println(k)
+            # Figure()
+            # display(volume(a))
 
-        if isnothing(ϵ3)
-            ϵ3 = zeros(Nf, size(a))
+            if isnothing(ϵ3)
+                ϵ3 = ones(Nf, size(am))
+            end
+            ϵ3 .*= .!(am)
+            ϵ3 .+= am .* ϵ
         end
-        ϵ3 .*= 1 - a
-        ϵ3 .+= a .* ϵ
     end
-    ϵ3 = max.(ϵmin, ϵ3)
+
+    # ϵ3 = max.(ϵmin, ϵ3)
     @assert eltype(ϵ3) == Nf
     GC.gc(true)
 
-    sources = map(enumerate(sources)) do (i, s)
+    volume(ϵ3) |> display
+    # error()
+
+    global sources = map(enumerate(sources)) do (i, s)
         λsmode = (λs, s.mode)
-        mask = npzread(joinpath(GEOMETRY, "source$i.npy"))
-        Source(mask, stack(s.frame); λsmode)
+        mask = npzread(joinpath(GEOMETRY, "sources", "$i.npy"))
+        @assert !all(iszero, mask)
+        mask = downsample(mask, ratio)
+        Source(mask, F.(stack(s.frame)); λsmode)
     end
-    monitors = map(enumerate(monitors)) do (i, s)
+    global monitors = map(enumerate(monitors)) do (i, s)
         λsmode = (λs, s.mode)
-        mask = npzread(joinpath(GEOMETRY, "monitor$i.npy"))
-        Monitor(mask, stack(s.frame); λsmode)
+        mask = npzread(joinpath(GEOMETRY, "monitors", "$i.npy"))
+        @assert !all(iszero, mask)
+        mask = downsample(mask, ratio)
+        Monitor(mask, F.(stack(s.frame)); λsmode)
     end
+    # error()
 
     boundaries = []
     ϵ = ϵ3
     N = 3
     global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ; array,
-        F, ϵ, deltas3=deltas / λ, λ, GEOMETRY, Ttrans=1, Tss=1)
+        F, ϵ, deltas3=deltas / λ, λ, GEOMETRY, Ttrans=10, Tss=1)
 
 
     sol = solve(prob; path)

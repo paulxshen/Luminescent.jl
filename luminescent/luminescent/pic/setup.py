@@ -59,13 +59,7 @@ def setup(path, c, study, nres, center_wavelength,
     prob["framerate"] = framerate
 
     gpu_backend = gpu
-    # if gpu_backend:
-    #     try:
-    #         subprocess.check_output('nvidia-smi')
-    #         print('Nvidia GPU detected!')
-    #     except Exception:  # this command not being found can raise quite a few different errors depending on the configuration
-    #         print("GPU selected but is not available. using CPU instead.")
-    #         gpu_backend = None
+    # if gpu_backend:s
     prob["gpu_backend"] = gpu_backend
 
     ports = {
