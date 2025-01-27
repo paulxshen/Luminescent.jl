@@ -32,6 +32,7 @@ def make_sim_prob(
         study="simulation",
         dtype="float32",
         Ttrans=None,
+        Tss=None,
         wl_res=.01,
         # Tss=None,
         gpu=None,
@@ -98,6 +99,8 @@ def make_sim_prob(
     zs = np.linspace(bbox[0][2], bbox[1][2], 1 +
                      round((bbox[1][2]-bbox[0][2])/dz)).tolist()
 #  dtype, center_wavelength, dl, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, wavelengths
+    if not Tss:
+        Tss = T if len(wavelengths) > 1 else None
     prob = {
         "sources": sources,
         "monitors": monitors,
@@ -114,10 +117,10 @@ def make_sim_prob(
         'materials': materials,
         'L': L,
         'gpu_backend': gpu,
+        'Ttrans': Ttrans,
+        'Tss': Tss,
     }
     prob["wavelengths"] = wavelengths
-    prob["Ttrans"] = None
-    prob["Tss"] = T if len(wavelengths) > 1 else None
     PROB = os.path.join(path, "problem.json")
     with open(PROB, 'w') as f:
         json.dump(prob, f)

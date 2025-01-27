@@ -109,7 +109,7 @@ function tensorinv(a::AbstractArray, lims, spacings, T=eltype(a))
                     T(0)
                 else
                     n = map(1:N) do dims
-                        sum(abs, diff(a; dims))
+                        sum(diff(a; dims))
                     end
                     Z = norm(n)
                     if Z != 0

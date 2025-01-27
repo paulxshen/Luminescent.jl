@@ -1,18 +1,5 @@
-function genrun(path)
-    PROB = joinpath(path, "problem.json")
-    prob = JSON.parse(read(open(PROB), String); dicttype=OrderedDict)
-    gpu_backend = prob["gpu_backend"]
-    array = if isnothing(gpu_backend)
-        println("using CPU")
-        Array
-    else
-        println("using $gpu_backend")
-        cu
-    end
-    genrun(path, array)
-end
 
-function genrun(path, array; kw...)
+function genrun(path, array=Array; kw...)
     Random.seed!(1)
     ENV["autodiff"] = "0"
     println("setting up simulation...")
@@ -24,7 +11,9 @@ function genrun(path, array; kw...)
     s = read(io, String)
     prob = JSON.parse(s; dicttype=OrderedDict)
 
-
+    for (k, v) = kw
+        prob[string(k)] = v
+    end
     @unpack dtype, center_wavelength, dl, dx, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, wavelengths = prob
     if study == "inverse_design"
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
@@ -43,7 +32,7 @@ function genrun(path, array; kw...)
     println("using $F")
 
     @show λ = center_wavelength
-    λs = wavelengths / λ
+    @show λs = wavelengths / λ
     ticks = [
         begin
             round((v - v[1]) / dl)
@@ -98,12 +87,13 @@ function genrun(path, array; kw...)
     @assert eltype(ϵ3) == Nf
     GC.gc(true)
 
-    volume(ϵ3) |> display
+    # volume(ϵ3) |> display
     # error()
 
     global sources = map(enumerate(sources)) do (i, s)
         λsmode = (λs, s.mode)
         mask = npzread(joinpath(GEOMETRY, "sources", "$i.npy"))
+        mask = permutedims(mask, [2, 1, 3])
         @assert !all(iszero, mask)
         mask = downsample(mask, ratio)
         Source(mask, F.(stack(s.frame)); λsmode)
@@ -111,6 +101,7 @@ function genrun(path, array; kw...)
     global monitors = map(enumerate(monitors)) do (i, s)
         λsmode = (λs, s.mode)
         mask = npzread(joinpath(GEOMETRY, "monitors", "$i.npy"))
+        mask = permutedims(mask, [2, 1, 3])
         @assert !all(iszero, mask)
         mask = downsample(mask, ratio)
         Monitor(mask, F.(stack(s.frame)); λsmode)
@@ -120,8 +111,9 @@ function genrun(path, array; kw...)
     boundaries = []
     ϵ = ϵ3
     N = 3
-    global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ; array,
-        F, ϵ, deltas3=deltas / λ, λ, GEOMETRY, Ttrans=10, Tss=1)
+    @show Ttrans, Tss
+    global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ;
+        Courant=0.5, array, F, ϵ, deltas3=deltas / λ, Ttrans, Tss, lpml=[0.3, 0.3, 0.5],)# σpml=0)
 
 
     sol = solve(prob; path)

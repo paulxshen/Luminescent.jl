@@ -16,10 +16,11 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     ϵ=1, μ=1, σ=0, m=0, γ=0, β=0,
     ϵ3=ϵ,
     F=Float32,
-    pml_depths=nothing, pml_ramp_fracs=0.2,
+    lpml=[1, 1, 1],
     Courant=0.9,
     deltas3=deltas,
     array=Array,
+    σpml=nothing, mpml=σpml,
     TEMP="",
     kw...)
 
@@ -59,14 +60,21 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     dt = 1 / ceil(1 / dt) |> F
 
     maxdeltas = maximum.(deltas)
-    if isnothing(pml_depths)
-        v = min(4, 0.5 / dt)
-        σpml = ϵmin * v
-        mpml = μmin * v
-        δ = -log(1e-8) / nmin / (4v) |> F
-        pml_depths = max.([δ, δ, 0.2δ][1:N], maxdeltas)
-        pml_depths = trim.(pml_depths, maxdeltas)
+    # if isnothing(pml_depths)
+    if isnothing(σpml)
+        σpml = mpml = min(4, 0.5 / dt)
+        σpml = ϵmin * σpml
+        mpml = μmin * mpml
     end
+
+    if σpml != 0
+        δ = -log(1e-8) / nmin / 2 / (σpml + mpml) |> F
+        pml_depths = max.(δ * lpml[1:N], maxdeltas)
+        pml_depths = trim.(pml_depths, maxdeltas)
+    else
+        pml_depths = fill(0, N)
+    end
+    @show pml_depths
 
     if N == 1
         field_names = (:Ez, :Hy)
@@ -269,6 +277,13 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
 
     field_diffpadvals = refactor(field_diffpadvals)
     grid = (; F, N, L, bbox, sz, deltas, deltas3, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals, geometry_padvals, geometry_padamts, _geometry_padamts, dl, spacings, mode_spacing, mode_deltas,) |> dict
+
+    l, r = geometry_padamts.ϵ |> eachcol
+    for m = vcat(sources, monitors)
+        if !isnothing(m.mask)
+            m.mask = pad(m.mask, 0, l, r)
+        end
+    end
 
     mode_solutions = []
     source_instances = SourceInstance.(sources, (grid,), (_ϵ3,), (TEMP,), (mode_solutions,))

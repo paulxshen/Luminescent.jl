@@ -205,7 +205,7 @@ function picrun(path, array=Array; kw...)
     global run_probs =
         [
             begin
-                setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ; approx_2D_mode, array,
+                setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ; lpml=[1, 1, 0.2], approx_2D_mode, array,
                     F, ϵ, ϵ3, deltas3=deltas / λ, λ, TEMP, Ttrans, Tss)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]

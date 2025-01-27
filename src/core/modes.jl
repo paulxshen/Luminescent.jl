@@ -88,7 +88,7 @@ function localframe(u, monitor)
 end
 
 function globalframe(mode, monitor)
-    global _gf1 = mode, monitor
+    # global _gf1 = mode, monitor
     @unpack dimsperm, frame = monitor
     N = ndims(monitor)
     if !isnothing(dimsperm)
@@ -170,7 +170,7 @@ function solvemodes(ϵ, dl, λ, neigs, spacing, path; mode_solutions=nothing)
 
     modes = [npzread(joinpath(path, "$(name)_mode_$(i-1).npz")) for i = 1:neigs]
     modes = [merge(mode, OrderedDict(["J$s" => mode["E$s"] .* ϵ for s = "xy"])) for mode in modes]
-    global modes = [SortedDict([Symbol(k) => downsample(mode(k), spacing) for k = keys(mode) if string(k)[end] in "xy"]) |> pairs |> NamedTuple for mode in modes]
+    modes = [SortedDict([Symbol(k) => downsample(mode(k), spacing) for k = keys(mode) if string(k)[end] in "xy"]) |> pairs |> NamedTuple for mode in modes]
 
     if !isnothing(mode_solutions)
         println("saving mode solutions")

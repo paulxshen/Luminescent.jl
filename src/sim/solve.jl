@@ -1,5 +1,10 @@
-function bell(t, dt)
+function bell(t, dt, u=nothing)
     ignore_derivatives() do
+
+        # fmap(u) do x
+        #     isnan(x) && error("NaN detected in field")
+        # end
+
         if floor(t + 0.001) > floor(t - dt + 0.001)
             ENV["autodiff"] == "0" && println("simulation period $t, took $(timepassed()) seconds")
         end
@@ -10,14 +15,14 @@ function bell(t, dt)
 end
 
 function f1(((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances)), t)
-    bell(t, dt)
+    bell(t, dt, u)
     # @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
     u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
     ((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances))
 end
 
 function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (t0, T, monitor_instances)), t)
-    bell(t, dt)
+    bell(t, dt, u)
     # @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
     u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
     ks = @ignore_derivatives [keys(u.E)..., keys(u.H)...]
@@ -59,6 +64,10 @@ function solve(prob, ;
     @ignore_derivatives GC.gc(true)
     invϵ = tensorinv(_p.ϵ |> cpu, values(field_lims(r"E.*")) |> cpu, spacings |> cpu, F)
     @assert eltype(eltype(invϵ)) == F
+    @assert !any(invϵ) do a
+        # @show extrema(a)
+        any(isnan, a)
+    end
     invϵ = invϵ .|> array
     @ignore_derivatives GC.gc(true)
     # @ignore_derivatives @show typeof(invϵ)
@@ -98,6 +107,12 @@ function solve(prob, ;
             f1(us, t)
         end
     end
+
+
+    fmap(u) do x
+        isnan(x) && error("NaN detected in field")
+    end
+
     ts = ts[end]+dt:dt:T[2]-F(0.001)
     init = ((u, 0), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (T[2], durations[2], monitor_instances))
     @nograd ts

@@ -19,7 +19,7 @@ end
 
 """
 """
-struct Source
+mutable struct Source
     λmodenums
     λsmode
     λmodes

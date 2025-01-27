@@ -1,6 +1,6 @@
 abstract type AbstractMonitor end
 
-struct Monitor <: AbstractMonitor
+mutable struct Monitor <: AbstractMonitor
     λmodenums
     λsmode
     λmodes

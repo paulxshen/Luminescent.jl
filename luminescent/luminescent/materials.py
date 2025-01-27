@@ -23,5 +23,5 @@ MATERIALS = {
     "SiN": {'epsilon': 2.0**2},
     "Ge": {'epsilon': 4.0**2},
     "Si": {'epsilon': 3.48**2},
-    'PEC': {'epsilon': 1000},
+    'PEC': {'epsilon': 500},
 }
