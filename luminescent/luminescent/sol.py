@@ -66,7 +66,7 @@ def solve(path, dev=False):
     print("no fdtd binaries found - starting julia session to compile fdtd code - will take 5 mins - can take a break and come back :) ...")
 
     prob = json.loads(open(os.path.join(path, "problem.json"), "rb").read())
-    a = ['juila', '-e', ]
+    a = ['julia', '-e', ]
     gpu_backend = prob["gpu_backend"]
     if gpu_backend:
         b = [f'using Luminescent,CUDA;picrun(raw"{path}",cu)']

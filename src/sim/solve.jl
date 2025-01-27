@@ -108,9 +108,10 @@ function solve(prob, ;
         end
     end
 
-
-    fmap(u) do x
-        isnan(x) && error("NaN detected in field")
+    if array == Array
+        fmap(u) do x
+            isnan(x) && error("NaN detected in field")
+        end
     end
 
     ts = ts[end]+dt:dt:T[2]-F(0.001)
