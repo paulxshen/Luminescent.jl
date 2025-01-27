@@ -15,7 +15,7 @@ import pyvista as pv
 
 # from .picToGDS import main
 
-from math import cos, pi, sin, tan
+from math import ceil, cos, pi, sin, tan
 import matplotlib.pyplot as plt
 import numpy as np
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
@@ -120,12 +120,12 @@ def normal_from_orientation(orientation):
 
 def stl_to_array(mesh: pv.PolyData, dl: float, bbox):
     # x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-    x_min,  y_min, z_min = bbox[0]
-    x_max, y_max, z_max = bbox[1]
-    x = np.linspace(x_min+dl/2, x_max-dl/2, round((x_max-x_min)/dl))
-    y = np.linspace(y_min+dl/2, y_max-dl/2, round((y_max-y_min)/dl))
-    z = np.linspace(z_min+dl/2, z_max-dl/2, round((z_max-z_min)/dl))
-    x, y, z = np.meshgrid(x, y, z)
+    lb = [mesh.bounds[i] for i in [0, 2, 4]]
+    ub = [mesh.bounds[i] for i in [1, 3, 5]]
+    lims = [[a+dl/2+dl*ceil((p-a-dl/2)/dl), b-dl/2-dl*ceil((b-dl/2-q)/dl)]
+            for (a, b, p, q) in zip(bbox[0], bbox[1], lb, ub)]
+    xyz = [np.linspace(a, b, 1+round((b-a)/dl)) for (a, b) in lims]
+    x, y, z = np.meshgrid(*xyz)
 
     # Create unstructured grid from the structured grid
     grid = pv.StructuredGrid(x, y, z)

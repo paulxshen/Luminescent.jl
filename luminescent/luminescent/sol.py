@@ -2,7 +2,6 @@
 from pprint import pprint
 import os
 import subprocess
-from .runs_utils import *
 import json
 import numpy as np
 import requests
@@ -11,6 +10,7 @@ from .pic.sparams import *
 from .utils import *
 from .layers import *
 from .constants import *
+from PIL import Image
 
 
 from subprocess import Popen, PIPE

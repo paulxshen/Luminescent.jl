@@ -8,8 +8,6 @@ from .pic.sparams import *
 from .utils import *
 from .layers import *
 from .constants import *
-from .sol import *
-from PIL import Image
 
 
 def lastrun(name="", wd=os.path.join(os.getcwd(), "runs"), study="",  **kwargs):

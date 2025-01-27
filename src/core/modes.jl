@@ -153,20 +153,20 @@ function solvemodes(ϵ, dl, λ, neigs, spacing, path; mode_solutions=nothing)
     # ϵ = pad(ϵ, :replicate, [0, m], [0, n])
     name = round(1000000Float64(λ))
 
-    if !isfile(joinpath(path, "$(name)_mode_$(neigs-1).npz"))
-        println("run empy")
-        npzwrite(joinpath(path, "args.npz"), Dict("eps" => begin
-                ϵ1 = (ϵ[1:end-1, :] + ϵ[2:end, :]) / 2
-                (ϵ1[:, 1:end-1] + ϵ1[:, 2:end]) / 2
-            end,
-            "dl" => dl, "center_wavelength" => λ, "neigs" => neigs, "name" => name))
-        fn = joinpath(path, "solvemodes.py")
-        try
-            run(`python $fn $path`)
-        catch e
-            run(`python3 $fn $path`)
-        end
+    # if !isfile(joinpath(path, "$(name)_mode_$(neigs-1).npz"))
+    println("run empy")
+    npzwrite(joinpath(path, "args.npz"), Dict("eps" => begin
+            ϵ1 = (ϵ[1:end-1, :] + ϵ[2:end, :]) / 2
+            (ϵ1[:, 1:end-1] + ϵ1[:, 2:end]) / 2
+        end,
+        "dl" => dl, "center_wavelength" => λ, "neigs" => neigs, "name" => name))
+    fn = joinpath(path, "solvemodes.py")
+    try
+        run(`python $fn $path`)
+    catch e
+        run(`python3 $fn $path`)
     end
+    # end
 
     modes = [npzread(joinpath(path, "$(name)_mode_$(i-1).npz")) for i = 1:neigs]
     modes = [merge(mode, OrderedDict(["J$s" => mode["E$s"] .* ϵ for s = "xy"])) for mode in modes]
