@@ -2,6 +2,9 @@
 phantom*
 phantom.*
 phantom.py
+
+/ant
+
 # build
 # *.ipynb
 # /build/precompile_*

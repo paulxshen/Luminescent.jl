@@ -16,11 +16,11 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     ϵ=1, μ=1, σ=0, m=0, γ=0, β=0,
     ϵ3=ϵ,
     F=Float32,
-    lpml=[1, 1, 1],
     Courant=0.9,
     deltas3=deltas,
     array=Array,
     σpml=nothing, mpml=σpml,
+    lpml=[1, 1, 1], pml_depths=nothing,
     TEMP="",
     kw...)
 
@@ -30,6 +30,8 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     N = length(deltas)
     (deltas, mode_deltas, ϵ, μ, σ, m, γ, β) = F.((deltas, mode_deltas, ϵ, μ, σ, m, γ, β))
 
+    dx = minimum(minimum.(deltas))
+    nres = int(1 / dx)
 
     mode_spacing = int(mode_deltas[1] / dl)
     L = size(ϵ) * dl
@@ -37,21 +39,24 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
 
     # @show sz,prod(sz)
 
-    a = ones(F, Tuple(sz))
     _geometry = (; ϵ, μ, σ, m, γ, β) |> pairs |> OrderedDict
     geometry = OrderedDict()
     for (k, v) = pairs(_geometry)
-        geometry[k] = if isa(v, AbstractArray)
-            downsample(v, int(deltas / dl)) |> F
-        elseif k ∈ (:σ, :m)
-            a * v
-        else
-            v
+        if isa(v, AbstractArray)
+            # downsample(v, int(deltas / dl)) |> F
+        elseif isa(v, Number)
+            v = F(v)
+            if k ∈ (:σ, :m)
+                geometry[k] = fill(v, sz)
+            else
+                geometry[k] = v
+            end
+            delete!(_geometry, k)
         end
     end
     _ϵ3 = ϵ3
 
-    ϵmin, ϵmax = extrema(abs, geometry.ϵ)
+    ϵmin, ϵmax = extrema(abs, _geometry.ϵ)
     μmin, μmax = extrema(abs, geometry.μ)
     nmax = sqrt(ϵmax * μmax)
     nmin = sqrt(ϵmin * μmin)
@@ -60,19 +65,21 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     dt = 1 / ceil(1 / dt) |> F
 
     maxdeltas = maximum.(deltas)
-    # if isnothing(pml_depths)
     if isnothing(σpml)
-        σpml = mpml = min(4, 0.5 / dt)
+        σpml = mpml = 0.2 / dt
         σpml = ϵmin * σpml
         mpml = μmin * mpml
     end
+    @show σpml
 
-    if σpml != 0
-        δ = -log(1e-8) / nmin / 2 / (σpml + mpml) |> F
-        pml_depths = max.(δ * lpml[1:N], maxdeltas)
-        pml_depths = trim.(pml_depths, maxdeltas)
-    else
-        pml_depths = fill(0, N)
+    if isnothing(pml_depths)
+        if σpml != 0
+            δ = -1.5log(1e-6) / nmin / 2 / (σpml + mpml) |> F
+            pml_depths = max.(δ * lpml[1:N], maxdeltas)
+            pml_depths = trim.(pml_depths, maxdeltas)
+        else
+            pml_depths = fill(0, N)
+        end
     end
     @show pml_depths
 
@@ -173,7 +180,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
             b = db[i, j]
             if isa(b, PML)
                 npml = round(b.d / maxdeltas[i])
-                _npml = round(b.d / dl)
+                _npml = npml * int(maxdeltas[i] / dl)
                 # l1 = max.(1, round.(b.ramp_frac * l))
                 # r1 = max.(1, round.(b.ramp_frac * r))
                 # if any(l1 .> 0) || any(r1 .> 0)
@@ -315,12 +322,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     end
 
     if Tss == nothing
-
-        Tssmin = if N == 3 && (F == Float16)# || F == BFloat16)
-            40
-        else
-            10
-        end
+        Tssmin = 120nmax / nres / N
 
         v = reduce(vcat, wavelengths.(monitor_instances))
         v = Base.round.(v, digits=3)

@@ -56,39 +56,56 @@ function genrun(path, array=Array; kw...)
     end
     enum = [materials(v.material).epsilon |> F for v = values(layer_stack)] |> unique |> sort
     # ϵmin = minimum(enum) |> Nf
-    global ϵ3 = nothing
+
+    _sz = Any[0]
+    global geometry = DefaultDict(passkey=true) do k
+        if k == :ϵ
+            ones(Nf, _sz[1])
+        elseif k == :σ
+            zeros(Nf, _sz[1])
+        end
+    end
+
 
     # layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2].mesh_order) |> OrderedDict
     # for (k, v) = pairs(layer_stack)
     for material = readdir(GEOMETRY)
         if string(material) ∉ ["sources", "monitors"]
-            ϵ = materials(material).epsilon |> Nf
+
             am = false
             for fn = readdir(joinpath(GEOMETRY, material))
                 if endswith(lowercase(fn), "npy")
                     a = npzread(joinpath(GEOMETRY, material, "$fn"))
-                    a = permutedims(a, [2, 1, 3])
+                    # a = permutedims(a, [2, 1, 3])
                     am = a .|| am
                 end
             end
+            _sz[1] = size(am)
             # println(k)
             # Figure()
             # display(volume(a))
 
-            if isnothing(ϵ3)
-                ϵ3 = ones(Nf, size(am))
+            m = materials(material)
+            for k = (:epsilon, :sigma)
+                v = m(k, nothing)
+                if !isnothing(v)
+                    v = Nf(v)
+                    @show k
+                    k = togreek(k)
+                    @show k
+                    a = geometry[k]
+                    a .*= .!(am)
+                    a .+= am .* v
+                end
             end
-            ϵ3 .*= .!(am)
-            ϵ3 .+= am .* ϵ
         end
     end
 
     # ϵ3 = max.(ϵmin, ϵ3)
-    @assert eltype(ϵ3) == Nf
     GC.gc(true)
-
-    # volume(ϵ3) |> display
+    geometry.ϵ |> volume |> display
     # error()
+
 
     global sources = map(enumerate(sources)) do (i, s)
         λsmode = (λs, s.mode)
@@ -106,16 +123,40 @@ function genrun(path, array=Array; kw...)
         mask = downsample(mask, ratio)
         Monitor(mask, F.(stack(s.frame)); λsmode)
     end
+    # volume(monitors[1].mask) |> display
     # error()
 
     boundaries = []
-    ϵ = ϵ3
     N = 3
     @show Ttrans, Tss
     global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ;
-        Courant=0.5, array, F, ϵ, deltas3=deltas / λ, Ttrans, Tss, lpml=[0.3, 0.3, 0.5],)# σpml=0)
+        geometry..., array, F, deltas3=deltas / λ, Ttrans, Tss,
+        # lpml=[0.2, 0.2, 0.2],
+        lpml=ones(3),)#
+    # σpml=4,)#
+    # pml_depths=[0.2, 0.2, 0.2])
 
+    # v = prob.monitor_instances
+    # v[1].frame = nothing
+    # v[1].dimsperm = [1, 2, 3]
+    # v[2].frame = nothing
+    # v[2].dimsperm = [-1, 2, -3]
 
-    sol = solve(prob; path)
-    prob, sol
+    global sol = solve(prob; path)
+    global S = getsparams.((sol,), eachindex(λs))
+
+    # solution = (;
+    #     sparam_family(S)...,)
+    solution = S
+    json(sparam_family(solution), 4) |> println
+    # volume(prob._geometry.σ |> cpu)
+    # volume(geometry.σ |> cpu)
+    open(joinpath(path, "solution.json"), "w") do f
+        write(f, json(cpu(solution)))
+    end
+    u = cpu(sol.u)
+    d = merge(u.E, u.H)
+    d = kmap(string, identity, d) |> pairs |> Dict
+    npzwrite(joinpath(path, "fields.npz"), d)
+    S, sol, prob
 end

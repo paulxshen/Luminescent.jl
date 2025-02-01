@@ -14,19 +14,19 @@ function bell(t, dt, u=nothing)
     end
 end
 
-function f1(((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances)), t)
+function f1(((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances,)), t)
     bell(t, dt, u)
     # @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
-    u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
-    ((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances))
+    u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
+    ((u,), p, (dt, field_diffdeltas, field_diffpadvals, source_instances,))
 end
 
-function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (t0, T, monitor_instances)), t)
+function f2(((u, um), p, (dt, field_diffdeltas, field_diffpadvals, source_instances,), (t0, T, monitor_instances)), t)
     bell(t, dt, u)
     # @time u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
     u = update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances;)
     ks = @ignore_derivatives [keys(u.E)..., keys(u.H)...]
-    mf += [
+    um += [
         begin
             um = namedtuple(ks .=> field.((u,), ks, (m,)))
             [
@@ -37,11 +37,11 @@ function f2(((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instan
                 end for λ = wavelengths(m)
             ]
         end for m = monitor_instances]
-    ((u, mf), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (t0, T, monitor_instances))
+    ((u, um), p, (dt, field_diffdeltas, field_diffpadvals, source_instances,), (t0, T, monitor_instances))
 end
 
 function solve(prob, ;
-    save_memory=false, ulims=(-3, 3), framerate=0, path="",
+    save_memory=false, ulims=(-3, 3), framerate=0, path="", #subpixel=true,
     kwargs...)
     @unpack approx_2D_mode, dt, u0, geometry, _geometry, source_instances, monitor_instances, Ttrans, Tss, ϵeff, array = prob
     @unpack mode_deltas, F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = prob.grid
@@ -57,27 +57,35 @@ function solve(prob, ;
     p = apply_subpixel_averaging(p, field_lims)
 
     _p = pad_geometry(_p, geometry_padvals, _geometry_padamts)
-
-    # ignore_derivatives() do
-    #     @show typeof(_p.ϵ)
-    # end
-    @ignore_derivatives GC.gc(true)
-    invϵ = tensorinv(_p.ϵ |> cpu, values(field_lims(r"E.*")) |> cpu, spacings |> cpu, F)
-    @assert eltype(eltype(invϵ)) == F
-    @assert !any(invϵ) do a
-        # @show extrema(a)
-        any(isnan, a)
+    ks = filter(k -> k != (:ϵ), keys(_p))
+    if !isempty(ks)
+        p1 = namedtuple([k => downsamplefield(v |> cpu, field_lims, spacings) for k = ks])
+        p = merge(p, p1)
     end
-    invϵ = invϵ .|> array
-    @ignore_derivatives GC.gc(true)
+
+    _ϵ = _p.ϵ |> cpu
+    _pec = _ϵ .>= (PECVAL - TOL)
+    if !any(_pec)
+        invϵ = tensorinv(_ϵ, field_lims, spacings)
+        @assert eltype(eltype(invϵ)) == F
+    else
+        # global _ϵ = pecfy(_ϵ, _pec, field_lims, spacings)
+        ϵ = downsamplefield(_ϵ, field_lims, spacings)
+        invϵ = map(ϵ) do a
+            1 ./ a
+        end
+    end
+    invμ = 1
+    p = merge(p, (; invϵ, invμ))
+    p = fmap(array, p, AbstractArray{<:Number})
+
     # @ignore_derivatives @show typeof(invϵ)
     # return sum(invϵ) |> sum
 
-    p = merge(p, (; invϵ))
     durations = [Ttrans, Tss]
     T = cumsum(durations)
     us0 = (u0,)
-    init = (us0, p, (dt, field_diffdeltas, field_diffpadvals, source_instances))
+    init = (us0, p, (dt, field_diffdeltas, field_diffpadvals, source_instances,))
 
     ts = 0:dt:T[1]-F(0.001)
     @nograd ts
@@ -104,7 +112,7 @@ function solve(prob, ;
                     end
                 end
             end
-            f1(us, t)
+            f1(us, t;)
         end
     end
 
@@ -115,15 +123,15 @@ function solve(prob, ;
     end
 
     ts = ts[end]+dt:dt:T[2]-F(0.001)
-    init = ((u, 0), p, (dt, field_diffdeltas, field_diffpadvals, source_instances), (T[2], durations[2], monitor_instances))
+    init = ((u, 0), p, (dt, field_diffdeltas, field_diffpadvals, source_instances,), (T[2], durations[2], monitor_instances,))
     @nograd ts
 
 
     println("accumulating dft fields...")
     if save_memory
-        (u, mf), = adjoint_reduce(f2, ts, init, ulims)
+        (u, um), = adjoint_reduce(f2, ts, init, ulims)
     else
-        (u, mf), = reduce(f2, ts; init)
+        (u, um), = reduce(f2, ts; init)
     end
     # return (u.E.Ex + u.H.Hz + u.E.Ey) .|> abs |> sum
 
@@ -132,30 +140,52 @@ function solve(prob, ;
         println("simulation done in $(time() - t0) seconds (includes some JIT compilation time).")
     end
 
-    # return sum(abs, mf[1][1].Ex + mf[1][1].Ey + mf[1][1].Hz)
+    # return sum(abs, um[1][1].Ex + um[1][1].Ey + um[1][1].Hz)
     ulims = 0
     # @assert all([all(!isnan, a) for a = u])
 
+    # volume(cpu(prob.monitor_instances[2].masks(1)) + 0.001ϵ(1) |> cpu) |> display
+    # volume(cpu(prob.monitor_instances[1].masks(1))) |> display
+    # for i = 1:2
+    #     for k = (:Ey, :Hx)
+    #         prob.monitor_instances[i]._λmodes(1)[1](k) |> extrema |> println
+    #     end
+    # end
+    # global a = um
+    # conj(a[1][1].Ey) .* a[1][1].Hx |> sum |> println
+    # conj(a[2][1].Ey) .* a[2][1].Hx |> sum |> println
+    # error()
+
     @nograd monitor_instances
-    v = map(mf, monitor_instances) do mf, m
-        map(mf, wavelengths(m)) do u, λ
-            dftfields = localframe(u, m)
+    v = map(um, monitor_instances) do um, m
+        map(um, wavelengths(m)) do um, λ
+            um = localframe(um, m)
             ap = am = nothing
             if !isnothing(m.λmodes)
                 md = first.(mode_deltas)
                 modes = m.λmodes[λ]
                 _modes = m._λmodes[λ]
                 @nograd modes, _modes, md
-                ap = inner.(modes, (dftfields,), (md,))
-                am = inner.(_modes, (dftfields,), (md,))
+                ap = inner.(modes, (um,), (md,))
+                am = inner.(_modes, (um,), (md,))
             end
 
-            dftfields, ap, am
+            um, ap, am
         end
     end
+
+    # extrema(prob.monitor_instances[1].λmodes(1)(1).Hx)
     um = [[v[1] for v = v] for v in v]
     ap = [[v[2] for v = v] for v in v]
     am = [[v[3] for v = v] for v in v]
+
+    # nm = length(monitor_instances)
+    # nλ = length(wavelengths(monitor_instances[1]))
+    # um = [[v[j][i][1] for j = 1:nλ] for i = 1:nm]
+    # ap = [[v[j][i][2] for j = 1:nλ] for i = 1:nm]
+
+    # am = [[v[j][i][3] for j = 1:nλ] for i = 1:nm]
+
     return Solution(u, p, _p, ulims, um, ap, am)
 end
 
@@ -188,3 +218,13 @@ function (s::Solution)(k, m, w=1, mn=0)
     end
 end
 # heatmap(___p.invϵ[1, 1])
+
+function getsparams(s, iλ=1, imode=1)
+    @unpack u, ulims, um, ap, am = s
+    # nλ = length(ap[1])
+    np = length(ap)
+    # ifelse.(1:np .== 1, am[j], ap[j]) 
+    map(1:np) do i
+        ap[i][iλ][imode]
+    end / am[1][iλ][imode]
+end

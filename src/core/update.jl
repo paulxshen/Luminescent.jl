@@ -2,10 +2,10 @@
 
 Updates fields. 
 """
-function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances; alg=nothing)
+function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instances)
     # unpack fields and geometry
     @unpack E, H = u
-    @unpack μ, m, invϵ = p
+    @unpack m, invϵ, invμ = p
     # global _p = p
 
     # dispersive material parameters
@@ -20,7 +20,7 @@ function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instanc
     γm = [p("γ$k") for k = poles]
     βm = [p("β$k") for k = poles]
 
-    @nograd t, dt, field_diffdeltas, field_diffpadvals, source_instances, μ, m
+    @nograd t, dt, field_diffdeltas, field_diffpadvals, source_instances, m, invμ
     N = ndims(E(1))
 
     # staggered grid housekeeping
@@ -50,12 +50,11 @@ function update(u, p, t, dt, field_diffdeltas, field_diffpadvals, source_instanc
 
     # first update E
     # tensor subpixel smoothing
-    # dEdt = (∇ × H - Js - sum(Jm)) ⊘ ϵ
     dEdt = invϵ * (∇ × H - Js - sum(Jm))
     E += dEdt * dt
 
     # then update H
-    dHdt = -(∇ × E + H ⊙ m) ⊘ μ
+    dHdt = -invμ * (∇ × E + H ⊙ m)
     H += dHdt * dt
 
     @ignore_derivatives gc()

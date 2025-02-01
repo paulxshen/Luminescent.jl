@@ -1,6 +1,7 @@
-mirror_mode(m) = namedtuple([k =>
+mirror_mode(m; flip=true) = namedtuple([k =>
     begin
-        a = reverse(m[k], dims=1)
+        a = flip ? reverse(m[k], dims=1) : m[k]
+
         v = ignore_derivatives() do
             string(k)[2:2]
         end
@@ -13,11 +14,11 @@ mirror_mode(m) = namedtuple([k =>
 # function normalize_mode(m, deltas)
 function inner(u, v, deltas)
     @nograd deltas
-    p = 0
-    p += conj(u(:Ex, 0)) ⊙ v(:Hy, 0)
-    p -= conj(u(:Ey, 0)) ⊙ v(:Hx, 0)
-    p += conj(u(:Hy, 0)) ⊙ v(:Ex, 0)
-    p -= conj(u(:Hx, 0)) ⊙ v(:Ey, 0)
+    p = conj(u(:Ex, 0)) ⊙ v(:Hy, 0) -
+        conj(u(:Ey, 0)) ⊙ v(:Hx, 0) +
+        conj(u(:Hy, 0)) ⊙ v(:Ex, 0) -
+        conj(u(:Hx, 0)) ⊙ v(:Ey, 0)
+
     sum(reduce(deltas; init=p) do a, v
         a .* v
     end)
@@ -84,6 +85,7 @@ function localframe(u, monitor)
             inv(monitor.frame) * v
         end
         u = unpackxyz(u)
+        u
     end
 end
 

@@ -68,10 +68,15 @@ def solve(path, dev=False):
     prob = json.loads(open(os.path.join(path, "problem.json"), "rb").read())
     a = ['julia', '-e', ]
     gpu_backend = prob["gpu_backend"]
-    if gpu_backend:
-        b = [f'using Luminescent,CUDA;picrun(raw"{path}",cu)']
+    _class = prob["class"]
+    if gpu_backend == "CUDA":
+        array = "cu"
+        pkgs = ",CUDA"
     else:
-        b = [f'using Luminescent;picrun(raw"{path}")']
+        array = "Array"
+        pkgs = ""
+
+    b = [f'using Luminescent{pkgs};{_class}run(raw"{path}",{array})']
     run(a+b)
 
     # with Popen(cmd,  stdout=PIPE, stderr=PIPE) as p:

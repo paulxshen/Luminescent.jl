@@ -61,6 +61,9 @@ function calc_sparams(runs, run_probs, lb, dl,
         end for (i, prob) in enumerate(run_probs)
     ]
 
+    ignore_derivatives() do
+    end
+
     # return sols[1]
     coeffs = OrderedDict()
     for (sol, run) in zip(sols, runs)

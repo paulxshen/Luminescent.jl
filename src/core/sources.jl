@@ -154,7 +154,13 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
 
     λs = @ignore_derivatives Array(keys(λmodes))
     modess = values(λmodes)
-    iss = cluster(λs)
+    if all(x -> x === (modess[1]), modess)
+        iss = [eachindex(λs)]
+        println("all modes are the same")
+    else
+        iss = cluster(λs)
+    end
+
     sigmodes = map(iss) do is
         f = t -> sum(getindex.((Array(λs),), Array(is))) do λ
             cispi(2t / λ) |> C
@@ -324,6 +330,7 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
         end
     elseif !isnothing(λsmode)
         λs, mode = λsmode
+        λs = F.(λs)
         mode = kmap(Symbol, identity, mode)
         mode = OrderedDict([
             begin
@@ -337,7 +344,7 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
         if isa(s, Monitor)
             mode = normalize_mode(mode, md)
         end
-        _mode = mirror_mode(mode)
+        _mode = mirror_mode(mode; flip=false)
 
         λmodes = OrderedDict([λ => [mode] for λ = λs])
         _λmodes = OrderedDict([λ => [_mode] for λ = λs])

@@ -84,7 +84,7 @@ function picrun(path, array=Array; kw...)
         # if AUTODIFF() || ϵ != ϵmin
         global a = npzread(joinpath(TEMP, "$k.npy"))
         # error("not implemented")
-        a = permutedims(a, [2, 1, 3])
+        # a = permutedims(a, [2, 1, 3])
         # a = downsample(a, (1, 1, 2))
         # @show typeof(a)
         # @show size(a)
@@ -328,6 +328,7 @@ function picrun(path, array=Array; kw...)
                     l
                 end
 
+                # f(model)
                 @time global l, (dldm,) = Flux.withgradient(f, model)
 
             end

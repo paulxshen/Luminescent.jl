@@ -30,6 +30,8 @@ def setup(path, c, study, nres, center_wavelength,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None,
           Ttrans=None,
           approx_2D_mode=False):
+    RATIO = 4
+
     materials = {**MATERIALS, **materials}
     prob = dict()
     if approx_2D_mode:
@@ -39,9 +41,10 @@ def setup(path, c, study, nres, center_wavelength,
         N = 3
         prob["approx_2D_mode"] = None
     dy = dx = center_wavelength/nres
-    dl = dx/4
+    dl = dx/RATIO
     dz = 1 * dx
 
+    prob["class"] = "pic"
     prob["Ttrans"] = Ttrans
     prob["path"] = path
     prob["name"] = name

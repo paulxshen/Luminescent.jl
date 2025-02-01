@@ -14,8 +14,6 @@ import numpy as np
 from gdsfactory.cross_section import Section
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
-RATIO = 4
-
 
 def make_sim_prob(
     path,
@@ -34,10 +32,10 @@ def make_sim_prob(
         Ttrans=None,
         Tss=None,
         wl_res=.01,
-        # Tss=None,
         gpu=None,
         margins=[[0, 0, 0], [0, 0, 0]],
 ):
+    RATIO = 2
 
     materials = {**MATERIALS, **materials}
 
@@ -48,7 +46,7 @@ def make_sim_prob(
         wavelengths = [center_wavelength * center_frequency /
                        f for f in sorted(frequencies, reverse=True)]
     wavelengths, center_wavelength, T = adjust_wavelengths(
-        wavelengths, wl_res)
+        wavelengths, center_wavelength, wl_res)
 
     if nres:
         dx = center_wavelength/nres
@@ -72,6 +70,7 @@ def make_sim_prob(
                         bbox[1][i] = w
     bbox[0] = (np.array(bbox[0])-np.array(margins[0])).tolist()
     bbox[1] = (np.array(bbox[1])+np.array(margins[1])).tolist()
+
     bbox[1] = [a+dx*floor((b-a)/dx) for (a, b) in zip(bbox[0], bbox[1])]
 
     print(bbox)
@@ -82,6 +81,7 @@ def make_sim_prob(
                 mesh = pv.read(STL)
                 # mesh.plot()
                 im = stl_to_array(mesh, dl,  bbox)
+                print(im.shape)
 
                 # fig = plt.figure()
                 # ax = fig.add_subplot(111, projection='3d')
@@ -102,6 +102,7 @@ def make_sim_prob(
     if not Tss:
         Tss = T if len(wavelengths) > 1 else None
     prob = {
+        "class": "gen",
         "sources": sources,
         "monitors": monitors,
         "nres": nres,

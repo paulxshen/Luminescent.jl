@@ -5,6 +5,8 @@ import gdsfactory as gf
 
 # dir = "runs"
 dir = os.path.join("build", "precompile_execution")
+lumi.solve(os.path.join(dir, "tiny_2_float32_None"))
+
 
 c = gf.components.straight(length=.1, width=0.5,)
 wavelengths = 1.5
