@@ -74,8 +74,8 @@ frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
 function MonitorInstance(m::Monitor, g, ϵ, TEMP, mode_solutions=nothing)
-    λmodes, _λmodes, inds, masks, labelpos, = _get_λmodes(m, ϵ, TEMP, mode_solutions, g)
-
+    @time λmodes, _λmodes, inds, masks, labelpos, = _get_λmodes(m, ϵ, TEMP, mode_solutions, g)
+    # println("")
     MonitorInstance(inds, masks, m.frame, m.dimsperm, g.deltas, labelpos, λmodes, _λmodes, m.tags)
 end
 

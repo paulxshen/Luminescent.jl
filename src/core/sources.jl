@@ -256,6 +256,7 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
             len = round.(stop - start + 1)
             I = range.(F.(start + 0.5), F.(stop + 0.5), len)
             mask = F.(mask)
+            GC.gc(true)
             getindexf(mask, I...; approx=true)
         end for k = ks])
     else
