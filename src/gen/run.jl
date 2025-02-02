@@ -105,7 +105,7 @@ function genrun(path, array=Array; kw...)
 
     geometry[:ϵ] = max.(ϵmin, geometry[:ϵ])
     GC.gc(true)
-    geometry.ϵ |> volume |> display
+    # geometry.ϵ |> volume |> display
     # error()
 
 
@@ -161,7 +161,7 @@ function genrun(path, array=Array; kw...)
     d = kmap(string, identity, d) |> pairs |> Dict
     npzwrite(joinpath(path, "fields.npz"), d)
 
-    plotslices(prob._geometry.ϵ |> cpu, joinpath(path, "epsilon.png"))
-    plotslices(u.Ey |> cpu, joinpath(path, "Ey.png"))
+    plotslices(prob._geometry.ϵ |> cpu; path=joinpath(path, "epsilon.png"))
+    plotslices(d.Ey |> cpu, path=joinpath(path, "Ey.png"))
     S, sol, prob
 end

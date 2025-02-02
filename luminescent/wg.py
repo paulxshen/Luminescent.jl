@@ -52,5 +52,6 @@ lumi.make_sim_prob(
 
     materials=materials,
     margins=margins,      dx=dx,    Ttrans=Ttrans,
+    gpu="CUDA",
     # Tss=1
 )

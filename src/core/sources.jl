@@ -183,28 +183,27 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
             end
             f = x -> convert(C, _f(x))
 
-            mode = NamedTuple([k => v for (k, v) = pairs(mode) if startswith(string(k), "J")])
-
             mode = globalframe(mode, s)
             mode = completexyz(mode, N)
             # ks = sort([k for k = keys(mode) if string(k)[end] in "xyz"[1:N]])
             # println(ks)
-
             mode = namedtuple([
                 begin
                     v = mode(k)
+                    @assert !any(isnan, v)
+
                     if all(iszero, v)
                         v = 0
                     else
                         if !isnothing(inds)
-                            kE = Symbol("E$(string(k)[end])")
-                            a = zeros(C, field_sizes[kE])
-                            I = inds[kE]
+                            a = zeros(C, field_sizes[k])
+                            I = inds[k]
                             # global aaaa = a, b, mode, k, I
                             setindexf!(a, v, I...)
                             v = a
                         end
                     end
+                    @assert !any(isnan, v)
                     k => v
                 end for k = sort(keys(mode))])
 
@@ -243,15 +242,22 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
 
     inds = masks = nothing
     labelpos = zeros(F, N)
+    if isa(s, Source)
+        ks = [k for k = keys(field_lims) if string(k)[1] ∈ ('J')]
+    elseif isa(s, Monitor)
+        ks = [k for k = keys(field_lims) if string(k)[1] ∈ ('E', 'H')]
+    end
+
     if !isnothing(mask)
         masks = dict([k => begin
+            lr = field_lims[k]
             start = lr[:, 1]
             stop = lr[:, 2]
             len = round.(stop - start + 1)
-            I = range.(start + 0.5, stop + 0.5, len)
+            I = range.(F.(start + 0.5), F.(stop + 0.5), len)
             mask = F.(mask)
-            getindexf(mask, I...;)
-        end for (k, lr) = pairs(field_lims)])
+            getindexf(mask, I...; approx=true)
+        end for k = ks])
     else
         dx = deltas[1][1]
 
@@ -268,8 +274,9 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
         stop = F(stop)
 
         inds = dict([k => begin
+            lr = field_lims[k]
             range.(start, stop, len) - lr[:, 1] + 1
-        end for (k, lr) = pairs(field_lims)])
+        end for k = ks])
         labelpos = round(v2i(center - g.lb, deltas) + 0.5)
     end
 
@@ -317,17 +324,29 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
             #     # ϵeff = maximum(ϵmode) => 0.8ϵmax + 0.2ϵmin
             #     ϵeff = maximum(ϵmode) => ϵmax
             # end
-            modes
-        end for (λ, mns) = pairs(λmodenums)])
-        if N == 2
-            λmodes = kmap(v -> collapse_mode.(v, approx_2D_mode), λmodes)
-        end
+            map(modes) do mode
+                if N == 2
+                    mode = collapse_mode(mode, approx_2D_mode)
+                end
+                if isa(s, Monitor)
 
-        λmodes = kmap(λmodes) do modes
-            normalize_mode.(modes, (md,))
-        end
-        _λmodes = kmap(λmodes) do modes
-            mirror_mode.(modes)
+                    ks = filter(k -> string(k)[1] ∈ ('E', 'H'), keys(mode))
+                else
+                    ks = filter(k -> string(k)[1] ∈ ('J'), keys(mode))
+                end
+                namedtuple(ks .=> mode.(ks))
+            end
+        end for (λ, mns) = pairs(λmodenums)])
+
+        if isa(s, Monitor)
+            λmodes = kmap(λmodes) do modes
+                normalize_mode.(modes, (md,))
+            end
+            _λmodes = kmap(λmodes) do modes
+                mirror_mode.(modes)
+            end
+        else
+            _λmodes = nothing
         end
     elseif !isnothing(λsmode)
         λs, mode = λsmode
@@ -335,27 +354,34 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
         mode = kmap(Symbol, identity, mode)
         mode = OrderedDict([
             begin
+                v = mode[k]
                 if isa(v, Number)
                     v = v * masks[k]
                 end
                 k => v
-            end for (k, v) = pairs(mode)
-        ])
+            end for k = keys(mode) if k ∈ ks])
 
         if isa(s, Monitor)
             mode = normalize_mode(mode, md)
+            _mode = mirror_mode(mode; flip=false)
         end
-        _mode = mirror_mode(mode; flip=false)
 
         λmodes = OrderedDict([λ => [mode] for λ = λs])
-        _λmodes = OrderedDict([λ => [_mode] for λ = λs])
+        if isa(s, Monitor)
+            _λmodes = OrderedDict([λ => [_mode] for λ = λs])
+        else
+            _λmodes = nothing
+        end
     end
 
     λmodes = fmap(F, λmodes)
     λmodes = sort(λmodes, by=kv -> kv[1])
 
-    _λmodes = fmap(F, _λmodes)
-    _λmodes = sort(_λmodes, by=kv -> kv[1])
+    if !isnothing(_λmodes)
+
+        _λmodes = fmap(F, _λmodes)
+        _λmodes = sort(_λmodes, by=kv -> kv[1])
+    end
     # m = kmap(x -> C.(x), m)
 
     λmodes, _λmodes, inds, masks, labelpos
