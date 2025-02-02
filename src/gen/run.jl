@@ -69,6 +69,7 @@ function genrun(path, array=Array; kw...)
 
     # layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2].mesh_order) |> OrderedDict
     # for (k, v) = pairs(layer_stack)
+    ϵmin = 10000000
     for material = readdir(GEOMETRY)
         if string(material) ∉ ["sources", "monitors"]
 
@@ -86,6 +87,9 @@ function genrun(path, array=Array; kw...)
             # display(volume(a))
 
             m = materials(material)
+            if m(:epsilon) < ϵmin
+                ϵmin = m(:epsilon)
+            end
             for k = (:epsilon, :sigma)
                 v = m(k, nothing)
                 if !isnothing(v)
@@ -101,7 +105,7 @@ function genrun(path, array=Array; kw...)
         end
     end
 
-    # ϵ3 = max.(ϵmin, ϵ3)
+    geometry[:ϵ] = max.(ϵmin, geometry[:ϵ])
     GC.gc(true)
     geometry.ϵ |> volume |> display
     # error()

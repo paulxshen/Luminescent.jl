@@ -42,6 +42,14 @@ def extend(endpoints, wm):
         (endpoints[0]-wm*v).tolist(), (endpoints[1]+wm*v).tolist()]
 
 
+# def round(x):
+#     r = round(x)
+#     if abs(x-r) > .1 and r == 0:
+#         raise ValueError(f"round: {x} -> {r}")
+
+#     return r
+
+
 def portsides(c):
     ports = c.ports
     bbox = c.bbox_np()
@@ -129,9 +137,11 @@ def stl_to_array(mesh: pv.PolyData, dl: float, bbox):
 
     lb = [mesh.bounds[i] for i in [0, 2, 4]]
     ub = [mesh.bounds[i] for i in [1, 3, 5]]
+    lb = [max(a, b) for a, b in zip(lb, bbox[0])]
+    ub = [min(a, b) for a, b in zip(ub, bbox[1])]
 
     lims = [
-        [a+dl/2+dl*ceil((p-a-dl/2)/dl), b-dl/2-dl*ceil((b-dl/2-q)/dl)]
+        [a+dl/2+dl*round((p-a)/dl-.01), b-dl/2-dl*round((b-q)/dl+.01)]
         for (a, b, p, q) in zip(bbox[0], bbox[1], lb, ub)]
     xyz = [np.linspace(a, b, 1+round((b-a)/dl)) for (a, b) in lims]
     x, y, z = np.meshgrid(*xyz)
@@ -153,12 +163,15 @@ def stl_to_array(mesh: pv.PolyData, dl: float, bbox):
 
     start = [(lims[i][0]-a-dl/2)/dl for (i, a) in enumerate(bbox[0])]
     stop = [a+l for (a, l) in zip(start, mask.shape)]
-    start = [int(a) for a in start]
-    stop = [int(a) for a in stop]
 
-    r = np.zeros(tuple([int((b-a)/dl)
+    r = np.zeros(tuple([round((b-a)/dl)
                  for a, b in zip(bbox[0], bbox[1])]), dtype=bool)
-    r[start[0]:stop[0], start[1]:stop[1], start[2]:stop[2]] = mask
+    start = [max(round(a), 0) for a in start]
+    stop = [min(round(a), u) for a, u in zip(stop, r.shape)]
+    len = [s-t for s, t in zip(stop, start)]
+
+    r[start[0]:stop[0], start[1]:stop[1], start[2]
+        :stop[2]] = mask[:len[0], :len[1], :len[2]]
     return r
 
 

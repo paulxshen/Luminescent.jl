@@ -127,7 +127,15 @@ function picrun(path, array=Array; kw...)
                 @unpack bbox = design
                 L = bbox[2] - bbox[1]
                 szd = Tuple(round.(Int, L / dl)) # design region size
-                symmetries = [Int(s) + 1 for s = design.symmetries]
+                symmetries = map(design.symmetries) do s
+                    try
+                        Int(s) + 1
+                    catch
+                        parse(Int, s) + 1
+                    finally
+                        s
+                    end
+                end
 
                 frame = ϵ2
                 # display(heatmap(frame))
