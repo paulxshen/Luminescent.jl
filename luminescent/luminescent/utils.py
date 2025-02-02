@@ -154,7 +154,7 @@ def stl_to_array(mesh: pv.PolyData, dl: float, bbox):
     selection = ugrid.select_enclosed_points(
         mesh.extract_surface(),
         tolerance=0.00,
-        # check_surface=False,
+        check_surface=False,
     )
     mask = selection['SelectedPoints'].view(bool)
     mask = mask.reshape(x.shape, order='F')

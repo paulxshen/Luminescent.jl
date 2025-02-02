@@ -1,6 +1,6 @@
 module Luminescent
 include("main.jl")
-export picrun
+export picrun, genrun
 export pkgadd, pkgrm, pkgup
 # export Periodic, PML, PEC, PMC, InPad, OutPad
 # export PlaneWave, GaussianBeam, Source, Source, keepxy
