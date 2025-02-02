@@ -292,6 +292,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         end
     end
 
+    println("making sources and monitors...")
     mode_solutions = []
     source_instances = SourceInstance.(sources, (grid,), (_ϵ3,), (TEMP,), (mode_solutions,))
     monitor_instances = MonitorInstance.(monitors, (grid,), (_ϵ3,), (TEMP,), (mode_solutions,))

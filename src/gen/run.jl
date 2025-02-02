@@ -94,9 +94,7 @@ function genrun(path, array=Array; kw...)
                 v = m(k, nothing)
                 if !isnothing(v)
                     v = Nf(v)
-                    @show k
                     k = togreek(k)
-                    @show k
                     a = geometry[k]
                     a .*= .!(am)
                     a .+= am .* v
@@ -136,7 +134,7 @@ function genrun(path, array=Array; kw...)
     global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ;
         geometry..., array, F, deltas3=deltas / λ, Ttrans, Tss,
         # lpml=[0.2, 0.2, 0.2],
-        lpml=ones(3),)#
+        lpml=0.7 / λs[1] * ones(3),)#
     # σpml=4,)#
     # pml_depths=[0.2, 0.2, 0.2])
 

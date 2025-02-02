@@ -154,7 +154,8 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
 
     λs = @ignore_derivatives Array(keys(λmodes))
     modess = values(λmodes)
-    if all(x -> x === (modess[1]), modess)
+    if !isnothing(s.frame)
+        #  all(x -> x === (modess[1]), modess) 
         iss = [eachindex(λs)]
         println("all modes are the same")
     else
