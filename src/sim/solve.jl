@@ -59,7 +59,7 @@ function solve(prob, ;
     _p = pad_geometry(_p, geometry_padvals, _geometry_padamts)
     ks = filter(k -> k != (:ϵ), keys(_p))
     if !isempty(ks)
-        p1 = namedtuple([k => downsamplefield(v |> cpu, field_lims, spacings) for k = ks])
+        p1 = namedtuple([k => downsamplefield(_p[k] |> cpu, field_lims, spacings) for k = ks])
         p = merge(p, p1)
     end
 
