@@ -151,8 +151,8 @@ function genrun(path, array=Array; kw...)
 
     # solution = (;
     #     sparam_family(S)...,)
-    solution = S
-    json(sparam_family(solution), 4) |> println
+    solution = sparam_family(S)
+    json(solution, 4) |> println
     # volume(prob._geometry.σ |> cpu)
     # volume(geometry.σ |> cpu)
     open(joinpath(path, "solution.json"), "w") do f
@@ -162,5 +162,8 @@ function genrun(path, array=Array; kw...)
     d = merge(u.E, u.H)
     d = kmap(string, identity, d) |> pairs |> Dict
     npzwrite(joinpath(path, "fields.npz"), d)
+
+    plotslices(prob._geometry.ϵ, joinpath(path, "epsilon.png"))
+    plotslices(u.Ey, joinpath(path, "Ey.png"))
     S, sol, prob
 end
