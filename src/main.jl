@@ -29,7 +29,7 @@ include("gen/run.jl")
 include("ops.jl")
 include("del.jl")
 # include("main.jl")
-
+include("plots.jl")
 include("gpu.jl")
 
 function julia_main()::Cint
