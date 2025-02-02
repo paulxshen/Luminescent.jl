@@ -292,9 +292,10 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         end
     end
 
-    println("making sources and monitors...")
+    println("making sources...")
     mode_solutions = []
     source_instances = SourceInstance.(sources, (grid,), (_ϵ3,), (TEMP,), (mode_solutions,))
+    println("making monitors...")
     monitor_instances = MonitorInstance.(monitors, (grid,), (_ϵ3,), (TEMP,), (mode_solutions,))
     ϵeff = nothing
     # ϵeff = source_instances[1].ϵeff
@@ -340,13 +341,13 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
 
     @show Ttrans, Tss
     Ttrans, Tss = convert.(F, (Ttrans, Tss))
-    prob = (;
-               grid,
-               source_instances, monitor_instances, field_names, approx_2D_mode, Courant,
-               Ttrans, Tss,
-               geometry, _geometry, nmax, nmin, ϵeff,
-               is_field_on_lb, is_field_on_ub,
-               u0, dt, array, kw...) |> pairs |> OrderedDict
+    global prob = (;
+                      grid,
+                      source_instances, monitor_instances, field_names, approx_2D_mode, Courant,
+                      Ttrans, Tss,
+                      geometry, _geometry, nmax, nmin, ϵeff,
+                      is_field_on_lb, is_field_on_ub,
+                      u0, dt, array, kw...) |> pairs |> OrderedDict
 
     _gpu = x -> gpu(array, x)
     if array == Array
@@ -360,8 +361,6 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         end
     end
     prob.grid[:field_diffdeltas] = _gpu.(prob.grid[:field_diffdeltas])
-    prob._geometry[:ϵ] = cpu(prob._geometry.ϵ)
-    global _prob = prob
     prob
 end
 update = update

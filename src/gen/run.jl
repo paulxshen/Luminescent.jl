@@ -161,7 +161,7 @@ function genrun(path, array=Array; kw...)
     d = kmap(string, identity, d) |> pairs |> Dict
     npzwrite(joinpath(path, "fields.npz"), d)
 
-    plotslices(prob._geometry.ϵ, joinpath(path, "epsilon.png"))
-    plotslices(u.Ey, joinpath(path, "Ey.png"))
+    plotslices(prob._geometry.ϵ |> cpu, joinpath(path, "epsilon.png"))
+    plotslices(u.Ey |> cpu, joinpath(path, "Ey.png"))
     S, sol, prob
 end

@@ -2,10 +2,10 @@ import luminescent as lumi
 from luminescent import eps0
 import numpy as np
 
-path = "ant"
+path = "drive/MyDrive/reflex/ant"
 center_frequency = 5
 center_wavelength = 60
-frequencies = [2, 3, 4, 5, 6, 7, 8],
+frequencies = [2, 3, 4, 5, 6, 7, 8]
 sigma = 1/(center_frequency*1e9)/eps0
 Z = 50*(center_frequency*1e9)*eps0*1e3/center_wavelength
 print(f"sigma: {sigma}, Z: {Z}")
@@ -19,7 +19,7 @@ frame1 = [[1, 0, 0],
 frame2 = [[-1, 0, 0],
           [0,  1, 0],
           [0, 0, -1]]
-margins = [[margin, margin, 0], [margin, margin, 0]],  # air margin
+margins = [[margin, margin, 0], [margin, margin, 0]]  # air margin
 
 materials = {
     'gel': {'epsilon': 50, 'sigma': sigma},

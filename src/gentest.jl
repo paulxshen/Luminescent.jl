@@ -6,7 +6,7 @@ Random.seed!(1234)
 using CUDA
 # prob, sol = genrun("phantom"; Ttrans=3)
 # prob, sol = genrun("ant"; Ttrans=10)
-S, sol, prob = genrun("ant", cu)
+S, sol, prob = genrun("wg", cu)
 # vis(sol, prob, :Ey)
 
 # a = sol.u(:Ey)

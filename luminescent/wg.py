@@ -23,7 +23,7 @@ margins = [[margin, margin, 0], [margin, margin, 0]]  # air margin
 
 materials = {
     'gel': {'epsilon': 50, 'sigma': sigma},
-    'fr4': {'epsilon': 4.3, },
+    'fr4': {'epsilon': 4.3, 'sigma': .01*sigma},
     'PEC': {'epsilon': 1000},
 }
 
