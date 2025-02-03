@@ -1,16 +1,19 @@
+from math import sqrt
 import luminescent as lumi
 from luminescent import eps0
 import numpy as np
+import os
 
-path = "wg"
+path = os.path.join("genruns", "wg")
 center_frequency = 5
 center_wavelength = 60
 frequencies = [2, 3, 4, 5, 6, 7, 8]
+# frequencies = [5]
 sigma = 1/(center_frequency*1e9)/eps0
-Z = 50*(center_frequency*1e9)*eps0*1e3/center_wavelength
+Z = 377/sqrt(4.3)*(center_frequency*1e9)*eps0/1e3*center_wavelength
 print(f"sigma: {sigma}, Z: {Z}")
 
-margin = 10
+margin = 20
 mode = {'Ey': 1, 'Hx': -1/Z}
 # +z pointing out of port
 frame2 = [[1, 0, 0],
@@ -23,12 +26,13 @@ margins = [[margin, margin, 0], [margin, margin, 0]]  # air margin
 
 materials = {
     'gel': {'epsilon': 50, 'sigma': sigma},
-    'fr4': {'epsilon': 4.3, 'sigma': .01*sigma},
-    'PEC': {'epsilon': 1000},
+    'fr4': {'epsilon': 4.3, 'sigma': .0001*sigma},
+    'PEC': {'epsilon': 10000},
 }
 
 dx = .8
-Ttrans = 3
+Ttrans = 4
+Tssmin = 10
 
 lumi.make_sim_prob(
     path=path,
@@ -51,7 +55,9 @@ lumi.make_sim_prob(
     ],
 
     materials=materials,
-    margins=margins,      dx=dx,    Ttrans=Ttrans,
+    margins=margins,      dx=dx,
+    Ttrans=Ttrans, Tssmin=Tssmin,
+    # Tss = 2
+
     gpu="CUDA",
-    # Tss=1
 )

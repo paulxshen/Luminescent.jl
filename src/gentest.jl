@@ -6,13 +6,15 @@ Random.seed!(1234)
 using CUDA
 # prob, sol = genrun("phantom"; Ttrans=3)
 # prob, sol = genrun("ant"; Ttrans=10)
-S, sol, prob = genrun("wg", cu)
+using GLMakie
+# S, sol, prob = genrun(joinpath("genruns", "ant"), cu)
+S, sol, prob = genrun(joinpath("genruns", "wg"), cu)
 # vis(sol, prob, :Ey)
 
 # a = sol.u(:Ey)
 # volume(abs.(a))
 # extrema(a)
-
+# abs(sum(sol.um[1][1].Ey) / sum(sol.um[1][1].Hx)) |> println
 
 # using GLMakie
 # a = 10prob.source_instances[1].sigmodes[1][2](2)

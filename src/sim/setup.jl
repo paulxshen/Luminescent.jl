@@ -12,7 +12,7 @@ Args
 """
 function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     approx_2D_mode=nothing,
-    Ttrans=nothing, Tss=nothing,
+    Ttrans=nothing, Tss=nothing, Tssmin=nothing,
     ϵ=1, μ=1, σ=0, m=0, γ=0, β=0,
     ϵ3=ϵ,
     F=Float32,
@@ -35,9 +35,10 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
 
     mode_spacing = int(mode_deltas[1] / dl)
     L = size(ϵ) * dl
-    sz = Tuple([isa(d, Number) ? int(l / d) : length(d) for (d, l) = zip(deltas, L)])
+    sz0 = Tuple([isa(d, Number) ? int(l / d) : length(d) for (d, l) = zip(deltas, L)])
+    sz = collect(sz0)
 
-    # @show sz,prod(sz)
+    # @show sz0,prod(sz0)
 
     _geometry = (; ϵ, μ, σ, m, γ, β) |> pairs |> OrderedDict
     geometry = OrderedDict()
@@ -47,7 +48,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         elseif isa(v, Number)
             v = F(v)
             if k ∈ (:σ, :m)
-                geometry[k] = fill(v, sz)
+                geometry[k] = fill(v, sz0)
             else
                 geometry[k] = v
             end
@@ -70,17 +71,23 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         σpml = ϵmin * σpml
         mpml = μmin * mpml
     end
-    @show σpml
 
     if isnothing(pml_depths)
         if σpml != 0
-            δ = -1.5log(1e-6) / nmin / 2 / (σpml + mpml) |> F
+            δ = -2log(1e-6) / nmin / 2 / (σpml + mpml) |> F
+
+            # r = max(1, maximum(16 ./ δ .* maxdeltas))
+            # δ *= r
+            # σpml /= r
+            # m /= r
+
             pml_depths = max.(δ * lpml[1:N], maxdeltas)
-            pml_depths = trim.(pml_depths, maxdeltas)
+            pml_depths = ceil.(pml_depths ./ maxdeltas) .* maxdeltas
         else
             pml_depths = fill(0, N)
         end
     end
+    @show σpml
     @show pml_depths
 
     if N == 1
@@ -108,13 +115,14 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     db = Any[PML(j * i, pml_depths[i], σpml, mpml) for i = 1:N, j = (-1, 1)]
     field_boundvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
     geometry_padvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
+    padamts = zeros(Int, N, 2)
     geometry_padamts = DefaultDict(() -> zeros(Int, N, 2))
     _geometry_padamts = DefaultDict(() -> zeros(Int, N, 2))
     is_field_on_lb = OrderedDict([k => zeros(Int, N) for k = field_names])
     is_field_on_ub = OrderedDict([k => zeros(Int, N) for k = field_names])
     bbox = zeros(F, N, 2)
     bbox[:, 2] .= L
-    field_sizes = OrderedDict([k => collect(sz) for k = field_names])
+    field_sizes = OrderedDict([k => collect(sz0) for k = field_names])
 
     for b = boundaries
         for i = b.dims
@@ -186,8 +194,8 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
                 # if any(l1 .> 0) || any(r1 .> 0)
                 #     # rr=ReplicateRamp(convert.(F,b.σ))
                 #     rr = convert.(F, b.σ)
-                #     push!(geometry_padvals[:σ], OutPad(rr, l1, r1, sz))
-                #     push!(geometry_padvals[:m], OutPad(rr, l1, r1, sz))
+                #     push!(geometry_padvals[:σ], OutPad(rr, l1, r1, sz0))
+                #     push!(geometry_padvals[:m], OutPad(rr, l1, r1, sz0))
                 # end
                 if !isa(deltas[i], Number)
                     if j == 1
@@ -196,6 +204,8 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
                         push!(deltas[i], fill(maxdeltas[i], npml)...)
                     end
                 end
+
+                padamts[i, j] = npml
                 for k = (:σ, :m, :ϵ, :μ)
                     geometry_padamts[k][i, j] = npml
                     _geometry_padamts[k][i, j] = _npml
@@ -209,6 +219,8 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
                 if j == 1
                     bbox[i, :] .-= b.d
                 end
+
+                sz[i] += npml
                 for k = keys(field_sizes)
                     field_sizes[k][i] += npml
                 end
@@ -249,7 +261,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     add_current_keys!(u0)
     u0 = groupkeys(u0)
 
-    geometry_sizes = NamedTuple([k => sz .+ sum(geometry_padamts[k], dims=2) for k = keys(geometry_padamts)])
+    geometry_sizes = NamedTuple([k => sz0 .+ sum(geometry_padamts[k], dims=2) for k = keys(geometry_padamts)])
     field_lims = OrderedDict{Symbol,Any}()
     for k = keys(geometry_sizes)
         if k in (:μ, :m)
@@ -281,16 +293,12 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     field_diffpadvals = kmap(a -> reverse(a, dims=2), field_boundvals)
     field_spacings = int(field_deltas / dl)
     spacings = int(deltas / dl)
-
     field_diffpadvals = refactor(field_diffpadvals)
-    grid = (; F, N, L, bbox, sz, deltas, deltas3, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals, geometry_padvals, geometry_padamts, _geometry_padamts, dl, spacings, mode_spacing, mode_deltas,) |> dict
 
-    l, r = geometry_padamts.ϵ |> eachcol
-    for m = vcat(sources, monitors)
-        if !isnothing(m.mask)
-            m.mask = pad(m.mask, 0, l, r)
-        end
-    end
+    sz = Tuple(sz)
+    sz0 = Tuple(sz0)
+
+    grid = (; F, N, L, bbox, sz0, sz, padamts, deltas, deltas3, lb, field_lims, field_sizes, field_boundvals, field_deltas, field_diffdeltas, field_diffpadvals, geometry_padvals, geometry_padamts, _geometry_padamts, dl, spacings, mode_spacing, mode_deltas,) |> dict
 
     println("making sources...")
     mode_solutions = []
@@ -301,7 +309,6 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     # ϵeff = source_instances[1].ϵeff
 
 
-    sz = Tuple(sz)
 
     # geometry_padvals[:invϵ] = geometry_padvals[:ϵ]
 
@@ -325,7 +332,6 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
 
     if Tss == nothing
         Tssmin = 120nmax / nres / N
-
         v = reduce(vcat, wavelengths.(monitor_instances))
         v = Base.round.(v, digits=3)
         v = v |> Set |> collect |> sort |> reverse
@@ -336,6 +342,9 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
             Tss = 1 / minimum(diff([0, (1 ./ v)...]))
             # Tss = ceil(100 / T) * T
         end
+    end
+    if !isnothing(Tssmin)
+        @show Tssmin
         Tss *= Base.ceil(Int, Tssmin / Tss)
     end
 

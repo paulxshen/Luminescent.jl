@@ -149,7 +149,7 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
     N = ndims(s)
     ϵeff = nothing
 
-    λmodes, _, inds, masks, labelpos = _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
+    λmodes, _, inds, labelpos = _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
     global _a = λmodes
 
     λs = @ignore_derivatives Array(keys(λmodes))
@@ -195,13 +195,11 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
                     if all(iszero, v)
                         v = 0
                     else
-                        if !isnothing(inds)
-                            a = zeros(C, field_sizes[k])
-                            I = inds[k]
-                            # global aaaa = a, b, mode, k, I
-                            setindexf!(a, v, I...)
-                            v = a
-                        end
+                        a = zeros(C, field_sizes[k])
+                        I = inds[k]
+                        # global aaaa = a, b, mode, k, I
+                        setindexf!(a, v, I...;)# approx=true)
+                        v = a
                     end
                     @assert !any(isnan, v)
                     k => v
@@ -234,13 +232,12 @@ end
 
 function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
     @unpack mask, center, L, tags, dimsperm, frame, center3, L3, approx_2D_mode, λmodenums, λmodes, λsmode = s
-    @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, dl = g
+    @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, spacings, dl, padamts = g
     N = ndims(s)
 
     C = complex(g.F)
     md = first.(g.mode_deltas)
 
-    inds = masks = nothing
     labelpos = zeros(F, N)
     if isa(s, Source)
         ks = [k for k = keys(field_lims) if string(k)[1] ∈ ('J')]
@@ -249,15 +246,30 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
     end
 
     if !isnothing(mask)
-        masks = dict([k => begin
-            lr = field_lims[k]
-            start = lr[:, 1]
-            stop = lr[:, 2]
-            len = round.(stop - start + 1)
-            I = range.(F.(start + 0.5), F.(stop + 0.5), len)
-            mask = F.(mask)
-            GC.gc(true)
-            getindexf(mask, I...; approx=true)
+        #  = dict([k => begin
+        #     lr = field_lims[k]
+        #     start = lr[:, 1]
+        #     stop = lr[:, 2]
+        #     len = round.(stop - start + 1)
+        #     I = range.(F.(start + 0.5), F.(stop + 0.5), len)
+        #     mask = F.(mask)
+        #     GC.gc(true)
+        #     getindexf(mask, I...; approx=true)
+        # end for k = ks])
+
+        @show start, stop = eachcol(getbbox(mask))
+        len = round(stop - start + 1)
+        block = ones(F, len...)
+        start += padamts[:, 1]
+        stop += padamts[:, 1]
+
+        # @show sz = size(mask)
+        start = F(start)
+        stop = F(stop)
+
+        inds = dict([k => begin
+            lr = field_lims[k] |> F
+            range.(start, stop, len) - lr[:, 1] + F(0.5)
         end for k = ks])
     else
         dx = deltas[1][1]
@@ -357,7 +369,7 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
             begin
                 v = mode[k]
                 if isa(v, Number)
-                    v = v * masks[k]
+                    v = v * block
                 end
                 k => v
             end for k = keys(mode) if k ∈ ks])
@@ -385,5 +397,5 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
     end
     # m = kmap(x -> C.(x), m)
 
-    λmodes, _λmodes, inds, masks, labelpos
+    λmodes, _λmodes, inds, labelpos
 end

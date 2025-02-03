@@ -11,8 +11,8 @@ Random.seed!(1234)
 # picrun(joinpath("runs", "splitter"); array=cu)
 # picrun(joinpath("runs", "splitter"))
 
-picrun(joinpath("build", "precompile_execution", "tiny_2_float32_CUDA"))
-picrun(joinpath("build", "precompile_execution", "tiny_3_float32_CUDA"))
+# picrun(joinpath("build", "precompile_execution", "tiny_2_float32_CUDA"))
+# picrun(joinpath("build", "precompile_execution", "tiny_3_float32_CUDA"))
 # picrun(joinpath("build", "precompile_execution", "tiny_3_float32_None"))
 # picrun(joinpath("build", "precompile_execution", "back_float32"))
 # picrun(joinpath("runs", "tiny3"))
@@ -22,11 +22,11 @@ picrun(joinpath("build", "precompile_execution", "tiny_3_float32_CUDA"))
 # picrun(joinpath("runs", "demux"))
 # picrun(joinpath("runs", "straight"))
 
-# for p = readdir("build/precompile_execution", join=true)
-#     # if !contains(string(p), "16") && !contains(string(p), "back")
-#     if !contains(string(p), "16") #&& contains(string(p), "back")
-#         # if !contains(string(p), "16") && contains(string(p), "back")
-#         picrun(p)
-#     end
-# end
-# # 
+for p = readdir("build/precompile_execution", join=true)
+    # if !contains(string(p), "16") && !contains(string(p), "back")
+    if !contains(string(p), "16") #&& contains(string(p), "back")
+        # if !contains(string(p), "16") && contains(string(p), "back")
+        picrun(p)
+    end
+end
+# 

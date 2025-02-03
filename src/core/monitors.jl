@@ -55,7 +55,7 @@ wavelengths(m::Monitor) = keys(m.λmodes)
 abstract type AbstractMonitorInstance end
 mutable struct MonitorInstance <: AbstractMonitorInstance
     inds
-    masks
+
 
     frame
     dimsperm
@@ -65,7 +65,7 @@ mutable struct MonitorInstance <: AbstractMonitorInstance
     _λmodes
     tags
 end
-@functor MonitorInstance (λmodes, _λmodes, masks, deltas)
+@functor MonitorInstance (λmodes, _λmodes, deltas)
 Base.ndims(m::MonitorInstance) = length(m.center)
 area(m::MonitorInstance) = m.v
 wavelengths(m::MonitorInstance) = keys(m.λmodes)
@@ -74,9 +74,9 @@ frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
 
 function MonitorInstance(m::Monitor, g, ϵ, TEMP, mode_solutions=nothing)
-    @time λmodes, _λmodes, inds, masks, labelpos, = _get_λmodes(m, ϵ, TEMP, mode_solutions, g)
+    λmodes, _λmodes, inds, labelpos, = _get_λmodes(m, ϵ, TEMP, mode_solutions, g)
     # println("")
-    MonitorInstance(inds, masks, m.frame, m.dimsperm, g.deltas, labelpos, λmodes, _λmodes, m.tags)
+    MonitorInstance(inds, m.frame, m.dimsperm, g.deltas, labelpos, λmodes, _λmodes, m.tags)
 end
 
 function MonitorInstance(m::PlaneMonitor, g)
@@ -86,14 +86,10 @@ function MonitorInstance(m::PlaneMonitor, g)
 end
 
 function field(u::Map, k, m)
-    @unpack inds, masks = m
-    @nograd k, m, inds, masks
+    @unpack inds, = m
+    @nograd k, m, inds
     a = u(k)
-    if !isnothing(masks)
-        a .* masks(k)
-    else
-        getindexf(a, m.inds[k]...)#; approx=true)
-    end
+    getindexf(a, m.inds[k]...)#; approx=true)
 end
 Base.getindex(a::AbstractDict, k, m::MonitorInstance) = field(a, k, m)
 Base.getindex(a::NamedTuple, k, m::MonitorInstance) = field(a, k, m)

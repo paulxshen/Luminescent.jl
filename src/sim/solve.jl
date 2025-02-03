@@ -144,8 +144,10 @@ function solve(prob, ;
     ulims = 0
     # @assert all([all(!isnan, a) for a = u])
 
-    # volume(cpu(prob.monitor_instances[2].masks(1)) + 0.001ϵ(1) |> cpu) |> display
-    # volume(cpu(prob.monitor_instances[1].masks(1))) |> display
+    # volume(cpu(prob.monitor_instances[2].(1)) + 0.001ϵ(1) |> cpu) |> display
+    # extrema(cpu(prob.monitor_instances[2].λmodes(1)(1).Ey))
+    # extrema(cpu(prob.monitor_instances[2].λmodes(1)(1).Hx))
+    # volume(cpu(abs.(prob.source_instances[1].sigmodes(1)[2].Jy))) |> display
     # for i = 1:2
     #     for k = (:Ey, :Hx)
     #         prob.monitor_instances[i]._λmodes(1)[1](k) |> extrema |> println

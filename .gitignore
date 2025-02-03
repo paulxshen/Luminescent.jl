@@ -2,6 +2,7 @@
 phantom*
 phantom.*
 phantom.py
+ant.*
 
 /ant
 
@@ -18,8 +19,10 @@ dump
 /*.mp4
 /.vscode
 docs/build/
-/runs
-/runs
+
+/picruns
+/genruns
+
 /lumi/dist
 *.lock
 *.pyc

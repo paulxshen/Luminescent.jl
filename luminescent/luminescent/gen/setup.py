@@ -31,6 +31,7 @@ def make_sim_prob(
         dtype="float32",
         Ttrans=None,
         Tss=None,
+        Tssmin=None,
         wl_res=.01,
         margins=[[0, 0, 0], [0, 0, 0]],
         gpu=None,
@@ -120,7 +121,7 @@ def make_sim_prob(
         'gpu_backend': gpu,
         'Ttrans': Ttrans,
         'Tss': Tss,
-
+        'Tssmin': Tssmin,
     }
     prob["wavelengths"] = wavelengths
     PROB = os.path.join(path, "problem.json")

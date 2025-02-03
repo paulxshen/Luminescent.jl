@@ -14,7 +14,7 @@ function genrun(path, array=Array; kw...)
     for (k, v) = kw
         prob[string(k)] = v
     end
-    @unpack dtype, center_wavelength, dl, dx, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, wavelengths = prob
+    @unpack dtype, center_wavelength, dl, dx, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, Tssmin, wavelengths = prob
     if study == "inverse_design"
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end
@@ -82,9 +82,8 @@ function genrun(path, array=Array; kw...)
                 end
             end
             _sz[1] = size(am)
-            # println(k)
-            # Figure()
-            # display(volume(a))
+            # display(volume(am))
+            # error()
 
             m = materials(material)
             if m(:epsilon) < ϵmin
@@ -112,7 +111,6 @@ function genrun(path, array=Array; kw...)
     global sources = map(enumerate(sources)) do (i, s)
         λsmode = (λs, s.mode)
         mask = npzread(joinpath(GEOMETRY, "sources", "$i.npy"))
-        mask = permutedims(mask, [2, 1, 3])
         @assert !all(iszero, mask)
         mask = downsample(mask, ratio)
         Source(mask, F.(stack(s.frame)); λsmode)
@@ -120,23 +118,23 @@ function genrun(path, array=Array; kw...)
     global monitors = map(enumerate(monitors)) do (i, s)
         λsmode = (λs, s.mode)
         mask = npzread(joinpath(GEOMETRY, "monitors", "$i.npy"))
-        mask = permutedims(mask, [2, 1, 3])
         @assert !all(iszero, mask)
         mask = downsample(mask, ratio)
         Monitor(mask, F.(stack(s.frame)); λsmode)
     end
-    # volume(monitors[1].mask) |> display
+    # volume(sources[1].mask) |> display
     # error()
 
     boundaries = []
     N = 3
     @show Ttrans, Tss
     global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ;
-        geometry..., array, F, deltas3=deltas / λ, Ttrans, Tss,
+        geometry..., array, F, deltas3=deltas / λ, Ttrans, Tss, Tssmin,
         # lpml=[0.2, 0.2, 0.2],
-        lpml=0.7 / λs[1] * ones(3),)#
-    # σpml=4,)#
-    # pml_depths=[0.2, 0.2, 0.2])
+        lpml=1 / λs[1] * ones(3),
+        # σpml=4,#
+        # pml_depths=[0.2, 0.2, 0.2])
+    )
 
     # v = prob.monitor_instances
     # v[1].frame = nothing
@@ -156,12 +154,30 @@ function genrun(path, array=Array; kw...)
     open(joinpath(path, "solution.json"), "w") do f
         write(f, json(cpu(solution)))
     end
+
     u = cpu(sol.u)
     d = merge(u.E, u.H)
-    d = kmap(string, identity, d) |> pairs |> Dict
-    npzwrite(joinpath(path, "fields.npz"), d)
+    global d = kmap(string, identity, d) |> pairs |> Dict
+    # npzwrite(joinpath(path, "fields.npz"), d)
 
-    plotslices(prob._geometry.ϵ |> cpu; path=joinpath(path, "epsilon.png"))
-    plotslices(d.Ey |> cpu, path=joinpath(path, "Ey.png"))
+    plotslices(prob._geometry.ϵ |> cpu; saturation=100, path=joinpath(path, "epsilon.png"))
+    for saturation = [1, 5]
+        plotslices(d.Ey |> cpu; saturation, path=joinpath(path, "Ey_sat$saturation.png"))
+    end
+
+    # plotslices(d.Ey |> cpu; saturation=1)
+    # volume(sol.u.E.Ey |> cpu) |> display
+
+    # c = sol.u.E.Ey
+    # sz = c |> size
+    # a = zeros(prob.grid.sz)
+    # @assert sz == size(a)
+    # setindexf!(a, 1, prob.monitor_instances[1].inds(1)...)
+    # setindexf!(a, 2, prob.monitor_instances[2].inds(1)...)
+    # b = abs.(prob.source_instances[1].sigmodes(1)[2].Jy) |> cpu
+    # b /= maximum(b)
+    # a .+= 3b
+    # volume(a) |> display
+
     S, sol, prob
 end
