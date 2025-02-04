@@ -131,9 +131,11 @@ function picrun(path, array=Array; kw...)
                     try
                         Int(s) + 1
                     catch
-                        parse(Int, s) + 1
-                    finally
-                        s
+                        try
+                            parse(Int, s) + 1
+                        catch
+                            s
+                        end
                     end
                 end
 
