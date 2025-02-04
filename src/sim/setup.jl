@@ -19,10 +19,10 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     Courant=0.9,
     deltas3=deltas,
     array=Array,
-    σpml=nothing, mpml=σpml,
-    lpml=[1, 1, 1], pml_depths=nothing,
+    lpml=[1, 1, 1],
     TEMP="",
-    kw...)
+    λ=1,
+)
 
     if !isnothing(approx_2D_mode)
         approx_2D_mode = Symbol(approx_2D_mode)
@@ -66,27 +66,19 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     dt = 1 / ceil(1 / dt) |> F
 
     maxdeltas = maximum.(deltas)
-    if isnothing(σpml)
-        σpml = mpml = 0.2 / dt
-        σpml = ϵmin * σpml
-        mpml = μmin * mpml
-    end
 
-    if isnothing(pml_depths)
-        if σpml != 0
-            δ = -2log(1e-6) / nmin / 2 / (σpml + mpml) |> F
+    v = 0.1 / dt
+    δ = -2log(1e-4) / nmin / 2 / (2v) |> F
+    σpml = ϵmin * v
+    mpml = μmin * v
 
-            # r = max(1, maximum(16 ./ δ .* maxdeltas))
-            # δ *= r
-            # σpml /= r
-            # m /= r
+    # r = max(1, maximum(16 ./ δ .* maxdeltas))
+    # δ *= r
+    # σpml /= r
+    # m /= r
 
-            pml_depths = max.(δ * lpml[1:N], maxdeltas)
-            pml_depths = ceil.(pml_depths ./ maxdeltas) .* maxdeltas
-        else
-            pml_depths = fill(0, N)
-        end
-    end
+    pml_depths = max.(δ * lpml[1:N], maxdeltas)
+    pml_depths = ceil.(pml_depths ./ maxdeltas) .* maxdeltas
     @show σpml
     @show pml_depths
 
@@ -331,7 +323,9 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     end
 
     if Tss == nothing
-        Tssmin = 120nmax / nres / N
+        if isnothing(Tssmin)
+            Tssmin = 120nmax / nres / N
+        end
         v = reduce(vcat, wavelengths.(monitor_instances))
         v = Base.round.(v, digits=3)
         v = v |> Set |> collect |> sort |> reverse
@@ -356,7 +350,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
                       Ttrans, Tss,
                       geometry, _geometry, nmax, nmin, ϵeff,
                       is_field_on_lb, is_field_on_ub,
-                      u0, dt, array, kw...) |> pairs |> OrderedDict
+                      u0, dt, array, λ) |> pairs |> OrderedDict
 
     _gpu = x -> gpu(array, x)
     if array == Array

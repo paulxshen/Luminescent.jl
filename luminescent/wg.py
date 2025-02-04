@@ -5,10 +5,10 @@ import numpy as np
 import os
 
 path = os.path.join("genruns", "wg")
-center_frequency = 5
-center_wavelength = 60
-frequencies = [2, 3, 4, 5, 6, 7, 8]
-# frequencies = [5]
+center_frequency = 2
+center_wavelength = 150
+# frequencies = [2, 3, 4, 5, 6, 7, 8]
+frequencies = [2]
 sigma = 1/(center_frequency*1e9)/eps0
 Z = 377/sqrt(4.3)*(center_frequency*1e9)*eps0/1e3*center_wavelength
 print(f"sigma: {sigma}, Z: {Z}")
