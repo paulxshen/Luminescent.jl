@@ -8,8 +8,7 @@ function vec2smatrix(v)
         elseif i == 1
             v[j]
         else
-            v[1]
-            # 1
+            1
         end
     end
 end

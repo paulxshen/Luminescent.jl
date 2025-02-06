@@ -111,7 +111,7 @@ def load_solution(path, show=True):
         frequencies = rf.Frequency.from_f(prob['frequencies'], unit='GHz')
         ntwk = rf.Network(frequency=frequencies, s=S)
         ntwk.write_touchstone(os.path.join(path, 'S.s2p'))
-        sol.update({"S": S, "ntwk": ntwk})
+        sol.update({"S": S, "network": ntwk})
     elif prob['class'] == 'pic':
         # sol = json.loads(p, "rb").read())["sol"]
         sol["S"] = load_sparams(sol["S"])
