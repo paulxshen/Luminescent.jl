@@ -122,8 +122,9 @@ def make_sim_prob(
         'Ttrans': Ttrans,
         'Tss': Tss,
         'Tssmin': Tssmin,
+        'wavelengths': wavelengths,
+        'frequencies': frequencies,
     }
-    prob["wavelengths"] = wavelengths
     PROB = os.path.join(path, "problem.json")
     with open(PROB, 'w') as f:
         json.dump(prob, f)

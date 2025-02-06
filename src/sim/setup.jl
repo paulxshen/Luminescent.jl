@@ -2,6 +2,10 @@ function refactor(d)
     N = size(d(1), 1)
     [namedtuple([k => d[k][i, :] for k = sort(keys(d))]) for i = 1:N]
 end
+_pmlfracs(a, N) = a[1:N, :]
+_pmlfracs(a::Real, N) = fill(a, (N, 2))
+_pmlfracs(a::AbstractVector, N) = stack([a[1:N], a[1:N]])
+
 """
     function setup(boundaries, sources, monitors, L, dx,                      approx_2D_mode=nothing; F=Float32)
 
@@ -19,7 +23,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     Courant=0.9,
     deltas3=deltas,
     array=Array,
-    lpml=[1, 1, 1],
+    pmlfracs=1,
     TEMP="",
     λ=1,
 )
@@ -28,6 +32,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
         approx_2D_mode = Symbol(approx_2D_mode)
     end
     N = length(deltas)
+    pmlfracs = _pmlfracs(pmlfracs, N)
     (deltas, mode_deltas, ϵ, μ, σ, m, γ, β) = F.((deltas, mode_deltas, ϵ, μ, σ, m, γ, β))
 
     dx = minimum(minimum.(deltas))
@@ -67,8 +72,8 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
 
     maxdeltas = maximum.(deltas)
 
-    v = 0.1 / dt
-    δ = -2log(1e-4) / nmin / 2 / (2v) |> F
+    v = 0.15 / dt
+    δ = -1.5log(1e-4) / nmin / 2 / (2v) |> F
     σpml = ϵmin * v
     mpml = μmin * v
 
@@ -77,7 +82,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     # σpml /= r
     # m /= r
 
-    pml_depths = max.(δ * lpml[1:N], maxdeltas)
+    pml_depths = max.(δ * pmlfracs, maxdeltas)
     pml_depths = ceil.(pml_depths ./ maxdeltas) .* maxdeltas
     @show σpml
     @show pml_depths
@@ -104,7 +109,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     # v=Vector{Any}(fill(nothing, N))
     # field_boundvals = DefaultDict(() -> [copy(v),copy(v)])
     # geometry_padvals = DefaultDict(() -> [copy(v),copy(v)])
-    db = Any[PML(j * i, pml_depths[i], σpml, mpml) for i = 1:N, j = (-1, 1)]
+    db = Any[PML(j * i, pml_depths[i, int(j / 2 + 1.5)], σpml, mpml) for i = 1:N, j = (-1, 1)]
     field_boundvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
     geometry_padvals = DefaultDict(() -> Array{Any,2}(fill(nothing, N, 2)))
     padamts = zeros(Int, N, 2)
@@ -242,10 +247,10 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     field_sizes = NamedTuple([k => Tuple(field_sizes[k]) for (k) = keys(field_sizes)])
     if N == 1
     elseif N == 3
-        u0 = dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz, :Jx, :Jy, :Jz)])
+        u0 = dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Ez, :Hx, :Hy, :Hz)])
     else
         if approx_2D_mode == :TM
-            u0 = dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ez, :Hx, :Hy, :Jz)])
+            u0 = dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ez, :Hx, :Hy)])
         else
             u0 = dict([k => zeros(F, Tuple(field_sizes[k])) for k = (:Ex, :Ey, :Hz)])
         end

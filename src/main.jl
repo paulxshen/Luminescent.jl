@@ -29,6 +29,8 @@ include("gen/run.jl")
 include("ops.jl")
 include("del.jl")
 # include("main.jl")
+
+include("sparams.jl")
 include("plots.jl")
 include("gpu.jl")
 

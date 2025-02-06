@@ -130,8 +130,8 @@ function genrun(path, array=Array; kw...)
     @show Ttrans, Tss
     global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ;
         geometry..., array, F, deltas3=deltas / λ, Ttrans, Tss, Tssmin,
-        # lpml=[0.2, 0.2, 0.2],
-        # lpml=1 / λs[1] * ones(3),
+        # pmlfracs=[0.2, 0.2, 0.2],
+        # pmlfracs=1 / λs[1] * ones(3),
         # σpml=4,#
         # pml_depths=[0.2, 0.2, 0.2])
     )
@@ -144,6 +144,10 @@ function genrun(path, array=Array; kw...)
 
     global sol = solve(prob; path)
     global S = getsparams.((sol,), eachindex(λs))
+    sarray = stack(vec2smatrix.(S))
+    sarray = ComplexF32.(sarray)
+    sarray = permutedims(sarray, [3, 1, 2])
+    npzwrite(joinpath(path, "S.npy"), sarray)
 
     # solution = (;
     #     sparam_family(S)...,)

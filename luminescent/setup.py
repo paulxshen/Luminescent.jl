@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='luminescent',  # Your package name
-    version='0.4.32',  # Your package version
+    version='0.4.33',  # Your package version
     description='A description of your package',
     author='Paul Shen',
     author_email='pxshen@alumni.stanford.edu',
@@ -13,6 +13,7 @@ setup(
         "pymeshfix",
         "electromagneticpython",
         "sortedcontainers",
+        'scikit-rf',
     ],
 )
 # python -m build

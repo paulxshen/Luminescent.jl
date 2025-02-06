@@ -5,6 +5,7 @@ phantom.py
 ant.*
 
 /ant
+/build
 
 # build
 # *.ipynb
