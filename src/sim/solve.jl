@@ -101,13 +101,16 @@ function solve(prob, ;
             ignore() do
                 if framerate > 0 && t > 0
                     if t % (1 / framerate) < dt
-                        (u,), p, = us
+                        (u,), = us
                         a = u.Hz
-                        g = p.ϵxx
+                        g = _p.ϵ
 
-                        _path = joinpath(path, "geometry")
+                        _path = joinpath(path, "temp", "movie")
                         mkpath(_path)
-                        CairoMakie.save(joinpath(_path, "$t.png"), quickie(a, g; monitor_instances, source_instances, ulims),)
+                        d = Dict("a" => a, "g" => g)
+                        npzwrite(joinpath(_path, "$t.npz"), d)
+
+                        # CairoMakie.save(joinpath(_path, "$t.png"), quickie(a, g; monitor_instances, source_instances, ulims),)
                         # quickie(a, g; monitor_instances, source_instances)
                     end
                 end

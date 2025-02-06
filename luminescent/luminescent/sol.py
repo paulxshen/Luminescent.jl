@@ -111,10 +111,12 @@ def load_res(path, show=True):
         ntwk = rf.Network(frequency=frequencies, s=S)
         ntwk.write_touchstone(os.path.join(path, 'S.s2p'))
 
-        ntwk.plot_s_db(m=1, n=0)
-        ntwk.plot_s_db(m=0, n=0)
-        ntwk.plot_s_deg_unwrap(m=1, n=0)
-        ntwk.plot_s_deg_unwrap(m=0, n=0)
+        # ntwk.plot_s_db(m=1, n=0)
+        ntwk.plot_s_db()
+        plt.show()
+        # ntwk.plot_s_deg_unwrap(m=1, n=0)
+        ntwk.plot_s_deg_unwrap()
+        plt.show()
 
     elif prob['class'] == 'pic':
         # sol = json.loads(p, "rb").read())["sol"]
