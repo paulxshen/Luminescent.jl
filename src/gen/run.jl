@@ -14,7 +14,7 @@ function genrun(path, array=Array; kw...)
     for (k, v) = kw
         prob[string(k)] = v
     end
-    @unpack dtype, center_wavelength, dl, dx, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, Tssmin, wavelengths = prob
+    @unpack dorun, dtype, center_wavelength, dl, dx, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, Tssmin, wavelengths = prob
     if study == "inverse_design"
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end
@@ -127,7 +127,6 @@ function genrun(path, array=Array; kw...)
 
     boundaries = []
     N = 3
-    @show Ttrans, Tss
     global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ;
         geometry..., array, F, deltas3=deltas / λ, Ttrans, Tss, Tssmin,
         # pmlfracs=[0.2, 0.2, 0.2],
@@ -135,6 +134,10 @@ function genrun(path, array=Array; kw...)
         # σpml=4,#
         # pml_depths=[0.2, 0.2, 0.2])
     )
+    g = prob._geometry.ϵ |> cpu
+    g = min.(g, 100)
+    plotslices(g; saturation=1, path=joinpath(path, "epsilon.png"))
+    !dorun && return prob
 
     # v = prob.monitor_instances
     # v[1].frame = nothing
@@ -164,10 +167,10 @@ function genrun(path, array=Array; kw...)
     global d = kmap(string, identity, d) |> pairs |> Dict
     # npzwrite(joinpath(path, "fields.npz"), d)
 
-    plotslices(prob._geometry.ϵ |> cpu; saturation=100, path=joinpath(path, "epsilon.png"))
-    for saturation = [1, 5]
-        plotslices(d.Ey |> cpu; saturation, path=joinpath(path, "Ey_sat$saturation.png"))
-    end
+
+    plotslices(d.Ey |> cpu; saturation=10, path=joinpath(path, "Ey_sat$saturation.png"))
+    # for saturation = [1, 5]
+    # end
 
     # plotslices(d.Ey |> cpu; saturation=1)
     # volume(sol.u.E.Ey |> cpu) |> display
