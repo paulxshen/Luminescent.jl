@@ -1,11 +1,11 @@
 using CairoMakie
-function plotslices(a; saturation=1, path=nothing)
+function plotslices(a; saturation=1, path=nothing, n=1)
     fig = Figure()
     v = maximum(abs, a)
     colormap = :seismic
     colorrange = (-v, v) ./ saturation
 
-    n = 4
+
     for i in 1:3
         for j = 1:n-1
             u = selectdim(a, i, round(Int, size(a, i) * j / n))

@@ -2,7 +2,9 @@
 phantom*
 phantom.*
 phantom.py
-ant.*
+
+ant.py
+wg.py
 
 /ant
 /build
