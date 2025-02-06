@@ -7,8 +7,8 @@ using CUDA
 # prob, sol = genrun("phantom"; Ttrans=3)
 # prob, sol = genrun("ant"; Ttrans=10)
 using GLMakie
-# S, sol, prob = genrun(joinpath("genruns", "ant"), cu)
-S, sol, prob = genrun(joinpath("genruns", "wg"), cu)
+S, sol, prob = genrun(joinpath("genruns", "ant"), cu)
+# S, sol, prob = genrun(joinpath("genruns", "wg"), cu)
 # S, sol, prob = genrun(joinpath("G:", "My Drive", "reflex", "wg"), cu)
 # S, sol, prob = genrun(joinpath(raw"G:\My Drive\reflex\wg"), cu)
 # vis(sol, prob, :Ey)

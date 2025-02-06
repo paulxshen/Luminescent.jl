@@ -69,10 +69,10 @@ function genrun(path, array=Array; kw...)
 
     # layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2].mesh_order) |> OrderedDict
     # for (k, v) = pairs(layer_stack)
-    ϵmin = 10000000
+    # ϵmin = 10000000
     for material = readdir(GEOMETRY)
         if string(material) ∉ ["sources", "monitors"]
-
+            @show material
             am = false
             for fn = readdir(joinpath(GEOMETRY, material))
                 if endswith(lowercase(fn), "npy")
@@ -86,12 +86,13 @@ function genrun(path, array=Array; kw...)
             # error()
 
             m = materials(material)
-            if m(:epsilon) < ϵmin
-                ϵmin = m(:epsilon)
-            end
+            # if m(:epsilon) < ϵmin
+            # ϵmin = m(:epsilon)
+            # end
             for k = (:epsilon, :sigma)
                 v = m(k, nothing)
                 if !isnothing(v)
+                    @show k
                     v = Nf(v)
                     k = togreek(k)
                     a = geometry[k]
@@ -102,6 +103,7 @@ function genrun(path, array=Array; kw...)
         end
     end
 
+    ϵmin = 1
     geometry[:ϵ] = max.(ϵmin, geometry[:ϵ])
     GC.gc(true)
     # geometry.ϵ |> volume |> display
@@ -134,9 +136,11 @@ function genrun(path, array=Array; kw...)
         # σpml=4,#
         # pml_depths=[0.2, 0.2, 0.2])
     )
-    g = prob._geometry.ϵ |> cpu
-    g = min.(g, 100)
-    plotslices(g; saturation=1, path=joinpath(path, "epsilon.png"))
+    global g = prob._geometry.ϵ |> cpu
+    g = min.(g, 70)
+    # volume(g) |> display
+    # error()
+    plotslices(g; saturation=10, path=joinpath(path, "epsilon.png"))
     !dorun && return prob
 
     # v = prob.monitor_instances
