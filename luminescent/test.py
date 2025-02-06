@@ -11,6 +11,6 @@ wavelengths = 1.5
 
 path = "a"
 approx_2D_mode = "TE"
-lumi.make_pic_sim_prob(path, c, wavelengths=wavelengths, keys=[
+lumi.make_pic_sim_problem(path, c, wavelengths=wavelengths, keys=[
     "2,1"], nres=15, approx_2D_mode=approx_2D_mode, gpu="CUDA")
 lumi.solve(path)

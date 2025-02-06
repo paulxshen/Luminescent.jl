@@ -13,16 +13,16 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 import json
 
 
-def make_pic_inv_prob(path, c,  targets, iters=10,
-                      lvoid=0, lsolid=0, symmetries=[],
-                      weights=dict(),
-                      eta=.4, init=1,   stoploss=None,
-                      design_region_layer=DESIGN_LAYER,
-                      #    design_guess_layer=LAYER.GUESS,
-                      fill_layer=LAYER.WG,
-                      void_layer=None,
-                      layer_stack=LAYER_STACK,
-                      restart=True, save_memory=False, **kwargs):
+def make_pic_inv_problem(path, c,  targets, iters=10,
+                         lvoid=0, lsolid=0, symmetries=[],
+                         weights=dict(),
+                         eta=.4, init=1,   stoploss=None,
+                         design_region_layer=DESIGN_LAYER,
+                         #    design_guess_layer=LAYER.GUESS,
+                         fill_layer=LAYER.WG,
+                         void_layer=None,
+                         layer_stack=LAYER_STACK,
+                         restart=True, save_memory=False, **kwargs):
     design_region_layer = tuple(design_region_layer)
     # if not N:
     #     raise NotImplementedError(
@@ -78,11 +78,11 @@ def make_pic_inv_prob(path, c,  targets, iters=10,
         wavelengths = list(wavelengths)
 
     wavelengths0 = deepcopy(wavelengths)
-    prob = make_pic_sim_prob(path, c,
-                             layer_stack=layer_stack,
-                             wavelengths=wavelengths,
-                             study="inverse_design",
-                             keys=keys, ** kwargs)
+    prob = make_pic_sim_problem(path, c,
+                                layer_stack=layer_stack,
+                                wavelengths=wavelengths,
+                                study="inverse_design",
+                                keys=keys, ** kwargs)
     wavelengths = prob["wavelengths"]
 
     prob["restart"] = restart
@@ -146,7 +146,7 @@ def make_pic_inv_prob(path, c,  targets, iters=10,
 
     prob["design_config"]["design_region_layer"] = design_region_layer
     prob["iters"] = iters
-    save_prob(prob, path)
+    save_problem(prob, path)
     return prob
 
 

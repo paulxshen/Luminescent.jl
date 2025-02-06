@@ -1,2 +1,2 @@
 import luminescent as lumi
-lumi.load_res('genruns/wg')
+lumi.load_solution('genruns/wg')

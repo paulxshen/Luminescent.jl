@@ -24,7 +24,7 @@ for (gpu, dtype, ) in itertools.product(
     ["f32"],
     # ["f32", "f16"],
 ):
-    prob = lumi.make_pic_inv_prob(
+    prob = lumi.make_pic_inv_problem(
         c, targets, name="invtest",
         lvoid=0.2, lsolid=.2,  nres=nres, iters=2,
         N=2, gpu=gpu, dtype=dtype,)  # wd=BUILD_RUNS)
@@ -38,9 +38,9 @@ for (N, gpu, dtype, wavelengths) in itertools.product(
     [None, ],
     ["f32"],
         [[1.55], ]):
-    lumi.make_pic_sim_prob(c, name=f"simtest{i}",
-                           wavelengths=wavelengths, keys=["2,1"], nres=nres,
-                           N=N, gpu=gpu, dtype=dtype,
-                           wd=BUILD_RUNS, run=False)
+    lumi.make_pic_sim_problem(c, name=f"simtest{i}",
+                              wavelengths=wavelengths, keys=["2,1"], nres=nres,
+                              N=N, gpu=gpu, dtype=dtype,
+                              wd=BUILD_RUNS, run=False)
     i += 1
     sleep(1)

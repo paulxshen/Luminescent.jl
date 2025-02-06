@@ -262,13 +262,13 @@ function picrun(path, array=Array; kw...)
             if :phase_shifter == first(keys(targets))
                 @time l, (dldm,) = Flux.withgradient(model) do model
                     models = [model]
-                    @unpack S, sols = make_pic_sim_prob(runs, run_probs, lb, dl,
+                    @unpack S, sols = make_pic_sim_problem(runs, run_probs, lb, dl,
                         designs, design_config, models;
                         F, img, alg)#(1)(1)
                     k = keys(S) |> first
                     s = S[k][Symbol("o2@0,o1@0")]
 
-                    @unpack S = make_pic_sim_prob(runs, run_probs, lb, dl,
+                    @unpack S = make_pic_sim_problem(runs, run_probs, lb, dl,
                         designs, design_config, models;
                         F, img, alg, save_memory, perturb=:ϵ,)#(1)(1)
                     s_ = S[k][Symbol("o2@0,o1@0")]
@@ -392,7 +392,7 @@ function picrun(path, array=Array; kw...)
 
         end
         if framerate > 0
-            make_pic_sim_prob(runs, run_probs, lb, dl,
+            make_pic_sim_problem(runs, run_probs, lb, dl,
                 designs, design_config, models;
                 F, img, alg, framerate, path)
         end

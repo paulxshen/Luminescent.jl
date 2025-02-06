@@ -15,7 +15,7 @@ from gdsfactory.cross_section import Section
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
-def make_sim_prob(
+def make_sim_problem(
     path,
     wavelengths=[],
     center_wavelength=None,

@@ -34,7 +34,7 @@ def start_fdtd_server(url=URL):
 
 def solve(path, dev=False):
     path = os.path.abspath(path)
-    # prob = load_prob(path)
+    # prob = load_problem(path)
 
     # prob["action"] = "solve"
     # r = requests.post(f"{url}/local", json=prob)
@@ -64,7 +64,7 @@ def solve(path, dev=False):
     # run(["Luminescent", path])
     # except:
     run(["julia", "-e", f'println(Base.active_project())'])
-    print("no fdtd binaries found - starting julia session to compile fdtd code - will take 5 mins - can take a break and come back :) ...")
+    print("no binaries found - starting julia session to compile - will alternate between execution and JIT compilation - will take 3 mins before simulation starts.\nYou can take a break and come back :) ...")
 
     prob = json.loads(open(os.path.join(path, "problem.json"), "rb").read())
     a = ['julia', '-e', ]
@@ -88,7 +88,7 @@ def solve(path, dev=False):
     # subprocess.run()
     # print(f"julia simulation took {time.time()-start_time} seconds")
     # print(f"images and results saved in {path}")
-    # sol = load_res(path=path)
+    # sol = load_solution(path=path)
     # return sol
 
 
@@ -99,28 +99,21 @@ def load_sparams(sparams):
                                 for k, v in d.items()} for center_wavelength, d in sparams.items()}
 
 
-def load_res(path, show=True):
+def load_solution(path, show=True):
     path = os.path.abspath(path)
     print(f"loading solution from {path}")
     prob = json.loads(open(os.path.join(path, "problem.json"), "rb").read())
     p = os.path.join(path, "solution.json")
+    sol = json.loads(open(p).read())
 
     if prob['class'] == 'gen':
         S = np.load(os.path.join(path, "S.npy"))
         frequencies = rf.Frequency.from_f(prob['frequencies'], unit='GHz')
         ntwk = rf.Network(frequency=frequencies, s=S)
         ntwk.write_touchstone(os.path.join(path, 'S.s2p'))
-
-        # ntwk.plot_s_db(m=1, n=0)
-        ntwk.plot_s_db()
-        plt.show()
-        # ntwk.plot_s_deg_unwrap(m=1, n=0)
-        ntwk.plot_s_deg_unwrap()
-        plt.show()
-
+        sol.update({"S": S, "ntwk": ntwk})
     elif prob['class'] == 'pic':
         # sol = json.loads(p, "rb").read())["sol"]
-        sol = json.loads(open(p).read())
         sol["S"] = load_sparams(sol["S"])
         sol["component"] = gf.import_gds(os.path.join(path, "component.gds"))
         if prob["study"] == "sparams":
@@ -170,7 +163,7 @@ def load_res(path, show=True):
             except:
                 pass
 
-    # return sol
+    return sol
 
 
 def finetune(path, iters, **kwargs):

@@ -9,7 +9,7 @@ targets = {"tparams": {
     1.10: {"3,1": 1.0},
 }}
 
-prob = lumi.make_pic_inv_prob(
+prob = lumi.make_pic_inv_problem(
     c, targets,
     lvoid=0.1, lsolid=0.1, dx=0.1,
     N=2, iters=50)

@@ -11,15 +11,15 @@ from gdsfactory.cross_section import Section
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
-def make_pic_sim_prob(path, c: gf.Component, nres,
-                      wavelengths,
-                      entries=None, keys=None,
-                      layer_stack=LAYER_STACK,
-                      study="sparams",
+def make_pic_sim_problem(path, c: gf.Component, nres,
+                         wavelengths,
+                         entries=None, keys=None,
+                         layer_stack=LAYER_STACK,
+                         study="sparams",
 
-                      wavelength=None,
-                      wl_res=.01,
-                      **kwargs):
+                         wavelength=None,
+                         wl_res=.01,
+                         **kwargs):
     if wavelength:
         raise ValueError("wavelength is deprecated, use wavelengths instead")
 
@@ -95,7 +95,7 @@ def make_pic_sim_prob(path, c: gf.Component, nres,
                  layer_stack=layer_stack, **kwargs)
     prob["wavelengths"] = wavelengths
     prob["Tss"] = T if len(wavelengths) > 1 else None
-    save_prob(prob, path)
+    save_problem(prob, path)
     return prob
 
     # l = [k for k in imow if port_number(k) == pi]

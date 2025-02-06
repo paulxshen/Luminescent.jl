@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='luminescent',  # Your package name
-    version='0.4.34',  # Your package version
+    version='0.4.35',  # Your package version
     description='A description of your package',
     author='Paul Shen',
     author_email='pxshen@alumni.stanford.edu',
@@ -16,5 +16,5 @@ setup(
         'scikit-rf',
     ],
 )
-# python -m build
+# python - m build
 # twine upload dist/*

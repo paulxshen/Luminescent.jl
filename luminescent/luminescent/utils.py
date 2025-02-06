@@ -275,7 +275,7 @@ def adjust_wavelengths(wavelengths, center_wavelength=None, wl_res=.01):
     return wavelengths, center_wavelength, nresfreq
 
 
-def save_prob(prob, path):
+def save_problem(prob, path):
     path = os.path.abspath(path)
     bson_data = json.dumps(prob)
     # prob["component"] = c0

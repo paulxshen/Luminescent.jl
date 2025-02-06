@@ -33,7 +33,7 @@ dx = .3
 Ttrans = 4
 Tssmin = 10
 
-lumi.make_sim_prob(
+lumi.make_sim_problem(
     path=path,
     frequencies=frequencies, center_frequency=center_frequency, center_wavelength=center_wavelength,
 

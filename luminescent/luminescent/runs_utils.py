@@ -26,7 +26,7 @@ def lastrun(name="", wd=os.path.join(os.getcwd(), "runs"), study="",  **kwargs):
     return l[0]
 
 
-def load_prob(path):
+def load_problem(path):
     path = os.path.abspath(path)
     print(f"loading problem from {path}")
     return json.loads(open(os.path.join(path, "problem.json"), "rb").read())
