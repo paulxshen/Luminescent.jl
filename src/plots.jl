@@ -18,5 +18,5 @@ function plotslices(a; saturation=1, path=nothing, n=1)
     !isnothing(path) && CairoMakie.save(path, fig)
 end
 
-a = randn(10, 10, 10)
-plotslices(a)
+# a = randn(10, 10, 10)
+# plotslices(a)

@@ -108,7 +108,7 @@ def load_solution(path, show=True):
 
     if prob['class'] == 'gen':
         S = np.load(os.path.join(path, "S.npy"))
-        frequencies = rf.Frequency.from_f(prob['frequencies'], unit='GHz')
+        frequencies = rf.Frequency.from_f(sol['fs'], unit='GHz')
         ntwk = rf.Network(frequency=frequencies, s=S)
         ntwk.write_touchstone(os.path.join(path, 'S.s2p'))
         sol.update({"S": S, "network": ntwk})
@@ -153,15 +153,16 @@ def load_solution(path, show=True):
             _sol["optimized_designs"] = "[[...]]"
             pprint(_sol)
 
-    for fn in os.listdir(path):
-        if fn.endswith(".png") or fn.endswith(".jpg"):
-            fn = os.path.join(path, fn)
-            img = Image.open(fn)
-            img.show()
-            try:
-                display(img)
-            except:
-                pass
+    if show:
+        for fn in os.listdir(path):
+            if fn.endswith(".png") or fn.endswith(".jpg"):
+                fn = os.path.join(path, fn)
+                img = Image.open(fn)
+                img.show()
+                try:
+                    display(img)
+                except:
+                    pass
 
     return sol
 

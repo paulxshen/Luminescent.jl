@@ -12,3 +12,17 @@ function vec2smatrix(v)
         end
     end
 end
+
+function sparam_family(S)
+    # S = simplify_sparams(detailed_sparams)
+    T = fmap(abs2, S)
+    dB = fmap(T) do x
+        10log10(x)
+    end
+    # detailed_tparams = Porcupine.apply(abs2, detailed_sparams)
+    phasors = fmap(S) do z
+        (mag=abs(z), phase=rad2deg(angle(z)))
+    end
+    sol = (; S, T, phasors, dB) |> pairs |> OrderedDict
+end
+

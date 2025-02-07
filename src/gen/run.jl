@@ -14,7 +14,7 @@ function genrun(path, array=Array; kw...)
     for (k, v) = kw
         prob[string(k)] = v
     end
-    @unpack dorun, dtype, center_wavelength, dl, dx, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, Tssmin, wavelengths = prob
+    @unpack dorun, dtype, center_wavelength, dl, dx, xs, ys, zs, study, layer_stack, sources, monitors, materials, L, Ttrans, Tss, Tssmin, wavelengths, frequencies, df = prob
     if study == "inverse_design"
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end
@@ -150,10 +150,24 @@ function genrun(path, array=Array; kw...)
     # v[2].dimsperm = [-1, 2, -3]
 
     global sol = solve(prob; path)
-    global S = getsparams.((sol,), eachindex(λs))
-    sarray = stack(vec2smatrix.(S))
-    sarray = ComplexF32.(sarray)
+
+    fs = range(frequencies[1], 1.0001frequencies[end], step=df)
+    global S = getsparams.((sol,), reverse(eachindex(λs)))
+
+    sarray = vec2smatrix.(S)
+    Is = CartesianIndices(sarray[1])
+    frequencies = range(frequencies[1], frequencies[end], length=length(frequencies))
+    sarray = map(Is) do I
+        v = getindex.(sarray, I)
+        itp = cubic_spline_interpolation(frequencies, v)
+        itp.(fs)
+    end
+    sarray = stack(map(eachindex(sarray[1])) do i
+        getindex.(sarray, i)
+    end)
     sarray = permutedims(sarray, [3, 1, 2])
+
+    sarray = ComplexF32.(sarray)
     npzwrite(joinpath(path, "S.npy"), sarray)
 
     # solution = (;
@@ -162,6 +176,7 @@ function genrun(path, array=Array; kw...)
     json(solution, 4) |> println
     # volume(prob._geometry.σ |> cpu)
     # volume(geometry.σ |> cpu)
+    solution[:fs] = fs
     open(joinpath(path, "solution.json"), "w") do f
         write(f, json(cpu(solution)))
     end

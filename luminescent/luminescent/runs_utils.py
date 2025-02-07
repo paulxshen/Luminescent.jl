@@ -32,23 +32,26 @@ def load_problem(path):
     return json.loads(open(os.path.join(path, "problem.json"), "rb").read())
 
 
-def make_simulation_movie(framerate=30, **kwargs):
-    1
-    # path = lastrun(**kwargs)
+def make_simulation_movie(path, framerate=30, **kwargs):
+    dir = os.path.join(path, "temp", 'fields')
+    umax = gmax = 0
+    fns = sorted(os.listdir(dir), key=lambda x: float(x[0:-4]))
+    for fn in fns:
+        a = np.load(os.path.join(dir, fn))
+        v = np.max(np.abs(a))
+        if umax < v:
+            umax = v
+    frame = cv2.imread(os.path.join(f, imgs[0]))
+    height, width, layers = frame.shape
 
-    # f = os.path.join(path, "geometry")
-    # imgs = sorted(os.listdir(f), key=lambda x: float(x[0:-4]))
-    # frame = cv2.imread(os.path.join(f, imgs[0]))
-    # height, width, layers = frame.shape
+    video = cv2.VideoWriter(os.path.join(
+        path, "simulation_video.mp4"), 0x7634706d, framerate, (width, height))
 
-    # video = cv2.VideoWriter(os.path.join(
-    #     path, "simulation_video.mp4"), 0x7634706d, framerate, (width, height))
+    for img in imgs:
+        video.write(cv2.imread(os.path.join(f, img)))
 
-    # for img in imgs:
-    #     video.write(cv2.imread(os.path.join(f, img)))
-
-    # cv2.destroyAllWindows()
-    # video.release()
+    cv2.destroyAllWindows()
+    video.release()
 
 
 def make_training_movie(framerate=2, **kwargs):

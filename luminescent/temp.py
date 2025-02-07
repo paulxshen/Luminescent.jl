@@ -1,2 +1,5 @@
 import luminescent as lumi
-lumi.load_solution('genruns/wg')
+import matplotlib.pyplot as plt
+sol = lumi.load_solution("genruns/wg", show=False)
+sol['network'].plot_s_db()
+plt.show()

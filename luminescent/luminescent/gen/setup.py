@@ -34,7 +34,8 @@ def make_sim_problem(
         Tssmin=None,
         wl_res=.01,
         margins=[[0, 0, 0], [0, 0, 0]],
-        gpu=None, dorun=True
+    df=None,
+    gpu=None, dorun=True
 ):
     RATIO = 2
 
@@ -124,6 +125,7 @@ def make_sim_problem(
         'Tssmin': Tssmin,
         'wavelengths': wavelengths,
         'frequencies': frequencies,
+        'df': df,
         'dorun': dorun,
     }
     PROB = os.path.join(path, "problem.json")

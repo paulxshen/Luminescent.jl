@@ -13,18 +13,7 @@ function simplify_sparams(s)
     k = k[round(Int, (length(k) + 1) / 2)]
     dict([shorten_key(k) => v for (k, v) = pairs(s[k]) if !isnothing(shorten_key(k))])
 end
-function sparam_family(S)
-    # S = simplify_sparams(detailed_sparams)
-    T = fmap(abs2, S)
-    dB = fmap(T) do x
-        10log10(x)
-    end
-    # detailed_tparams = Porcupine.apply(abs2, detailed_sparams)
-    phasors = fmap(S) do z
-        (mag=abs(z), phase=rad2deg(angle(z)))
-    end
-    sol = (; S, T, phasors, dB)
-end
+
 function port_number(port)
     s = split(string(port), "@")[1]
     if s[1] == 'o'
