@@ -187,7 +187,7 @@ function genrun(path, array=Array; kw...)
     # npzwrite(joinpath(path, "fields.npz"), d)
 
 
-    plotslices(d.Ey |> cpu; saturation=10, path=joinpath(path, "Ey.png"))
+    plotslices(d.Ey |> cpu; saturation=1e3, path=joinpath(path, "Ey.png"))
     # for saturation = [1, 5]
     # end
 
