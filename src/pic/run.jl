@@ -339,7 +339,7 @@ function picrun(path, array=Array; kw...)
                 end
 
                 # f(model)
-                if i == 1
+                if iters == 1
                     f(model)
                     break
                 else
