@@ -1,13 +1,16 @@
-# import skrf as rf
-# a = rf.Network('S.s3p')
-# s = a.s
-# f = a.f
-# s = s[:, :2, :2]
-# f = rf.Frequency.from_f(f, unit='GHz')
-# a = rf.Network(frequency=f, s=s)
-# a.write_touchstone('S.s2p')
-
+# 60G RAM
+import os
 import luminescent as lumi
-# lumi.make_simulation_movie(     "build/precompile_execution/tiny_2_float32_CUDA")
-# lumi.finetune("build/precompile_execution/back_float32", 1, framerate=20)
-lumi.make_simulation_movie("build/precompile_execution/back_float32")
+
+path = os.path.join("runs", "demux")
+c = lumi.mimo(west=1, east=2, l=5.0, w=3.0, wwg=.5, taper=0.05)
+targets = {"tparams": {
+    1.2: {"3,1": 1.0},
+    1.8: {"2,1": 1.0},
+}}
+
+lumi.make_pic_inv_problem(
+    path, c, targets,
+    lvoid=0.15, lsolid=0.1, nres=30,
+    approx_2D_mode="TE", stoploss=.03, iters=200, dtype="float16")  # ,gpu="CUDA")
+lumi.solve(path)

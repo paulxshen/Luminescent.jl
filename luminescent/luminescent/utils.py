@@ -170,12 +170,11 @@ def stl_to_array(mesh: pv.PolyData, dl: float, bbox):
     stop = [min(round(a), u) for a, u in zip(stop, r.shape)]
     len = [s-t for s, t in zip(stop, start)]
 
-    r[start[0]:stop[0], start[1]:stop[1], start[2]
-        :stop[2]] = mask[:len[0], :len[1], :len[2]]
+    r[start[0]:stop[0], start[1]:stop[1], start[2]        :stop[2]] = mask[:len[0], :len[1], :len[2]]
     return r
 
 
-def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
+def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path, unit=1000):
     stacks = sum([[[v.mesh_order, v.material, tuple(layer), k]
                  for k, v in get_layers(layer_stack, layer, withkey=True)] for layer in layers], [])
     c.flatten()
@@ -207,7 +206,7 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path):
 
             pymeshfix.clean_from_file(STL, STL)
             mesh = pv.read(STL)
-            im = stl_to_array(mesh, dl, bbox)
+            im = stl_to_array(mesh, dl*unit, bbox)
             np.save(os.path.join(path, f'{k}.npy'), im)
 
             layer_stack_info[k] = {
