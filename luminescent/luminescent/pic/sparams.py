@@ -38,7 +38,7 @@ def make_pic_sim_problem(path, c: gf.Component, nres,
         else:
             wavelengths = wavelengths
         wavelengths, center_wavelength, T = adjust_wavelengths(
-            wavelengths, wl_res)
+            wavelengths, wl_res=wl_res)
         for w in wavelengths:
             for k in keys:
                 entries.append([w, *unpack_sparam_key(k)])

@@ -107,7 +107,7 @@ function solve(prob, ;
         (u,), = reduce(ts; init) do us, t
 
             ignore() do
-                if framerate > 0 && t > 0
+                if !isnothing(framerate) && t > 0
                     if t % (1 / framerate) < dt
                         (u,), = us
                         a = u(showfield)
