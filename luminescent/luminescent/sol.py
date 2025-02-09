@@ -177,3 +177,12 @@ def finetune(path, iters, **kwargs):
     with open(fn, 'w') as f:
         json.dump(prob, f)
     return solve(path)
+
+    # PROB = os.path.join(path, "problem.json")
+    # prob = json.loads(open(PROB, "rb").read())
+    # prob["iters"] = iters
+    # prob["path"] = path
+    # prob["restart"] = False
+    # prob = {**prob, **kwargs}
+    # json.dump(prob, open(PROB, "w"))
+    # return solve(path)

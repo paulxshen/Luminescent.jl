@@ -1,23 +1,8 @@
-using Genie, Genie.Router, Genie.Assets
+using Meshes
+# 2D rectilinear grid
+x = 0.0:0.2:1.0
+y = [0.0, 0.1, 0.3, 0.7, 0.9, 1.0]
+grid = RectilinearGrid(x, x, y)
 
-Genie.config.websockets_server = true # enable the websockets server
-
-route("/") do
-    Assets.channels_support() *
-    """
-    <script>
-    window.parse_payload = function(payload) {
-      console.log('Got this payload: ' + payload);
-    }
-    </script>
-    """
-end
-
-
-channel("/____/echo") do
-    @info "Received: $(params(:payload))"
-end
-up() # start the servers
-# Genie.WebChannels sendMessageTo("____", "echo", "Hello!")
-# Genie.WebChannels.broadcast("____", "Hey!")
-Genie.WebChannels.connected_clients()
+n = Ngon((0, 0), (0.1, 0), (0.1, 0.1), (0, 0.1))
+I = grid ∩ n

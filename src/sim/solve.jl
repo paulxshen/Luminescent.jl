@@ -41,7 +41,7 @@ function f2(((u, um), p, (dt, field_diffdeltas, field_diffpadvals, source_instan
 end
 
 function solve(prob, ;
-    save_memory=false, ulims=(-3, 3), framerate=0, path="", #subpixel=true,
+    save_memory=false, ulims=(-3, 3), framerate=nothing, showfield=:Hz, path="", #subpixel=true,
     kwargs...)
     @unpack approx_2D_mode, dt, u0, geometry, _geometry, source_instances, monitor_instances, Ttrans, Tss, ϵeff, array = prob
     @unpack mode_deltas, F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = prob.grid
@@ -50,7 +50,15 @@ function solve(prob, ;
 
     p = geometry
     _p = _geometry
-    # return sum(_p.ϵ)
+
+    TEMP = joinpath(path, "temp")
+    FIELDS = joinpath(path, "temp", "fields")
+    mkpath(FIELDS)
+    mkpath(TEMP)
+
+    if !isnothing(framerate)
+        npzwrite(joinpath(TEMP, "g.npy"), prob._geometry.ϵ)
+    end
 
     println("preprocessing geometry...")
     p = pad_geometry(p, geometry_padvals, geometry_padamts)
@@ -102,15 +110,10 @@ function solve(prob, ;
                 if framerate > 0 && t > 0
                     if t % (1 / framerate) < dt
                         (u,), = us
-                        a = u.Hz
-                        g = _p.ϵ
+                        a = u(showfield)
+                        npzwrite(joinpath(FIELDS, "$t.npy"), a)
 
-                        _path = joinpath(path, "temp", "movie")
-                        mkpath(_path)
-                        d = Dict("a" => a, "g" => g)
-                        npzwrite(joinpath(_path, "$t.npz"), d)
-
-                        # CairoMakie.save(joinpath(_path, "$t.png"), quickie(a, g; monitor_instances, source_instances, ulims),)
+                        # CairoMakie.save(joinpath(FIELDS, "$t.png"), quickie(a, g; monitor_instances, source_instances, ulims),)
                         # quickie(a, g; monitor_instances, source_instances)
                     end
                 end

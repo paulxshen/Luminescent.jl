@@ -284,7 +284,7 @@ function picrun(path, array=Array; kw...)
                     models = [model]
                     res = calc_sparams(runs, run_probs, lb, dl,
                         designs, design_config, models, ;
-                        F, img, alg, save_memory, materials)
+                        F, img, alg, save_memory, materials, path, framerate)
                     # return res
                     @unpack S, sols = res
                     l = 0
@@ -339,8 +339,12 @@ function picrun(path, array=Array; kw...)
                 end
 
                 # f(model)
-                @time global l, (dldm,) = Flux.withgradient(f, model)
-
+                if i == 1
+                    f(model)
+                    break
+                else
+                    @time global l, (dldm,) = Flux.withgradient(f, model)
+                end
             end
             @assert !isnothing(dldm)
             if !isnothing(stoploss) && l < stoploss
@@ -389,12 +393,6 @@ function picrun(path, array=Array; kw...)
             Flux.update!(opt_state, model, dldm)# |> gpu)
             GC.gc(true)
             println("====\n")
-
-        end
-        if framerate > 0
-            make_pic_sim_problem(runs, run_probs, lb, dl,
-                designs, design_config, models;
-                F, img, alg, framerate, path)
         end
         println("Done in $(time() - t0) .")
 

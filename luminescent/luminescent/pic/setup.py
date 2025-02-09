@@ -26,7 +26,7 @@ def setup(path, c, study, nres, center_wavelength,
           exclude_layers=[
               DESIGN_LAYER, GUESS], Courant=None,
           gpu=None, dtype=np.float32,
-          plot=False, framerate=0,
+          plot=False, framerate=None,
           magic="", wd=os.path.join(os.getcwd(), "runs"), name=None,
           Ttrans=None,
           approx_2D_mode=False):
