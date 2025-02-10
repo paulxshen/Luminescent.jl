@@ -231,7 +231,7 @@ function EH2JM(d::T) where {T}
 end
 
 function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
-    @unpack mask, center, L, tags, dimsperm, frame, center3, L3, approx_2D_mode, λmodenums, λmodes, λsmode = s
+    @unpack center, L, tags, dimsperm, frame, center3, L3, approx_2D_mode, λmodenums, λmodes, λsmode = s
     @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, spacings, dl, padamts = g
     N = ndims(s)
 
@@ -245,53 +245,25 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
         ks = [k for k = keys(field_lims) if string(k)[1] ∈ ('E', 'H')]
     end
 
-    if !isnothing(mask)
-        #  = dict([k => begin
-        #     lr = field_lims[k]
-        #     start = lr[:, 1]
-        #     stop = lr[:, 2]
-        #     len = round.(stop - start + 1)
-        #     I = range.(F.(start + 0.5), F.(stop + 0.5), len)
-        #     mask = F.(mask)
-        #     GC.gc(true)
-        #     getindexf(mask, I...; approx=true)
-        # end for k = ks])
+    dx = deltas[1][1]
 
-        @show start, stop = eachcol(getbbox(mask))
-        len = round(stop - start + 1)
-        block = ones(F, len...)
-        start += padamts[:, 1]
-        stop += padamts[:, 1]
+    start = v2i(center - L / 2 - g.lb, deltas)
+    stop = v2i(center + L / 2 - g.lb, deltas)
+    start, stop = min.(start, stop), max.(start, stop)
 
-        # @show sz = size(mask)
-        start = F(start)
-        stop = F(stop)
+    sel = abs.(start - stop) .> 1e-3
+    start += 0.5sel
+    stop -= 0.5sel
+    len = Tuple(int(stop - start + 1))
 
-        inds = dict([k => begin
-            lr = field_lims[k] |> F
-            range.(start, stop, len) - lr[:, 1] + F(0.5)
-        end for k = ks])
-    else
-        dx = deltas[1][1]
+    start = F(start)
+    stop = F(stop)
 
-        start = v2i(center - L / 2 - g.lb, deltas)
-        stop = v2i(center + L / 2 - g.lb, deltas)
-        start, stop = min.(start, stop), max.(start, stop)
-
-        sel = abs.(start - stop) .> 1e-3
-        start += 0.5sel
-        stop -= 0.5sel
-        len = Tuple(int(stop - start + 1))
-
-        start = F(start)
-        stop = F(stop)
-
-        inds = dict([k => begin
-            lr = field_lims[k]
-            range.(start, stop, len) - lr[:, 1] + 1
-        end for k = ks])
-        labelpos = round(v2i(center - g.lb, deltas) + 0.5)
-    end
+    inds = dict([k => begin
+        lr = field_lims[k]
+        range.(start, stop, len) - lr[:, 1] + 1
+    end for k = ks])
+    labelpos = round(v2i(center - g.lb, deltas) + 0.5)
 
     # 
     if !isnothing(λmodenums)

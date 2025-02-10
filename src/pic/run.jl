@@ -245,11 +245,7 @@ function picrun(path, array=Array; kw...)
         # minchange = 0.001
         # maxchange = max(4minchange, holesize(model) / prod(size(model)))
         global opt = AreaChangeOptimiser(
-            model;
-            # minchange,
-            # maxchange,
-            # opt=Adam(1, (0.8, 0.9)), 
-            opt=Optimisers.Momentum(1, 0.7),
+            model; opt=Optimisers.Momentum(1, 0.7),
         )
         opt_state = Flux.setup(opt, model)
         # error("not implemented")

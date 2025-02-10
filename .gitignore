@@ -1,3 +1,7 @@
+/runs
+/picruns
+/genruns
+
 # temp*
 phantom*
 phantom.*
@@ -23,8 +27,7 @@ dump
 /.vscode
 docs/build/
 
-/picruns
-/genruns
+
 
 /lumi/dist
 *.lock
