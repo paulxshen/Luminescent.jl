@@ -111,7 +111,7 @@ def setup(path, c, study, nres, center_wavelength,
     ps = portsides(c)
     xmargin = ymargin = 2*port_width
 
-    source_port_margin = port_width if N == 2 else 6*port_width
+    source_port_margin = 3 * port_width if N == 2 else 6*port_width
 
     port_margin = 2*dx
     margins = []

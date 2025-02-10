@@ -74,6 +74,7 @@ function solve(prob, ;
     _ϵ = _p.ϵ |> cpu
     _pec = _ϵ .>= (PECVAL - TOL)
     if !any(_pec)
+        println("no PEC regions found in geometry")
         invϵ = tensorinv(_ϵ, field_lims, spacings)
         @assert eltype(eltype(invϵ)) == F
     else

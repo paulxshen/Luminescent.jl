@@ -73,7 +73,7 @@ function setup(dl, boundaries, sources, monitors, deltas, mode_deltas;
     maxdeltas = maximum.(deltas)
 
     v = 0.15 / dt
-    δ = -1.5log(1e-4) / nmin / 2 / (2v) |> F
+    δ = -3log(1e-4) / nmin / 2 / (2v) |> F
     σpml = ϵmin * v
     mpml = μmin * v
 
