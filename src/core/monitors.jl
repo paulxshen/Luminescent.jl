@@ -27,14 +27,11 @@ Monitor(center, L, dimsperm, center3=center, L3=L, approx_2D_mode=nothing; λmod
 Monitor(mask, frame; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
     Monitor(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, frame, nothing, tags)
 
-function Base.ndims(m::Monitor)
-    v = m.center
-    if !isnothing(v)
-        length(v)
-    else
-        ndims(m.mask)
-    end
-end
+Base.ndims(m::Monitor) = length(m.center)
+isortho(m::Monitor) = !isnothing(m.dimsperm)
+@enum Eps ep1 ep2
+a = Eps(1)
+sizeof(ones(Bool, 64))
 
 struct PlaneMonitor <: AbstractMonitor
     dims
@@ -72,6 +69,7 @@ wavelengths(m::MonitorInstance) = keys(m.λmodes)
 Base.length(m::MonitorInstance) = 1
 frame(m::MonitorInstance) = m.frame
 normal(m::MonitorInstance) = frame(m)[3][1:length(m.center)]
+isortho(m::MonitorInstance) = !isnothing(m.dimsperm)
 
 function MonitorInstance(m::Monitor, g, ϵ, TEMP, mode_solutions=nothing)
     λmodes, _λmodes, inds, labelpos, = _get_λmodes(m, ϵ, TEMP, mode_solutions, g)

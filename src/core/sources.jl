@@ -53,14 +53,8 @@ Source(center, L, dimsperm, center3=center, L3=L, approx_2D_mode=nothing; λmode
 Source(mask, frame; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
     Source(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, frame, nothing, tags)
 
-function Base.ndims(m::Source)
-    v = m.center
-    if !isnothing(v)
-        length(v)
-    else
-        ndims(m.mask)
-    end
-end
+Base.ndims(m::Source) = length(m.center)
+isortho(m::Source) = !isnothing(m.dimsperm)
 
 """
     function PlaneWave(f, dims; mode...)

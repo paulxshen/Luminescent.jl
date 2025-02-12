@@ -21,6 +21,23 @@ function getdimsperm(L::Base.AbstractVecOrTuple)
     v[end] *= sign(Permutation(abs.(v))) * prod(sign.(v))
     v
 end
+
+# function getdimsperm(frame)
+#     r = zeros(Int, 3)
+#     vs = vcat(collect(eachcol(Matrix(I, 3, 3))), collect(eachcol(-Matrix(I, 3, 3))))
+#     for i = 1:3
+#         j = findfirst(vs) do v
+#             all(frame[:, i] .≈ v)
+#         end
+#         isnothing(j) && return nothing
+#         if j > 3
+#             j = 3 - j
+#         end
+#         r[i] = j
+#     end
+#     r
+# end
+
 function permutexyz(d, p, N=length(p))
     _p = @ignore_derivatives invperm(p)
     namedtuple([
