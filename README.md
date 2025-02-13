@@ -1,6 +1,6 @@
 Photonic and RF simulation and inverse design in just few lines of code! Fully featured, fully differentiable, GPU accelerated FDTD engine and geometry optimizer. Experimental release: expect occasional critters..
 
-https://github.com/user-attachments/assets/c7307ac7-ad27-4b8c-856c-77762008a4d1
+https://github.com/user-attachments/assets/9c2857dc-d3fa-4744-8089-784c62f593a2
 
 Features 
 - Automatic differentiation (AD) compatible for adjoint optimization
