@@ -18,11 +18,12 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 
 def setup(path, c, study, nres, center_wavelength,
-          bbox_layer=LAYER.WAFER,
+          bbox_layer=BBOX_LAYER,
           zmargin2=None, zlims=None, core_layer=LAYER.WG,
           port_source_offset="auto", port_margin="auto",
           runs=[],  sources=[],
-          layer_stack=LAYER_STACK, materials=dict(),
+          layer_stack=SOI, materials=dict(),
+          default_material='SiO2',
           exclude_layers=[
               DESIGN_LAYER, GUESS], Courant=None,
           gpu=None, dtype=np.float32,
@@ -67,13 +68,19 @@ def setup(path, c, study, nres, center_wavelength,
 
     ports = {
         p.name: {
-            "center": p.center,
+            "center": (np.array(p.center)/1e3).tolist(),
             "normal": [cos(p.orientation/180*pi), sin(p.orientation/180*pi)],
+            "tangent": [-sin(p.orientation/180*pi), cos(p.orientation/180*pi)],
+            'width': p.width/1e3,
         }
         for p in c.get_ports_list(prefix="o")
     }
+    for (k, v) in ports.items():
+        z, n = [0, 0, 1], [*v['normal'], 0]
+        t = np.cross(z, n).tolist()
+        v['frame'] = [t, z, n]
+        v["dimensions"] = np.abs(v['width']*np.array(v['tangent'])).tolist(),
     prob["ports"] = ports
-
     mode_solutions = []
 
     d = get_layers(layer_stack, core_layer)[0]
@@ -142,11 +149,12 @@ def setup(path, c, study, nres, center_wavelength,
     prob["hcore"] = hcore
     prob["zcenter"] = zcenter
     prob["zmin"] = zmin
+    prob["zmax"] = zmax
     prob["zcore"] = zcore
     prob["xmargin"] = xmargin
     prob["ymargin"] = ymargin
     prob["zmargin2"] = zmargin2
-    prob["L"] = [l, w, h]
+    # prob["L"] = [l, w, h]
 
     _c = gf.Component()
     kwargs = dict()
@@ -157,7 +165,8 @@ def setup(path, c, study, nres, center_wavelength,
         else:
             kwargs[side] = length
     _c << gf.components.bbox(component=c, layer=bbox_layer, **kwargs)
-    c0 = _c << c
+    # _c = gf.Component()
+    _c << c
     c = _c
     # c.plot()
     # c.show()
@@ -187,31 +196,24 @@ def setup(path, c, study, nres, center_wavelength,
     prob["ys"] = ys
     prob["zs"] = zs
 
-    for run in runs:
-        for port in run["sources"]:
-            s = c0.ports[port]
-            a = pi/180*s.orientation
-            center = np.array(s.center)/1e3 - \
-                np.array([cos(a), sin(a)])*port_margin
-            run["sources"][port]["center"] = center.tolist()
-
     layers = set(c.layers)-set(exclude_layers)
 
-    normal = [1, 0, 0]
+    TEMP = os.path.join(path, "TEMP")
+    os.makedirs(TEMP, exist_ok=True)
+    SURFACES = os.path.join(path, 'surfaces')
+    os.makedirs(SURFACES, exist_ok=True)
 
-    temp = os.path.join(path, "geometry")
-    os.makedirs(temp, exist_ok=True)
     layer_stack_info = material_voxelate(
-        c, dl, zmin, zmax, layers, layer_stack, temp)
+        c, dl, zmin, zmax, layers, layer_stack, SURFACES)
     dir = os.path.dirname(os.path.realpath(__file__))
     print(dir)
     fn = os.path.join(dir, "solvemodes.py")
     assert os.path.exists(fn)
-    assert os.path.exists(temp)
+    assert os.path.exists(TEMP)
     if platform.system() == "Windows":
-        os.system(f"copy /Y {fn} {temp}")
+        os.system(f"copy /Y {fn} {TEMP}")
     else:
-        subprocess.run(["cp", fn, temp])
+        subprocess.run(["cp", fn, TEMP])
     prob["layer_stack"] = layer_stack_info
     # materials = set([v["material"] for v in layer_stack_info.values()])
     # d = {
@@ -237,13 +239,21 @@ def setup(path, c, study, nres, center_wavelength,
     wavelengths = []
     # _c = add_bbox(c, layer=bbox_layer, nonport_margin=margin)
     for run in runs:
-        for s in list(run["sources"].values())+list(run["monitors"].values()):
-            s["mode_width"] = wmode
-            for center_wavelength in s["wavelength_mode_numbers"]:
+        for k, v in list(run["sources"].items())+list(run["monitors"].items()):
+            p = ports[k]
+            v['dimensions'] = p['dimensions']
+            v['frame'] = p['frame']
+            for center_wavelength in v["wavelength_mode_numbers"]:
                 wavelengths.append(center_wavelength)
-    wavelengths = sorted(set(wavelengths))
 
-    bbox = c.bbox_np()
+            if k in run["sources"]:
+                ct = np.array(p['center'])
+                n = np.array(p['normal'])
+                v["center"] = (ct-n*port_margin).tolist()
+            else:
+                v['center'] = p['center']
+
+    wavelengths = sorted(set(wavelengths))
 
     prob["mode_solutions"] = mode_solutions
     prob["runs"] = runs
@@ -251,6 +261,11 @@ def setup(path, c, study, nres, center_wavelength,
         "device": {
             "bbox": c.bbox_np().tolist(),
         }}
+    bbox = c.bbox_np().tolist()
+
+    prob['bbox'] = bbox
+    # prob['epdefault'] = materials[layer_stack['default']['material']]['epsilon']
+    prob['epdefault'] = materials[default_material]['epsilon']
 
     prob["Courant"] = Courant
     if not os.path.exists(path):

@@ -25,33 +25,19 @@ mutable struct Source
     λmodes
 
     center
-    L
+    dimensions
+
     center3
-    L3
-    mask
-    # normal
-    # tangent
-    # zaxis
-    # xaxis
-    dimsperm
+    dimensions3
     frame
+    dimsperm
 
     approx_2D_mode
     tags
-    # function Source(sigmodes, center::Base.AbstractVecOrTuple, normal, tangent, lb, ub, ; tags...)
-    #     new(f, center, lb, ub, normal, tangent, E2J(mode), tags)
-    # end
-    # function Source(sigmodes, center::Base.AbstractVecOrTuple, L; tags...)
-    #     new(sigmodes, center, -L / 2, L / 2, getdimsperm(L), tags)
-    # end
-
 end
 
-Source(center, L, dimsperm, center3=center, L3=L, approx_2D_mode=nothing; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
-    Source(λmodenums, λsmode, λmodes, center, L, center3, L3, nothing, dimsperm, nothing, approx_2D_mode, tags)
-
-Source(mask, frame; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
-    Source(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, frame, nothing, tags)
+Source(center, dimensions, center3=center, dimensions3=dimensions, frame=I3, approx_2D_mode=nothing; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
+    Source(λmodenums, λsmode, λmodes, center, dimensions, center3, dimensions3, frame, getdimsperm(frame), approx_2D_mode, tags)
 
 Base.ndims(m::Source) = length(m.center)
 isortho(m::Source) = !isnothing(m.dimsperm)
@@ -100,7 +86,7 @@ end
 
 """
     function Source(f, c, lb, ub, tags=""; mode...)
-    function Source(f, c, L, tags=""; mode...)
+    function Source(f, c, dimensions, tags=""; mode...)
         
 Constructs custom  source. Can be used to specify uniform or modal sources
 
@@ -109,7 +95,7 @@ Args
 - c: g.lb or center of source
 - lb: lower bounds wrt to c
 - ub: upper bounds wrt to c
-- L: source dimensions in [wavelengths]
+- dimensions: source dimensions in [wavelengths]
 - mode: which mode to excite & their scaling constants (typically a current source, eg Jz=1)
 """
 
@@ -131,9 +117,9 @@ end
 Base.ndims(m::SourceInstance) = length(m.center)
 
 function SourceInstance(s::PlaneWave, g)
-    @unpack L = g
+    @unpack dimensions = g
     @unpack dims, sigmodes, tags = s
-    SourceInstance(Source(sigmodes, L / 2, -L / 2, L / 2, getdimsperm(dims), tags), g)
+    SourceInstance(Source(sigmodes, dimensions / 2, -dimensions / 2, dimensions / 2, getdimsperm(dims), tags), g)
 end
 
 function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
@@ -148,14 +134,12 @@ function SourceInstance(s::Source, g, ϵ, TEMP, mode_solutions=nothing)
 
     λs = @ignore_derivatives Array(keys(λmodes))
     modess = values(λmodes)
-    if !isnothing(s.frame)
-        #  all(x -> x === (modess[1]), modess) 
+    if all(x -> x === (modess[1]), modess)
         iss = [eachindex(λs)]
         println("all modes are the same")
     else
         iss = cluster(λs)
     end
-
     sigmodes = map(iss) do is
         f = t -> sum(getindex.((Array(λs),), Array(is))) do λ
             cispi(2t / λ) |> C
@@ -225,7 +209,7 @@ function EH2JM(d::T) where {T}
 end
 
 function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
-    @unpack center, L, tags, dimsperm, frame, center3, L3, approx_2D_mode, λmodenums, λmodes, λsmode = s
+    @unpack center, dimensions, tags, dimsperm, frame, center3, dimensions3, approx_2D_mode, λmodenums, λmodes, λsmode = s
     @unpack F, deltas, deltas3, field_sizes, field_lims, mode_spacing, spacings, dl, padamts = g
     N = ndims(s)
 
@@ -241,8 +225,8 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
 
     dx = deltas[1][1]
 
-    start = v2i(center - L / 2 - g.lb, deltas)
-    stop = v2i(center + L / 2 - g.lb, deltas)
+    start = v2i(center - dimensions / 2 - g.lb, deltas)
+    stop = v2i(center + dimensions / 2 - g.lb, deltas)
     start, stop = min.(start, stop), max.(start, stop)
 
     sel = abs.(start - stop) .> 1e-3
@@ -262,8 +246,8 @@ function _get_λmodes(s, ϵ, TEMP, mode_solutions, g)
     # 
     if !isnothing(λmodenums)
 
-        start3 = round((center3 - L3 / 2) / dl + 0.001)
-        stop3 = round((center3 + L3 / 2) / dl + 0.001)
+        start3 = round((center3 - dimensions3 / 2) / dl + 0.001)
+        stop3 = round((center3 + dimensions3 / 2) / dl + 0.001)
         start3, stop3 = min.(start3, stop3), max.(start3, stop3)
 
         sel3 = start3 .!= stop3

@@ -1,4 +1,7 @@
 using UnPack, LinearAlgebra, Statistics, Random, Jello, DataStructures, FileIO, Porcupine, Dates, NPZ, DataStructures, JSON, Flux, Zygote, CairoMakie, ArrayPadding, Permutations, Functors, Optimisers, ChainRulesCore, SparseArrays, Interpolations
+using Meshes, GeoIO
+using Meshes: Point, boundingbox
+# using GeometryBasics, MeshIO
 using Porcupine: keys, values, pairs, fmap, ⊙, trim, round, floor, ceil, invperm, permutedims, dict, cpu, gpu
 using Flux: mae, Adam
 using Zygote: withgradient, Buffer, ignore_derivatives, @ignore_derivatives

@@ -16,7 +16,7 @@ def meta_simulation_problem(
         source,
         monitor,
         nres,
-        layer_stack=LAYER_STACK,
+        layer_stack=SOI,
         study="simulation",
         **kwargs):
     prob = {

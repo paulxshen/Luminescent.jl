@@ -21,7 +21,7 @@ def make_pic_inv_problem(path, c,  targets, iters=10,
                          #    design_guess_layer=LAYER.GUESS,
                          fill_layer=LAYER.WG,
                          void_layer=None,
-                         layer_stack=LAYER_STACK,
+                         layer_stack=SOI,
                          restart=True, save_memory=False, **kwargs):
     design_region_layer = tuple(design_region_layer)
     # if not N:

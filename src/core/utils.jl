@@ -1,42 +1,18 @@
-getdimsperm(dims::Int) =
-    if dims == 1
-        [2, 3, 1]
-    elseif dims == 2
-        [-1, 3, 2]
-    elseif dims == 3
-        [1, 2, 3]
-    end
-
-function getdimsperm(L::Base.AbstractVecOrTuple)
-    a = Int[]
-    b = Int[]
-    for (i, v) = enumerate(L)
-        if abs(v) > 1e-3
-            push!(a, sign(v) * i)
-        else
-            push!(b, i)
+function getdimsperm(frame)
+    r = zeros(Int, 3)
+    vs = vcat(collect(eachcol(Matrix(I, 3, 3))), collect(eachcol(-Matrix(I, 3, 3))))
+    for i = 1:3
+        j = findfirst(vs) do v
+            all(isapprox.(frame[:, i], v; atol=0.01))
         end
+        isnothing(j) && return nothing
+        if j > 3
+            j = 3 - j
+        end
+        r[i] = j
     end
-    v = vcat(a, b)
-    v[end] *= sign(Permutation(abs.(v))) * prod(sign.(v))
-    v
+    r
 end
-
-# function getdimsperm(frame)
-#     r = zeros(Int, 3)
-#     vs = vcat(collect(eachcol(Matrix(I, 3, 3))), collect(eachcol(-Matrix(I, 3, 3))))
-#     for i = 1:3
-#         j = findfirst(vs) do v
-#             all(frame[:, i] .≈ v)
-#         end
-#         isnothing(j) && return nothing
-#         if j > 3
-#             j = 3 - j
-#         end
-#         r[i] = j
-#     end
-#     r
-# end
 
 function permutexyz(d, p, N=length(p))
     _p = @ignore_derivatives invperm(p)

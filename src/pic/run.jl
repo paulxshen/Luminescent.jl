@@ -18,7 +18,7 @@ function picrun(path, array=Array; kw...)
     println("setting up simulation...")
     PROB = joinpath(path, "problem.json")
     SOL = joinpath(path, "solution.json")
-    TEMP = joinpath(path, "geometry")
+    TEMP = joinpath(path, "temp")
 
     io = open(PROB)
     s = read(io, String)
@@ -27,10 +27,12 @@ function picrun(path, array=Array; kw...)
     for (k, v) = pairs(kw)
         prob[string(k)] = v
     end
-    @unpack name, N, approx_2D_mode, dtype, center_wavelength, xmargin, ymargin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zcenter, magic, framerate, layer_stack, materials, L, Ttrans, Tss = prob
+    @unpack name, N, approx_2D_mode, dtype, center_wavelength, xmargin, ymargin, runs, ports, dl, xs, ys, zs, components, study, zmode, hmode, zmin, zmax, zcenter, magic, framerate, layer_stack, materials, Ttrans, Tss, bbox, epdefault = prob
     if study == "inverse_design"
         @unpack lsolid, lvoid, designs, targets, weights, eta, iters, restart, save_memory, design_config, stoploss = prob
     end
+    v = [xs, ys, zs]
+    global bbox = [getindex.(v, 1), getindex.(v, length.(v))]
     F = Float32
     alg = :spectral
     alg = nothing
@@ -59,8 +61,6 @@ function picrun(path, array=Array; kw...)
 
 
     ϵ2 = nothing
-    global sz = round.(L / dl)
-
     GC.gc(true)
     if AUTODIFF()
         Nf = F
@@ -70,40 +70,65 @@ function picrun(path, array=Array; kw...)
     end
     enum = [materials(v.material).epsilon |> F for v = values(layer_stack)] |> unique |> sort
     ϵmin = minimum(enum) |> Nf
-    # if AUTODIFF()
-    # ϵ3 = zeros(Nf, Tuple(sz))
-    ϵ3 = nothing
-    # else
-    #     ϵ3 = SparseArrays.zeros(Nf, Tuple(sz))
-    # end
-    # @show Nf
-    layer_stack = sort(collect(pairs(layer_stack)), by=kv -> -kv[2].mesh_order) |> OrderedDict
-    for (k, v) = pairs(layer_stack)
-        @unpack material, thickness = v
-        ϵ = materials(material).epsilon |> Nf
-        # if AUTODIFF() || ϵ != ϵmin
-        global a = npzread(joinpath(TEMP, "$k.npy"))
-        # error("not implemented")
-        # a = permutedims(a, [2, 1, 3])
-        # a = downsample(a, (1, 1, 2))
-        # @show typeof(a)
-        # @show size(a)
-        # a = a[Base.OneTo.(min.(size(a), sz))...]
 
-        if isnothing(ϵ3)
-            ϵ3 = zeros(Nf, size(a))
+    bbox = Float32(bbox)
+    layer_stack = sort(collect(pairs(layer_stack)), by=kv -> kv[2].mesh_order) |> OrderedDict
+    ks = keys(layer_stack)
+    fns = readdir(joinpath(path, "surfaces"), join=true)
+    sort!(fns)
+    @show fns
+    global meshes = getfield.(GeoIO.load.(fns,), :domain)
+    m = meshes[1]
+
+    # meshes = map(meshes) do m
+    #     for i = 1:12
+    #         try
+    #             m = m |> Repair(i)
+    #         catch
+    #             @show i
+    #         end
+    #     end
+    #     m
+    # end
+    # meshes = boundingbox.(meshes)
+    # global meshes = FileIO.load.(fns)
+    global eps = [materials(string(split(basename(fn), "_")[2])).epsilon |> Float16 for fn = fns]
+    meps = zip(meshes, eps)
+    epdefault = Float16(epdefault)
+    # start = [bbox[1]..., zmin]
+    # stop = [bbox[2]..., zmax]
+    # error()
+
+    start = bbox[1] + dl / 2
+    stop = bbox[2] - dl / 2
+    # start = permutedims(start, (2, 1, 3))
+    # stop = permutedims(stop, (2, 1, 3))
+    len = int((stop - start) / dl) + 1
+    global ϵ3 = map(Base.product(range.(start, stop, len)...)) do v
+        x, y, z = v
+        # ϵ3 = map(Base.product(range.(start, stop, step=dl)...)) do v
+        for (m, ep) = meps
+            sideof(Point(v), m) != OUT && return ep
+            # intersects(Meshes.Point(v), m) && return ep
+            # global i = intersect(GeometryBasics.Point3f(v), m)
+            # error()
+            # && return ep
+            # I = intersect(m, GeometryBasics.Point3f(v))
+            # global I = intersect(m, Point(v))
+            # global I = intersect(Point(v), m)
+            # !isempty(I) && return ep
+            # -0.25 < y < 0.25 && 0 < z < 0.22 && return ep
         end
-        ϵ3 .*= 1 - a
-        ϵ3 .+= a .* ϵ
-        # end
+        epdefault
     end
-    ϵ3 = max.(ϵmin, ϵ3)
-    # @show eltype(ϵ3)
-    @assert eltype(ϵ3) == Nf
-    # @show typeof(ϵ3)
+    # ϵ3 = permutedims(ϵ3, (2, 1, 3))
+    extrema(ϵ3) |> println
+    # using GLMakie
+    volume(ϵ3) |> display
     GC.gc(true)
 
     ϵ2 = ϵ3[:, :, 1+round((zcenter - zmin) / dl)]
+    # error()
 
     global models = nothing
     lb = components.device.bbox[1]
@@ -125,8 +150,8 @@ function picrun(path, array=Array; kw...)
         models = [
             begin
                 @unpack bbox = design
-                L = bbox[2] - bbox[1]
-                szd = Tuple(round.(Int, L / dl)) # design region size
+                dimensions = bbox[2] - bbox[1]
+                szd = Tuple(round.(Int, dimensions / dl)) # design region size
                 symmetries = map(design.symmetries) do s
                     try
                         Int(s) + 1
@@ -171,20 +196,24 @@ function picrun(path, array=Array; kw...)
         begin
             sources = []
             for (port, sig) = SortedDict(run.sources) |> pairs
-                @unpack center, wavelength_mode_numbers = sig
-                n = -sig.normal
-                tangent = [-n[2], n[1]]
-                center = (sig.center - lb) / λ
-                L = tangent * sig.mode_width / λ
-                L3 = [L..., hmode / λ]
+                @unpack center, frame, dimensions, wavelength_mode_numbers = sig
+                if dimensions[1] isa Vector
+                    dimensions = dimensions[1]
+                end
+
+                center = (center - lb) / λ
+                dimensions /= λ
+                dimensions3 = [dimensions..., hmode / λ]
                 center3 = [center..., (zcenter - zmin) / λ]
+                frame = stack(frame)
                 if N == 3
-                    L = L3
+                    dimensions = dimensions3
                     center = center3
                 end
-                dimsperm = getdimsperm(L3)
+
                 λmodenums = SortedDict([(F(_λ) / λ) => v for (_λ, v) in pairs(wavelength_mode_numbers)])
-                push!(sources, Source(center, L, dimsperm, center3, L3, approx_2D_mode, ; λmodenums, label="s$(string(port)[2:end])"))
+
+                push!(sources, Source(center, dimensions, center3, dimensions3, frame, approx_2D_mode; λmodenums, label="s$(string(port)[2:end])"))
             end
             sources
         end for run in runs
@@ -193,23 +222,24 @@ function picrun(path, array=Array; kw...)
 
     global runs_monitors = [[
         begin
-            center = (m.center - lb) / λ
-            n = m.normal
-            tangent = [-n[2], n[1]]
-            # n, tangent, = vcat.((n, tangent,), ([0],))
+            @unpack center, frame, dimensions, wavelength_mode_numbers = m
+            if dimensions[1] isa Vector
+                dimensions = dimensions[1]
+            end
+
+            center = (center - lb) / λ
+            dimensions /= λ
+            dimensions3 = [dimensions..., hmode / λ]
+            center3 = [center..., (zcenter - zmin) / λ]
+            frame = stack(frame)
+            if N == 3
+                dimensions = dimensions3
+                center = center3
+            end
 
             λmodenums = SortedDict([(F(_λ) / λ) => v for (_λ, v) in pairs(m.wavelength_mode_numbers)])
 
-            L = tangent * m.mode_width / λ
-            L3 = [L..., hmode / λ]
-            center3 = [center..., (zcenter - zmin) / λ]
-            if N == 3
-                L = L3
-                center = center3
-            end
-            dimsperm = getdimsperm(L3)
-
-            Monitor(center, L, dimsperm, center3, L3, approx_2D_mode, ; λmodenums, label=port)
+            Monitor(center, dimensions, center3, dimensions3, frame, approx_2D_mode, ; λmodenums, label=port)
         end for (port, m) = SortedDict(run.monitors) |> pairs] for run in runs]
 
     global run_probs =

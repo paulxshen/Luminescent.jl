@@ -1,3 +1,4 @@
+import open3d as o3d
 import time
 import pymeshfix
 import json
@@ -21,9 +22,37 @@ import numpy as np
 from gdsfactory.generic_tech import LAYER_STACK, LAYER
 import copy
 import shutil
+import trimesh
 # from gdsfactory import LAYER_VIEWS
 
 tol = .001
+
+
+def repair_obj_open3d(input_path, output_path):
+    """Repairs an OBJ file using Open3D."""
+    try:
+        mesh = o3d.io.read_triangle_mesh(input_path)
+        if mesh.is_empty():
+            raise ValueError("Failed to load mesh.")
+
+        # Perform operations to clean/repair mesh (example: remove non-manifold edges)
+        mesh.remove_non_manifold_edges()
+
+        # Save the repaired mesh
+        o3d.io.write_triangle_mesh(output_path, mesh)
+        print(f"Repaired OBJ file saved to {output_path}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def get(c, i):
+    try:
+        return c[i]
+    except:
+        try:
+            return getattr(c, i)
+        except:
+            return None
 
 
 def arange(a, b, d):
@@ -170,7 +199,7 @@ def stl_to_array(mesh: pv.PolyData, dl: float, bbox):
     stop = [min(round(a), u) for a, u in zip(stop, r.shape)]
     len = [s-t for s, t in zip(stop, start)]
 
-    r[start[0]:stop[0], start[1]:stop[1], start[2]        :stop[2]] = mask[:len[0], :len[1], :len[2]]
+    r[start[0]:stop[0], start[1]:stop[1], start[2]:stop[2]] = mask[:len[0], :len[1], :len[2]]
     return r
 
 
@@ -186,28 +215,39 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path, unit=1):
     # bbox = [[**lb, zmin], [**ub, zmax]]
     bbox = [[lb[0], lb[1], zmin], [ub[0], ub[1], zmax]]
     for i, stack in enumerate(stacks):
+        order = stack[0]
         m = stack[1]
         l1, l2 = layer = stack[2]
         k = stack[3]
 
-        _layer_stack = copy.deepcopy(layer_stack)
-        _layer_stack.layers.clear()
+        _layer_stack = copy.deepcopy(LAYER_STACK)
+        get(_layer_stack, 'layers').clear()
 
-        d = copy.deepcopy(layer_stack.layers[k])
+        d = copy.deepcopy(get(layer_stack, 'layers')[k])
         if d.zmin <= zmax and d.bounds[1] >= zmin:
-            _layer_stack.layers[k] = d
+            get(_layer_stack, 'layers')[k] = d
             d.zmin = max(zmin, d.zmin)
             d.thickness = min(zmax-d.zmin, d.thickness)
             # _d.bounds = (_d.zmin, _d.zmin+_d.thickness)
             # origin = (c.extract([layer]).bbox_np()-c.bbox_np())[0].tolist()
-            STL = os.path.abspath(os.path.join(path, f"{k}.stl"))
-            gf.export.to_stl(c, STL, layer_stack=_layer_stack)
-            STL = os.path.join(path, f'{k}_{l1}_{l2}.stl')
 
-            pymeshfix.clean_from_file(STL, STL)
-            mesh = pv.read(STL)
-            im = stl_to_array(mesh, dl*unit, bbox)
-            np.save(os.path.join(path, f'{k}.npy'), im)
+            mesh = c.to_3d()
+            OBJ = os.path.join(path, f'{order}_{m}_{k}.obj')
+            trimesh.exchange.export.export_mesh(mesh, OBJ, 'obj')
+            # pymeshfix.clean_from_file(OBJ, OBJ)
+            repair_obj_open3d(OBJ, OBJ)
+
+            # STL = os.path.abspath(os.path.join(path, f"{k}.stl"))
+            # gf.export.to_stl(c, STL, layer_stack=_layer_stack)
+
+            # STL = os.path.join(path, f'{k}_{l1}_{l2}.stl')
+            # pymeshfix.clean_from_file(STL, STL)
+            # STL1 = os.path.join(path, f'{order}_{m}_{k}.stl')
+            # os.replace(STL, STL1)
+
+            # mesh = pv.read(STL)
+            # im = stl_to_array(mesh, dl*unit, bbox)
+            # np.save(os.path.join(path, f'{k}.npy'), im)
 
             layer_stack_info[k] = {
                 "layer": (l1, l2),
@@ -222,24 +262,26 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path, unit=1):
 
 def get_layers(layer_stack, layer, withkey=False):
     r = []
-    for k, x in layer_stack.layers.items():
-        l = x.layer
-        if hasattr(l, "layer"):
-            if tuple(l.layer) == tuple(layer):
+    d = get(layer_stack, 'layers').items()
+
+    for k, x in d:
+        l = get(x, 'layer')
+        if l is not None:
+            t = get(l, 'layer')
+            if t is not None and tuple(t) == tuple(layer):
                 if withkey:
                     x = k, x
-                # print(layer, k, x)
                 r.append(x)
     if r:
         return r
 
-    for k, x in layer_stack.layers.items():
-        l = x.derived_layer
-        if hasattr(l, "layer"):
-            if tuple(l.layer) == tuple(layer):
+    for k, x in d:
+        l = get(x, 'derived_layer')
+        if l is not None:
+            t = get(l, 'layer')
+            if t is not None and tuple(t) == tuple(layer):
                 if withkey:
                     x = k, x
-                # print(layer, k, x)
                 r.append(x)
     return r
 

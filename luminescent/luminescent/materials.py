@@ -1,3 +1,5 @@
+import copy
+from gdsfactory.generic_tech import LAYER_STACK, LAYER
 
 MATKEYS = {
     "si": "cSi",
@@ -25,3 +27,16 @@ MATERIALS = {
     "Si": {'epsilon': 3.48**2},
     'PEC': {'epsilon': 10000},
 }
+
+ks = copy.deepcopy(list(MATERIALS.keys()))
+for k in ks:
+    MATERIALS[k.lower()] = MATERIALS[k]
+
+SOI = {
+    'layers': dict()
+}
+SOI['layers']['core'] = LAYER_STACK['core']
+SOI['layers']['default'] = {
+    'material': 'SiO2'
+}
+BBOX_LAYER = (8888, 8888)

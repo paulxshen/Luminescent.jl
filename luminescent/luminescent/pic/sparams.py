@@ -14,7 +14,7 @@ from gdsfactory.generic_tech import LAYER_STACK, LAYER
 def make_pic_sim_problem(path, c: gf.Component, nres,
                          wavelengths,
                          entries=None, keys=None,
-                         layer_stack=LAYER_STACK,
+                         layer_stack=SOI,
                          study="sparams",
 
                          wavelength=None,
@@ -72,18 +72,12 @@ def make_pic_sim_problem(path, c: gf.Component, nres,
                 d = {
                     "sources": {
                         i: {
-                            "center": (np.array(c.ports[i].center)/1e3).tolist(),
-                            "width": (np.array(c.ports[i].width)/1e3).tolist(),
-                            "normal": normal_from_orientation(c.ports[i].orientation),
                             "wavelength_mode_numbers": {w: [mi] for w in wavelengths},
                             "port": i,
                         }},
                     "monitors": {
                         o: {
                             "port": o,
-                            "normal": normal_from_orientation(c.ports[o].orientation),
-                            "center": (np.array(c.ports[o].center)/1e3).tolist(),
-                            "width": (np.array(c.ports[o].width)/1e3).tolist(),
                             "wavelength_mode_numbers": {w: list(range(imow[i][mi][o]+1)) for w in wavelengths},
                         } for o in imow[i][mi]}}
                 d["sources"] = SortedDict(d["sources"])

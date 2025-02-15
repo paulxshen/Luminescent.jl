@@ -6,26 +6,20 @@ mutable struct Monitor <: AbstractMonitor
     λmodes
 
     center
-    L
+    dimensions
+
     center3
-    L3
-    mask
-
-
-    dimsperm
+    dimensions3
     frame
+    dimsperm
 
     approx_2D_mode
-    # tangent
 
     tags
 end
 
-Monitor(center, L, dimsperm, center3=center, L3=L, approx_2D_mode=nothing; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
-    Monitor(λmodenums, λsmode, λmodes, center, L, center3, L3, nothing, dimsperm, nothing, approx_2D_mode, tags)
-
-Monitor(mask, frame; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
-    Monitor(λmodenums, λsmode, λmodes, nothing, nothing, nothing, nothing, mask, nothing, frame, nothing, tags)
+Monitor(center, dimensions, center3=center, dimensions3=dimensions, frame=I3, approx_2D_mode=nothing; λmodenums=nothing, λsmode=nothing, λmodes=nothing, tags...) =
+    Monitor(λmodenums, λsmode, λmodes, center, dimensions, center3, dimensions3, frame, getdimsperm(frame), approx_2D_mode, tags)
 
 Base.ndims(m::Monitor) = length(m.center)
 isortho(m::Monitor) = !isnothing(m.dimsperm)
@@ -78,9 +72,9 @@ function MonitorInstance(m::Monitor, g, ϵ, TEMP, mode_solutions=nothing)
 end
 
 function MonitorInstance(m::PlaneMonitor, g)
-    @unpack L = g
+    @unpack dimensions = g
     @unpack dims, q, λmodes, tags = m
-    MonitorInstance(Monitor(λmodes, L / 2, -L / 2, L / 2, getdimsperm(dims), tags), g)
+    MonitorInstance(Monitor(λmodes, dimensions / 2, -dimensions / 2, dimensions / 2, getdimsperm(dims), tags), g)
 end
 
 function field(u::Map, k, m)
