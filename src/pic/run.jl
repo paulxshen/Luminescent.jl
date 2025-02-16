@@ -71,13 +71,13 @@ function picrun(path, array=Array; kw...)
     enum = [materials(v.material).epsilon |> F for v = values(layer_stack)] |> unique |> sort
     ϵmin = minimum(enum) |> Nf
 
-    bbox = Float32(bbox)
+    bbox = F.(bbox)
     layer_stack = sort(collect(pairs(layer_stack)), by=kv -> kv[2].mesh_order) |> OrderedDict
     ks = keys(layer_stack)
     fns = readdir(joinpath(path, "surfaces"), join=true)
     sort!(fns)
     @show fns
-    global meshes = getfield.(GeoIO.load.(fns,), :domain)
+    global meshes = getfield.(GeoIO.load.(fns, numbertype=F), :domain)
     m = meshes[1]
 
     # meshes = map(meshes) do m
@@ -124,7 +124,7 @@ function picrun(path, array=Array; kw...)
     # ϵ3 = permutedims(ϵ3, (2, 1, 3))
     extrema(ϵ3) |> println
     # using GLMakie
-    volume(ϵ3) |> display
+    # volume(ϵ3) |> display
     GC.gc(true)
 
     ϵ2 = ϵ3[:, :, 1+round((zcenter - zmin) / dl)]

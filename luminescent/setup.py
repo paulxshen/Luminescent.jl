@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='luminescent',  # Your package name
-    version='0.4.48',  # Your package version
+    version='0.5.1',  # Your package version
     description='A description of your package',
     author='Paul Shen',
     author_email='pxshen@alumni.stanford.edu',
@@ -17,8 +17,8 @@ setup(
         # 'python-opencv',
     ],
 )
+# cd C:\Users\pxshe\OneDrive\Desktop\beans\Luminescent.jl\luminescent
 # python -m build
 # twine upload dist/*
 
 # pip install gdsfactory pillow pymeshfix electromagneticpython sortedcontainers scikit-rf
-# C:\Users\pxshe\OneDrive\Desktop\beans\Luminescent.jl\luminescent>

@@ -1,4 +1,3 @@
-import open3d as o3d
 import time
 import pymeshfix
 import json
@@ -234,8 +233,8 @@ def material_voxelate(c, dl, zmin, zmax, layers, layer_stack, path, unit=1):
             mesh = c.to_3d()
             OBJ = os.path.join(path, f'{order}_{m}_{k}.obj')
             trimesh.exchange.export.export_mesh(mesh, OBJ, 'obj')
-            # pymeshfix.clean_from_file(OBJ, OBJ)
-            repair_obj_open3d(OBJ, OBJ)
+            pymeshfix.clean_from_file(OBJ, OBJ)
+            # repair_obj_open3d(OBJ, OBJ)
 
             # STL = os.path.abspath(os.path.join(path, f"{k}.stl"))
             # gf.export.to_stl(c, STL, layer_stack=_layer_stack)
