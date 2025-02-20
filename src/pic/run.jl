@@ -99,44 +99,24 @@ function picrun(path, array=Array; kw...)
     # stop = [bbox[2]..., zmax]
     # error()
 
-    start = bbox[1] + dl / 2
-    stop = bbox[2] - dl / 2
-    # start = permutedims(start, (2, 1, 3))
-    # stop = permutedims(stop, (2, 1, 3))
-    len = int((stop - start) / dl) + 1
-    global ϵ3 = map(Base.product(range.(start, stop, len)...)) do v
-        x, y, z = v
-        # ϵ3 = map(Base.product(range.(start, stop, step=dl)...)) do v
-        for (m, ep) = meps
-            sideof(Point(v), m) != OUT && return ep
-            # intersects(Meshes.Point(v), m) && return ep
-            # global i = intersect(GeometryBasics.Point3f(v), m)
-            # error()
-            # && return ep
-            # I = intersect(m, GeometryBasics.Point3f(v))
-            # global I = intersect(m, Point(v))
-            # global I = intersect(Point(v), m)
-            # !isempty(I) && return ep
-            # -0.25 < y < 0.25 && 0 < z < 0.22 && return ep
-        end
-        epdefault
-    end
+
     # ϵ3 = permutedims(ϵ3, (2, 1, 3))
     extrema(ϵ3) |> println
     # using GLMakie
     # volume(ϵ3) |> display
     GC.gc(true)
-
-    ϵ2 = ϵ3[:, :, 1+round((zcenter - zmin) / dl)]
     # error()
 
     global models = nothing
     lb = components.device.bbox[1]
     if N == 2
-        ϵ = ϵ2
-    else
-        ϵ = ϵ3
+        midplane = Plane((0, 0, zcenter), (0, 0, 1))
+        meps = map(meps) do (m, ϵ)
+            m ∩ midplane, ϵ
+        end
     end
+    push!(meps, (nothing, epdefault))
+
     if study == "inverse_design"
         targets = fmap(F, targets)
         # targets = sortkeys(targets)

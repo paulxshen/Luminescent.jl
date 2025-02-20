@@ -142,8 +142,8 @@ end
 function solvemodes(ϵ, dl, λ, neigs, spacing, path; mode_solutions=nothing)
     if !isnothing(mode_solutions)
         i = findfirst(mode_solutions) do v
-            _ϵ, _dl, _λ, _neigs = v
-            size(ϵ) == size(_ϵ) && sum(abs, ϵ - _ϵ) / sum(abs, ϵ) < 1e-3 && dl == _dl && λ == _λ && neigs <= _neigs
+            mesheps, _dl, _λ, _neigs = v
+            size(ϵ) == size(mesheps) && sum(abs, ϵ - mesheps) / sum(abs, ϵ) < 1e-3 && dl == _dl && λ == _λ && neigs <= _neigs
         end
         if !isnothing(i)
             return mode_solutions[i][end][1:neigs]

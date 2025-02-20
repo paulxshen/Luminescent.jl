@@ -71,15 +71,15 @@ function solve(prob, ;
         p = merge(p, p1)
     end
 
-    _ϵ = _p.ϵ |> cpu
-    _pec = _ϵ .>= (PECVAL - TOL)
+    mesheps = _p.ϵ |> cpu
+    _pec = mesheps .>= (PECVAL - TOL)
     if !any(_pec)
         println("no PEC regions found in geometry")
-        invϵ = tensorinv(_ϵ, field_lims, spacings)
+        invϵ = tensorinv(mesheps, field_lims, spacings)
         @assert eltype(eltype(invϵ)) == F
     else
-        # global _ϵ = pecfy(_ϵ, _pec, field_lims, spacings)
-        ϵ = downsamplefield(_ϵ, field_lims, spacings)
+        # global mesheps = pecfy(mesheps, _pec, field_lims, spacings)
+        ϵ = downsamplefield(mesheps, field_lims, spacings)
         invϵ = map(ϵ) do a
             1 ./ a
         end

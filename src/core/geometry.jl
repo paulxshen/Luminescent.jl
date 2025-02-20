@@ -79,6 +79,54 @@ function tensorinv(a::AbstractArray{T}, field_lims, spacings) where {T}
     [j <= i ? v[i][j] : v[j][i] for i = 1:N, j = 1:N]
 end
 
+function tensorinv(meshvals::AbstractVector{Tuple}, rulers)
+    N = length(rulers)
+    ns = length.(rulers)
+    a = map(Base.product(range.(OneTo.(ns - 1))...)) do I
+        start = getindex.(rulers, I)
+        stop = getindex.(rulers, I .+ 1)
+        Δ = stop - start
+
+        start -= Δ / 2
+        stop += Δ / 2
+        start .= max.(start, first.(rulers))
+        stop .= min.(stop, last.(rulers))
+
+        box = Box(start, stop)
+        point = centroid(box)
+        hits = fill(false, length(meshvals))
+        for (i, (m, v)) = enumerate(meshvals)
+            if !isnothing(m) && intersects(box, m)
+                hits[i] = true
+            elseif isnothing(m) || sideof(point, m) == IN
+                return v
+            end
+        end
+
+        n = 4
+        δ = Δ / n
+        a = map(Base.product(range.(start + δ / 2, stop - δ / 2, n)...)) do p
+            for (m, v) = meshvals[hits]
+                (isnothing(m) || sideof(p, m) != OUT) && return v
+            end
+            default
+        end
+
+        n = imnormal(a)
+        P = n * n'
+        P * mean(1 ./ a) + (LinearAlgebra.I - P) / mean(a)
+    end
+
+    v = map(1:N) do i
+        map(1:i) do j
+            map(a) do v
+                v(i, j)
+            end
+        end
+    end
+    [j <= i ? v[i][j] : v[j][i] for i = 1:N, j = 1:N]
+end
+
 # function tensorinv(a::S{T}, lims, spacings) where {S<:AbstractArray,T<:Real}
 # tensorinv(a, lims, spacings) = tensorinv(a, false, lims, spacings)
 # function tensorinv(a, pec, field_lims, spacings, prop=:ϵ)
