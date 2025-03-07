@@ -44,9 +44,9 @@ function solve(prob, ;
     save_memory=false, ulims=(-3, 3), framerate=nothing, showfield=:Hz, path="", #subpixel=true,
     kwargs...)
     @unpack approx_2D_mode, dt, u0, geometry, _geometry, source_instances, monitor_instances, Ttrans, Tss, ϵeff, array = prob
-    @unpack mode_deltas, F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = prob.grid
+    @unpack plane_deltas, F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts = prob.grid
 
-    @nograd mode_deltas, dt, u0, source_instances, monitor_instances, Ttrans, Tss, ϵeff, F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts
+    @nograd plane_deltas, dt, u0, source_instances, monitor_instances, Ttrans, Tss, ϵeff, F, N, sz, deltas, field_diffdeltas, field_diffpadvals, field_lims, dl, spacings, geometry_padvals, geometry_padamts, _geometry_padamts
 
     p = geometry
     _p = _geometry
@@ -171,7 +171,7 @@ function solve(prob, ;
             um = localframe(um, m)
             ap = am = nothing
             if !isnothing(m.λmodes)
-                md = first.(mode_deltas)
+                md = first.(plane_deltas)
                 modes = m.λmodes[λ]
                 _modes = m._λmodes[λ]
                 @nograd modes, _modes, md

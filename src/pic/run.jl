@@ -170,7 +170,7 @@ function picrun(path, array=Array; kw...)
     i = int(v2i(zmode - zmin, deltas[3]))
     j = int(v2i(zmode + hmode - zmin, deltas[3]))
     mode_spacings = [spacings[1][1], adddims(spacings[3][i+1:j], dims=1)]
-    mode_deltas = mode_spacings * dl
+    plane_deltas = mode_spacings * dl
     global runs = [SortedDict([k => isa(v, AbstractDict) ? SortedDict(v) : v for (k, v) = pairs(run)]) for run in runs]
     global runs_sources = [
         begin
@@ -225,7 +225,7 @@ function picrun(path, array=Array; kw...)
     global run_probs =
         [
             begin
-                setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ, ; pmlfracs=[1, 1, 0.2], approx_2D_mode, array,
+                setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, plane_deltas[1:N-1] / λ, ; pmlfracs=[1, 1, 0.2], approx_2D_mode, array,
                     F, ϵ, ϵ3, deltas3=deltas / λ, λ, TEMP, Ttrans, Tss)
             end for (i, (run, sources, monitors)) in enumerate(zip(runs, runs_sources, runs_monitors))
         ]

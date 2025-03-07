@@ -43,7 +43,7 @@ function genrun(path, array=Array; kw...)
     spacings = [x, x, spacings[3]]
     popfirst!.(ticks)
     deltas = spacings * dl
-    mode_deltas = [dx, dx, dx]
+    plane_deltas = [dx, dx, dx]
 
     # global sz = round.(L / dl)
 
@@ -129,7 +129,7 @@ function genrun(path, array=Array; kw...)
 
     boundaries = []
     N = 3
-    global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, mode_deltas[1:N-1] / λ;
+    global prob = setup(dl / λ, boundaries, sources, monitors, deltas[1:N] / λ, plane_deltas[1:N-1] / λ;
         geometry..., array, F, deltas3=deltas / λ, Ttrans, Tss, Tssmin,
         # pmlfracs=[0.2, 0.2, 0.2],
         # pmlfracs=1 / λs[1] * ones(3),

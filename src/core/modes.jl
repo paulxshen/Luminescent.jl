@@ -18,9 +18,10 @@ function inner(u, v, deltas)
         conj(u(:Ey, 0)) ⊙ v(:Hx, 0) +
         conj(u(:Hy, 0)) ⊙ v(:Ex, 0) -
         conj(u(:Hx, 0)) ⊙ v(:Ey, 0)
-
-    sum(reduce(deltas; init=p) do a, v
-        a .* v
+    N = length(deltas)
+    p * sum(mapreduce((x, y) -> x .* y, enumerate(deltas)) do (i, v)
+        sel = i .== N
+        reshape(v, (length(v) * sel + .!sel)...)
     end)
 end
 
@@ -76,36 +77,35 @@ function insert(a, i, v)
 end
 
 function localframe(u, monitor)
-    N = ndims(monitor)
-    if !isnothing(monitor.dimsperm)
-        permutexyz(u, monitor.dimsperm, N)
-    else
-        u = packxyz(u)
-        u = kmap(u) do v
-            inv(monitor.frame) * v
-        end
-        u = unpackxyz(u)
-        u
+    # N = ndims(monitor)
+    # if !isnothing(monitor.dimsperm)
+    #     permutexyz(u, monitor.dimsperm, N)
+    # else
+    u = packxyz(u)
+    u = kmap(u) do v
+        inv(monitor.frame) * v
     end
+    u = unpackxyz(u)
+    getindexf.((u,), Tuple.(monitor.plane_Is))
 end
 
-function globalframe(mode, monitor)
-    # global _gf1 = mode, monitor
-    @unpack dimsperm, frame = monitor
-    N = ndims(monitor)
-    if !isnothing(dimsperm)
-        permutexyz(mode, invperm(dimsperm), N)
-    else
-        mode = packxyz(mode)
-        mode = kmap(mode) do v
-            frame * v
-        end
+# function globalframe(mode, monitor)
+#     # global _gf1 = mode, monitor
+#     @unpack dimsperm, frame = monitor
+#     N = ndims(monitor)
+#     if !isnothing(dimsperm)
+#         permutexyz(mode, invperm(dimsperm), N)
+#     else
+#         mode = packxyz(mode)
+#         mode = kmap(mode) do v
+#             frame * v
+#         end
 
-        mode = unpackxyz(mode)
-        # global _gf2 = mode, monitor
-        # error("stop")
-    end
-end
+#         mode = unpackxyz(mode)
+#         # global _gf2 = mode, monitor
+#         # error("stop")
+#     end
+# end
 # function localframe(frame, u, inv=false)
 #     # p = = 0
 #     d = ndims(u[1]) + 1
@@ -139,7 +139,7 @@ end
 # invlocalframe(frame, u) = localframe(frame, u, true)
 
 
-function solvemodes(ϵ, dl, λ, neigs, spacing, path; mode_solutions=nothing)
+function solvemodes(ϵ, dl, λ, neigs, path; mode_solutions=nothing)
     if !isnothing(mode_solutions)
         i = findfirst(mode_solutions) do v
             mesheps, _dl, _λ, _neigs = v
@@ -172,7 +172,7 @@ function solvemodes(ϵ, dl, λ, neigs, spacing, path; mode_solutions=nothing)
 
     modes = [npzread(joinpath(path, "$(name)_mode_$(i-1).npz")) for i = 1:neigs]
     modes = [merge(mode, OrderedDict(["J$s" => mode["E$s"] .* ϵ for s = "xy"])) for mode in modes]
-    modes = [SortedDict([Symbol(k) => downsample(mode(k), spacing) for k = keys(mode) if string(k)[end] in "xy"]) |> pairs |> NamedTuple for mode in modes]
+    modes = [SortedDict([Symbol(k) => mode(k) for k = keys(mode) if string(k)[end] in "xy"]) |> pairs |> NamedTuple for mode in modes]
 
     if !isnothing(mode_solutions)
         println("saving mode solutions")
