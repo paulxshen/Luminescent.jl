@@ -300,7 +300,7 @@ lumi.make_movie(path)
 # sol = lumi.load_sol(path)
 
 ```
-![alt text](sim-2.gif)
+![alt text](sim-3.gif)
 ### Symmetric crossing
 ```python
 import os
