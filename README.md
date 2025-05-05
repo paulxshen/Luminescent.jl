@@ -74,6 +74,7 @@ Ring resonator sparams similar to [Lumerical example](https://optics.ansys.com/h
 """
 
 import luminescent as lumi
+from luminescent import OVERRIDE, WG, CLAD
 from gdsfactory.technology import LogicalLayer, LayerLevel, LayerStack
 import gdsfactory as gf
 import numpy as np
@@ -90,37 +91,57 @@ source_port_margin = 2
 zmargin_mode = 0.5
 xmargin_mode = 0.5
 
-# layers
-WG = (1, 0)
-CLAD = (2, 0)
-
 # make component in gdsfactory. alternatively can import .gds into gdsfactory
 c = gf.Component()
+
 dut = c << gf.components.ring(radius=radius, width=width, layer=WG)
+dut.move((radius + width / 2, width + gap + radius))
+
 wg1 = c << gf.components.straight(length=2 * radius + width, width=width)
 wg2 = c << gf.components.straight(length=2 * radius + width + 1, width=width)
 ext1 = c << gf.components.straight(length=1.1 * source_port_margin, width=width)
 ext3 = c << gf.components.straight(length=1.1 * source_port_margin, width=width)
 ext2 = c << gf.components.straight(length=1, width=width)
-
-dut.move((radius + width / 2, width + gap + radius))
 wg2.movey(2 * (width + gap + radius))
 ext1.connect("o2", wg1.ports["o1"])
 ext2.connect("o1", wg1.ports["o2"])
 ext3.connect("o2", wg2.ports["o1"])
 
-# add ports
+# optional: override with higher mesh density for coupling regions
+override_length = 5 * width
+override_width = width + gap
+cross_section = gf.CrossSection(
+    sections=(gf.Section(width=override_width, layer=OVERRIDE),)
+)
+or1 = c << gf.components.straight(override_length, cross_section=cross_section)
+or2 = c << gf.components.straight(override_length, cross_section=cross_section)
+or1.move((radius + width / 2 - override_length / 2, (width + gap) / 2))
+or2.move(
+    (radius + width / 2 - override_length / 2, 1.5 * width + 1.5 * gap + 2 * radius)
+)
+
+c << gf.components.bbox(component=c, layer=CLAD, top=1, bottom=1)
+
 c.add_port("o1", port=wg1.ports["o1"])
 c.add_port("o2", port=wg1.ports["o2"])  # thru channel
 c.add_port("o3", port=wg2.ports["o1"])  # drop channel
-c << gf.components.bbox(component=c, layer=CLAD, top=1, bottom=1)
-c.draw_ports()  # optional annotation
+c.draw_ports()  # optional. caution: make sure annotation doesn't change overall bounding box
 c.show()
 c.plot()
+raise ValueError("c.show() to see the component")
 
-# layer stack. lower mesh order layers override higher mesh order layers
+# layer stack. lower mesh order layers supplant higher mesh order layers
 SOI180 = LayerStack(
     layers={
+        "override": LayerLevel(
+            layer=LogicalLayer(layer=OVERRIDE),
+            thickness=thickness,
+            zmin=0.0,
+            material=None,
+            mesh_order=0,
+            # region treated like a material with a refractive index of `mesh_index` during meshing, eg to increase mesh density via override regions or set mesh density for PEC regions
+            info={"mesh_index": 6.0},
+        ),
         "core": LayerLevel(
             layer=LogicalLayer(layer=WG),
             thickness=thickness,
@@ -132,7 +153,7 @@ SOI180 = LayerStack(
             layer=LogicalLayer(layer=CLAD),
             thickness=5,
             zmin=thickness,
-            material="SiO2", # or 'air'
+            material="SiO2",  # or 'air'
             mesh_order=2,
         ),
         "sub": LayerLevel(
@@ -152,7 +173,7 @@ lumi.make_prob(
     path,  # path to make simulation folder
     component=c,
     #
-    wavelengths=np.linspace(1.5, 1.6, 101),
+    wavelengths=np.linspace(1.5, 1.6, 201),
     keys=["2,1", "3,1"],  # sparameters to compute
     #
     zmin=-1.1 * zmargin_mode,
@@ -165,7 +186,7 @@ lumi.make_prob(
     layer_stack=SOI180,
     #
     T=1000,  # max time [periods]
-    field_decay_threshold=0.03,  # field decay threshold for stopping simulation
+    field_decay_threshold=0.02,  # field decay threshold for stopping simulation
     #
     nres=6,  # number of grid points per wavelength in material (not vacuum)
     gpu="CUDA",  # None or "CUDA"
@@ -173,10 +194,11 @@ lumi.make_prob(
 )
 lumi.solve(path)  # solves simulation and saves results to path
 lumi.make_movie(path)
-```
-![alt text](sim.gif)
-```python
+
+
 import matplotlib.pyplot as plt
+
+path = os.path.join("runs", f"ring")
 sol = lumi.load_sol(path)
 k = "T"  # choices: S, T, dB
 x = [float(x) for x in sol[k].keys()]
@@ -186,7 +208,11 @@ plt.xlabel("wavelength [um]")
 plt.ylabel("drop channel T")
 plt.show()
 ```
-![alt text](Figure_1.png)
+
+![alt text](image-1.png)
+![alt text](sim.gif)
+![alt text](Figure_1-1.png)
+
 ## Inverse design examples
 ### Wavelength demultiplexer (getting started tutorial)
 ```python
