@@ -217,33 +217,39 @@ plt.show()
 ### Wavelength demultiplexer (getting started tutorial)
 ```python
 """
-We inverse design a 1x2 wavelength demultiplexer separating 1.2um and 1.8um signals. Done in 2.5D for sake of demonstration with limited RAM.
+We inverse design a 1x2 wavelength demultiplexer separating 1.0um and 2.0um signals. Done in 2.5D for sake of demonstration with limited RAM.
 
-30G RAM, 1h on colab free TPU runtime (TPU not used)
+30G RAM, 1h on CPU
 """
 
+import math
 import os
 import luminescent as lumi
+from luminescent import DESIGN, WG, CLAD
 import gdsfactory as gf
 from gdsfactory.technology import LogicalLayer, LayerLevel, LayerStack
 
 path = os.path.join("runs", "demux")
+length = 5.0
+width = 2.0
+width_wg = 0.5
 
 # margins
 source_port_margin = 1
-port_margin = 0.25
+port_margin = 0.3
 xmargin_mode = 0.5
 
-# layers
-WG = (1, 0)
-CLAD = (2, 0)
-
-c = gf.Component()
-
 # makes gdsfadory component to be optimized. has rectangular design region with port stubs. ports numbered clockwise from bottom left. `io` specifies input output paths for initial geometry
-width_wg = 0.5
+c = gf.Component()
 dut = c << lumi.mimo(
-    l=5.0, w=3.0, west=1, east=2, width_wg=width_wg, io=[(1, 2), (1, 3)]
+    length,
+    width,
+    west=1,
+    east=2,
+    width_wg=width_wg,
+    io=[(1, 2), (1, 3)],
+    layer=WG,
+    design_layer=DESIGN,
 )
 
 # margin extensions
@@ -260,14 +266,21 @@ c.add_port("o2", port=dut.ports["o2"])
 c.add_port("o3", port=dut.ports["o3"])
 c << gf.components.bbox(component=c, layer=CLAD, top=1, bottom=1)
 
-c.draw_ports()  # optional annotation
 c.plot()
 c.show()
 
 # layer stack. lower mesh order layers override higher mesh order layers. for 2.5D problems as is here, the mesher will slice thru middle of 'core' layer
 thickness = 0.22
+materials = lumi.MATERIALS
 layer_stack = LayerStack(
     layers={
+        "design": LayerLevel(
+            layer=LogicalLayer(layer=DESIGN),
+            thickness=thickness,
+            zmin=0.0,
+            material=None,
+            mesh_order=0,
+        ),
         "core": LayerLevel(
             layer=LogicalLayer(layer=WG),
             thickness=thickness,
@@ -288,20 +301,21 @@ layer_stack = LayerStack(
 # optimization targets wrt wavelengths
 targets = {
     "tparams": {
-        1.2: {"3,1": 1.0},
-        1.8: {"2,1": 1.0},
+        1.0: {"3,1": 1.0},
+        2.0: {"2,1": 1.0},
     }
 }
 
-lumi.make_design_prob(
+lumi.make_prob(
     path,  # path to make problem folder
     c,
-    targets,
+    targets=targets,
     #
+    materials=materials,
     layer_stack=layer_stack,
     approx_2D_mode="TE",  # makes problem 2.5D instead of 3D
     #
-    lmin=0.2,  # approximate minimum feature size
+    lmin=0.15,  # approximate minimum feature size
     fill_material="Si",
     void_material="SiO2",
     #
@@ -310,10 +324,12 @@ lumi.make_design_prob(
     #
     nres=6,  # number of grid points per wavelength in material (not vacuum)
     #
+    init_holes=True,
     stoploss=0.05,
     iters=100,  # max iters
     #
     gpu=None,
+    saveat=5,  # save frame every `saveat` periods for movie
     force=True,  # delete and overwrite existing path
 )
 
@@ -321,6 +337,9 @@ lumi.make_design_prob(
 lumi.solve(path)
 lumi.make_movie(path)
 
+# if `path` has `solution.json` from previous run, `solve` will use it as initial geometry for finetuning.
+# lumi.solve(path, iters=50, stoploss=.03)
+# sol = lumi.load_sol(path)
 # if `path` has `solution.json` from previous run, `solve` will use it as initial geometry for finetuning.
 # lumi.solve(path, iters=50, stoploss=.03)
 # sol = lumi.load_sol(path)
@@ -390,7 +409,7 @@ targets = {
         1.55: {"3,1": 1.0},
     }
 }
-lumi.make_design_prob(
+lumi.make_prob(
     path,
     c,
     targets,
