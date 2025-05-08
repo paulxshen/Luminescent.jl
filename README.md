@@ -58,6 +58,7 @@ Experimental release 🥼. Expect critters  🐛🐞
 - Paid
     - Custom features
     - Perpetual license
+    - 1yr of support and updates
     - Full ownership, run anywhere
     - No vendor or cloud lock-in (eg Tidy3D)
     - Fraction of the cost vs Lumerical, Tidy3D, COMSOL, CST, HFSS
@@ -93,6 +94,10 @@ https://colab.research.google.com/drive/1XHC2bEULDzIYSUe4WI48Cmy8a77lArUu?usp=sh
 https://colab.research.google.com/drive/13oneyRcUwEonLCk-PwB8Lrl_jMgzNn5n?usp=sharing
 
 ![alt text](sim-3.gif)
+
+### Splitter
+https://colab.research.google.com/drive/1Awtw9slUD9TKu1Zezg9RlarJ1z5aRB0L?usp=sharing
+![alt text](image-2.png)
 
 ### Symmetric crossing
 https://colab.research.google.com/drive/1CJ-eLSzOgb9d4W7tmFd3k2h4qYs6Q9cG?usp=sharing
