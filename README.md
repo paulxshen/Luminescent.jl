@@ -52,16 +52,17 @@ Experimental release 🥼. Expect critters  🐛🐞
 - PML, periodic, PEC, PMC boundaries
 - Nonlinear, dispersive and anisotropic materials
 
-**Affordable**
-- Free
-    - Basic features
-- Paid
-    - Custom features
-    - Perpetual license
+# Pricing
+Core code is open source. Build code and advanced features are proprietary. Contact us for free CPU binaries.
+- Forever free tier
+    - CPU binaries with core features
+    - Full ownership, perpetual usage
+    - Fully local, run anywhere
+- Lux tier
+    - Everything in free tier
+    - Advanced features eg GPU binaries
     - 1yr of support and updates
-    - Full ownership, run anywhere
-    - No vendor or cloud lock-in (eg Tidy3D)
-    - Fraction of the cost vs Lumerical, Tidy3D, COMSOL, CST, HFSS
+    - Fraction of the cost vs Lumerical, Tidy3D, COMSOL, CST, HFSS with no cloud or license server lock-in 
 
 ✨
 
@@ -70,12 +71,10 @@ Experimental release 🥼. Expect critters  🐛🐞
 Contact us for DOWNLOAD_LINK
 
 ```
-%%shell
-pip install -U luminescent &> /dev/null
-gdown DOWNLOAD_LINK
-tar -xf lumi.tar.gz  -C /usr/local/
-```
-```
+!pip install -U luminescent &> /dev/null
+!gdown DOWNLOAD_LINK
+!tar -xf lumi.tar.gz  -C /usr/local/
+
 import os
 os.environ['PATH'] += ':/usr/local/Luminescent/bin'
 ```
