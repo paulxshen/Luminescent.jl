@@ -112,24 +112,27 @@ https://colab.research.google.com/drive/1CJ-eLSzOgb9d4W7tmFd3k2h4qYs6Q9cG?usp=sh
 ## Inverse design examples
 ### Metagrating
 
-# RF and microwave circuits (propreitary)
+# RF and microwave circuits
 ## Simulation examples
-### Microstrip stub filter
+### Microstrip quarter wavelength stub filter
+https://colab.research.google.com/drive/1ymWD36Xvx4jcbf2-p-MeKZIwU2PzbAOv?usp=sharing
+![alt text](sim-4.gif)
+![alt text](image-3.png)
 ## Inverse design examples
 ### Microstrip bandpass filter
 
-# Planar antennas (propreitary)
+# Planar antennas (proprietary)
 ## Simulation examples
 ### Inverted F antenna
 ## Inverse design examples
 ### Patch antenna
 
-# 3D antennas (propreitary)
+# 3D antennas (proprietary)
 ## Simulation examples
 ### Coaxial fed horn antenna
 ## Inverse design examples
 ### 3D printed RF lens
 
-# Biomedical RF (propreitary)
+# Biomedical RF (proprietary)
 ## Simulation examples
 ### Human head SAR 
