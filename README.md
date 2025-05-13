@@ -56,13 +56,13 @@ Experimental release 🥼. Expect critters  🐛🐞
 Core code is open source. Build code and advanced features are proprietary. Contact us for free CPU binaries.
 - Forever free tier
     - CPU binaries with core features
-    - Full ownership, perpetual usage
     - Fully local, run anywhere
 - Lux tier
     - Everything in free tier
     - Advanced features eg GPU binaries
+    - Full ownership, perpetual license
+    - No cloud or license server lock-in 
     - 1yr of support and updates
-    - Fraction of the cost vs Lumerical, Tidy3D, COMSOL, CST, HFSS with no cloud or license server lock-in 
 
 ✨
 
@@ -116,7 +116,7 @@ https://colab.research.google.com/drive/1CJ-eLSzOgb9d4W7tmFd3k2h4qYs6Q9cG?usp=sh
 ### Microstrip quarter wavelength stub filter
 https://colab.research.google.com/drive/1ymWD36Xvx4jcbf2-p-MeKZIwU2PzbAOv?usp=sharing
 ![alt text](sim-4.gif)
-![alt text](image-3.png)
+![alt text](image-5.png)
 ## Inverse design examples
 ### Microstrip bandpass filter
 
