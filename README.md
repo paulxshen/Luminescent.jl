@@ -53,7 +53,7 @@ Experimental release 🥼. Expect critters  🐛🐞
 - Nonlinear, dispersive and anisotropic materials
 
 # Pricing
-Core code is open source. Build code and advanced features are proprietary. Contact us for free CPU binaries.
+Core code is open source. Build code and advanced features are proprietary. 
 - Forever free tier
     - CPU binaries with core features
     - Fully local, run anywhere
@@ -68,11 +68,9 @@ Core code is open source. Build code and advanced features are proprietary. Cont
 
 # Installation
 
-Contact us for DOWNLOAD_LINK
-
 ```
 !pip install -U luminescent &> /dev/null
-!gdown DOWNLOAD_LINK
+!gdown --fuzzy FREE_CPU_INSTALL_LINK # provided after filling out contact form at https://forms.gle/fP9wAkdJinT8t66w8
 !tar -xf lumi.tar.gz  -C /usr/local/
 
 import os
@@ -96,7 +94,7 @@ https://colab.research.google.com/drive/13oneyRcUwEonLCk-PwB8Lrl_jMgzNn5n?usp=sh
 
 ### Splitter
 https://colab.research.google.com/drive/1Awtw9slUD9TKu1Zezg9RlarJ1z5aRB0L?usp=sharing
-![alt text](image-2.png)
+![alt text](sim-6.gif)
 
 ### Symmetric crossing
 https://colab.research.google.com/drive/1CJ-eLSzOgb9d4W7tmFd3k2h4qYs6Q9cG?usp=sharing
