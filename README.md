@@ -1,7 +1,11 @@
 # Luminescent AI - FDTD Simulation and Inverse Design
 
 2025/04/25  
-Paul Shen <pxshen@alumni.stanford.edu>  
+Paul Shen  
+<pxshen@alumni.stanford.edu>  
+
+# Update
+Undergoing maintenance - check back on 2025/05/23 for updated installer! You can browse the examples in the meantime.
 
 # Summary
 
@@ -107,8 +111,8 @@ https://colab.research.google.com/drive/1CJ-eLSzOgb9d4W7tmFd3k2h4qYs6Q9cG?usp=sh
 ## Simulation examples
 ### Microwave frequency selective surface (FSS)
 https://colab.research.google.com/drive/1ofB-iSfh7uSQS7AqfzSkgbJu3NG1mPsh?usp=sharing
-![alt text](sim-5.gif)
-![alt text](image-6.png)
+![alt text](sim-7.gif)
+![alt text](image-7.png)
 ### Metasurface lens (getting started tutorial)
 ## Inverse design examples
 ### Metagrating
@@ -117,8 +121,8 @@ https://colab.research.google.com/drive/1ofB-iSfh7uSQS7AqfzSkgbJu3NG1mPsh?usp=sh
 ## Simulation examples
 ### Microstrip quarter wavelength stub filter
 https://colab.research.google.com/drive/1ymWD36Xvx4jcbf2-p-MeKZIwU2PzbAOv?usp=sharing
-![alt text](sim-4.gif)
-![alt text](image-5.png)
+![alt text](sim-8.gif)
+![alt text](image-8.png)
 ## Inverse design examples
 ### Microstrip bandpass filter
 
