@@ -74,7 +74,6 @@ Fill out new user [form](https://forms.gle/fP9wAkdJinT8t66w8) to obtain free tie
 
 https://colab.research.google.com/drive/1XHC2bEULDzIYSUe4WI48Cmy8a77lArUu?usp=sharing
 
-![alt text](image-1.png)
 ![alt text](sim.gif)
 ![alt text](Figure_1-1.png)
 
