@@ -4,9 +4,6 @@
 Paul Shen  
 <pxshen@alumni.stanford.edu>  
 
-# Update
-Undergoing maintenance - check back on 2025/05/23 for updated installer! You can browse the examples in the meantime.
-
 # Summary
 
 [Luminescent AI](https://luminescentai.com/) enables generative design and simulation of electromagnetic structures  in just a few lines of code! We help design next generation photonic integrated circuits, optical metasurfaces, RF and microwave circuits, and antennas in diverse industries including consumer electronics, automotive, telecom, datacenters and quantum computing. We created an automatic differentiation (AD) and GPU compatible finite difference time domain (FDTD) simulator and geometry generator.
@@ -68,13 +65,11 @@ Core code is open source. Build code and advanced features are proprietary.
     - No cloud or license server lock-in 
     - 1yr of support and updates
 
-✨
-
 # Installation
 
 ```
 !pip install -U luminescent &> /dev/null
-!gdown --fuzzy FREE_CPU_INSTALL_LINK # provided after filling out contact form at https://forms.gle/fP9wAkdJinT8t66w8
+!gdown --fuzzy FREE_CPU_INSTALL_LINK &> /dev/null # provided after filling out contact form at https://forms.gle/fP9wAkdJinT8t66w8
 !tar -xf lumi.tar.gz  -C /usr/local/
 
 import os
