@@ -112,7 +112,7 @@ https://colab.research.google.com/drive/1CJ-eLSzOgb9d4W7tmFd3k2h4qYs6Q9cG?usp=sh
 ### Microwave frequency selective surface (FSS)
 https://colab.research.google.com/drive/1ofB-iSfh7uSQS7AqfzSkgbJu3NG1mPsh?usp=sharing
 ![alt text](sim-7.gif)
-![alt text](image-7.png)
+![alt text](image-10.png)
 ### Metasurface lens (getting started tutorial)
 ## Inverse design examples
 ### Metagrating
