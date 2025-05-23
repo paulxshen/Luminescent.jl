@@ -66,15 +66,8 @@ Core code is open source. Build code and advanced features are proprietary.
     - 1yr of support and updates
 
 # Installation
+Fill out new user [form](https://forms.gle/fP9wAkdJinT8t66w8) to obtain free tier Linux install script.
 
-```
-!pip install -U luminescent &> /dev/null
-!gdown --fuzzy FREE_CPU_INSTALL_LINK &> /dev/null # provided after filling out contact form at https://forms.gle/fP9wAkdJinT8t66w8
-!tar -xf lumi.tar.gz  -C /usr/local/
-
-import os
-os.environ['PATH'] += ':/usr/local/Luminescent/bin'
-```
 # Photonic integrated circuits
 ## Simulation examples
 ### Ring resonator (getting started tutorial)
