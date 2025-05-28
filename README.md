@@ -80,16 +80,14 @@ https://colab.research.google.com/drive/1XHC2bEULDzIYSUe4WI48Cmy8a77lArUu?usp=sh
 ## Inverse design examples
 ### Wavelength demultiplexer (getting started tutorial)
 https://colab.research.google.com/drive/13oneyRcUwEonLCk-PwB8Lrl_jMgzNn5n?usp=sharing
+![alt text](sim-9.gif)
 
-![alt text](sim-3.gif)
-
-### Splitter
+<!-- ### Splitter
 https://colab.research.google.com/drive/1Awtw9slUD9TKu1Zezg9RlarJ1z5aRB0L?usp=sharing
-![alt text](sim-6.gif)
+![alt text](sim-6.gif) -->
 
 ### Symmetric crossing
 https://colab.research.google.com/drive/1CJ-eLSzOgb9d4W7tmFd3k2h4qYs6Q9cG?usp=sharing
-
 ![alt text](sim-1.gif)
 ```python
 ```
