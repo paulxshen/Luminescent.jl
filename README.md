@@ -1,6 +1,6 @@
 # Luminescent AI - FDTD Simulation and Inverse Design
 
-2025/05/26
+2025/05/26  
 Paul Shen  
 <pxshen@alumni.stanford.edu>  
 
@@ -53,12 +53,12 @@ Experimental release 🥼. Expect critters  🐛🐞
 - PML, periodic, PEC, PMC boundaries
 - Nonlinear, dispersive and anisotropic materials
 
-# Pricing
+# Product tiers
 Core code is open source. Build code and advanced features are proprietary. 
 - Forever free tier
     - CPU binaries with core features
     - Fully local, run anywhere
-- Lux tier
+- Lux enterprise tier
     - Everything in free tier
     - Advanced features eg GPU binaries
     - Full ownership, perpetual license
@@ -67,6 +67,15 @@ Core code is open source. Build code and advanced features are proprietary.
 
 # Installation
 Fill out new user [form](https://forms.gle/fP9wAkdJinT8t66w8) to obtain free tier Linux install script.
+# Metasurfaces
+## Simulation examples
+### Microwave frequency selective surface (FSS)
+https://colab.research.google.com/drive/1ofB-iSfh7uSQS7AqfzSkgbJu3NG1mPsh?usp=sharing
+![alt text](sim-7.gif)
+![alt text](image-10.png)
+### Metasurface lens (getting started tutorial)
+## Inverse design examples
+### Metagrating
 
 # Photonic integrated circuits
 ## Simulation examples
@@ -91,16 +100,6 @@ https://colab.research.google.com/drive/1CJ-eLSzOgb9d4W7tmFd3k2h4qYs6Q9cG?usp=sh
 ![alt text](sim-1.gif)
 ```python
 ```
-
-# Metasurfaces
-## Simulation examples
-### Microwave frequency selective surface (FSS)
-https://colab.research.google.com/drive/1ofB-iSfh7uSQS7AqfzSkgbJu3NG1mPsh?usp=sharing
-![alt text](sim-7.gif)
-![alt text](image-10.png)
-### Metasurface lens (getting started tutorial)
-## Inverse design examples
-### Metagrating
 
 # RF and microwave circuits
 ## Simulation examples
