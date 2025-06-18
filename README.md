@@ -5,7 +5,7 @@ Paul Shen
 <pxshen@alumni.stanford.edu>  
 
 # Update  
-Next version release planned for 2025/06/14
+Next version release planned for 2025/06/25
 # Summary
 
 [Luminescent AI](https://luminescentai.com/) enables generative design and simulation of electromagnetic structures  in just a few lines of code! We help design next generation photonic integrated circuits, optical metasurfaces, RF and microwave circuits, and antennas in diverse industries including consumer electronics, automotive, telecom, datacenters and quantum computing. We created an automatic differentiation (AD) and GPU compatible finite difference time domain (FDTD) simulator and geometry generator.
