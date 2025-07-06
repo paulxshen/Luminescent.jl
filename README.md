@@ -1,11 +1,9 @@
 # Luminescent AI - FDTD Simulation and Inverse Design
 
-2025/06/04  
+2025/07/06  
 Paul Shen  
 <pxshen@alumni.stanford.edu>  
 
-# Update  
-Next version release planned for 2025/06/25
 # Summary
 
 [Luminescent AI](https://luminescentai.com/) enables generative design and simulation of electromagnetic structures  in just a few lines of code! We help design next generation photonic integrated circuits, optical metasurfaces, RF and microwave circuits, and antennas in diverse industries including consumer electronics, automotive, telecom, datacenters and quantum computing. We created an automatic differentiation (AD) and GPU compatible finite difference time domain (FDTD) simulator and geometry generator.
@@ -61,8 +59,8 @@ Fill out new user [form](https://forms.gle/fP9wAkdJinT8t66w8) to obtain Linux in
 ### Microwave frequency selective surface (FSS)
 [Colab notebook](https://colab.research.google.com/drive/1ofB-iSfh7uSQS7AqfzSkgbJu3NG1mPsh?usp=sharing)  
 [Video tutorial](https://www.youtube.com/watch?v=Uq7OnLmFSEk)
-![alt text](sim-7.gif)
-![alt text](image-10.png)
+![alt text](assets/sim-7.gif)
+![alt text](assets/image-10.png)
 ### Metasurface lens 
 ## Inverse design examples
 ### Metagrating
@@ -71,14 +69,14 @@ Fill out new user [form](https://forms.gle/fP9wAkdJinT8t66w8) to obtain Linux in
 ## Simulation examples
 ### Ring resonator (getting started tutorial)
 [Colab notebook](https://colab.research.google.com/drive/1XHC2bEULDzIYSUe4WI48Cmy8a77lArUu?usp=sharing)  
-![alt text](sim.gif)
-![alt text](Figure_1-1.png)
+![alt text](assets/sim.gif)
+![alt text](assets/Figure_1-1.png)
 
 ## Inverse design examples
 ### Wavelength demultiplexer (getting started tutorial)
 [Colab notebook](https://colab.research.google.com/drive/13oneyRcUwEonLCk-PwB8Lrl_jMgzNn5n?usp=sharing)  
 [Video tutorial](https://youtu.be/DX1_vPu0ngI)
-![alt text](sim-9.gif)
+![alt text](assets/sim-9.gif)
 
 <!-- ### Splitter
 https://colab.research.google.com/drive/1Awtw9slUD9TKu1Zezg9RlarJ1z5aRB0L?usp=sharing
@@ -86,7 +84,7 @@ https://colab.research.google.com/drive/1Awtw9slUD9TKu1Zezg9RlarJ1z5aRB0L?usp=sh
 
 ### Symmetric crossing
 [Colab notebook](https://colab.research.google.com/drive/1CJ-eLSzOgb9d4W7tmFd3k2h4qYs6Q9cG?usp=sharing)
-![alt text](sim-1.gif)
+![alt text](assets/sim-1.gif)
 ```python
 ```
 
@@ -94,8 +92,8 @@ https://colab.research.google.com/drive/1Awtw9slUD9TKu1Zezg9RlarJ1z5aRB0L?usp=sh
 ## Simulation examples
 ### Microstrip quarter wavelength stub filter
 [Colab notebook](https://colab.research.google.com/drive/1ymWD36Xvx4jcbf2-p-MeKZIwU2PzbAOv?usp=sharing)
-![alt text](sim-8.gif)
-![alt text](image-8.png)
+![alt text](assets/sim-8.gif)
+![alt text](assets/image-8.png)
 ## Inverse design examples
 ### Microstrip bandpass filter
 
