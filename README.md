@@ -1,17 +1,17 @@
 # Luminescent AI - FDTD Simulation and Inverse Design
 
-2025/07/06  
+2025/08/01  
 Paul Shen  
 <pxshen@alumni.stanford.edu>  
 
 # Summary
 
-[Luminescent AI](https://luminescentai.com/) enables generative design and simulation of electromagnetic structures  in just a few lines of code! We help design next generation photonic integrated circuits, optical metasurfaces, RF and microwave circuits, and antennas in diverse industries including consumer electronics, automotive, telecom, datacenters and quantum computing. We created an automatic differentiation (AD) and GPU compatible finite difference time domain (FDTD) simulator and geometry generator.
+Luminescent AI enables generative design and simulation of electromagnetic structures  in just a few lines of code! We help design next generation photonic integrated circuits, optical metasurfaces, RF and microwave circuits, and antennas in diverse industries including consumer electronics, automotive, telecom, datacenters and quantum computing. We created an automatic differentiation (AD) and GPU compatible finite difference time domain (FDTD) simulator and geometry generator.
 
 
 [GitHub](https://github.com/paulxshen/Luminescent.jl): Star us :) We respond to issues within a day  
 [LinkedIn](https://www.linkedin.com/company/luminescent-ai/about): Follow us for new features and bug fixes  
-[Company](luminescentai.com): Consulting, collaboration, publication opportunities available  
+[Company](luminescentai.com): Consulting, collaboration, publication, investment
 
 Email: pxshen@alumni.stanford.edu  
 WhatsApp: 650-776-7724  
@@ -24,6 +24,7 @@ Experimental release 🥼. Expect critters  🐛🐞
 **Easy**
 - Generative design and simulation in just few lines of Python code!
 - Broadband and multimode S-parameters 
+- Embedded mode solver for modal sources and monitors
 - Near and far field radiation patterns
 - Application specific API via gdsfactory integration
     - Photonic integrated circuits 
@@ -35,8 +36,8 @@ Experimental release 🥼. Expect critters  🐛🐞
     - Biomedical RF
 
 **Fast**
-- Adaptive graded mesh
-- Tensor subpixel smoothing for accuracy on coarse meshes
+- Adaptive graded mesh for reduced cell count
+- Tensor subpixel smoothing for accuracy even on coarse mesh
 - Optional GPU acceleration
 
 **Smart**
@@ -46,69 +47,44 @@ Experimental release 🥼. Expect critters  🐛🐞
 - Length scale controlled geometry optimizer with fabrication constraints  
 
 **Comprehensive**
-- Embedded mode solver for modal sources and monitors
 - Modal sources, plane waves, Gaussian beams, custom sources
 - Oblique sources and monitors
 - PML, periodic, Bloch, PEC boundaries
 - Nonlinear, dispersive and anisotropic materials
 
-# Installation
-Fill out new user [form](https://forms.gle/fP9wAkdJinT8t66w8) to obtain Linux install script.
-# Metasurfaces
-## Simulation examples
-### Microwave frequency selective surface (FSS)
-[Colab notebook](https://colab.research.google.com/drive/1ofB-iSfh7uSQS7AqfzSkgbJu3NG1mPsh?usp=sharing)  
-[Video tutorial](https://www.youtube.com/watch?v=Uq7OnLmFSEk)
-![alt text](assets/sim-7.gif)
-![alt text](assets/image-10.png)
-### Metasurface lens 
-## Inverse design examples
-### Metagrating
+# Examples
+## Simulation
+### [Tutorial: photonic ring resonator](https://colab.research.google.com/drive/1NQ222-Odjz4Yg_ZguFyhLTMUplpKafgX?usp=sharing)  
+### [Microwave frequency selective surface (FSS)](https://colab.research.google.com/drive/1R477Sk5y-qPRHokCeYm98U1Jo4C8qwR8?usp=sharing) | [video](https://www.youtube.com/watch?v=Uq7OnLmFSEk)
+### [Microstrip quarter wavelength stub filter](https://colab.research.google.com/drive/1NqAf7z9sDB8BdkNkSDoP24ckSv0XYquH?usp=sharing)
 
-# Photonic integrated circuits
-## Simulation examples
-### Ring resonator (getting started tutorial)
-[Colab notebook](https://colab.research.google.com/drive/1XHC2bEULDzIYSUe4WI48Cmy8a77lArUu?usp=sharing)  
-![alt text](assets/sim.gif)
-![alt text](assets/Figure_1-1.png)
+## Inverse design 
+### [Tutorial: photonic wavelength demultiplexer](https://colab.research.google.com/drive/1vJ-y2NabANt9xD-hWUq0rTBaeLzaBzmG?usp=sharing) | [video](https://youtu.be/DX1_vPu0ngI)
 
-## Inverse design examples
-### Wavelength demultiplexer (getting started tutorial)
-[Colab notebook](https://colab.research.google.com/drive/13oneyRcUwEonLCk-PwB8Lrl_jMgzNn5n?usp=sharing)  
-[Video tutorial](https://youtu.be/DX1_vPu0ngI)
-![alt text](assets/sim-9.gif)
+### [Photonic symmetric crossing](https://colab.research.google.com/drive/1ah2517VuLNj0kUSyux2LGEtQppVClvNH?usp=sharing)
 
-<!-- ### Splitter
-https://colab.research.google.com/drive/1Awtw9slUD9TKu1Zezg9RlarJ1z5aRB0L?usp=sharing
-![alt text](sim-6.gif) -->
+# Product
+All installers are fully local and never expire.   
 
-### Symmetric crossing
-[Colab notebook](https://colab.research.google.com/drive/1CJ-eLSzOgb9d4W7tmFd3k2h4qYs6Q9cG?usp=sharing)
-![alt text](assets/sim-1.gif)
+**Free**
+- CPU + GPU binaries
+- 3D simulation up to 0.5M cells
+- 2.5D inverse design  
+
+**Pro**
+- Everything in free
+- Unrestricted 3D simulation
+- 3D inverse design
+- 1 year of updates and support
+<!-- # Product tiers
+
 ```python
-```
+``` -->
 
-# RF and microwave circuits
+<!-- # RF and microwave circuits
 ## Simulation examples
-### Microstrip quarter wavelength stub filter
-[Colab notebook](https://colab.research.google.com/drive/1ymWD36Xvx4jcbf2-p-MeKZIwU2PzbAOv?usp=sharing)
-![alt text](assets/sim-8.gif)
-![alt text](assets/image-8.png)
-## Inverse design examples
+![alt text](assets/sim-8.gif) ![alt text](assets/image-8.png) -->
+<!-- ## Inverse design examples
+### Microstrip patch antenna
 ### Microstrip bandpass filter
-
-# Planar antennas (proprietary)
-## Simulation examples
-### Inverted F antenna
-## Inverse design examples
-### Patch antenna
-
-# 3D antennas (proprietary)
-## Simulation examples
-### Coaxial fed horn antenna
-## Inverse design examples
-### 3D printed RF lens
-
-# Biomedical RF (proprietary)
-## Simulation examples
-### Human head SAR 
+### 3D printed RF lens -->
