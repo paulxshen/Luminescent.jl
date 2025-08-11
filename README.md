@@ -61,7 +61,7 @@ Experimental release 🥼. Expect critters  🐛🐞
 ## Inverse design
 ### [Tutorial: photonic wavelength demultiplexer](https://colab.research.google.com/drive/1vJ-y2NabANt9xD-hWUq0rTBaeLzaBzmG?usp=sharing) | [video](https://youtu.be/DX1_vPu0ngI)
 
-### Photonic symmetric crossing
+### [Photonic symmetric crossing](https://colab.research.google.com/drive/1ah2517VuLNj0kUSyux2LGEtQppVClvNH?usp=sharing)
 
 # Product
 All installers are fully local and never expire.   
