@@ -56,9 +56,9 @@ Experimental release 🥼. Expect critters  🐛🐞
 ## Simulation
 ### [Tutorial: photonic ring resonator](https://colab.research.google.com/drive/1NQ222-Odjz4Yg_ZguFyhLTMUplpKafgX?usp=sharing)  
 ### [Microwave frequency selective surface (FSS)](https://colab.research.google.com/drive/1R477Sk5y-qPRHokCeYm98U1Jo4C8qwR8?usp=sharing) | [video](https://www.youtube.com/watch?v=Uq7OnLmFSEk)
-### [Microstrip quarter wavelength stub filter](https://colab.research.google.com/drive/1NqAf7z9sDB8BdkNkSDoP24ckSv0XYquH?usp=sharing)
+### Microstrip quarter wavelength stub filter
 
-## Inverse design (undergoing update: check back on 8/12)
+## Inverse design
 ### [Tutorial: photonic wavelength demultiplexer](https://colab.research.google.com/drive/1vJ-y2NabANt9xD-hWUq0rTBaeLzaBzmG?usp=sharing) | [video](https://youtu.be/DX1_vPu0ngI)
 
 ### [Photonic symmetric crossing](https://colab.research.google.com/drive/1ah2517VuLNj0kUSyux2LGEtQppVClvNH?usp=sharing)
