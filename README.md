@@ -1,7 +1,7 @@
 # Luminescent AI - FDTD Simulation and Inverse Design
 
-2025/08/15  
-v1.0.54  
+2025/08/23  
+v1.1 
 Paul Shen  
 <pxshen@alumni.stanford.edu>  
 
@@ -37,39 +37,8 @@ Experimental release 🥼. Expect critters  🐛🐞
 - Nonlinear, dispersive and anisotropic materials
 
 # Examples
-Test drive any of the examples below for free on Google Colab GPUs!
-## Simulation
-### [Tutorial: photonic ring resonator](https://colab.research.google.com/drive/1NQ222-Odjz4Yg_ZguFyhLTMUplpKafgX?usp=sharing)  
-### [Microwave frequency selective surface (FSS)](https://colab.research.google.com/drive/1R477Sk5y-qPRHokCeYm98U1Jo4C8qwR8?usp=sharing) | [video](https://www.youtube.com/watch?v=Uq7OnLmFSEk)
-### [Microstrip quarter wavelength stub filter](https://colab.research.google.com/drive/1NqAf7z9sDB8BdkNkSDoP24ckSv0XYquH)
-<!-- ### [Microstrip quarter wavelength stub filter](https://colab.research.google.com/drive/1b2g0k3j4a5c7d8f9e0b1c2d3e4f5g6h7?usp=sharing) | [video](https://www.youtube.com/watch?v=YzXyZzWwVvU) -->
-
-## Inverse design
-### [Tutorial: photonic wavelength demultiplexer](https://colab.research.google.com/drive/1vJ-y2NabANt9xD-hWUq0rTBaeLzaBzmG?usp=sharing) | [video](https://youtu.be/DX1_vPu0ngI)
-
-### [Photonic symmetric crossing](https://colab.research.google.com/drive/1ah2517VuLNj0kUSyux2LGEtQppVClvNH?usp=sharing)
-
-# Product
-All installers are fully local and never expire.   
-
-**Free**
-- CPU + GPU binaries
-- Simulation up to 0.5M cells
-- Inverse design up to 20M cell-steps
-
-**Pro**
-- Everything in free
-- Unrestricted size
-- 1 year of updates and support
-
-# Links
-[GitHub](https://github.com/paulxshen/Luminescent.jl): Star us :) We respond to issues within a day  
-[LinkedIn](https://www.linkedin.com/company/luminescent-ai/about): Follow us for new features and bug fixes  
-[Company](luminescentai.com): Consulting, collaboration, publication, investment
-
-Email: pxshen@alumni.stanford.edu  
-WhatsApp: 650-776-7724  
-WeChat: pxshen1230  
+[Test drive any of our examples for free on Google Colab GPUs!](https://www.luminescentai.com/product) 
+<!-- [Test drive any of our examples for free on Google Colab GPUs!](https://colab.research.google.com/drive/1NQ222-Odjz4Yg_ZguFyhLTMUplpKafgX?usp=sharing)  -->
 <!-- # Product tiers
 
 ```python
