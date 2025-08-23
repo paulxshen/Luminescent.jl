@@ -37,7 +37,7 @@ Experimental release 🥼. Expect critters  🐛🐞
 - Nonlinear, dispersive and anisotropic materials
 
 # Examples
-[Test drive any of our examples for free on Google Colab GPUs!](https://www.luminescentai.com/product) 
+[Test drive any of our examples for free on Google Colab GPUs at our new product website!](https://www.luminescentai.com/product) 
 <!-- [Test drive any of our examples for free on Google Colab GPUs!](https://colab.research.google.com/drive/1NQ222-Odjz4Yg_ZguFyhLTMUplpKafgX?usp=sharing)  -->
 <!-- # Product tiers
 
