@@ -1,4 +1,4 @@
-Please visit our docs website at github.io/paulxshen/Luminescent.jl :) This repo now only hosts docs. The source code is outdated.
+Please visit our docs [website](https://paulxshen.github.io/Luminescent.jl/) :) This repo now only hosts docs. The source code is outdated.
 
 # Home
 
