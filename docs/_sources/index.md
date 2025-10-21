@@ -1,5 +1,3 @@
-Please visit our docs website at github.io/paulxshen/Luminescent.jl :) This repo now only hosts docs. The source code is outdated.
-
 # Home
 
 Luminescent AI enables **generative design and simulation** of electromagnetic structures  in just a few lines of code! We help design next generation **photonic integrated circuits, optical metasurfaces, RF and microwave circuits, and antennas** in diverse industries including **consumer electronics, automotive, telecom, datacenters and quantum computing**. We created a **fully differentiable and GPU-accelerated finite difference time domain (FDTD)** simulator and geometry generator.
