@@ -1,5 +1,5 @@
 # Installation
-Please fill out [new user form](https://forms.gle/fP9wAkdJinT8t66w8) to obtain free tier `__INSTALL_LINK__` which is pasted below. 
+Please fill out [new user form](https://forms.gle/fP9wAkdJinT8t66w8) to obtain free tier `__INSTALL_LINK__` which is pasted into scripts below. Free tier doesn't include inverse design.
 ## Google Colab Linux with CUDA
 Easiest way is to run Luminescent on free Google Colab with GPU runtime. For more juice simply upgrade to Colab Pro to use A100 GPU for $1/hr. Run the following code cells.
 ```
