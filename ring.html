@@ -175,12 +175,14 @@
         <ul class="nav bd-sidenav bd-sidenav__home-link">
             <li class="toctree-l1">
                 <a class="reference internal" href="index.html">
-                    <no title>
+                    Home
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Install</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Product</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="features.html">Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pricing.html">Tier pricing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
@@ -199,10 +201,6 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="ref.html">Simulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="opt.html">Inverse Design</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Pricing</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="pricing.html">Tier pricing</a></li>
 </ul>
 
     </div>
@@ -474,7 +472,7 @@ document.write(`
 <span class="n">zmargin</span> <span class="o">=</span> <span class="mf">1.8</span> <span class="o">*</span> <span class="n">height_port_margin</span>
 <span class="n">source_port_margin</span> <span class="o">=</span> <span class="mf">2.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">width</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lateral_port_margin</span><span class="p">)</span>
 
-<span class="c1"># boring code to draw layout in gdsfactory. `gf.components` defaults to layer WG = (1, 0)</span>
+<span class="c1"># draw layout in gdsfactory. `gf.components` defaults to layer WG = (1, 0)</span>
 <span class="n">c</span> <span class="o">=</span> <span class="n">gf</span><span class="o">.</span><span class="n">Component</span><span class="p">()</span>
 
 <span class="n">dut</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">ring</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="n">radius</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">WG</span><span class="p">)</span>

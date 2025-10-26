@@ -1,9 +1,9 @@
 # Tier pricing
-Standalone installer so you have the freedom to run it anywhere: your local machine, your cloud provider or Google Colab. Lifetime license. No recurring fees.
+Standalone installer so you have the freedom to run it anywhere: your local machine, your cloud provider or Google Colab. Lifetime license. No recurring fees. Purchases at lower tiers or limits count as credits toward higher tiers or tiers. Upgrade as needed without penalty.
 
 ## Forever free
 - CPU + GPU binaries
-- 3D Simulation up to 1M cells
+- 3D Simulation up to 1M cells (sufficient to run all simulation tutorials)
 
 ## Pro simulation
 - Everything in free

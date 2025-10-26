@@ -1,6 +1,7 @@
-# Features
-
-Luminescent AI enables **generative design and simulation** of electromagnetic structures  in just a few lines of code! We help design next generation **photonic integrated circuits, optical metasurfaces, RF and microwave circuits, and antennas** in diverse industries including **consumer electronics, automotive, telecom, datacenters and quantum computing**. We created a **fully differentiable and GPU-accelerated finite difference time domain (FDTD)** simulator and geometry generator.
+# Home
+## Overview
+[Luminescent AI](https://luminescentai.com) enables **generative design and simulation** of electromagnetic structures  in just a few lines of code! We help design next generation **photonic integrated circuits, optical metasurfaces, RF and microwave circuits, and antennas** in diverse industries including **consumer electronics, automotive, telecom, datacenters and quantum computing**. At the heart is our **fully differentiable and GPU-accelerated finite difference time domain (FDTD)** engine.
+## Features
 
 **Powerful**
 - Generative inverse design and simulation in just few lines of Python code!
@@ -25,3 +26,10 @@ Luminescent AI enables **generative design and simulation** of electromagnetic s
 - PML, periodic, Bloch, PEC boundaries
 - Near and far field radiation patterns
 - Nonlinear, dispersive and anisotropic materials_library
+## Aboout
+We're Stanford alum and founded Luminescent AI in 2024 to democratize photonic and RF design with AI.
+
+[LinkedIn](https://www.linkedin.com/company/luminescent-ai): follow us for product updates and opportunities!  
+[Company](https://luminescentai.com): learn more about our mission and team!  
+Email: paul@luminescentai.com  
+WhatsApp and WeChat: +1 (650) 776-7724

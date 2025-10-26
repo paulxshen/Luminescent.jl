@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>RF antenna: coax fed monopole over ground &#8212; Luminescent AI FDTD</title>
+    <title>Antenna: microstrip fed patch &#8212; Luminescent AI FDTD</title>
   
   
   
@@ -57,10 +57,10 @@
     <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'monopole';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'patch';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Inverse design of photonic wavelength division demultiplexer" href="demux.html" />
+    <link rel="next" title="RF antenna: coax fed monopole over ground" href="monopole.html" />
     <link rel="prev" title="Metasurface: microwave frequency selective surface (FSS)" href="FSS.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -190,7 +190,8 @@
 <li class="toctree-l1"><a class="reference internal" href="ring.html">Photonic integrated circuit: ring resonator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stub.html">RF microstrip: quarter wave stub filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">RF antenna: coax fed monopole over ground</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Antenna: microstrip fed patch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="monopole.html">RF antenna: coax fed monopole over ground</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
 <ul class="nav bd-sidenav">
@@ -272,7 +273,7 @@
       
       
       
-      <li><a href="https://github.com/paulxshen/Luminescent.jl/issues/new?title=Issue%20on%20page%20%2Fmonopole.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/paulxshen/Luminescent.jl/issues/new?title=Issue%20on%20page%20%2Fpatch.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -302,7 +303,7 @@
       
       
       
-      <li><a href="_sources/monopole.ipynb" target="_blank"
+      <li><a href="_sources/patch.ipynb" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -386,7 +387,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>RF antenna: coax fed monopole over ground</h1>
+    <h1>Antenna: microstrip fed patch</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -396,7 +397,6 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#geometry">Geometry</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solve">Solve</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">Analysis</a></li>
@@ -411,18 +411,14 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="rf-antenna-coax-fed-monopole-over-ground">
-<h1>RF antenna: coax fed monopole over ground<a class="headerlink" href="#rf-antenna-coax-fed-monopole-over-ground" title="Link to this heading">#</a></h1>
-<section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>We simulate coax fed quarter-wave monopole antenna over ground plane. Nominally matched to 50 Ohm around 3 GHz. Please wait for v2.1 on 10/28 before running this example.</p>
-</section>
+  <section class="tex2jax_ignore mathjax_ignore" id="antenna-microstrip-fed-patch">
+<h1>Antenna: microstrip fed patch<a class="headerlink" href="#antenna-microstrip-fed-patch" title="Link to this heading">#</a></h1>
+<p>We simulate a narrowband patch antenna fed by a microstrip line around 1.5 GHz. Compare with <a class="reference external" href="https://www.comsol.com/model/microstrip-patch-antenna-11742">COMSOL example</a>. Please wait for v2.1 on 10/28 before running this example.</p>
 <section id="geometry">
 <h2>Geometry<a class="headerlink" href="#geometry" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">luminescent</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">lumi</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">luminescent</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">lumi</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gdsfactory.technology</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogicalLayer</span><span class="p">,</span> <span class="n">LayerLevel</span><span class="p">,</span> <span class="n">LayerStack</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">gdsfactory</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gf</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
@@ -430,41 +426,84 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
 
-<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;monopole&quot;</span><span class="p">)</span>
+<span class="c1"># simulation folder</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;patch&quot;</span><span class="p">)</span>
 
-<span class="c1"># length and frequency units are arbitrary</span>
-<span class="n">f</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># GHz</span>
-<span class="n">bw</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">df</span> <span class="o">=</span> <span class="mf">0.05</span>
-<span class="n">frequencies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">f</span> <span class="o">-</span> <span class="n">bw</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">f</span> <span class="o">+</span> <span class="n">bw</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">bw</span> <span class="o">/</span> <span class="n">df</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-<span class="n">wl1f</span> <span class="o">=</span> <span class="mi">300</span>  <span class="c1"># vacuum wavelength at 1 unit of frequency in your units</span>
-<span class="n">wl</span> <span class="o">=</span> <span class="n">wl1f</span> <span class="o">/</span> <span class="n">f</span>  <span class="c1"># characteristic wavelength</span>
+<span class="c1"># length and frequency units are arbitrary but must be consistent</span>
+<span class="n">frequency</span> <span class="o">=</span> <span class="mf">1.575</span>  <span class="c1"># GHz</span>
+<span class="n">wl1f</span> <span class="o">=</span> <span class="mi">300</span>  <span class="c1"># vacuum wavelength at 1 unit of frequency in your units in this case mm</span>
+<span class="n">wavelength</span> <span class="o">=</span> <span class="n">wl1f</span> <span class="o">/</span> <span class="n">frequency</span>  <span class="c1"># characteristic wavelength</span>
+<span class="n">frequencies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.6</span><span class="p">,</span> <span class="mi">51</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
-<span class="c1"># below creates monopole antenna geometry in gdsfactory. however it&#39;s easier to create in a CAD program and import .obj mesh file</span>
+<span class="c1"># microstrip patch [mm]</span>
+<span class="n">d</span> <span class="o">=</span> <span class="mf">0001.524</span> <span class="c1"># Substrate depth</span>
+<span class="n">w_line</span> <span class="o">=</span> <span class="mf">3.2</span> <span class="c1"># 50 ohm line width</span>
+<span class="n">w_patch</span> <span class="o">=</span> <span class="mi">53</span> <span class="c1"># Patch width</span>
+<span class="n">l_patch</span> <span class="o">=</span> <span class="mi">52</span> <span class="c1"># Patch length</span>
+<span class="n">w_slot</span> <span class="o">=</span> <span class="mi">7</span> <span class="c1"># slot width</span>
+<span class="n">l_flap</span> <span class="o">=</span> <span class="mf">15.5</span> <span class="c1"># flap or slot length</span>
+<span class="n">w_flap</span><span class="o">=</span><span class="n">w_patch</span><span class="o">/</span><span class="mi">2</span><span class="o">-</span><span class="n">w_slot</span><span class="o">-</span><span class="n">w_line</span><span class="o">/</span><span class="mi">2</span>
+<span class="n">w_sub</span> <span class="o">=</span> <span class="mi">200</span> <span class="c1"># Substrate width</span>
+<span class="n">l_sub</span> <span class="o">=</span> <span class="mi">200</span> <span class="c1"># Substrate length</span>
+<span class="n">th</span><span class="o">=</span><span class="mf">.1</span> <span class="c1"># metal thickness</span>
 
-<span class="c1"># coax</span>
-<span class="n">l_ant</span> <span class="o">=</span> <span class="n">wl</span> <span class="o">/</span> <span class="mi">4</span>
-<span class="n">d1</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># center conductor diameter</span>
-<span class="n">d2</span> <span class="o">=</span> <span class="mf">3.8</span>  <span class="c1"># shield inner diameter</span>
-<span class="n">thickness</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># shield thickness</span>
-<span class="n">d3</span> <span class="o">=</span> <span class="n">d2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">thickness</span>  <span class="c1"># shield outer diameter</span>
+<span class="n">lateral_port_margin</span> <span class="o">=</span> <span class="n">height_port_margin</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="n">d</span>
+<span class="n">source_port_margin</span> <span class="o">=</span> <span class="n">l_line</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">*</span><span class="p">(</span><span class="n">w_line</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">lateral_port_margin</span><span class="p">)</span>
 
-<span class="n">H</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">l_ant</span>  <span class="c1"># height of simulation domain above ground plane</span>
-<span class="n">L</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">H</span>  <span class="c1"># ground plane width</span>
-<span class="n">l_coax</span> <span class="o">=</span> <span class="n">d3</span>
-<span class="n">offset</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">thickness</span>
-
+<span class="c1"># layers</span>
 <span class="n">WG</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span>
-<span class="n">CLAD</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span>
-<span class="n">SHIELD</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span>
-<span class="n">GROUND</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span>
+<span class="n">PATCH</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span>
+<span class="n">SUB</span><span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span>
+
+<span class="c1"># make geometry in gdsfadory</span>
+<span class="c1"># alternatively can import .gds into gdsfadory</span>
 
 <span class="n">c</span> <span class="o">=</span> <span class="n">gf</span><span class="o">.</span><span class="n">Component</span><span class="p">()</span>
-<span class="n">core</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="n">d1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">clad</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="n">d2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">CLAD</span><span class="p">)</span>
-<span class="n">shield</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="n">d3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">SHIELD</span><span class="p">)</span>
 
-<span class="n">gnd</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">rectangle</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">L</span><span class="p">),</span> <span class="n">centered</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">GROUND</span><span class="p">)</span>
+<span class="n">c</span><span class="o">.</span><span class="n">add_polygon</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">l_flap</span><span class="p">,</span> <span class="o">-</span><span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">l_flap</span><span class="p">,</span> <span class="o">-</span><span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">w_flap</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">w_flap</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">layer</span><span class="o">=</span><span class="n">PATCH</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">c</span><span class="o">.</span><span class="n">add_polygon</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">l_flap</span><span class="p">,</span> <span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">l_flap</span><span class="p">,</span> <span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">w_flap</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">w_flap</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">layer</span><span class="o">=</span><span class="n">PATCH</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">c</span><span class="o">.</span><span class="n">add_polygon</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">l_flap</span><span class="p">,</span> <span class="o">-</span><span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">l_flap</span><span class="p">,</span> <span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">w_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">layer</span><span class="o">=</span><span class="n">PATCH</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">c</span><span class="o">.</span><span class="n">add_polygon</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_sub</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w_sub</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">l_sub</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">w_sub</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">l_sub</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">w_sub</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">l_sub</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w_sub</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">layer</span><span class="o">=</span><span class="n">SUB</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">line</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">((</span><span class="n">l_sub</span> <span class="o">-</span> <span class="n">l_patch</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">l_flap</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">)</span>
+<span class="n">line</span><span class="o">.</span><span class="n">movex</span><span class="p">(</span><span class="o">-</span><span class="n">l_sub</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">l_line</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">WG</span>
+<span class="p">)</span>
+
 <span class="n">c</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -473,7 +512,7 @@ document.write(`
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>running luminescent python frontend
 </pre></div>
 </div>
-<img alt="_images/cd167928cbe003a66335a2ed75a5bd35b01bc5a9f4ab01dabd01daa641c8a99f.png" src="_images/cd167928cbe003a66335a2ed75a5bd35b01bc5a9f4ab01dabd01daa641c8a99f.png" />
+<img alt="_images/8f08b83f405141843ff9dd3af50b74bad3edf1d8dc169a10409c6bdee753758d.png" src="_images/8f08b83f405141843ff9dd3af50b74bad3edf1d8dc169a10409c6bdee753758d.png" />
 </div>
 </div>
 </section>
@@ -481,116 +520,116 @@ document.write(`
 <h2>Solve<a class="headerlink" href="#solve" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">layer_stack</span> <span class="o">=</span> <span class="n">LayerStack</span><span class="p">(</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># adaptive meshing</span>
+<span class="n">nres</span> <span class="o">=</span> <span class="mi">16</span> <span class="c1"># points per wavelength in material</span>
+<span class="n">dx0</span> <span class="o">=</span> <span class="n">wavelength</span> <span class="o">/</span> <span class="n">nres</span>  <span class="c1"># mesh step in air</span>
+
+<span class="n">layer_stack</span> <span class="o">=</span> <span class="n">LayerStack</span><span class="p">(</span>
     <span class="n">layers</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;core&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
-            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">WG</span><span class="p">),</span>
-            <span class="n">zmin</span><span class="o">=-</span><span class="n">l_coax</span><span class="p">,</span>
-            <span class="n">thickness</span><span class="o">=</span><span class="n">l_coax</span> <span class="o">+</span> <span class="n">l_ant</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC_coax&quot;</span><span class="p">,</span>
-            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="s2">&quot;clad&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
-            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">CLAD</span><span class="p">),</span>
-            <span class="n">zmin</span><span class="o">=-</span><span class="n">l_coax</span><span class="p">,</span>
-            <span class="n">thickness</span><span class="o">=</span><span class="n">l_coax</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;FR&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
+            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">PATCH</span><span class="p">),</span>
+            <span class="n">zmin</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+            <span class="n">thickness</span><span class="o">=</span><span class="n">th</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC_patch&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="s2">&quot;shield&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
-            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">SHIELD</span><span class="p">),</span>
-            <span class="n">zmin</span><span class="o">=-</span><span class="n">l_coax</span><span class="p">,</span>
-            <span class="n">thickness</span><span class="o">=</span><span class="n">l_coax</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC_coax&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;line&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
+            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">WG</span><span class="p">),</span>
+            <span class="n">zmin</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+            <span class="n">thickness</span><span class="o">=</span><span class="n">th</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC_line&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="s2">&quot;ground&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
-            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">GROUND</span><span class="p">),</span>
-            <span class="n">zmin</span><span class="o">=-</span><span class="n">thickness</span><span class="p">,</span>
-            <span class="n">thickness</span><span class="o">=</span><span class="n">thickness</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC_gnd&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;core&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
+            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">SUB</span><span class="p">),</span>
+            <span class="n">zmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">thickness</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;substrate&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">}</span>
 <span class="p">)</span>
 
-<span class="n">nres</span> <span class="o">=</span> <span class="mi">16</span>
-<span class="n">dx</span><span class="o">=</span><span class="mf">.4</span>
-<span class="n">nPEC</span> <span class="o">=</span> <span class="n">wl</span> <span class="o">/</span> <span class="n">nres</span> <span class="o">/</span> <span class="n">dx</span>
-<span class="n">epsFR</span> <span class="o">=</span> <span class="mf">2.3</span>  <span class="c1"># relative permittivity of FR</span>
-<span class="n">nFR</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">epsFR</span><span class="p">)</span>
+<span class="n">dx_line</span> <span class="o">=</span> <span class="n">w_line</span> <span class="o">/</span> <span class="mi">5</span>  <span class="c1"># 5 mesh points across the strip</span>
+<span class="n">dx_patch</span> <span class="o">=</span> <span class="n">l_patch</span> <span class="o">/</span> <span class="mi">20</span>  <span class="c1"># 20 mesh points across the patch</span>
 
-<span class="n">materials_library</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">MATERIALS_LIBRARY</span>
-<span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;PEC_gnd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;PEC_coax&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="p">[</span><span class="n">nPEC</span><span class="p">,</span> <span class="n">nPEC</span><span class="p">,</span> <span class="n">nFR</span><span class="p">])</span>
-<span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;FR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">epsFR</span><span class="p">)</span>
+<span class="n">eps_substrate</span> <span class="o">=</span> <span class="mf">3.38</span>
+<span class="n">n_substrate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eps_substrate</span><span class="p">)</span>
 
+<span class="n">materials_library</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;air&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(),</span>
+    <span class="s2">&quot;substrate&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">eps_substrate</span><span class="p">),</span>
+    <span class="s2">&quot;PEC_patch&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">dx0</span><span class="o">/</span><span class="n">dx_patch</span><span class="p">),</span>
+    <span class="s2">&quot;PEC_line&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="p">[</span><span class="n">n_substrate</span><span class="p">,</span> <span class="n">dx0</span><span class="o">/</span><span class="n">dx_line</span><span class="p">,</span><span class="mi">1</span><span class="p">]),</span>
+    <span class="s1">&#39;background&#39;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(),</span>
+<span class="p">}</span>
 
-<span class="n">angres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span> <span class="o">*</span> <span class="mi">5</span>  <span class="c1"># angular resolution </span>
+<span class="c1"># radiation port</span>
+<span class="n">zoffset</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">d</span>
+<span class="n">H</span> <span class="o">=</span> <span class="p">(</span><span class="n">w_sub</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+<span class="n">R</span><span class="o">=</span><span class="n">H</span><span class="o">-</span><span class="n">zoffset</span>
+<span class="n">angres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span> <span class="o">*</span> <span class="mi">5</span>  <span class="c1"># angular resolution</span>
 <span class="n">θmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
 <span class="n">φmax</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
 <span class="n">ports</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">lumi</span><span class="o">.</span><span class="n">PlanePort</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span>
-        <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">offset</span><span class="p">),</span>
-        <span class="n">width</span><span class="o">=</span><span class="mf">1.1</span> <span class="o">*</span> <span class="n">d2</span><span class="p">,</span>
-        <span class="n">length</span><span class="o">=</span><span class="mf">1.1</span> <span class="o">*</span> <span class="n">d2</span><span class="p">,</span>
-        <span class="n">frame</span><span class="o">=</span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span>
-    <span class="p">),</span>
     <span class="n">lumi</span><span class="o">.</span><span class="n">SpherePort</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">radius</span><span class="o">=</span><span class="mf">.9</span><span class="o">*</span><span class="n">H</span><span class="p">,</span> <span class="n">angres</span><span class="o">=</span><span class="n">angres</span><span class="p">,</span> <span class="n">θmax</span><span class="o">=</span><span class="n">θmax</span><span class="p">,</span> <span class="n">φmax</span><span class="o">=</span><span class="n">φmax</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">zoffset</span><span class="p">),</span> <span class="n">radius</span><span class="o">=</span><span class="n">R</span><span class="p">,</span> <span class="n">angres</span><span class="o">=</span><span class="n">angres</span><span class="p">,</span> <span class="n">θmax</span><span class="o">=</span><span class="n">θmax</span><span class="p">,</span> <span class="n">φmax</span><span class="o">=</span><span class="n">φmax</span>
     <span class="p">),</span>
 <span class="p">]</span>
 
-<span class="c1"># ideal monopole mode fields for reference</span>
-<span class="c1"># φ, θ = np.meshgrid(</span>
-<span class="c1">#     np.linspace(0, 2 * np.pi, 37),</span>
-<span class="c1">#     np.linspace(1e-3, np.pi / 2, 10),</span>
-<span class="c1"># )</span>
-<span class="c1"># Ey = np.cos(np.pi / 2 * np.cos(θ)) / np.sin(θ)</span>
-<span class="c1"># Hx = -Ey</span>
-
+<span class="c1"># microstrip mode</span>
 <span class="n">modes</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span><span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">],</span> <span class="n">metallic_boundaries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;core&quot;</span><span class="p">,</span> <span class="s2">&quot;clad&quot;</span><span class="p">]),</span>
-    <span class="c1"># lumi.Mode(ports=[&quot;o2&quot;], fields=[{&quot;Ey&quot;: Ey, &quot;Hx&quot;: Hx}]),</span>
+    <span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span>
+        <span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">],</span>
+        <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span>
+        <span class="n">metallic_boundaries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;line&quot;</span><span class="p">],</span>
+        <span class="n">nmodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
 <span class="p">]</span>
 
 <span class="n">sources</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">lumi</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">source_port_margin</span><span class="o">=</span><span class="n">l_coax</span> <span class="o">-</span> <span class="n">thickness</span><span class="p">,</span> <span class="n">frequency</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">bandwidth</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
+    <span class="n">lumi</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span>
+        <span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">source_port_margin</span><span class="o">=</span><span class="n">source_port_margin</span>
+    <span class="p">)</span>
 <span class="p">]</span>
 
+
 <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-    <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+    <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>  <span class="c1"># path to make problem folder</span>
     <span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
-    <span class="n">frequency</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
     <span class="n">frequencies</span><span class="o">=</span><span class="n">frequencies</span><span class="p">,</span>
+    <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span>
     <span class="n">wl1f</span><span class="o">=</span><span class="n">wl1f</span><span class="p">,</span>
-    <span class="c1">#</span>
-    <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
+    <span class="n">boundaries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;PML&quot;</span><span class="p">,</span> <span class="s2">&quot;PML&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;PEC&quot;</span><span class="p">,</span> <span class="s2">&quot;PML&quot;</span><span class="p">]],</span>
+
+    <span class="c1"># </span>
     <span class="n">ports</span><span class="o">=</span><span class="n">ports</span><span class="p">,</span>
     <span class="n">modes</span><span class="o">=</span><span class="n">modes</span><span class="p">,</span>
+    <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
+    <span class="c1">#</span>
+    <span class="n">lateral_port_margin</span><span class="o">=</span><span class="n">lateral_port_margin</span><span class="p">,</span>
+    <span class="n">height_port_margin</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">height_port_margin</span><span class="p">],</span>
+    <span class="n">zmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">zmax</span><span class="o">=</span><span class="n">H</span><span class="p">,</span>
     <span class="c1">#</span>
     <span class="n">materials_library</span><span class="o">=</span><span class="n">materials_library</span><span class="p">,</span>
     <span class="n">layer_stack</span><span class="o">=</span><span class="n">layer_stack</span><span class="p">,</span>
-    <span class="n">zmin</span><span class="o">=-</span><span class="n">l_coax</span><span class="p">,</span>
-    <span class="n">zmax</span><span class="o">=</span><span class="n">H</span><span class="p">,</span>
     <span class="c1">#</span>
-    <span class="n">nres</span><span class="o">=</span><span class="n">nres</span><span class="p">,</span>
-    <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># relative courant number between 0 and 1</span>
-    <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># field decay threshold for stopping simulation</span>
-    <span class="c1"># visualization</span>
-    <span class="n">field_slices</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">offset</span><span class="p">],</span>
-    <span class="n">geometry_slices</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">offset</span><span class="p">],</span>
+    <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>
+    <span class="n">nres</span><span class="o">=</span><span class="n">nres</span><span class="p">,</span>  <span class="c1"># number of grid points per wavelength in material (not vacuum)</span>
+    <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span>
+    <span class="c1"># </span>
+    <span class="n">saveat</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="c1"># save frame every _ periods for movie</span>
+    <span class="n">field_slices</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="n">d</span> <span class="o">/</span> <span class="mi">2</span><span class="p">],</span>
+    <span class="n">geometry_slices</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span> <span class="n">d</span><span class="o">+</span><span class="n">th</span> <span class="o">/</span> <span class="mi">2</span><span class="p">],</span>
     <span class="n">show_field</span><span class="o">=</span><span class="s2">&quot;Ez&quot;</span><span class="p">,</span>
-    <span class="c1">#</span>
-    <span class="n">saveat</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># override and delete simulation folder</span>
-    <span class="n">gpu</span><span class="o">=</span><span class="s1">&#39;CUDA&#39;</span><span class="p">,</span>
+    <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># overwrite files in existing path</span>
 <span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">make_prob</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">make_movie</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;peak.png&quot;</span><span class="p">)))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;simulation.gif&quot;</span><span class="p">)))</span>
 </pre></div>
 </div>
 </div>
@@ -598,16 +637,17 @@ document.write(`
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Solving port modes with FEM...
 </pre></div>
 </div>
-<img alt="_images/1a0ee412a994859cc9ed5974a4e15f1cebdc12cf96e647e696ec984e2bea82c7.png" src="_images/1a0ee412a994859cc9ed5974a4e15f1cebdc12cf96e647e696ec984e2bea82c7.png" />
-<img alt="_images/3193e7991008ca1fe69cc0fdbd93b2a14c3815106c84346a5bf3e26fea6c26e5.png" src="_images/3193e7991008ca1fe69cc0fdbd93b2a14c3815106c84346a5bf3e26fea6c26e5.png" />
+<img alt="_images/6e11b34bac0b3592e358b1bfcb8495abf246c7ad843efeff9c93562b3b31caad.png" src="_images/6e11b34bac0b3592e358b1bfcb8495abf246c7ad843efeff9c93562b3b31caad.png" />
+<img alt="_images/165cb6c33cea5684e35f0fd24c62219d92adb7a851bff314636f73882f48d952.png" src="_images/165cb6c33cea5684e35f0fd24c62219d92adb7a851bff314636f73882f48d952.png" />
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\monopole
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\patch
+Video generated successfully at runs\patch\simulation.mp4 and runs\patch\sim.gif!
 </pre></div>
 </div>
-<img alt="_images/4f42b544d92048a222bee1ea69aa8d765f478a8c05b92303be3569c7c4807747.png" src="_images/4f42b544d92048a222bee1ea69aa8d765f478a8c05b92303be3569c7c4807747.png" />
+<img alt="_images/06570b28c7178bb4a9b96e683b609edf89457963f344ca843882cefb622541aa.gif" src="_images/06570b28c7178bb4a9b96e683b609edf89457963f344ca843882cefb622541aa.gif" />
 </div>
 </div>
 </section>
@@ -662,11 +702,14 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\monopole
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\patch
 </pre></div>
 </div>
-<img alt="_images/df57ff2f4e38adea656bc320f1ef388b8e2ec6de03414daa0bed090f266983b5.png" src="_images/df57ff2f4e38adea656bc320f1ef388b8e2ec6de03414daa0bed090f266983b5.png" />
-<img alt="_images/5aba811f3cc829869173bab94cbcaf0b20734cb0ec3670644111b4c1fb344e8f.png" src="_images/5aba811f3cc829869173bab94cbcaf0b20734cb0ec3670644111b4c1fb344e8f.png" />
+<img alt="_images/9fd0c8a9bedb74cd5eb0352d025f9d484d02215cfbe71dae8600b0ce271dd371.png" src="_images/9fd0c8a9bedb74cd5eb0352d025f9d484d02215cfbe71dae8600b0ce271dd371.png" />
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;H-Plane Radiation Pattern&#39;)
+</pre></div>
+</div>
+<img alt="_images/51d0b2d1b71b917ca7fab881f350f670029268d014376cfb128497d5283091cb.png" src="_images/51d0b2d1b71b917ca7fab881f350f670029268d014376cfb128497d5283091cb.png" />
 </div>
 </div>
 </section>
@@ -712,11 +755,11 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="demux.html"
+       href="monopole.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Inverse design of photonic wavelength division demultiplexer</p>
+        <p class="prev-next-title">RF antenna: coax fed monopole over ground</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -736,7 +779,6 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#geometry">Geometry</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solve">Solve</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">Analysis</a></li>
