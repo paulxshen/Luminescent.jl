@@ -58,6 +58,7 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'patch';</script>
+    <link rel="icon" href="_static/logo.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="RF antenna: coax fed monopole over ground" href="monopole.html" />
@@ -413,7 +414,7 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="antenna-microstrip-fed-patch">
 <h1>Antenna: microstrip fed patch<a class="headerlink" href="#antenna-microstrip-fed-patch" title="Link to this heading">#</a></h1>
-<p>We simulate a narrowband patch antenna fed by a microstrip line around 1.5 GHz. Compare with <a class="reference external" href="https://www.comsol.com/model/microstrip-patch-antenna-11742">COMSOL example</a>. Please wait for v2.1 on 10/28 before running this example.</p>
+<p>We simulate a narrowband patch antenna fed by a microstrip line around 1.5 GHz. Compare with <a class="reference external" href="https://www.comsol.com/model/microstrip-patch-antenna-11742">COMSOL example</a>. Please wait for v2.1 on 10/30 before running this example.</p>
 <section id="geometry">
 <h2>Geometry<a class="headerlink" href="#geometry" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
@@ -448,7 +449,7 @@ document.write(`
 <span class="n">th</span><span class="o">=</span><span class="mf">.1</span> <span class="c1"># metal thickness</span>
 
 <span class="n">lateral_port_margin</span> <span class="o">=</span> <span class="n">height_port_margin</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="n">d</span>
-<span class="n">source_port_margin</span> <span class="o">=</span> <span class="n">l_line</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">*</span><span class="p">(</span><span class="n">w_line</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">lateral_port_margin</span><span class="p">)</span>
+<span class="n">source_port_margin</span> <span class="o">=</span>  <span class="mf">1.</span><span class="o">*</span><span class="p">(</span><span class="n">w_line</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">lateral_port_margin</span><span class="p">)</span>
 
 <span class="c1"># layers</span>
 <span class="n">WG</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span>
@@ -501,7 +502,7 @@ document.write(`
 <span class="n">line</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">((</span><span class="n">l_sub</span> <span class="o">-</span> <span class="n">l_patch</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">l_flap</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">)</span>
 <span class="n">line</span><span class="o">.</span><span class="n">movex</span><span class="p">(</span><span class="o">-</span><span class="n">l_sub</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">l_line</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">WG</span>
+    <span class="sa">f</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">WG</span>
 <span class="p">)</span>
 
 <span class="n">c</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
@@ -565,15 +566,18 @@ document.write(`
 <span class="p">}</span>
 
 <span class="c1"># radiation port</span>
-<span class="n">zoffset</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">d</span>
-<span class="n">H</span> <span class="o">=</span> <span class="p">(</span><span class="n">w_sub</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-<span class="n">R</span><span class="o">=</span><span class="n">H</span><span class="o">-</span><span class="n">zoffset</span>
-<span class="n">angres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span> <span class="o">*</span> <span class="mi">5</span>  <span class="c1"># angular resolution</span>
-<span class="n">θmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
-<span class="n">φmax</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+<span class="n">R</span><span class="o">=</span><span class="n">H</span> <span class="o">=</span> <span class="p">(</span><span class="n">w_sub</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+<span class="n">angres</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">θmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mi">80</span><span class="p">)</span> <span class="c1"># avoid microstrip</span>
+<span class="n">φmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mi">360</span><span class="p">)</span>
 <span class="n">ports</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">lumi</span><span class="o">.</span><span class="n">SpherePort</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">zoffset</span><span class="p">),</span> <span class="n">radius</span><span class="o">=</span><span class="n">R</span><span class="p">,</span> <span class="n">angres</span><span class="o">=</span><span class="n">angres</span><span class="p">,</span> <span class="n">θmax</span><span class="o">=</span><span class="n">θmax</span><span class="p">,</span> <span class="n">φmax</span><span class="o">=</span><span class="n">φmax</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span>
+        <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">radius</span><span class="o">=</span><span class="n">R</span><span class="p">,</span>
+        <span class="n">angres</span><span class="o">=</span><span class="n">angres</span><span class="p">,</span>
+        <span class="n">θmax</span><span class="o">=</span><span class="n">θmax</span><span class="p">,</span>
+        <span class="n">φmax</span><span class="o">=</span><span class="n">φmax</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">]</span>
 
@@ -637,17 +641,17 @@ document.write(`
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Solving port modes with FEM...
 </pre></div>
 </div>
-<img alt="_images/6e11b34bac0b3592e358b1bfcb8495abf246c7ad843efeff9c93562b3b31caad.png" src="_images/6e11b34bac0b3592e358b1bfcb8495abf246c7ad843efeff9c93562b3b31caad.png" />
-<img alt="_images/165cb6c33cea5684e35f0fd24c62219d92adb7a851bff314636f73882f48d952.png" src="_images/165cb6c33cea5684e35f0fd24c62219d92adb7a851bff314636f73882f48d952.png" />
+<img alt="_images/c7bd93317827dc2e47c5c17680bfa522800457bb1b0270a93a23dae21b71fc46.png" src="_images/c7bd93317827dc2e47c5c17680bfa522800457bb1b0270a93a23dae21b71fc46.png" />
+<img alt="_images/a4e73cd6f9bf2614c3781303c8be2fa5d78f42679a4ca9674749073ec9082a9f.png" src="_images/a4e73cd6f9bf2614c3781303c8be2fa5d78f42679a4ca9674749073ec9082a9f.png" />
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\patch
-Video generated successfully at runs\patch\simulation.mp4 and runs\patch\sim.gif!
+Video generated successfully at runs\patch\simulation.mp4 and runs\patch\simulation.gif!
 </pre></div>
 </div>
-<img alt="_images/06570b28c7178bb4a9b96e683b609edf89457963f344ca843882cefb622541aa.gif" src="_images/06570b28c7178bb4a9b96e683b609edf89457963f344ca843882cefb622541aa.gif" />
+<img alt="_images/dd6a57a12412b5d47e8128e17f4ba0db75d2ab3eb72be2606e032f588ccdaade.gif" src="_images/dd6a57a12412b5d47e8128e17f4ba0db75d2ab3eb72be2606e032f588ccdaade.gif" />
 </div>
 </div>
 </section>
@@ -705,11 +709,11 @@ Video generated successfully at runs\patch\simulation.mp4 and runs\patch\sim.gif
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\patch
 </pre></div>
 </div>
-<img alt="_images/9fd0c8a9bedb74cd5eb0352d025f9d484d02215cfbe71dae8600b0ce271dd371.png" src="_images/9fd0c8a9bedb74cd5eb0352d025f9d484d02215cfbe71dae8600b0ce271dd371.png" />
+<img alt="_images/9570e3bf209515530bbf4d5cd5748d55a8d167cd7e5851a16fbd8abd26b8cf8b.png" src="_images/9570e3bf209515530bbf4d5cd5748d55a8d167cd7e5851a16fbd8abd26b8cf8b.png" />
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;H-Plane Radiation Pattern&#39;)
 </pre></div>
 </div>
-<img alt="_images/51d0b2d1b71b917ca7fab881f350f670029268d014376cfb128497d5283091cb.png" src="_images/51d0b2d1b71b917ca7fab881f350f670029268d014376cfb128497d5283091cb.png" />
+<img alt="_images/3047ffbfc1d97454f36dfeaa5e1d54ff5b29fd1439f65e3e2b33498be5afdfa0.png" src="_images/3047ffbfc1d97454f36dfeaa5e1d54ff5b29fd1439f65e3e2b33498be5afdfa0.png" />
 </div>
 </div>
 </section>

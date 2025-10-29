@@ -1,18 +1,13 @@
 # Tier pricing
-Standalone installer so you have the freedom to run it anywhere: your local machine, your cloud provider or Google Colab. Lifetime license. No recurring fees. Purchases at lower tiers or limits count as credits toward higher tiers or tiers. Upgrade as needed without penalty.
+Standalone installer so you have the freedom to run it anywhere: your local machine, your cloud provider or Google Colab. Lifetime license. No recurring fees. Purchases at lower tiers or limits count as credits toward higher tiers or tiers. Upgrade as needed without penalty. We also offer consulting, including 24h turnaround for porting your code to our engine.
 
 ## Forever free
 - CPU + GPU binaries
-- 3D Simulation up to 1M cells (sufficient to run all simulation tutorials)
-
-## Pro simulation
-- Everything in free
-- \$500  to \$5000 per seat prorated from 1M to 1B cells
-- Unrestricted size past \$5000
-- Academic and classroom discounts available
-- 1 year of updates and support
+- Fully local installer with no license server
+- Unrestricted simulation!
 
 ## Pro inverse design
-- Everything in pro simulation
+- Everything in lower tiers
 - 3D inverse design
-- Inquire for pricing
+- Inquire for pricing with academic and classroom discounts available
+- 1 year of updates and support
