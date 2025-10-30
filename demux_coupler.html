@@ -445,9 +445,9 @@ document.write(`
 <span class="n">DESIGN</span> <span class="o">=</span> <span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># design region layer</span>
 
 <span class="c1"># makes gdsfactory component to be optimized. has rectangular design region with port stubs. ports numbered clockwise from bottom left</span>
-<span class="n">length</span> <span class="o">=</span> <span class="mf">6.0</span>
-<span class="n">width</span> <span class="o">=</span> <span class="mf">6.0</span>
-<span class="n">width_wg</span> <span class="o">=</span> <span class="mf">0.4</span>
+<span class="n">length</span> <span class="o">=</span> <span class="mf">15.0</span>
+<span class="n">width</span> <span class="o">=</span> <span class="mf">10.0</span>
+<span class="n">width_wg</span> <span class="o">=</span> <span class="mf">0.5</span>
 <span class="n">length_wg</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">width_wg</span>
 <span class="n">c</span> <span class="o">=</span> <span class="n">gf</span><span class="o">.</span><span class="n">Component</span><span class="p">()</span>
 <span class="n">dut</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">mimo</span><span class="p">(</span>
@@ -495,9 +495,11 @@ document.write(`
 <span class="n">thickness</span> <span class="o">=</span> <span class="mf">0.22</span>
 <span class="n">materials_library</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">MATERIALS_LIBRARY</span>
 <span class="n">nSi</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;Si&quot;</span><span class="p">][</span><span class="s2">&quot;epsilon&quot;</span><span class="p">])</span>
+<span class="n">nSiN</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;SiN&quot;</span><span class="p">][</span><span class="s2">&quot;epsilon&quot;</span><span class="p">])</span>
 <span class="n">materials_library</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
     <span class="p">{</span>
-        <span class="s2">&quot;design&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PlaceholderMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">nSi</span><span class="p">),</span>  <span class="c1"># placeholder material for design region</span>
+        <span class="s2">&quot;design_Si&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PlaceholderMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">nSi</span><span class="p">),</span>  <span class="c1"># placeholder material for design region</span>
+        <span class="s2">&quot;design_SiN&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PlaceholderMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">nSiN</span><span class="p">),</span>  <span class="c1"># placeholder material for design region</span>
         <span class="s2">&quot;background&quot;</span><span class="p">:</span> <span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;SiO2&quot;</span><span class="p">],</span>
     <span class="p">}</span>
 <span class="p">)</span>

@@ -510,9 +510,6 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>running luminescent python frontend
-</pre></div>
-</div>
 <img alt="_images/8f08b83f405141843ff9dd3af50b74bad3edf1d8dc169a10409c6bdee753758d.png" src="_images/8f08b83f405141843ff9dd3af50b74bad3edf1d8dc169a10409c6bdee753758d.png" />
 </div>
 </div>
@@ -631,9 +628,9 @@ document.write(`
     <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># overwrite files in existing path</span>
 <span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">make_prob</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<span class="c1"># lumi.solve(path)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">make_movie</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;simulation.gif&quot;</span><span class="p">)))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;peak.png&quot;</span><span class="p">)))</span>
 </pre></div>
 </div>
 </div>
@@ -641,8 +638,8 @@ document.write(`
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Solving port modes with FEM...
 </pre></div>
 </div>
-<img alt="_images/c7bd93317827dc2e47c5c17680bfa522800457bb1b0270a93a23dae21b71fc46.png" src="_images/c7bd93317827dc2e47c5c17680bfa522800457bb1b0270a93a23dae21b71fc46.png" />
-<img alt="_images/a4e73cd6f9bf2614c3781303c8be2fa5d78f42679a4ca9674749073ec9082a9f.png" src="_images/a4e73cd6f9bf2614c3781303c8be2fa5d78f42679a4ca9674749073ec9082a9f.png" />
+<img alt="_images/0b30ad92bd65389c13fe02bbfdcb1168c0c0f8a0f9b61d2f9bcdb105278a7b13.png" src="_images/0b30ad92bd65389c13fe02bbfdcb1168c0c0f8a0f9b61d2f9bcdb105278a7b13.png" />
+<img alt="_images/bb58bd73121e8deaec2d2887b89e714a6fc2d5d088defb0ae90dab05466e012d.png" src="_images/bb58bd73121e8deaec2d2887b89e714a6fc2d5d088defb0ae90dab05466e012d.png" />
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
 </pre></div>
@@ -651,7 +648,7 @@ document.write(`
 Video generated successfully at runs\patch\simulation.mp4 and runs\patch\simulation.gif!
 </pre></div>
 </div>
-<img alt="_images/dd6a57a12412b5d47e8128e17f4ba0db75d2ab3eb72be2606e032f588ccdaade.gif" src="_images/dd6a57a12412b5d47e8128e17f4ba0db75d2ab3eb72be2606e032f588ccdaade.gif" />
+<img alt="_images/55dc4084ddcb1636a314df3ee9a0f22a3615cbfcee830be992747306f27f1b83.png" src="_images/55dc4084ddcb1636a314df3ee9a0f22a3615cbfcee830be992747306f27f1b83.png" />
 </div>
 </div>
 </section>
@@ -672,13 +669,13 @@ Video generated successfully at runs\patch\simulation.mp4 and runs\patch\simulat
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;S11 [dB]&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
-<span class="c1"># Radiation pattern plots</span>
-<span class="n">flux</span> <span class="o">=</span> <span class="n">sol</span><span class="p">[</span><span class="s2">&quot;dBi&quot;</span><span class="p">][</span><span class="s2">&quot;o2&quot;</span><span class="p">]</span>
+<span class="n">flux</span> <span class="o">=</span> <span class="n">sol</span><span class="p">[</span><span class="s2">&quot;dBi&quot;</span><span class="p">][</span><span class="s2">&quot;o2&quot;</span><span class="p">]</span> <span class="c1"># can append after o2 @H, V, L or R for polarization</span>
 <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
 <span class="n">nφ</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">φmax</span> <span class="o">/</span> <span class="n">angres</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
 <span class="n">nθ</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">θmax</span> <span class="o">/</span> <span class="n">angres</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
 <span class="n">θ</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">θmax</span><span class="p">,</span> <span class="n">nθ</span><span class="p">)</span>
 
+<span class="c1"># Radiation pattern plots</span>
 <span class="n">flux_E_plane1</span> <span class="o">=</span> <span class="n">flux</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
 <span class="n">flux_E_plane2</span> <span class="o">=</span> <span class="n">flux</span><span class="p">[:,</span> <span class="nb">round</span><span class="p">((</span><span class="n">nφ</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="n">i</span><span class="p">]</span>
 
@@ -709,11 +706,11 @@ Video generated successfully at runs\patch\simulation.mp4 and runs\patch\simulat
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\patch
 </pre></div>
 </div>
-<img alt="_images/9570e3bf209515530bbf4d5cd5748d55a8d167cd7e5851a16fbd8abd26b8cf8b.png" src="_images/9570e3bf209515530bbf4d5cd5748d55a8d167cd7e5851a16fbd8abd26b8cf8b.png" />
+<img alt="_images/ec68bbaa6fedc655aa7f9b35c0eacd2e60e5f02c017b22eaa967cc456270afea.png" src="_images/ec68bbaa6fedc655aa7f9b35c0eacd2e60e5f02c017b22eaa967cc456270afea.png" />
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;H-Plane Radiation Pattern&#39;)
 </pre></div>
 </div>
-<img alt="_images/3047ffbfc1d97454f36dfeaa5e1d54ff5b29fd1439f65e3e2b33498be5afdfa0.png" src="_images/3047ffbfc1d97454f36dfeaa5e1d54ff5b29fd1439f65e3e2b33498be5afdfa0.png" />
+<img alt="_images/0b78b8a42a9ed25d0417bed9cc1b5ef399ef6d9d1fdbb1ffe4b147fc31e9ba17.png" src="_images/0b78b8a42a9ed25d0417bed9cc1b5ef399ef6d9d1fdbb1ffe4b147fc31e9ba17.png" />
 </div>
 </div>
 </section>
