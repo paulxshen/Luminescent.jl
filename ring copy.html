@@ -57,12 +57,10 @@
     <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'ring';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'ring copy';</script>
     <link rel="icon" href="_static/logo.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="RF microstrip: quarter wave stub filter" href="stub.html" />
-    <link rel="prev" title="Installation" href="install.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -124,6 +122,8 @@
     <div class="bd-container__inner bd-page-width">
       
       
+      
+        
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -187,8 +187,8 @@
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
-<ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Photonic integrated circuit: ring resonator</a></li>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="ring.html">Photonic integrated circuit: ring resonator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stub.html">RF microstrip: quarter wave stub filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="patch.html">RF antenna: microstrip fed patch</a></li>
@@ -274,7 +274,7 @@
       
       
       
-      <li><a href="https://github.com/paulxshen/Luminescent.jl/issues/new?title=Issue%20on%20page%20%2Fring.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/paulxshen/Luminescent.jl/issues/new?title=Issue%20on%20page%20%2Fring copy.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -304,7 +304,7 @@
       
       
       
-      <li><a href="_sources/ring.ipynb" target="_blank"
+      <li><a href="_sources/ring copy.ipynb" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -442,19 +442,27 @@ document.write(`
 <span class="n">r</span> <span class="o">=</span> <span class="mf">3.1</span>  <span class="c1"># radius of ring</span>
 <span class="n">w_wg</span> <span class="o">=</span> <span class="mf">0.4</span>  <span class="c1"># width of waveguide</span>
 <span class="n">gap</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># gap between waveguide and ring</span>
-<span class="n">th</span> <span class="o">=</span> <span class="mf">0.18</span>  <span class="c1"># th of waveguide</span>
+<span class="n">thickness</span> <span class="o">=</span> <span class="mf">0.18</span>  <span class="c1"># thickness of waveguide</span>
 
 <span class="c1"># gds layers</span>
 <span class="n">WG</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># waveguide layer</span>
+<span class="n">OVERRIDE</span><span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># dense mesh override layer</span>
 <span class="n">BBOX</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># bounding box layer</span>
 
 <span class="c1"># we create geometry in gdsfactory. alternatively, you can import .gds layout into gdsfactory or .stl bodies directly into ours</span>
 <span class="c1"># for gdsfactory, we need vertical layer stack. &quot;core&quot; layer is special as mode margins are demarcated from it for defining modal sources and monitors. during 3d meshing lower mesh order layers supplant higher mesh order layers</span>
 <span class="n">layer_stack</span> <span class="o">=</span> <span class="n">LayerStack</span><span class="p">(</span>
     <span class="n">layers</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;override&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
+            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">OVERRIDE</span><span class="p">),</span>
+            <span class="n">thickness</span><span class="o">=</span><span class="n">thickness</span><span class="p">,</span>
+            <span class="n">zmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Dense&quot;</span><span class="p">,</span>
+            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="p">),</span>
         <span class="s2">&quot;core&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">WG</span><span class="p">),</span>
-            <span class="n">thickness</span><span class="o">=</span><span class="n">th</span><span class="p">,</span>
+            <span class="n">thickness</span><span class="o">=</span><span class="n">thickness</span><span class="p">,</span>
             <span class="n">zmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
             <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Si&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
@@ -463,45 +471,59 @@ document.write(`
 <span class="p">)</span>
 
 <span class="c1"># our default lumi.MATERIALS_LIBRARY lib covers limited range of photonic and PCB materials_library. here we create our own materials_library. `background` is special and tags regions outside any bodies during meshing</span>
+<span class="n">eps_Si</span> <span class="o">=</span> <span class="mf">12.25</span>
+<span class="n">nSi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eps_Si</span><span class="p">)</span>
 <span class="n">materials_library</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;Si&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">12.25</span><span class="p">),</span>
+    <span class="s2">&quot;Si&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">eps_Si</span><span class="p">),</span>
     <span class="s2">&quot;SiO2&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">2.25</span><span class="p">),</span>
+    <span class="s1">&#39;Dense&#39;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PlaceholderMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">nSi</span><span class="p">)</span> <span class="c1"># higher mesh density for mesh override regions</span>
 <span class="p">}</span>
 <span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;background&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;SiO2&quot;</span><span class="p">]</span>
 
 <span class="c1"># margins are demarcated from `core` layer</span>
-<span class="n">height_port_margin</span> <span class="o">=</span> <span class="n">lateral_port_margin</span> <span class="o">=</span> <span class="mf">0.5</span>
-<span class="n">margin</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">lateral_port_margin</span>
-<span class="n">zmargin</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">height_port_margin</span>
-<span class="n">source_port_margin</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">w_wg</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lateral_port_margin</span><span class="p">)</span>
+<span class="n">height_port_margin</span> <span class="o">=</span> <span class="n">lateral_port_margin</span> <span class="o">=</span> <span class="mf">0.4</span>
+<span class="n">xmargin</span> <span class="o">=</span> <span class="mf">1.8</span> <span class="o">*</span> <span class="n">lateral_port_margin</span>
+<span class="n">zmargin</span> <span class="o">=</span> <span class="mf">1.8</span> <span class="o">*</span> <span class="n">height_port_margin</span>
+<span class="n">source_port_margin</span> <span class="o">=</span> <span class="mf">2.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">w_wg</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lateral_port_margin</span><span class="p">)</span>
 
 <span class="c1"># draw layout in gdsfactory. `gf.components` defaults to layer WG = (1, 0)</span>
 <span class="n">c</span> <span class="o">=</span> <span class="n">gf</span><span class="o">.</span><span class="n">Component</span><span class="p">()</span>
 
 <span class="n">dut</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">ring</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_wg</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">WG</span><span class="p">)</span>
 
-<span class="n">l_branch</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">r</span> <span class="o">+</span> <span class="n">w_wg</span> <span class="o">+</span> <span class="n">source_port_margin</span> <span class="o">+</span> <span class="n">margin</span>
-<span class="n">branch_bottom_left</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_wg</span><span class="p">)</span>
-<span class="n">branch_bottom_left</span><span class="o">.</span><span class="n">move</span><span class="p">((</span><span class="o">-</span><span class="n">source_port_margin</span> <span class="o">-</span> <span class="n">r</span> <span class="o">-</span> <span class="n">w_wg</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w_wg</span> <span class="o">-</span> <span class="n">gap</span> <span class="o">-</span><span class="n">r</span><span class="p">))</span>
+<span class="n">margin1</span> <span class="o">=</span> <span class="mf">0.7</span> <span class="o">*</span> <span class="n">source_port_margin</span>
+<span class="n">margin2</span> <span class="o">=</span> <span class="n">xmargin</span>
+<span class="n">branch_length</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">r</span> <span class="o">+</span> <span class="n">w_wg</span> <span class="o">+</span> <span class="n">margin1</span> <span class="o">+</span> <span class="n">margin2</span>
 
-<span class="n">branch_bottom_right</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">l_branch</span> <span class="o">-</span> <span class="n">source_port_margin</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_wg</span><span class="p">)</span>
-<span class="n">branch_bottom_right</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">branch_bottom_left</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o2&quot;</span><span class="p">])</span>
+<span class="n">lower_branch1</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_wg</span><span class="p">)</span>
+<span class="n">lower_branch2</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span>
+    <span class="n">length</span><span class="o">=</span><span class="n">branch_length</span> <span class="o">-</span> <span class="n">source_port_margin</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_wg</span>
+<span class="p">)</span>
+<span class="n">lower_branch1</span><span class="o">.</span><span class="n">move</span><span class="p">((</span><span class="o">-</span><span class="n">margin1</span> <span class="o">-</span> <span class="n">r</span> <span class="o">-</span> <span class="n">w_wg</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w_wg</span> <span class="o">-</span> <span class="n">gap</span> <span class="o">-</span><span class="n">r</span><span class="p">))</span>
+<span class="n">lower_branch2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">lower_branch1</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o2&quot;</span><span class="p">])</span>
 
-<span class="n">branch_top</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">l_branch</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_wg</span><span class="p">)</span>
-<span class="n">branch_top</span><span class="o">.</span><span class="n">move</span><span class="p">((</span><span class="o">-</span><span class="n">source_port_margin</span> <span class="o">-</span> <span class="n">r</span> <span class="o">-</span> <span class="n">w_wg</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">w_wg</span> <span class="o">+</span> <span class="n">gap</span> <span class="o">+</span> <span class="n">r</span><span class="p">))</span>
+<span class="n">upper_branch</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">branch_length</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_wg</span><span class="p">)</span>
+<span class="n">upper_branch</span><span class="o">.</span><span class="n">move</span><span class="p">((</span><span class="o">-</span><span class="n">margin1</span> <span class="o">-</span> <span class="n">r</span> <span class="o">-</span> <span class="n">w_wg</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">w_wg</span> <span class="o">+</span> <span class="n">gap</span> <span class="o">+</span> <span class="n">r</span><span class="p">))</span>
+
+<span class="n">l</span><span class="o">=</span><span class="mi">6</span><span class="o">*</span><span class="n">w_wg</span>
+<span class="n">w</span><span class="o">=</span><span class="n">w_wg</span><span class="o">+</span><span class="n">gap</span>
+<span class="n">dy</span> <span class="o">=</span> <span class="o">-</span><span class="n">gap</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span> <span class="n">r</span> <span class="o">-</span> <span class="n">w_wg</span> <span class="o">/</span> <span class="mi">2</span>
+<span class="n">lower_mesh_override</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">add_polygon</span><span class="p">([[</span><span class="o">-</span><span class="n">l</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="n">dy</span><span class="p">],</span> <span class="p">[</span><span class="n">l</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="n">dy</span><span class="p">],</span> <span class="p">[</span><span class="n">l</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="n">dy</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="n">l</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="n">dy</span><span class="p">]],</span> <span class="n">layer</span><span class="o">=</span><span class="n">OVERRIDE</span><span class="p">)</span>
+<span class="n">dy</span> <span class="o">=</span> <span class="o">-</span><span class="n">dy</span>
+<span class="n">upper_mesh_override</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">add_polygon</span><span class="p">([[</span><span class="o">-</span><span class="n">l</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="n">dy</span><span class="p">],</span> <span class="p">[</span><span class="n">l</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="n">dy</span><span class="p">],</span> <span class="p">[</span><span class="n">l</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="n">dy</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="n">l</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="n">dy</span><span class="p">]],</span> <span class="n">layer</span><span class="o">=</span><span class="n">OVERRIDE</span><span class="p">)</span>
 
 <span class="c1"># add ports</span>
-<span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">branch_bottom_right</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">])</span>
-<span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">branch_bottom_right</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o2&quot;</span><span class="p">])</span>  <span class="c1"># thru channel</span>
-<span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="s2">&quot;o3&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">branch_top</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">])</span>  <span class="c1"># drop channel</span>
+<span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">lower_branch2</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">])</span>
+<span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">lower_branch2</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o2&quot;</span><span class="p">])</span>  <span class="c1"># thru channel</span>
+<span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="s2">&quot;o3&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">upper_branch</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">])</span>  <span class="c1"># drop channel</span>
 
-<span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">bbox</span><span class="p">(</span><span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">BBOX</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="n">margin</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="n">margin</span><span class="p">)</span>
+<span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">bbox</span><span class="p">(</span><span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">BBOX</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="n">xmargin</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="n">xmargin</span><span class="p">)</span>
 <span class="n">c</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/c2c928a3eb478d1e9c762e2196805f888c08f29572f60fa8d55477e4b9163b71.png" src="_images/c2c928a3eb478d1e9c762e2196805f888c08f29572f60fa8d55477e4b9163b71.png" />
+<img alt="_images/b35d7a7a9a78957fd9fe0a0251ce08dfe5e17767533106dcc73483d2b32fcf03.png" src="_images/b35d7a7a9a78957fd9fe0a0251ce08dfe5e17767533106dcc73483d2b32fcf03.png" />
 </div>
 </div>
 </section>
@@ -515,7 +537,7 @@ document.write(`
         <span class="s2">&quot;o1&quot;</span><span class="p">,</span>
         <span class="n">source_port_margin</span><span class="o">=</span><span class="n">source_port_margin</span><span class="p">,</span>
         <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">,</span>
-        <span class="n">bandwidth</span><span class="o">=</span><span class="n">wavelength</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">bandwidth</span><span class="o">=</span><span class="n">bandwidth</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="p">]</span>
 
@@ -529,7 +551,7 @@ document.write(`
     <span class="n">modes</span><span class="o">=</span><span class="n">modes</span><span class="p">,</span>
     <span class="c1">#</span>
     <span class="n">zmin</span><span class="o">=-</span><span class="n">zmargin</span><span class="p">,</span>
-    <span class="n">zmax</span><span class="o">=</span><span class="n">th</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>
+    <span class="n">zmax</span><span class="o">=</span><span class="n">thickness</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>
     <span class="n">height_port_margin</span><span class="o">=</span><span class="n">height_port_margin</span><span class="p">,</span>
     <span class="n">lateral_port_margin</span><span class="o">=</span><span class="n">lateral_port_margin</span><span class="p">,</span>
     <span class="c1">#</span>
@@ -537,29 +559,29 @@ document.write(`
     <span class="n">layer_stack</span><span class="o">=</span><span class="n">layer_stack</span><span class="p">,</span>
     <span class="c1">#</span>
     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration</span>
-    <span class="n">nres</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>  <span class="c1"># number of grid points per wavelength in material (not vacuum)</span>
+    <span class="n">nres</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>  <span class="c1"># number of grid points per wavelength in material (not vacuum)</span>
     <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>  <span class="c1"># relative Courant number</span>
-    <span class="n">relative_pml_depths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>  <span class="c1"># relative PML thes</span>
+    <span class="n">relative_pml_depths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>  <span class="c1"># relative PML thicknesses</span>
     <span class="n">Tsim</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>  <span class="c1"># max time [periods]</span>
     <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># field energy decay threshold for stopping simulation</span>
     <span class="n">saveat</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>  <span class="c1"># save field every n periods for movie</span>
     <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># delete and overwrite existing path</span>
 <span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">make_prob</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<span class="c1"># lumi.solve(path)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">make_movie</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 <span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;peak.png&quot;</span><span class="p">)))</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/7667433e41a8f8c9965c883cbe75ec42ec2659050bdc090bcd480f49eb1a82dc.png" src="_images/7667433e41a8f8c9965c883cbe75ec42ec2659050bdc090bcd480f49eb1a82dc.png" />
-<img alt="_images/0928078dbb120653fec73e0f388be713529b6fe9bec3ba98eda71d9d27994932.png" src="_images/0928078dbb120653fec73e0f388be713529b6fe9bec3ba98eda71d9d27994932.png" />
+<img alt="_images/20a0801c1cc332907a9b98de57af85fa796ca91918edbd1ba762c16a957317c5.png" src="_images/20a0801c1cc332907a9b98de57af85fa796ca91918edbd1ba762c16a957317c5.png" />
+<img alt="_images/b62fb9647266d74a98ad0393e2ace0b987b7346aacafd25f4d1158fe1e715ab4.png" src="_images/b62fb9647266d74a98ad0393e2ace0b987b7346aacafd25f4d1158fe1e715ab4.png" />
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring
 Video generated successfully at runs\ring\simulation.mp4 and runs\ring\simulation.gif!
 </pre></div>
 </div>
-<img alt="_images/8e619041d8342eaf746d250be97f61d54e34e9c25dbfeca46db67f6db0dac0b6.png" src="_images/8e619041d8342eaf746d250be97f61d54e34e9c25dbfeca46db67f6db0dac0b6.png" />
+<img alt="_images/a0871b4d32b49959ad07a6b756992daea8e6a4a13de7ee1905f9f2971615ebbe.png" src="_images/a0871b4d32b49959ad07a6b756992daea8e6a4a13de7ee1905f9f2971615ebbe.png" />
 </div>
 </div>
 </section>
@@ -582,7 +604,7 @@ Video generated successfully at runs\ring\simulation.mp4 and runs\ring\simulatio
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring
 </pre></div>
 </div>
-<img alt="_images/c55af318ddf29bb27fd7e55992d63a6e1a4763f162c1ebd4b98f04b412f5f6e2.png" src="_images/c55af318ddf29bb27fd7e55992d63a6e1a4763f162c1ebd4b98f04b412f5f6e2.png" />
+<img alt="_images/4892507ae30e7e74869865102b4cf2b554a8367b2a89c9d4e53b278af6366189.png" src="_images/4892507ae30e7e74869865102b4cf2b554a8367b2a89c9d4e53b278af6366189.png" />
 </div>
 </div>
 </section>
@@ -618,24 +640,6 @@ Video generated successfully at runs\ring\simulation.mp4 and runs\ring\simulatio
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
-    <a class="left-prev"
-       href="install.html"
-       title="previous page">
-      <i class="fa-solid fa-angle-left"></i>
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Installation</p>
-      </div>
-    </a>
-    <a class="right-next"
-       href="stub.html"
-       title="next page">
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">RF microstrip: quarter wave stub filter</p>
-      </div>
-      <i class="fa-solid fa-angle-right"></i>
-    </a>
 </div>
                 </footer>
               

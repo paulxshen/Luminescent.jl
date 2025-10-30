@@ -1,9 +1,9 @@
 # Product tiers
-Completely free for simulation. Paid for inverse design. Standalone installer so you have the freedom to run it anywhere: your local machine, your cloud provider or Google Colab. We also offer consulting, including 24h turnaround for porting your code to our engine.
+Completely free for simulation. Paid tier for inverse design. Standalone installer so you have the freedom to run it anywhere: your local machine, your cloud provider or Google Colab. We also offer consulting, including 24h turnaround for porting your code to our engine.
 
 ## Free simulation
-- CPU + GPU binaries
-- Fully local installer with no license server
+- GPU binaries
+- Fully local installer
 - Unrestricted simulation!
 
 ## Pro inverse design
