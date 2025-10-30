@@ -249,6 +249,37 @@
 
 
 
+<div class="dropdown dropdown-launch-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Launch interactive content">
+    <i class="fas fa-rocket"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://colab.research.google.com/github/paulxshen/Luminescent.jl/blob/master/docs/metagrating_coupler.ipynb" target="_blank"
+   class="btn btn-sm dropdown-item"
+   title="Launch on Colab"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  
+    <img alt="Colab logo" src="_static/images/logo_colab.png">
+  </span>
+<span class="btn__text-container">Colab</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
 <div class="dropdown dropdown-source-buttons">
   <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
     <i class="fab fa-github"></i>
@@ -493,48 +524,31 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># layer stack. lower mesh order layers override higher mesh order layers. for 2.5D problems as is here, the mesher will slice thru middle of &#39;core&#39; layer</span>
-<span class="n">th_Si</span> <span class="o">=</span> <span class="mf">0.22</span>
-<span class="n">th_SiN</span> <span class="o">=</span> <span class="mf">0.6</span>
-<span class="n">d_etch</span> <span class="o">=</span> <span class="mf">0.16</span>
-<span class="n">th_slab</span> <span class="o">=</span> <span class="n">th_Si</span><span class="o">-</span><span class="n">d_etch</span>
-<span class="n">gap_Si_SiN</span><span class="o">=</span><span class="mf">.1</span>
-<span class="n">gap_metal_Si</span><span class="o">=</span><span class="mf">.3</span>
+<span class="n">thickness_teeth</span> <span class="o">=</span> <span class="mf">0.07</span>
+<span class="n">thickness_slab</span> <span class="o">=</span> <span class="mf">0.15</span>
+<span class="n">thickness</span> <span class="o">=</span> <span class="n">thickness_teeth</span> <span class="o">+</span> <span class="n">thickness_slab</span>
 <span class="n">layer_stack</span> <span class="o">=</span> <span class="n">LayerStack</span><span class="p">(</span>
     <span class="n">layers</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;design_Si&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
-            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">DESIGN_Si</span><span class="p">),</span>
-            <span class="n">zmin</span><span class="o">=</span><span class="n">th_slab</span><span class="p">,</span>
-            <span class="n">thickness</span><span class="o">=</span><span class="n">d_etch</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;design_Si&quot;</span><span class="p">,</span>
-            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="s2">&quot;design_SiN&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
-            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">DESIGN_SiN</span><span class="p">),</span>
-            <span class="n">zmin</span><span class="o">=</span><span class="n">th_Si</span> <span class="o">+</span> <span class="n">gap_Si_SiN</span><span class="p">,</span>
-            <span class="n">thickness</span><span class="o">=</span><span class="n">th_SiN</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;design_SiN&quot;</span><span class="p">,</span>
-            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="s2">&quot;design&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
+            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">DESIGN</span><span class="p">),</span>
+            <span class="n">zmin</span><span class="o">=</span><span class="n">thickness_slab</span><span class="p">,</span>
+            <span class="n">thickness</span><span class="o">=</span><span class="n">thickness_teeth</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;design&quot;</span><span class="p">,</span>
+            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">&quot;teeth&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
-            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">ETCH</span><span class="p">),</span>
-            <span class="n">zmin</span><span class="o">=</span><span class="n">th_slab</span><span class="p">,</span>
-            <span class="n">thickness</span><span class="o">=</span><span class="n">d_etch</span><span class="p">,</span>
+            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">TEETH</span><span class="p">),</span>
+            <span class="n">zmin</span><span class="o">=</span><span class="n">thickness_slab</span><span class="p">,</span>
+            <span class="n">thickness</span><span class="o">=</span><span class="n">thickness_teeth</span><span class="p">,</span>
             <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Si&quot;</span><span class="p">,</span>
-            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">&quot;core&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">WG</span><span class="p">),</span>
             <span class="n">zmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">thickness</span><span class="o">=</span><span class="n">th_Si</span><span class="p">,</span>
+            <span class="n">thickness</span><span class="o">=</span><span class="n">thickness</span><span class="p">,</span>
             <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Si&quot;</span><span class="p">,</span>
-            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="s2">&quot;SiN&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
-            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">WG_SiN</span><span class="p">),</span>
-            <span class="n">zmin</span><span class="o">=</span><span class="n">th_Si</span> <span class="o">+</span> <span class="n">gap_Si_SiN</span><span class="p">,</span>
-            <span class="n">thickness</span><span class="o">=</span><span class="n">th_SiN</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;SiN&quot;</span><span class="p">,</span>
-            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">}</span>
 <span class="p">)</span>
@@ -545,10 +559,10 @@ document.write(`
 <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">R</span> <span class="o">+</span> <span class="n">_dx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">R</span> <span class="o">-</span> <span class="n">_dx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">nx</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">R</span> <span class="o">+</span> <span class="n">_dx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">R</span> <span class="o">-</span> <span class="n">_dx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">nx</span><span class="p">)</span>
 <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-<span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">X</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">X</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">w</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
 
 <span class="n">modes</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span><span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Ey&quot;</span><span class="p">:</span> <span class="n">g</span><span class="p">,</span> <span class="s2">&quot;Hx&quot;</span><span class="p">:</span> <span class="o">-</span><span class="n">nox</span> <span class="o">*</span> <span class="n">g</span><span class="p">}),</span>
+    <span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span><span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">],</span> <span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Ey&quot;</span><span class="p">:</span> <span class="n">g</span><span class="p">,</span> <span class="s2">&quot;Hx&quot;</span><span class="p">:</span> <span class="o">-</span><span class="n">nox</span> <span class="o">*</span> <span class="n">g</span><span class="p">},</span> <span class="n">dx</span><span class="o">=</span><span class="n">_dx</span><span class="p">),</span>
     <span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span><span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;o2&quot;</span><span class="p">]),</span>
 <span class="p">]</span>
 
@@ -556,45 +570,55 @@ document.write(`
 <span class="n">ports</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">lumi</span><span class="o">.</span><span class="n">PlanePort</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span>
-        <span class="n">center</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">th_Si</span> <span class="o">+</span> <span class="n">gap_Si_SiN</span> <span class="o">+</span><span class="n">th_SiN</span><span class="o">+</span> <span class="n">dz</span><span class="p">],</span>
+        <span class="n">center</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">thickness</span> <span class="o">+</span> <span class="n">dz</span><span class="p">],</span>
         <span class="n">frame</span><span class="o">=</span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span>
         <span class="n">length</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">R</span><span class="p">,</span>
         <span class="n">width</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">R</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="p">]</span>
 
-<span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span>     <span class="n">source_port_margin</span><span class="o">=</span><span class="n">source_port_margin</span><span class="p">,)]</span>
-
-<span class="n">targets</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span>
-    <span class="p">[</span>
-        <span class="n">lumi</span><span class="o">.</span><span class="n">Target</span><span class="p">(</span>
-        <span class="n">key</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;To</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="si">}</span><span class="s2">@0,o1@0&quot;</span><span class="p">,</span>
-        <span class="n">target</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">weight</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">12</span><span class="p">,</span>
-        <span class="n">wavelength</span><span class="o">=</span><span class="n">wl</span><span class="p">,</span>
-    <span class="p">)</span> <span class="k">for</span> <span class="n">wl</span> <span class="ow">in</span> <span class="p">[</span><span class="n">wavelength</span><span class="o">-</span><span class="n">channel_bandwidth</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">+</span><span class="n">channel_bandwidth</span><span class="o">/</span><span class="mi">2</span><span class="p">]</span>
-    <span class="p">]</span>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">wavelength</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">)</span>
-<span class="p">],[])</span>
-
-<span class="n">zmax</span><span class="o">=</span><span class="n">source_port_margin</span><span class="o">+</span> <span class="n">th_Si</span> <span class="o">+</span> <span class="n">gap_Si_SiN</span> <span class="o">+</span><span class="n">th_SiN</span> <span class="o">+</span> <span class="n">gap_metal_Si</span>
-<span class="n">Tsim</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">zmax</span> <span class="o">+</span> <span class="n">length_wg</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">length</span> <span class="o">+</span> <span class="n">width</span><span class="p">))</span> <span class="o">/</span> <span class="n">wavelength</span> <span class="o">*</span> <span class="n">nSi</span>
-
-
-<span class="n">designs</span><span class="o">=</span><span class="p">[</span>
-    <span class="n">lumi</span><span class="o">.</span><span class="n">Design</span><span class="p">(</span><span class="s1">&#39;d1&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">DESIGN_Si</span><span class="p">,</span><span class="n">lmin</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span><span class="n">fill_material</span><span class="o">=</span><span class="s1">&#39;Si&#39;</span><span class="p">,</span> <span class="n">void_material</span><span class="o">=</span><span class="s1">&#39;SiO2&#39;</span><span class="p">,</span><span class="n">symmetries</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span><span class="n">uniform_along</span><span class="o">=</span><span class="s1">&#39;z&#39;</span><span class="p">),</span>
-    <span class="n">lumi</span><span class="o">.</span><span class="n">Design</span><span class="p">(</span><span class="s1">&#39;d2&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">DESIGN_SiN</span><span class="p">,</span><span class="n">lmin</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span><span class="n">fill_material</span><span class="o">=</span><span class="s1">&#39;SiN&#39;</span><span class="p">,</span> <span class="n">void_material</span><span class="o">=</span><span class="s1">&#39;SiO2&#39;</span><span class="p">,</span><span class="n">symmetries</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span><span class="n">uniform_along</span><span class="o">=</span><span class="s1">&#39;z&#39;</span><span class="p">),</span>
+<span class="n">sources</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">lumi</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span>
+        <span class="s2">&quot;o1&quot;</span><span class="p">,</span>
+        <span class="n">source_port_margin</span><span class="o">=</span><span class="n">source_port_margin</span><span class="p">,</span>
+    <span class="p">)</span>
 <span class="p">]</span>
-<span class="n">optimizer</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">(</span>    
+
+<span class="c1"># optimization targets of T params. o1@0 means optical port 1 on mode 0 (fundamental mode)</span>
+<span class="n">targets</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">lumi</span><span class="o">.</span><span class="n">Target</span><span class="p">(</span><span class="s2">&quot;To2@0,o1@0&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">),</span> <span class="n">wavelength</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">wavelengths</span>
+<span class="p">]</span>
+
+<span class="n">Tsim</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="mf">1.0</span>
+    <span class="o">*</span> <span class="p">(</span><span class="n">length</span> <span class="o">+</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">box_thickness</span> <span class="o">+</span> <span class="n">zmargin</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">thickness</span> <span class="o">+</span> <span class="n">length_wg</span><span class="p">)</span>
+    <span class="o">/</span> <span class="n">wl</span>
+    <span class="o">*</span> <span class="n">nSi</span>
+    <span class="o">+</span> <span class="mi">5</span>
+<span class="p">)</span>  <span class="c1"># max time [periods]</span>
+
+<span class="n">designs</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">lumi</span><span class="o">.</span><span class="n">Design</span><span class="p">(</span>
+        <span class="s2">&quot;d1&quot;</span><span class="p">,</span>
+        <span class="n">layer</span><span class="o">=</span><span class="n">DESIGN</span><span class="p">,</span>
+        <span class="n">lmin</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">fill_material</span><span class="o">=</span><span class="s2">&quot;Si&quot;</span><span class="p">,</span>
+        <span class="n">void_material</span><span class="o">=</span><span class="s2">&quot;SiO2&quot;</span><span class="p">,</span>
+        <span class="n">symmetries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">],</span>
+        <span class="n">uniform_along</span><span class="o">=</span><span class="s2">&quot;z&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="p">]</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">(</span>
     <span class="n">stoploss</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
     <span class="n">area_change</span><span class="o">=</span><span class="mf">0.03</span><span class="p">,</span>  <span class="c1"># area change initial target</span>
-    <span class="n">iters</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>  <span class="c1"># max iters</span>
+    <span class="n">iters</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>  <span class="c1"># max iters</span>
 <span class="p">)</span>
 
 <span class="n">lumi</span><span class="o">.</span><span class="n">make_prob</span><span class="p">(</span>
     <span class="c1">#</span>
     <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>  <span class="c1"># path to make problem folder</span>
     <span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
-    <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">,</span>
     <span class="n">wavelengths</span><span class="o">=</span><span class="n">wavelengths</span><span class="p">,</span>
     <span class="n">ports</span><span class="o">=</span><span class="n">ports</span><span class="p">,</span>
     <span class="n">modes</span><span class="o">=</span><span class="n">modes</span><span class="p">,</span>
@@ -606,8 +630,8 @@ document.write(`
     <span class="c1">#</span>
     <span class="n">lateral_port_margin</span><span class="o">=</span><span class="n">lateral_port_margin</span><span class="p">,</span>
     <span class="n">height_port_margin</span><span class="o">=</span><span class="n">height_port_margin</span><span class="p">,</span>
-    <span class="n">zmin</span><span class="o">=-</span><span class="n">gap_metal_Si</span><span class="p">,</span>  <span class="c1"># zmin of simulation region</span>
-    <span class="n">zmax</span><span class="o">=</span><span class="n">zmax</span><span class="p">,</span>  <span class="c1"># zmax of simulation region</span>
+    <span class="n">zmin</span><span class="o">=-</span><span class="n">box_thickness</span><span class="p">,</span>  <span class="c1"># zmin of simulation region</span>
+    <span class="n">zmax</span><span class="o">=</span><span class="n">thickness</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>  <span class="c1"># zmax of simulation region</span>
     <span class="c1">#</span>
     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>
     <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
@@ -620,9 +644,9 @@ document.write(`
     <span class="c1">#</span>
     <span class="n">show_field</span><span class="o">=</span><span class="s2">&quot;Ey&quot;</span><span class="p">,</span>
     <span class="n">show_grid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">field_slices</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d_etch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">th_slab</span><span class="p">],</span>
-    <span class="n">geometry_slices</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d_etch</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">th_slab</span><span class="p">],</span>
-        <span class="c1"># inverse design parameters</span>
+    <span class="n">field_slices</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">thickness_teeth</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">thickness_slab</span><span class="p">],</span>
+    <span class="n">geometry_slices</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">thickness_teeth</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">thickness_slab</span><span class="p">],</span>
+    <span class="c1"># inverse design parameters</span>
     <span class="n">targets</span><span class="o">=</span><span class="n">targets</span><span class="p">,</span>
     <span class="n">designs</span><span class="o">=</span><span class="n">designs</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
