@@ -184,7 +184,7 @@
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Product</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="features.html">Home</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pricing.html">Tier pricing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pricing.html">Product tiers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
@@ -192,7 +192,7 @@
 <li class="toctree-l1"><a class="reference internal" href="ring.html">Photonic integrated circuit: ring resonator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stub.html">RF microstrip: quarter wave stub filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patch.html">Antenna: microstrip fed patch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patch.html">RF antenna: microstrip fed patch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="monopole.html">RF antenna: coax fed monopole over ground</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
@@ -415,6 +415,7 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="home">
 <h1>Home<a class="headerlink" href="#home" title="Link to this heading">#</a></h1>
+<p>v2.1 2025-10-30</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p><a class="reference external" href="https://luminescentai.com">Luminescent AI</a> enables <strong>generative design and simulation</strong> of electromagnetic structures  in just a few lines of code! We help design next generation <strong>photonic integrated circuits, optical metasurfaces, RF and microwave circuits, and antennas</strong> in diverse industries including <strong>consumer electronics, automotive, telecom, datacenters and quantum computing</strong>. At the heart is our <strong>fully differentiable and GPU-accelerated finite difference time domain (FDTD)</strong> engine.</p>
@@ -429,25 +430,25 @@ document.write(`
 <li><p>.gds and <code class="docutils literal notranslate"><span class="pre">gdsfactory</span></code> integration</p></li>
 <li><p>.stl / .step  3D geometry import</p></li>
 </ul>
-<p><strong>Fast</strong></p>
-<ul class="simple">
-<li><p>GPU acceleration on NVIDIA, AMD, and Apple Silicon</p></li>
-<li><p>Adaptive graded mesh reduces cell count</p></li>
-<li><p>Tensor subpixel smoothing boosts accuracy</p></li>
-</ul>
 <p><strong>Smart</strong></p>
 <ul class="simple">
 <li><p>Fully differentiable (native automatic differentiation in Julia)</p></li>
 <li><p>Simultaneous inverse design of multiple 2D and 3D structures</p></li>
 <li><p>Length scale controlled geometry optimizer with fabrication constraints</p></li>
 </ul>
-<p><strong>Comprehensive</strong> (some features require additional dev)</p>
+<p><strong>Fast</strong></p>
+<ul class="simple">
+<li><p>GPU acceleration on NVIDIA, AMD, and Apple Silicon</p></li>
+<li><p>Adaptive graded mesh reduces cell count</p></li>
+<li><p>Tensor subpixel smoothing boosts accuracy</p></li>
+</ul>
+<p><strong>Comprehensive</strong></p>
 <ul class="simple">
 <li><p>Modal sources, plane waves, Gaussian beams, custom sources</p></li>
 <li><p>Oblique sources and monitors</p></li>
-<li><p>PML, periodic, Bloch, PEC boundaries</p></li>
+<li><p>PML, periodic, PEC, PMC boundaries</p></li>
 <li><p>Near and far field radiation patterns</p></li>
-<li><p>Nonlinear, dispersive and anisotropic materials_library</p></li>
+<li><p>Nonlinear, dispersive and anisotropic materials</p></li>
 </ul>
 </section>
 <section id="aboout">
