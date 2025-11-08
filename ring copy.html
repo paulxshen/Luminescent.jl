@@ -188,11 +188,10 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="ring.html">Photonic integrated circuit: ring resonator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stub.html">RF microstrip: quarter wave stub filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patch.html">RF antenna: microstrip fed patch</a></li>
-<li class="toctree-l1"><a class="reference internal" href="monopole.html">RF antenna: coax fed monopole over ground</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_ring.html">Photonic integrated circuit: ring resonator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_stub.html">RF microstrip: quarter wave stub filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_patch.html">RF antenna: microstrip fed patch</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
 <ul class="nav bd-sidenav">
@@ -598,9 +597,9 @@ document.write(`
     <span class="n">saveat</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>  <span class="c1"># save field every n periods for movie</span>
     <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># delete and overwrite existing path</span>
 <span class="p">)</span>
-<span class="n">lumi</span><span class="o">.</span><span class="n">make_prob</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <span class="c1"># lumi.solve(path)</span>
-<span class="n">lumi</span><span class="o">.</span><span class="n">make_movie</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 <span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;peak.png&quot;</span><span class="p">)))</span>
 </pre></div>
 </div>
@@ -620,7 +619,7 @@ Video generated successfully at runs\ring\simulation.mp4 and runs\ring\simulatio
 <h2>Analysis<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load_sol</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">wavelengths</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;T3,1&quot;</span><span class="p">)</span> <span class="c1"># wavelength or frequency ordered depending on problem setup</span>
 <span class="c1"># y = lumi.query(sol, &quot;To3@0,o1@0&quot;)</span>

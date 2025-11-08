@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Photonic integrated circuit: ring resonator &#8212; Luminescent AI FDTD</title>
+    <title>Metasurface: microwave frequency selective surface (FSS) &#8212; Luminescent AI FDTD</title>
   
   
   
@@ -57,10 +57,12 @@
     <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'ring';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'test_FSS';</script>
     <link rel="icon" href="_static/logo.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="RF antenna: microstrip fed patch" href="test_patch.html" />
+    <link rel="prev" title="RF microstrip: quarter wave stub filter" href="test_stub.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -122,8 +124,6 @@
     <div class="bd-container__inner bd-page-width">
       
       
-      
-        
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -187,10 +187,10 @@
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="test_ring.html">Photonic integrated circuit: ring resonator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_stub.html">RF microstrip: quarter wave stub filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Metasurface: microwave frequency selective surface (FSS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_patch.html">RF antenna: microstrip fed patch</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
@@ -256,7 +256,7 @@
       
       
       
-      <li><a href="https://colab.research.google.com/github/paulxshen/Luminescent.jl/blob/master/docs/ring.ipynb" target="_blank"
+      <li><a href="https://colab.research.google.com/github/paulxshen/Luminescent.jl/blob/master/docs/test_FSS.ipynb" target="_blank"
    class="btn btn-sm dropdown-item"
    title="Launch on Colab"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -304,7 +304,7 @@
       
       
       
-      <li><a href="https://github.com/paulxshen/Luminescent.jl/issues/new?title=Issue%20on%20page%20%2Fring.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/paulxshen/Luminescent.jl/issues/new?title=Issue%20on%20page%20%2Ftest_FSS.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -334,7 +334,7 @@
       
       
       
-      <li><a href="_sources/ring.ipynb" target="_blank"
+      <li><a href="_sources/test_FSS.ipynb" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -418,7 +418,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Photonic integrated circuit: ring resonator</h1>
+    <h1>Metasurface: microwave frequency selective surface (FSS)</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -443,11 +443,11 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="photonic-integrated-circuit-ring-resonator">
-<h1>Photonic integrated circuit: ring resonator<a class="headerlink" href="#photonic-integrated-circuit-ring-resonator" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="metasurface-microwave-frequency-selective-surface-fss">
+<h1>Metasurface: microwave frequency selective surface (FSS)<a class="headerlink" href="#metasurface-microwave-frequency-selective-surface-fss" title="Link to this heading">#</a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>We simulate small silicon ring resonator coupled to parallel waveguides buried in silica cladding. Compare with <a class="reference external" href="https://optics.ansys.com/hc/en-us/articles/360042800293-Ring-resonator-getting-started-Design-and-initial-simulation">Lumerical example</a></p>
+<p>We simulate microwave frequency selective surface (FSS) with 12GHz bandstop. periodic Metal cross array on dielectric substrate. Compare with Tidy3D example <a class="reference external" href="https://www.flexcompute.com/tidy3d/examples/notebooks/MicrowaveFrequencySelectiveSurface">https://www.flexcompute.com/tidy3d/examples/notebooks/MicrowaveFrequencySelectiveSurface</a></p>
 </section>
 <section id="geometry">
 <h2>Geometry<a class="headerlink" href="#geometry" title="Link to this heading">#</a></h2>
@@ -456,82 +456,85 @@ document.write(`
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">luminescent</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">lumi</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gdsfactory.technology</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogicalLayer</span><span class="p">,</span> <span class="n">LayerLevel</span><span class="p">,</span> <span class="n">LayerStack</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">gdsfactory</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gf</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">display</span>
 
-<span class="c1"># simulation folder</span>
-<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;ring&quot;</span><span class="p">)</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;FSS&quot;</span><span class="p">)</span>
 
-<span class="c1"># length units are arbitrary so long as they are consistent, in this case [um]. everything gets normalized around center wavelength and period at backend.</span>
-<span class="n">wavelength</span> <span class="o">=</span> <span class="mf">1.55</span>  <span class="c1"># characteristic wavelength [um]</span>
-<span class="n">bandwidth</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># wavelength bandwidth [um]</span>
-<span class="n">wavelengths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">wavelength</span> <span class="o">-</span> <span class="n">bandwidth</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">wavelength</span> <span class="o">+</span> <span class="n">bandwidth</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">401</span><span class="p">)</span>
+<span class="c1"># length and frequency units are arbitrary</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mi">12</span>  <span class="c1"># center frequency GHz</span>
+<span class="n">bw</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># bandwidth</span>
+<span class="n">df</span> <span class="o">=</span> <span class="mf">0.05</span>  <span class="c1"># frequency step</span>
+<span class="n">wl1f</span> <span class="o">=</span> <span class="mi">300</span>  <span class="c1"># vacuum wavelength at 1 unit of frequency in your units</span>
+<span class="n">wl</span> <span class="o">=</span> <span class="n">wl1f</span> <span class="o">/</span> <span class="n">f</span>  <span class="c1"># characteristic wavelength</span>
+<span class="n">frequencies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">f</span><span class="o">-</span><span class="n">bw</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">f</span><span class="o">+</span><span class="n">bw</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">bw</span><span class="o">/</span><span class="n">df</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
 
-<span class="n">r</span> <span class="o">=</span> <span class="mf">3.1</span>  <span class="c1"># radius of ring</span>
-<span class="n">w_wg</span> <span class="o">=</span> <span class="mf">0.4</span>  <span class="c1"># width of waveguide</span>
-<span class="n">gap</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># gap between waveguide and ring</span>
-<span class="n">th</span> <span class="o">=</span> <span class="mf">0.18</span>  <span class="c1"># th of waveguide</span>
+<span class="c1"># unit cell [mm]</span>
+<span class="n">P</span> <span class="o">=</span> <span class="mi">15</span>  <span class="c1"># periodicity</span>
+<span class="n">L</span> <span class="o">=</span> <span class="mf">9.4</span>  <span class="c1"># length of cross</span>
+<span class="n">W</span> <span class="o">=</span> <span class="mf">2.0</span>  <span class="c1"># width of cross stub</span>
+<span class="n">d</span> <span class="o">=</span> <span class="mf">2.2</span>  <span class="c1"># height of substrate</span>
+<span class="n">th</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># metal thickness</span>
+<span class="n">gap</span> <span class="o">=</span> <span class="mf">15.0</span>  <span class="c1"># air gap below and above - keeps resonant evanescent field from coupling to lossy PML</span>
+<span class="n">margin</span> <span class="o">=</span> <span class="mf">2.0</span>
 
-<span class="c1"># gds layers</span>
-<span class="n">WG</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># waveguide layer</span>
-<span class="n">BBOX</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># bounding box layer</span>
+<span class="c1"># adaptive meshing</span>
+<span class="n">nres</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">dx0</span> <span class="o">=</span> <span class="n">wl</span> <span class="o">/</span> <span class="n">nres</span>
+<span class="n">mesh_density</span> <span class="o">=</span> <span class="n">dx0</span> <span class="o">/</span> <span class="mf">0.5</span>
 
-<span class="c1"># we create geometry in gdsfactory. alternatively, you can import .gds layout into gdsfactory or .stl bodies directly into ours</span>
-<span class="c1"># for gdsfactory, we need vertical layer stack. &quot;core&quot; layer is special as mode margins are demarcated from it for defining modal sources and monitors. during 3d meshing lower mesh order layers supplant higher mesh order layers</span>
+<span class="c1"># materials_library</span>
+<span class="n">materials_library</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">MATERIALS_LIBRARY</span>
+<span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;sub&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">mesh_density</span><span class="o">=</span><span class="n">mesh_density</span><span class="p">)</span>
+<span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;PEC&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">mesh_density</span><span class="p">)</span>
+
+<span class="c1"># make geometry in gdsfactory. 1/4 section of unit cell due to symmetry</span>
+<span class="c1"># alternatively can import .gds into gdsfactory</span>
+
+<span class="n">WG</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">BBOX</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
 <span class="n">layer_stack</span> <span class="o">=</span> <span class="n">LayerStack</span><span class="p">(</span>
     <span class="n">layers</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;core&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
+        <span class="s2">&quot;WG&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">WG</span><span class="p">),</span>
             <span class="n">thickness</span><span class="o">=</span><span class="n">th</span><span class="p">,</span>
-            <span class="n">zmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Si&quot;</span><span class="p">,</span>
-            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">zmin</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC&quot;</span><span class="p">,</span>
+            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;sub&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
+            <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">BBOX</span><span class="p">),</span>
+            <span class="n">thickness</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+            <span class="n">zmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;sub&quot;</span><span class="p">,</span>
+            <span class="n">mesh_order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">}</span>
 <span class="p">)</span>
 
-<span class="c1"># our default lumi.MATERIALS_LIBRARY lib covers limited range of photonic and PCB materials_library. here we create our own materials_library. `background` is special and tags regions outside any bodies during meshing</span>
-<span class="n">materials_library</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;Si&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">12.25</span><span class="p">),</span>
-    <span class="s2">&quot;SiO2&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">2.25</span><span class="p">),</span>
-<span class="p">}</span>
-<span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;background&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;SiO2&quot;</span><span class="p">]</span>
-
-<span class="c1"># margins are demarcated from `core` layer</span>
-<span class="n">height_port_margin</span> <span class="o">=</span> <span class="n">lateral_port_margin</span> <span class="o">=</span> <span class="mf">0.5</span>
-<span class="n">margin</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">lateral_port_margin</span>
-<span class="n">zmargin</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">height_port_margin</span>
-<span class="n">source_port_margin</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">w_wg</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lateral_port_margin</span><span class="p">)</span>
-
-<span class="c1"># draw layout in gdsfactory. `gf.components` defaults to layer WG = (1, 0)</span>
 <span class="n">c</span> <span class="o">=</span> <span class="n">gf</span><span class="o">.</span><span class="n">Component</span><span class="p">()</span>
-
-<span class="n">dut</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">ring</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_wg</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">WG</span><span class="p">)</span>
-
-<span class="n">l_branch</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">r</span> <span class="o">+</span> <span class="n">w_wg</span> <span class="o">+</span> <span class="n">source_port_margin</span> <span class="o">+</span> <span class="n">margin</span>
-<span class="n">branch_bottom_left</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_wg</span><span class="p">)</span>
-<span class="n">branch_bottom_left</span><span class="o">.</span><span class="n">move</span><span class="p">((</span><span class="o">-</span><span class="n">source_port_margin</span> <span class="o">-</span> <span class="n">r</span> <span class="o">-</span> <span class="n">w_wg</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">w_wg</span> <span class="o">-</span> <span class="n">gap</span> <span class="o">-</span><span class="n">r</span><span class="p">))</span>
-
-<span class="n">branch_bottom_right</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">l_branch</span> <span class="o">-</span> <span class="n">source_port_margin</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_wg</span><span class="p">)</span>
-<span class="n">branch_bottom_right</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">branch_bottom_left</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o2&quot;</span><span class="p">])</span>
-
-<span class="n">branch_top</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">l_branch</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_wg</span><span class="p">)</span>
-<span class="n">branch_top</span><span class="o">.</span><span class="n">move</span><span class="p">((</span><span class="o">-</span><span class="n">source_port_margin</span> <span class="o">-</span> <span class="n">r</span> <span class="o">-</span> <span class="n">w_wg</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">w_wg</span> <span class="o">+</span> <span class="n">gap</span> <span class="o">+</span> <span class="n">r</span><span class="p">))</span>
-
-<span class="c1"># add ports</span>
-<span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">branch_bottom_right</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">])</span>
-<span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">branch_bottom_right</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o2&quot;</span><span class="p">])</span>  <span class="c1"># thru channel</span>
-<span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="s2">&quot;o3&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">branch_top</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">])</span>  <span class="c1"># drop channel</span>
-
-<span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">bbox</span><span class="p">(</span><span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">BBOX</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="n">margin</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="n">margin</span><span class="p">)</span>
+<span class="n">c</span><span class="o">.</span><span class="n">add_polygon</span><span class="p">(</span>
+    <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">L</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="n">W</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">L</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="n">W</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)],</span>
+    <span class="n">layer</span><span class="o">=</span><span class="n">WG</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">add_polygon</span><span class="p">(</span>
+    <span class="p">[(</span><span class="n">W</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">W</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="n">W</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="n">L</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="n">L</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">W</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)],</span>
+    <span class="n">layer</span><span class="o">=</span><span class="n">WG</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">c</span><span class="o">.</span><span class="n">add_polygon</span><span class="p">([(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">P</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="n">P</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">P</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="n">P</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)],</span> <span class="n">layer</span><span class="o">=</span><span class="n">BBOX</span><span class="p">)</span>
 <span class="n">c</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/c2c928a3eb478d1e9c762e2196805f888c08f29572f60fa8d55477e4b9163b71.png" src="_images/c2c928a3eb478d1e9c762e2196805f888c08f29572f60fa8d55477e4b9163b71.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>running luminescent python frontend
+</pre></div>
+</div>
+<img alt="_images/4184ab48df87ae797fa45ce98de0aa4529012660b124635889041a6c1f062032.png" src="_images/4184ab48df87ae797fa45ce98de0aa4529012660b124635889041a6c1f062032.png" />
 </div>
 </div>
 </section>
@@ -539,57 +542,57 @@ document.write(`
 <h2>Solve<a class="headerlink" href="#solve" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># source launches `source_port_margin` in front of port. it&#39;s bidirectional: the other direction goes into PML. pulse spectrum rolls off gradually past bandwidth limits.</span>
-<span class="n">sources</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">lumi</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span>
-        <span class="s2">&quot;o1&quot;</span><span class="p">,</span>
-        <span class="n">source_port_margin</span><span class="o">=</span><span class="n">source_port_margin</span><span class="p">,</span>
-        <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">,</span>
-        <span class="n">bandwidth</span><span class="o">=</span><span class="n">wavelength</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span>
-    <span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ports</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">lumi</span><span class="o">.</span><span class="n">PlanePort</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">d</span> <span class="o">+</span> <span class="n">th</span> <span class="o">+</span> <span class="n">gap</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">),</span>
+    <span class="n">lumi</span><span class="o">.</span><span class="n">PlanePort</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=-</span><span class="n">gap</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">),</span>
 <span class="p">]</span>
+<span class="n">modes</span> <span class="o">=</span> <span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;Ex&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Hy&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},{</span><span class="s2">&quot;Ey&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Hx&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">}])]</span>
+<span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">source_port_margin</span><span class="o">=</span><span class="n">margin</span><span class="p">,</span> <span class="n">frequency</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">bandwidth</span><span class="o">=</span><span class="n">bw</span><span class="p">)]</span>
 
-<span class="n">modes</span> <span class="o">=</span> <span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">)]</span>
-
-<span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-    <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">,</span>
     <span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
-    <span class="n">wavelengths</span><span class="o">=</span><span class="n">wavelengths</span><span class="p">,</span>
-    <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
-    <span class="n">modes</span><span class="o">=</span><span class="n">modes</span><span class="p">,</span>
+    <span class="n">frequencies</span><span class="o">=</span><span class="n">frequencies</span><span class="p">,</span>
+    <span class="n">wl1f</span><span class="o">=</span><span class="n">wl1f</span><span class="p">,</span>
+    <span class="c1"># antisymmetric/PEC/odd vs symmetric/PMC/even symmetry</span>
+    <span class="n">boundaries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;PEC&quot;</span><span class="p">,</span> <span class="s2">&quot;PMC&quot;</span><span class="p">,</span> <span class="s2">&quot;PML&quot;</span><span class="p">],</span>
     <span class="c1">#</span>
-    <span class="n">zmin</span><span class="o">=-</span><span class="n">zmargin</span><span class="p">,</span>
-    <span class="n">zmax</span><span class="o">=</span><span class="n">th</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>
-    <span class="n">height_port_margin</span><span class="o">=</span><span class="n">height_port_margin</span><span class="p">,</span>
-    <span class="n">lateral_port_margin</span><span class="o">=</span><span class="n">lateral_port_margin</span><span class="p">,</span>
+    <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
+    <span class="n">ports</span><span class="o">=</span><span class="n">ports</span><span class="p">,</span>
+    <span class="n">modes</span><span class="o">=</span><span class="n">modes</span><span class="p">,</span>
+    <span class="n">zmin</span><span class="o">=-</span><span class="n">gap</span><span class="p">,</span>
+    <span class="n">zmax</span><span class="o">=</span><span class="n">d</span> <span class="o">+</span> <span class="n">th</span> <span class="o">+</span> <span class="n">gap</span> <span class="o">+</span> <span class="n">margin</span><span class="p">,</span>
     <span class="c1">#</span>
     <span class="n">materials_library</span><span class="o">=</span><span class="n">materials_library</span><span class="p">,</span>
     <span class="n">layer_stack</span><span class="o">=</span><span class="n">layer_stack</span><span class="p">,</span>
     <span class="c1">#</span>
     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration</span>
-    <span class="n">nres</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>  <span class="c1"># number of grid points per wavelength in material (not vacuum)</span>
-    <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>  <span class="c1"># relative Courant number</span>
-    <span class="n">relative_pml_depths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>  <span class="c1"># relative PML thes</span>
-    <span class="n">Tsim</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>  <span class="c1"># max time [periods]</span>
-    <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># field energy decay threshold for stopping simulation</span>
-    <span class="n">saveat</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>  <span class="c1"># save field every n periods for movie</span>
-    <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># delete and overwrite existing path</span>
+    <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>  <span class="c1"># relative courant number between 0 and 1</span>
+    <span class="n">nres</span><span class="o">=</span><span class="n">nres</span><span class="p">,</span>
+    <span class="n">Tsim</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>  <span class="c1"># max time [periods]</span>
+    <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.003</span><span class="p">,</span>  <span class="c1"># field decay threshold for stopping simulation</span>
+    <span class="n">saveat</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="n">lumi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;peak.png&quot;</span><span class="p">)))</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s1">&#39;Ex&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">d</span> <span class="o">+</span> <span class="n">th</span><span class="o">/</span><span class="mi">2</span><span class="p">)])</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/7667433e41a8f8c9965c883cbe75ec42ec2659050bdc090bcd480f49eb1a82dc.png" src="_images/7667433e41a8f8c9965c883cbe75ec42ec2659050bdc090bcd480f49eb1a82dc.png" />
-<img alt="_images/0928078dbb120653fec73e0f388be713529b6fe9bec3ba98eda71d9d27994932.png" src="_images/0928078dbb120653fec73e0f388be713529b6fe9bec3ba98eda71d9d27994932.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring
-Video generated successfully at runs\ring\simulation.mp4 and runs\ring\simulation.gif!
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\FSS
+0.25
+0.25
+0.25
+loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\FSS
+========================================
+
+failed fdtd binary execution
+========================================
+
+Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\FSS\simulation.gif!
 </pre></div>
 </div>
-<img alt="_images/8e619041d8342eaf746d250be97f61d54e34e9c25dbfeca46db67f6db0dac0b6.png" src="_images/8e619041d8342eaf746d250be97f61d54e34e9c25dbfeca46db67f6db0dac0b6.png" />
+<img alt="_images/08388647b2e9b6fb676238bed19538ecaa0861ff0da45a9ed199054bcbdaa758.gif" src="_images/08388647b2e9b6fb676238bed19538ecaa0861ff0da45a9ed199054bcbdaa758.gif" />
 </div>
 </div>
 </section>
@@ -598,21 +601,20 @@ Video generated successfully at runs\ring\simulation.mp4 and runs\ring\simulatio
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">wavelengths</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;T3,1&quot;</span><span class="p">)</span> <span class="c1"># wavelength or frequency ordered depending on problem setup</span>
-<span class="c1"># y = lumi.query(sol, &quot;To3@0,o1@0&quot;)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">frequencies</span>
+<span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span><span class="s1">&#39;T2,1&#39;</span><span class="p">)]</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;wavelength [um]&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;drop channel T&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;f [GHz]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;S21 [dB]&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\FSS
 </pre></div>
 </div>
-<img alt="_images/c55af318ddf29bb27fd7e55992d63a6e1a4763f162c1ebd4b98f04b412f5f6e2.png" src="_images/c55af318ddf29bb27fd7e55992d63a6e1a4763f162c1ebd4b98f04b412f5f6e2.png" />
+<img alt="_images/e15b93c37ed8d7ec436d8eca736b9417f21888a27f018159a741db2ba28814eb.png" src="_images/e15b93c37ed8d7ec436d8eca736b9417f21888a27f018159a741db2ba28814eb.png" />
 </div>
 </div>
 </section>
@@ -648,6 +650,24 @@ Video generated successfully at runs\ring\simulation.mp4 and runs\ring\simulatio
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
+    <a class="left-prev"
+       href="test_stub.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">RF microstrip: quarter wave stub filter</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="test_patch.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">RF antenna: microstrip fed patch</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
 </div>
                 </footer>
               

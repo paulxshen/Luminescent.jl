@@ -188,11 +188,10 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="ring.html">Photonic integrated circuit: ring resonator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stub.html">RF microstrip: quarter wave stub filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patch.html">RF antenna: microstrip fed patch</a></li>
-<li class="toctree-l1"><a class="reference internal" href="monopole.html">RF antenna: coax fed monopole over ground</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_ring.html">Photonic integrated circuit: ring resonator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_stub.html">RF microstrip: quarter wave stub filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_patch.html">RF antenna: microstrip fed patch</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
 <ul class="nav bd-sidenav">
@@ -444,7 +443,7 @@ document.write(`
 <p>We recommend first going through a tutorial to get a feel on running simulations. Then come back here for detailed explanations.</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>Everything revolves around the simulation folder <code class="docutils literal notranslate"><span class="pre">path</span></code> you specify in <code class="docutils literal notranslate"><span class="pre">make_prob</span></code>, which uses Python frontend to write <code class="docutils literal notranslate"><span class="pre">problem.json</span></code> and other config files. <code class="docutils literal notranslate"><span class="pre">solve</span></code> then reads them and invokes compiled Julia backend to run simulation, producing <code class="docutils literal notranslate"><span class="pre">solution.json</span></code>. <code class="docutils literal notranslate"><span class="pre">load_sol</span></code> then loads it into a</p>
+<p>Everything revolves around the simulation folder <code class="docutils literal notranslate"><span class="pre">path</span></code> you specify in <code class="docutils literal notranslate"><span class="pre">make</span></code>, which uses Python frontend to write <code class="docutils literal notranslate"><span class="pre">problem.json</span></code> and other config files. <code class="docutils literal notranslate"><span class="pre">solve</span></code> then reads them and invokes compiled Julia backend to run simulation, producing <code class="docutils literal notranslate"><span class="pre">solution.json</span></code>. <code class="docutils literal notranslate"><span class="pre">load</span></code> then loads it into a</p>
 </section>
 <section id="units">
 <h2>Units<a class="headerlink" href="#units" title="Link to this heading">#</a></h2>
@@ -454,11 +453,11 @@ document.write(`
 <h2>Geometry<a class="headerlink" href="#geometry" title="Link to this heading">#</a></h2>
 <section id="option-1-gdsfactory">
 <h3>Option 1: <code class="docutils literal notranslate"><span class="pre">gdsfactory</span></code><a class="headerlink" href="#option-1-gdsfactory" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">gdsfactory</span></code> is a popular Python library for programmatic electronic layout. It uses <code class="docutils literal notranslate"><span class="pre">layer_stack</span></code> to convert 2D layers to 3D geometry. <code class="docutils literal notranslate"><span class="pre">make_prob</span></code> accepts <code class="docutils literal notranslate"><span class="pre">gdsfactory</span></code> <code class="docutils literal notranslate"><span class="pre">layer_stack</span></code> and <code class="docutils literal notranslate"><span class="pre">component</span></code> whose ports automatically become simulation ports. .gds and .gerber files can also be imported into <code class="docutils literal notranslate"><span class="pre">gdsfactory</span></code> components.</p>
+<p><code class="docutils literal notranslate"><span class="pre">gdsfactory</span></code> is a popular Python library for programmatic electronic layout. It uses <code class="docutils literal notranslate"><span class="pre">layer_stack</span></code> to convert 2D layers to 3D geometry. <code class="docutils literal notranslate"><span class="pre">make</span></code> accepts <code class="docutils literal notranslate"><span class="pre">gdsfactory</span></code> <code class="docutils literal notranslate"><span class="pre">layer_stack</span></code> and <code class="docutils literal notranslate"><span class="pre">component</span></code> whose ports automatically become simulation ports. .gds and .gerber files can also be imported into <code class="docutils literal notranslate"><span class="pre">gdsfactory</span></code> components.</p>
 </section>
 <section id="option-2-3d-mesh-file-import">
 <h3>Option 2: 3D mesh file import<a class="headerlink" href="#option-2-3d-mesh-file-import" title="Link to this heading">#</a></h3>
-<p>Create geometry in your favorite CAD and or another simulation tool. Then export each body as .obj (can be saved from .stl or .step) file. Then place them in <code class="docutils literal notranslate"><span class="pre">geometry</span></code> folder inside simulation folder using the convention <code class="docutils literal notranslate"><span class="pre">{mesh_order}#{material_name}#{layer_name}#{body_name}.obj</span></code> eg <code class="docutils literal notranslate"><span class="pre">1#Si#core#wg.obj</span></code>. Lower mesh order overrides higher mesh order.</p>
+<p>Create geometry in your favorite CAD and or another simulation tool. Then export each body as .obj (can be saved from .stl or .step) file. Then place them in <code class="docutils literal notranslate"><span class="pre">geometry</span></code> folder inside simulation folder using the convention <code class="docutils literal notranslate"><span class="pre">{mesh_order}{SEP}{material_name}{SEP}{layer_name}{SEP}{body_name}.obj</span></code> eg <code class="docutils literal notranslate"><span class="pre">1#Si#core#wg.obj</span></code>. Lower mesh order overrides higher mesh order.</p>
 </section>
 </section>
 <section id="boundaries">
@@ -467,7 +466,7 @@ document.write(`
 </section>
 <section id="mesh">
 <h2>Mesh<a class="headerlink" href="#mesh" title="Link to this heading">#</a></h2>
-<p>Adaptive graded mesh proportions more points to regions of high refractive index and fine features. It also snaps to body boundaries including thin sheets in RF. <code class="docutils literal notranslate"><span class="pre">nres</span></code> arg in <code class="docutils literal notranslate"><span class="pre">make_prob</span></code> controls number of points per characteristic wavelength adjusted locally for refractive index. <code class="docutils literal notranslate"><span class="pre">mesh_density</span></code> relative to vacuum which is by default the refractive index can also be manually set in material constructors. This is useful for mesh overrides or metal materials with undefined refractive index.</p>
+<p>Adaptive graded mesh proportions more points to regions of high refractive index and fine features. It also snaps to body boundaries including thin sheets in RF. <code class="docutils literal notranslate"><span class="pre">nres</span></code> arg in <code class="docutils literal notranslate"><span class="pre">make</span></code> controls number of points per characteristic wavelength adjusted locally for refractive index. <code class="docutils literal notranslate"><span class="pre">mesh_density</span></code> relative to vacuum which is by default the refractive index can also be manually set in material constructors. This is useful for mesh overrides or metal materials with undefined refractive index.</p>
 </section>
 <section id="materials">
 <h2>Materials<a class="headerlink" href="#materials" title="Link to this heading">#</a></h2>
@@ -505,8 +504,8 @@ document.write(`
 </section>
 <section id="ports">
 <h2>Ports<a class="headerlink" href="#ports" title="Link to this heading">#</a></h2>
-<p>Plane ports are automatically extracted from gdsfactory component or imported geometry. gdsfactory derived ports are extended by <code class="docutils literal notranslate"><span class="pre">lateral_port_margin</span></code> and <code class="docutils literal notranslate"><span class="pre">height_port_margin</span></code> args in <code class="docutils literal notranslate"><span class="pre">make_prob</span></code> for creating modal sources and monitors.</p>
-<p>Additional ports (not from gdsfactory or marked in imported geometry) can be created as follows and passed to <code class="docutils literal notranslate"><span class="pre">make_prob</span></code> via <code class="docutils literal notranslate"><span class="pre">ports</span></code></p>
+<p>Plane ports are automatically extracted from gdsfactory component or imported geometry. gdsfactory derived ports are extended by <code class="docutils literal notranslate"><span class="pre">lateral_port_margin</span></code> and <code class="docutils literal notranslate"><span class="pre">height_port_margin</span></code> args in <code class="docutils literal notranslate"><span class="pre">make</span></code> for creating modal sources and monitors.</p>
+<p>Additional ports (not from gdsfactory or marked in imported geometry) can be created as follows and passed to <code class="docutils literal notranslate"><span class="pre">make</span></code> via <code class="docutils literal notranslate"><span class="pre">ports</span></code></p>
 <blockquote>
 <div><dl class="py function">
 <dt class="sig sig-object py" id="luminescent.setup.PlanePort">
@@ -568,7 +567,7 @@ document.write(`
 </section>
 <section id="solution">
 <h2>Solution<a class="headerlink" href="#solution" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">solve</span></code> calls system command <code class="docutils literal notranslate"><span class="pre">luminescent</span></code> to do simulation. It writes <code class="docutils literal notranslate"><span class="pre">solution.json</span></code> which references numpy arrays in the auxiliary folder <code class="docutils literal notranslate"><span class="pre">.solution.json</span></code>. <code class="docutils literal notranslate"><span class="pre">load_sol</span></code> loads them into a dictionary which <code class="docutils literal notranslate"><span class="pre">query</span></code> can further process into derived quantities eg S-parameters</p>
+<p><code class="docutils literal notranslate"><span class="pre">solve</span></code> calls system command <code class="docutils literal notranslate"><span class="pre">luminescent</span></code> to do simulation. It writes <code class="docutils literal notranslate"><span class="pre">solution.json</span></code> which references numpy arrays in the auxiliary folder <code class="docutils literal notranslate"><span class="pre">.solution.json</span></code>. <code class="docutils literal notranslate"><span class="pre">load</span></code> loads them into a dictionary which <code class="docutils literal notranslate"><span class="pre">query</span></code> can further process into derived quantities eg S-parameters</p>
 </section>
 </section>
 

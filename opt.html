@@ -187,11 +187,10 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="ring.html">Photonic integrated circuit: ring resonator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stub.html">RF microstrip: quarter wave stub filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patch.html">RF antenna: microstrip fed patch</a></li>
-<li class="toctree-l1"><a class="reference internal" href="monopole.html">RF antenna: coax fed monopole over ground</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_ring.html">Photonic integrated circuit: ring resonator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_stub.html">RF microstrip: quarter wave stub filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_patch.html">RF antenna: microstrip fed patch</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
 <ul class="nav bd-sidenav">
@@ -425,7 +424,7 @@ document.write(`
 <h1>Inverse Design<a class="headerlink" href="#inverse-design" title="Link to this heading">#</a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>Workflow same as simulation. Only difference is passing additional args to <code class="docutils literal notranslate"><span class="pre">make_prob</span></code> : <code class="docutils literal notranslate"><span class="pre">designs</span></code>, <code class="docutils literal notranslate"><span class="pre">targets</span></code>, <code class="docutils literal notranslate"><span class="pre">optimizer</span></code>. <code class="docutils literal notranslate"><span class="pre">solve</span></code> then runs optimization loop instead of single simulation. Each iteration has forward and backward pass. Forward pass is a simulation that has to save all intermediate fields to compute gradients in backward pass. Each iteration is &gt;5x slower than single simulation. &gt;40 iterations typically needed to converge. Altogether &gt;200x slower than single simulation.</p>
+<p>Workflow same as simulation. Only difference is passing additional args to <code class="docutils literal notranslate"><span class="pre">make</span></code> : <code class="docutils literal notranslate"><span class="pre">designs</span></code>, <code class="docutils literal notranslate"><span class="pre">targets</span></code>, <code class="docutils literal notranslate"><span class="pre">optimizer</span></code>. <code class="docutils literal notranslate"><span class="pre">solve</span></code> then runs optimization loop instead of single simulation. Each iteration has forward and backward pass. Forward pass is a simulation that has to save all intermediate fields to compute gradients in backward pass. Each iteration is &gt;5x slower than single simulation. &gt;40 iterations typically needed to converge. Altogether &gt;200x slower than single simulation.</p>
 </section>
 <section id="design-regions">
 <h2>Design regions<a class="headerlink" href="#design-regions" title="Link to this heading">#</a></h2>

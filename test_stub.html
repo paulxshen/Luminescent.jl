@@ -57,10 +57,12 @@
     <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'stub copy';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'test_stub';</script>
     <link rel="icon" href="_static/logo.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Metasurface: microwave frequency selective surface (FSS)" href="test_FSS.html" />
+    <link rel="prev" title="Photonic integrated circuit: ring resonator" href="test_ring.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -122,8 +124,6 @@
     <div class="bd-container__inner bd-page-width">
       
       
-      
-        
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -187,9 +187,9 @@
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="test_ring.html">Photonic integrated circuit: ring resonator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_stub.html">RF microstrip: quarter wave stub filter</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">RF microstrip: quarter wave stub filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_patch.html">RF antenna: microstrip fed patch</a></li>
 </ul>
@@ -256,7 +256,7 @@
       
       
       
-      <li><a href="https://colab.research.google.com/github/paulxshen/Luminescent.jl/blob/master/docs/stub copy.ipynb" target="_blank"
+      <li><a href="https://colab.research.google.com/github/paulxshen/Luminescent.jl/blob/master/docs/test_stub.ipynb" target="_blank"
    class="btn btn-sm dropdown-item"
    title="Launch on Colab"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -304,7 +304,7 @@
       
       
       
-      <li><a href="https://github.com/paulxshen/Luminescent.jl/issues/new?title=Issue%20on%20page%20%2Fstub copy.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/paulxshen/Luminescent.jl/issues/new?title=Issue%20on%20page%20%2Ftest_stub.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -334,7 +334,7 @@
       
       
       
-      <li><a href="_sources/stub copy.ipynb" target="_blank"
+      <li><a href="_sources/test_stub.ipynb" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -447,7 +447,7 @@ document.write(`
 <h1>RF microstrip: quarter wave stub filter<a class="headerlink" href="#rf-microstrip-quarter-wave-stub-filter" title="Link to this heading">#</a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>We simulate a quarter wave stub bandstop filter in RF microstrip with nominal 3.5GHz notch. Compare with <a class="reference external" href="https://docs.openems.de/python/openEMS/Tutorials/MSL_NotchFilter.html">OpenEMS example</a></p>
+<p>We simulate a quarter wave stub bandstop filter in RF microstrip with nominal 3.5GHz notch.</p>
 </section>
 <section id="geometry">
 <h2>Geometry<a class="headerlink" href="#geometry" title="Link to this heading">#</a></h2>
@@ -463,22 +463,25 @@ document.write(`
 
 <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;stub&quot;</span><span class="p">)</span>
 
-<span class="c1"># length and frequency units are arbitrary so long as they are consistent. Here we use mm and GHz.</span>
-<span class="n">frequency</span> <span class="o">=</span> <span class="mf">3.5</span>  <span class="c1"># GHz</span>
-<span class="n">wl1f</span> <span class="o">=</span> <span class="mi">300</span>  <span class="c1"># vacuum wavelength at 1 unit of frequency, all  in your units</span>
-<span class="n">wl</span> <span class="o">=</span> <span class="n">wl1f</span> <span class="o">/</span> <span class="n">frequency</span>  <span class="c1"># characteristic wavelength</span>
-<span class="n">frequencies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">101</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="c1"># length and frequency units are arbitrary</span>
+<span class="n">frequency</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># GHz</span>
+<span class="n">wl1f</span> <span class="o">=</span> <span class="mi">300</span>  <span class="c1"># vacuum wavelength at 1 unit of frequency in your units</span>
+<span class="n">wavelength</span> <span class="o">=</span> <span class="n">wl1f</span> <span class="o">/</span> <span class="n">frequency</span>  <span class="c1"># characteristic wavelength</span>
+<span class="n">frequencies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">81</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">bandwidth</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">frequencies</span><span class="p">)</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">frequencies</span><span class="p">)</span>
 
 <span class="c1"># microstrip</span>
-<span class="n">w_line</span> <span class="o">=</span> <span class="mf">.6</span>  <span class="c1"># width of microstrip line</span>
-<span class="n">d</span> <span class="o">=</span> <span class="mf">0.254</span>  <span class="c1"># substrate depth</span>
-<span class="n">th</span><span class="o">=</span><span class="mf">.01</span> <span class="c1"># metal thickness</span>
-<span class="n">l_stub</span><span class="o">=</span><span class="mi">12</span>
-<span class="n">l_line</span> <span class="o">=</span> <span class="n">l_stub</span>
+<span class="n">w_line</span> <span class="o">=</span> <span class="mf">1.52</span>  <span class="c1"># mm</span>
+<span class="n">th</span> <span class="o">=</span> <span class="mf">0.035</span>  <span class="c1"># mm</span>
+<span class="n">d</span> <span class="o">=</span> <span class="mf">0.8</span>  <span class="c1"># mm</span>
+<span class="n">c</span> <span class="o">=</span> <span class="mf">87.5</span> <span class="o">/</span> <span class="mi">139</span>  <span class="c1"># relative signal speed, from microstrip calculator</span>
 
+<span class="n">wl_sig</span> <span class="o">=</span> <span class="n">wl1f</span> <span class="o">*</span> <span class="n">c</span> <span class="o">/</span> <span class="n">frequency</span>  <span class="c1"># mm</span>
+<span class="n">l_stub</span> <span class="o">=</span> <span class="n">wl_sig</span> <span class="o">/</span> <span class="mi">4</span>
+<span class="n">l_line</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">*</span> <span class="n">l_stub</span>
 <span class="n">lateral_port_margin</span> <span class="o">=</span> <span class="n">height_port_margin</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">d</span>
-<span class="n">xmargin</span> <span class="o">=</span> <span class="n">zmargin</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">lateral_port_margin</span>
-<span class="n">source_port_margin</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">w_line</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lateral_port_margin</span><span class="p">)</span>
+<span class="n">margin</span> <span class="o">=</span> <span class="n">zmargin</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">lateral_port_margin</span>
+<span class="n">source_port_margin</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">*</span> <span class="p">(</span><span class="n">w_line</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lateral_port_margin</span><span class="p">)</span>
 
 <span class="c1"># layers</span>
 <span class="n">FEED</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span>
@@ -488,18 +491,18 @@ document.write(`
 <span class="c1"># make geometry in gdsfadory</span>
 <span class="c1"># alternatively can import .gds into gdsfadory</span>
 <span class="n">c</span> <span class="o">=</span> <span class="n">gf</span><span class="o">.</span><span class="n">Component</span><span class="p">()</span>
-<span class="n">line</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">lumi</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">l_line</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span><span class="n">layer</span><span class="o">=</span><span class="n">FEED</span><span class="p">)</span>
-<span class="n">stub</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">lumi</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">l_stub</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span><span class="n">layer</span><span class="o">=</span><span class="n">STUB</span><span class="p">)</span>
+<span class="n">feed</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">lumi</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">l_line</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">FEED</span><span class="p">)</span>
+<span class="n">stub</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">lumi</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">l_stub</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">STUB</span><span class="p">)</span>
 <span class="n">stub</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="mi">90</span><span class="p">)</span>
 <span class="n">stub</span><span class="o">.</span><span class="n">movex</span><span class="p">(</span><span class="n">l_line</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-<span class="c1"># stub.movey(-w_line / 2)</span>
+<span class="n">stub</span><span class="o">.</span><span class="n">movey</span><span class="p">(</span><span class="o">-</span><span class="n">w_line</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">ext</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">lumi</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">FEED</span><span class="p">)</span>
-<span class="n">ext</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">])</span>
+<span class="n">ext</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">feed</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">])</span>
 
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
-    <span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;o</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;o</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;o</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">feed</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;o</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
 
-<span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">bbox</span><span class="p">(</span><span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">SUB</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="n">xmargin</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="n">xmargin</span><span class="p">)</span>
+<span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">bbox</span><span class="p">(</span><span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">SUB</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="n">margin</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="n">margin</span><span class="p">)</span>
 <span class="n">c</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -508,7 +511,7 @@ document.write(`
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>running luminescent python frontend
 </pre></div>
 </div>
-<img alt="_images/fb9f5ec8666321e5470dbeeb9d61c180a1d774bf0bc24881210196cd85390b3a.png" src="_images/fb9f5ec8666321e5470dbeeb9d61c180a1d774bf0bc24881210196cd85390b3a.png" />
+<img alt="_images/176afc68d7db1877e59b0fac91ebc0717dc09fbacd0253e6dec340b156984cc1.png" src="_images/176afc68d7db1877e59b0fac91ebc0717dc09fbacd0253e6dec340b156984cc1.png" />
 </div>
 </div>
 </section>
@@ -518,7 +521,7 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># adaptive meshing</span>
 <span class="n">nres</span> <span class="o">=</span> <span class="mi">16</span>
-<span class="n">dx0</span> <span class="o">=</span> <span class="n">wl</span> <span class="o">/</span> <span class="n">nres</span>
+<span class="n">dx0</span> <span class="o">=</span> <span class="n">wavelength</span> <span class="o">/</span> <span class="n">nres</span>
 
 <span class="n">layer_stack</span> <span class="o">=</span> <span class="n">LayerStack</span><span class="p">(</span>
     <span class="n">layers</span><span class="o">=</span><span class="p">{</span>
@@ -536,7 +539,7 @@ document.write(`
             <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC_stub&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="s2">&quot;sub&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
+        <span class="s2">&quot;core&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">SUB</span><span class="p">),</span>
             <span class="n">zmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
             <span class="n">thickness</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
@@ -547,16 +550,16 @@ document.write(`
 <span class="p">)</span>
 
 <span class="c1"># materials</span>
-<span class="n">eps_substrate</span> <span class="o">=</span> <span class="mf">3.66</span>
+<span class="n">eps_substrate</span> <span class="o">=</span> <span class="mf">4.3</span>
 <span class="n">n_substrate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eps_substrate</span><span class="p">)</span> 
 
 <span class="n">dx</span> <span class="o">=</span> <span class="n">w_line</span> <span class="o">/</span> <span class="mi">4</span> <span class="c1"># 4 mesh points across the strip</span>
-<span class="n">n_line_width</span> <span class="o">=</span> <span class="n">dx0</span> <span class="o">/</span> <span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="c1"># mesh density relative to vacuum  </span>
+<span class="n">n_line</span> <span class="o">=</span> <span class="n">dx0</span> <span class="o">/</span> <span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="c1"># mesh density relative to vacuum  </span>
 
 <span class="n">materials_library</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;substrate&#39;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">eps_substrate</span><span class="p">),</span>
-    <span class="s1">&#39;PEC_feed&#39;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="p">[</span><span class="n">n_substrate</span><span class="p">,</span><span class="n">n_line_width</span><span class="p">,</span><span class="mi">1</span><span class="p">]),</span>
-    <span class="s1">&#39;PEC_stub&#39;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="p">[</span><span class="n">n_line_width</span><span class="p">,</span><span class="n">n_substrate</span><span class="p">,</span><span class="mi">1</span><span class="p">]),</span>
+    <span class="s1">&#39;PEC_feed&#39;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">n_line</span><span class="p">),</span>
+    <span class="s1">&#39;PEC_stub&#39;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">n_line</span><span class="p">),</span>
 <span class="p">}</span>
 <span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;background&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 
@@ -574,7 +577,7 @@ document.write(`
     <span class="p">)</span>
 <span class="p">]</span>
 
-<span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>    
     <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
     <span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
     <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span>
@@ -590,33 +593,22 @@ document.write(`
     <span class="c1">#</span>
     <span class="n">materials_library</span><span class="o">=</span><span class="n">materials_library</span><span class="p">,</span>
     <span class="n">layer_stack</span><span class="o">=</span><span class="n">layer_stack</span><span class="p">,</span>
-    <span class="n">core</span><span class="o">=</span><span class="s2">&quot;sub&quot;</span><span class="p">,</span>
     <span class="n">zmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-    <span class="n">zmax</span><span class="o">=</span><span class="n">d</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>
+    <span class="n">zmax</span><span class="o">=</span><span class="n">d</span> <span class="o">+</span> <span class="n">th</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>
     <span class="c1">#</span>
+    <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration)</span>
     <span class="n">nres</span><span class="o">=</span><span class="n">nres</span><span class="p">,</span>
     <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>  <span class="c1"># relative courant number between 0 and 1</span>
     <span class="n">relative_pml_depths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>
-    <span class="n">Tsim</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>  <span class="c1"># max time</span>
-    <span class="n">subpixel_smoothing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">Tsim</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>  <span class="c1"># max time</span>
     <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># field decay threshold for stopping simulation</span>
-    <span class="c1"># visualization</span>
-    <span class="n">field_slices</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d</span> <span class="o">/</span> <span class="mi">2</span><span class="p">],</span>
-    <span class="n">geometry_slices</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d</span> <span class="o">+</span> <span class="n">th</span> <span class="o">/</span> <span class="mi">2</span><span class="p">],</span>
-    <span class="n">show_field</span><span class="o">=</span><span class="s2">&quot;Ez&quot;</span><span class="p">,</span>
-    <span class="c1">#</span>
+    <span class="c1"># visualization    </span>
     <span class="n">saveat</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># save frame for plotting every _ periods</span>
-    <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># override and delete simulation folder</span>
-    <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration</span>
 <span class="p">)</span>
-
-
-<span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
-
-<span class="n">lumi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;peak.png&quot;</span><span class="p">)))</span>
-<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;simulation.gif&quot;</span><span class="p">)))</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">views</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s1">&#39;Ez&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">d</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">x</span><span class="o">=-</span><span class="n">source_port_margin</span><span class="p">),</span>
+        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s1">&#39;Ez&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="n">th</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">x</span><span class="o">=-</span><span class="n">source_port_margin</span><span class="p">)],)</span>
 </pre></div>
 </div>
 </div>
@@ -624,88 +616,25 @@ document.write(`
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Solving port modes with FEM...
 </pre></div>
 </div>
-<img alt="_images/180accdd89f15c9f17f6ee8d1c5fb6161a5e5f857255ef90b00b3fabf2ba8174.png" src="_images/180accdd89f15c9f17f6ee8d1c5fb6161a5e5f857255ef90b00b3fabf2ba8174.png" />
-<img alt="_images/1fd37294d806ca2a00273da5df64e0ca52518b568fb6136d780ac75e48555c03.png" src="_images/1fd37294d806ca2a00273da5df64e0ca52518b568fb6136d780ac75e48555c03.png" />
+<img alt="_images/57ebdfa08fb66857270652d653977133394d86fc5667b100b962254a8b2660b5.png" src="_images/57ebdfa08fb66857270652d653977133394d86fc5667b100b962254a8b2660b5.png" />
+<img alt="_images/6835dc11102a0e2216f3ba8e8c05742314fdb313c488369f7278f7a241bac765.png" src="_images/6835dc11102a0e2216f3ba8e8c05742314fdb313c488369f7278f7a241bac765.png" />
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub
-loading problem from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub
+0.19
+0.19
+0.19
+0.9042052915695228
+loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub
 ========================================
+
+failed fdtd binary execution
+Video generated successfully at runs\stub\simulation.mp4 and runs\stub\simulation.gif!
 </pre></div>
 </div>
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">FileNotFoundError</span><span class="g g-Whitespace">                         </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">line</span> <span class="mi">97</span>
-<span class="g g-Whitespace">     </span><span class="mi">59</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-<span class="g g-Whitespace">     </span><span class="mi">60</span>     <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">61</span>     <span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>     <span class="mi">92</span>     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration</span>
-<span class="g g-Whitespace">     </span><span class="mi">93</span> <span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">96</span> <span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">97</span> <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">99</span> <span class="n">lumi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">100</span> <span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;peak.png&quot;</span><span class="p">)))</span>
-
-<span class="nn">File c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\sol.py:80,</span> in <span class="ni">solve</span><span class="nt">(path, a, nthreads, **kwargs)</span>
-<span class="g g-Whitespace">     </span><span class="mi">78</span>         <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">79</span> <span class="k">else</span><span class="p">:</span>
-<span class="ne">---&gt; </span><span class="mi">80</span>     <span class="n">run</span><span class="p">(</span>
-<span class="g g-Whitespace">     </span><span class="mi">81</span>         <span class="p">[</span>
-<span class="g g-Whitespace">     </span><span class="mi">82</span>             <span class="s2">&quot;julia&quot;</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">83</span>             <span class="s2">&quot;-t16&quot;</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">84</span>             <span class="s2">&quot;C:</span><span class="se">\\</span><span class="s2">Users</span><span class="se">\\</span><span class="s2">default.LAPTOP-HMRU58MH</span><span class="se">\\</span><span class="s2">Desktop</span><span class="se">\\</span><span class="s2">lumi</span><span class="se">\\</span><span class="s2">src</span><span class="se">\\</span><span class="s2">pictest.jl&quot;</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">85</span>         <span class="p">]</span>
-<span class="g g-Whitespace">     </span><span class="mi">86</span>     <span class="p">)</span>
-
-<span class="nn">File c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\sol.py:59,</span> in <span class="ni">solve.&lt;locals&gt;.run</span><span class="nt">(cmd)</span>
-<span class="g g-Whitespace">     </span><span class="mi">57</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">58</span> <span class="nb">print</span><span class="p">()</span>
-<span class="ne">---&gt; </span><span class="mi">59</span> <span class="n">proc</span> <span class="o">=</span> <span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">60</span> <span class="c1"># proc.wait()</span>
-<span class="g g-Whitespace">     </span><span class="mi">61</span> <span class="k">with</span> <span class="n">proc</span><span class="p">:</span>
-
-<span class="nn">File c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\subprocess.py:1026,</span> in <span class="ni">Popen.__init__</span><span class="nt">(self, args, bufsize, executable, stdin, stdout, stderr, preexec_fn, close_fds, shell, cwd, env, universal_newlines, startupinfo, creationflags, restore_signals, start_new_session, pass_fds, user, group, extra_groups, encoding, errors, text, umask, pipesize, process_group)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1022</span>         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_mode</span><span class="p">:</span>
-<span class="g g-Whitespace">   </span><span class="mi">1023</span>             <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">TextIOWrapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1024</span>                     <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)</span>
-<span class="ne">-&gt; </span><span class="mi">1026</span>     <span class="bp">self</span><span class="o">.</span><span class="n">_execute_child</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">executable</span><span class="p">,</span> <span class="n">preexec_fn</span><span class="p">,</span> <span class="n">close_fds</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1027</span>                         <span class="n">pass_fds</span><span class="p">,</span> <span class="n">cwd</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1028</span>                         <span class="n">startupinfo</span><span class="p">,</span> <span class="n">creationflags</span><span class="p">,</span> <span class="n">shell</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1029</span>                         <span class="n">p2cread</span><span class="p">,</span> <span class="n">p2cwrite</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1030</span>                         <span class="n">c2pread</span><span class="p">,</span> <span class="n">c2pwrite</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1031</span>                         <span class="n">errread</span><span class="p">,</span> <span class="n">errwrite</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1032</span>                         <span class="n">restore_signals</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1033</span>                         <span class="n">gid</span><span class="p">,</span> <span class="n">gids</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="n">umask</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1034</span>                         <span class="n">start_new_session</span><span class="p">,</span> <span class="n">process_group</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1035</span> <span class="k">except</span><span class="p">:</span>
-<span class="g g-Whitespace">   </span><span class="mi">1036</span>     <span class="c1"># Cleanup if the child failed starting.</span>
-<span class="g g-Whitespace">   </span><span class="mi">1037</span>     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stdin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="p">)):</span>
-
-<span class="nn">File c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\subprocess.py:1538,</span> in <span class="ni">Popen._execute_child</span><span class="nt">(self, args, executable, preexec_fn, close_fds, pass_fds, cwd, env, startupinfo, creationflags, shell, p2cread, p2cwrite, c2pread, c2pwrite, errread, errwrite, unused_restore_signals, unused_gid, unused_gids, unused_uid, unused_umask, unused_start_new_session, unused_process_group)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1536</span> <span class="c1"># Start the process</span>
-<span class="g g-Whitespace">   </span><span class="mi">1537</span> <span class="k">try</span><span class="p">:</span>
-<span class="ne">-&gt; </span><span class="mi">1538</span>     <span class="n">hp</span><span class="p">,</span> <span class="n">ht</span><span class="p">,</span> <span class="n">pid</span><span class="p">,</span> <span class="n">tid</span> <span class="o">=</span> <span class="n">_winapi</span><span class="o">.</span><span class="n">CreateProcess</span><span class="p">(</span><span class="n">executable</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1539</span>                              <span class="c1"># no special security</span>
-<span class="g g-Whitespace">   </span><span class="mi">1540</span>                              <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1541</span>                              <span class="nb">int</span><span class="p">(</span><span class="ow">not</span> <span class="n">close_fds</span><span class="p">),</span>
-<span class="g g-Whitespace">   </span><span class="mi">1542</span>                              <span class="n">creationflags</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1543</span>                              <span class="n">env</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1544</span>                              <span class="n">cwd</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1545</span>                              <span class="n">startupinfo</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1546</span> <span class="k">finally</span><span class="p">:</span>
-<span class="g g-Whitespace">   </span><span class="mi">1547</span>     <span class="c1"># Child is launched. Close the parent&#39;s copy of those pipe</span>
-<span class="g g-Whitespace">   </span><span class="mi">1548</span>     <span class="c1"># handles that only the child should have open.  You need</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>   <span class="mi">1551</span>     <span class="c1"># pipe will not close when the child process exits and the</span>
-<span class="g g-Whitespace">   </span><span class="mi">1552</span>     <span class="c1"># ReadFile will hang.</span>
-<span class="g g-Whitespace">   </span><span class="mi">1553</span>     <span class="bp">self</span><span class="o">.</span><span class="n">_close_pipe_fds</span><span class="p">(</span><span class="n">p2cread</span><span class="p">,</span> <span class="n">p2cwrite</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1554</span>                          <span class="n">c2pread</span><span class="p">,</span> <span class="n">c2pwrite</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1555</span>                          <span class="n">errread</span><span class="p">,</span> <span class="n">errwrite</span><span class="p">)</span>
-
-<span class="ne">FileNotFoundError</span>: [WinError 2] The system cannot find the file specified
-</pre></div>
-</div>
+<img alt="_images/3c4baf10eb521bd4f77fee1ef7c9c79768ca00982c83919d3c21d897df8fd05c.png" src="_images/3c4baf10eb521bd4f77fee1ef7c9c79768ca00982c83919d3c21d897df8fd05c.png" />
 </div>
 </div>
 </section>
@@ -717,8 +646,8 @@ loading problem from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\r
 
 <span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">frequencies</span>
-<span class="c1"># y = lumi.query(sol, &quot;To2@0,o1@0&quot;)</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;T2,1&quot;</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;To2@0,o1@0&quot;</span><span class="p">)</span>
+<span class="c1"># y = lumi.query(sol, &quot;T2,1&quot;)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">y</span><span class="p">]</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;f [GHz]&quot;</span><span class="p">)</span>
@@ -728,20 +657,10 @@ loading problem from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\r
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub
 </pre></div>
 </div>
-<img alt="_images/eb6b5d7f02cc8afd2c518ef2a38eb755fb53d1cc8b1990cd6ff4770d480a8743.png" src="_images/eb6b5d7f02cc8afd2c518ef2a38eb755fb53d1cc8b1990cd6ff4770d480a8743.png" />
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># from IPython.display import Video</span>
-<span class="c1"># lumi.plot(path)</span>
-<span class="c1"># video = Video(os.path.join(path, &quot;simulation.mp4&quot;),embed=True)</span>
-<span class="c1"># display(video)</span>
-</pre></div>
-</div>
+<img alt="_images/a264c6267582a87dc1441b4a92dec6cbaede2c2e5fb7c7f82b7e4dd583a39c0b.png" src="_images/a264c6267582a87dc1441b4a92dec6cbaede2c2e5fb7c7f82b7e4dd583a39c0b.png" />
 </div>
 </div>
 </section>
@@ -777,6 +696,24 @@ loading problem from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\r
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
+    <a class="left-prev"
+       href="test_ring.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Photonic integrated circuit: ring resonator</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="test_FSS.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Metasurface: microwave frequency selective surface (FSS)</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
 </div>
                 </footer>
               

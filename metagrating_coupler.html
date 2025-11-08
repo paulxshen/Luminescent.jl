@@ -188,11 +188,10 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="ring.html">Photonic integrated circuit: ring resonator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stub.html">RF microstrip: quarter wave stub filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patch.html">RF antenna: microstrip fed patch</a></li>
-<li class="toctree-l1"><a class="reference internal" href="monopole.html">RF antenna: coax fed monopole over ground</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_ring.html">Photonic integrated circuit: ring resonator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_stub.html">RF microstrip: quarter wave stub filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_patch.html">RF antenna: microstrip fed patch</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
 <ul class="current nav bd-sidenav">
@@ -472,8 +471,8 @@ document.write(`
 <span class="n">R</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">w</span>  <span class="c1"># source radius</span>
 <span class="n">width</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># of design region</span>
 <span class="n">length</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">width</span>  <span class="c1"># of design region</span>
-<span class="n">width_wg</span> <span class="o">=</span> <span class="mf">0.5</span>
-<span class="n">length_wg</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">width_wg</span>
+<span class="n">w_wg</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">l_wg</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">w_wg</span>
 <span class="n">dz</span> <span class="o">=</span> <span class="mf">0.1</span>
 
 <span class="c1"># margins</span>
@@ -493,8 +492,8 @@ document.write(`
 <span class="n">dut</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">lumi</span><span class="o">.</span><span class="n">mimo</span><span class="p">(</span>
     <span class="n">length</span><span class="p">,</span>
     <span class="n">width</span><span class="p">,</span>
-    <span class="n">width_wg</span><span class="o">=</span><span class="n">width_wg</span><span class="p">,</span>
-    <span class="n">length_wg</span><span class="o">=</span><span class="n">length_wg</span><span class="p">,</span>
+    <span class="n">w_wg</span><span class="o">=</span><span class="n">w_wg</span><span class="p">,</span>
+    <span class="n">l_wg</span><span class="o">=</span><span class="n">l_wg</span><span class="p">,</span>
     <span class="n">west</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">layer_wg</span><span class="o">=</span><span class="n">WG</span><span class="p">,</span>
     <span class="n">layer_design</span><span class="o">=</span><span class="n">DESIGN</span><span class="p">,</span>
@@ -592,7 +591,7 @@ document.write(`
 
 <span class="n">Tsim</span> <span class="o">=</span> <span class="p">(</span>
     <span class="mf">1.0</span>
-    <span class="o">*</span> <span class="p">(</span><span class="n">length</span> <span class="o">+</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">box_thickness</span> <span class="o">+</span> <span class="n">zmargin</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">thickness</span> <span class="o">+</span> <span class="n">length_wg</span><span class="p">)</span>
+    <span class="o">*</span> <span class="p">(</span><span class="n">length</span> <span class="o">+</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">box_thickness</span> <span class="o">+</span> <span class="n">zmargin</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">thickness</span> <span class="o">+</span> <span class="n">l_wg</span><span class="p">)</span>
     <span class="o">/</span> <span class="n">wl</span>
     <span class="o">*</span> <span class="n">nSi</span>
     <span class="o">+</span> <span class="mi">5</span>
@@ -615,7 +614,7 @@ document.write(`
     <span class="n">iters</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>  <span class="c1"># max iters</span>
 <span class="p">)</span>
 
-<span class="n">lumi</span><span class="o">.</span><span class="n">make_prob</span><span class="p">(</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>
     <span class="c1">#</span>
     <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>  <span class="c1"># path to make problem folder</span>
     <span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>

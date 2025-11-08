@@ -188,11 +188,10 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="ring.html">Photonic integrated circuit: ring resonator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stub.html">RF microstrip: quarter wave stub filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patch.html">RF antenna: microstrip fed patch</a></li>
-<li class="toctree-l1"><a class="reference internal" href="monopole.html">RF antenna: coax fed monopole over ground</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_ring.html">Photonic integrated circuit: ring resonator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_stub.html">RF microstrip: quarter wave stub filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_patch.html">RF antenna: microstrip fed patch</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
 <ul class="nav bd-sidenav">
@@ -493,8 +492,8 @@ document.write(`
     <span class="n">w</span><span class="o">=</span><span class="n">l_design</span><span class="p">,</span>
     <span class="n">west</span><span class="o">=</span><span class="p">[</span><span class="n">w_line</span> <span class="o">/</span> <span class="mi">2</span><span class="p">],</span>
     <span class="n">east</span><span class="o">=</span><span class="p">[</span><span class="n">l_design</span> <span class="o">-</span> <span class="n">w_line</span> <span class="o">/</span> <span class="mi">2</span><span class="p">],</span>
-    <span class="n">width_wg</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span>
-    <span class="n">length_wg</span><span class="o">=</span><span class="n">l_line</span><span class="p">,</span>
+    <span class="n">w_wg</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span>
+    <span class="n">l_wg</span><span class="o">=</span><span class="n">l_line</span><span class="p">,</span>
     <span class="n">init</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># solid slab</span>
     <span class="n">layer_wg</span><span class="o">=</span><span class="n">WG</span><span class="p">,</span>
     <span class="n">layer_design</span><span class="o">=</span><span class="n">DESIGN</span><span class="p">,</span>
@@ -640,12 +639,12 @@ document.write(`
     <span class="n">targets</span><span class="o">=</span><span class="n">targets</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">lumi</span><span class="o">.</span><span class="n">make_prob</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="c1"># lumi.make_movie(path)</span>
+<span class="c1"># lumi.plot(path)</span>
 
 
-<span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load_sol</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">frequencies</span>
 <span class="c1"># y = lumi.query(sol, &quot;To2@0,o1@0&quot;)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;T2,1&quot;</span><span class="p">)</span>
@@ -684,10 +683,10 @@ loading problem from c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\r
 <span class="g g-Whitespace">     </span><span class="mi">82</span>     <span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
    <span class="p">(</span><span class="o">...</span><span class="p">)</span>    <span class="mi">113</span>     <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
 <span class="g g-Whitespace">    </span><span class="mi">114</span> <span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">115</span> <span class="n">lumi</span><span class="o">.</span><span class="n">make_prob</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">115</span> <span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <span class="ne">--&gt; </span><span class="mi">116</span> <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">117</span> <span class="c1"># lumi.make_movie(path)</span>
-<span class="g g-Whitespace">    </span><span class="mi">120</span> <span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load_sol</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">117</span> <span class="c1"># lumi.plot(path)</span>
+<span class="g g-Whitespace">    </span><span class="mi">120</span> <span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 
 <span class="nn">File c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\sol.py:75,</span> in <span class="ni">solve</span><span class="nt">(path, a, nthreads, **kwargs)</span>
 <span class="g g-Whitespace">     </span><span class="mi">68</span> <span class="c1"># if dev:</span>
