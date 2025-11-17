@@ -5,6 +5,8 @@ Easiest way is to run Luminescent on free Google Colab with GPU runtime. For mor
 ```
 import os
 os.environ['LD_LIBRARY_PATH']='/temp-nvidia'
+os.environ["JULIA_CUDA_USE_COMPAT"] = "0"
+os.environ["PATH"] += ":/usr/local/Luminescent/bin"
 ```
 ```
 %%shell
@@ -34,6 +36,9 @@ pip install -U luminescent
 apt-get install -y libglu1-mesa
 gdown --fuzzy __INSTALL_LINK__
 tar -xf luminescent-latest.tar.gz  -C /usr/local/
+
+export JULIA_CUDA_USE_COMPAT=0
+export PATH=$PATH:/usr/local/Luminescent/bin
 
 # first time run downloads artifacts
 luminescent

@@ -419,6 +419,8 @@ document.write(`
 <p>Easiest way is to run Luminescent on free Google Colab with GPU runtime. For more juice simply upgrade to Colab Pro to use A100 GPU for $1/hr. Run the following code cells.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;LD_LIBRARY_PATH&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;/temp-nvidia&#39;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;JULIA_CUDA_USE_COMPAT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="s2">&quot;:/usr/local/Luminescent/bin&quot;</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">shell</span>
@@ -443,16 +445,19 @@ document.write(`
 <section id="generic-x86-64-linux-with-cuda">
 <h2>Generic x86_64 Linux with CUDA<a class="headerlink" href="#generic-x86-64-linux-with-cuda" title="Link to this heading">#</a></h2>
 <p>You can also run on your own machine or cloud provider. If install fails (probably due to CUDA config), raise an issue on <a class="reference external" href="https://github.com/paulxshen/Luminescent.jl">GitHub</a>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># frontend</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">luminescent</span> 
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># frontend
+pip install -U luminescent 
 
-<span class="c1"># backend binaries</span>
-<span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">libglu1</span><span class="o">-</span><span class="n">mesa</span>
-<span class="n">gdown</span> <span class="o">--</span><span class="n">fuzzy</span> <span class="n">__INSTALL_LINK__</span>
-<span class="n">tar</span> <span class="o">-</span><span class="n">xf</span> <span class="n">luminescent</span><span class="o">-</span><span class="n">latest</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>  <span class="o">-</span><span class="n">C</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span>
+# backend binaries
+apt-get install -y libglu1-mesa
+gdown --fuzzy __INSTALL_LINK__
+tar -xf luminescent-latest.tar.gz  -C /usr/local/
 
-<span class="c1"># first time run downloads artifacts</span>
-<span class="n">luminescent</span>
+export JULIA_CUDA_USE_COMPAT=0
+export PATH=$PATH:/usr/local/Luminescent/bin
+
+# first time run downloads artifacts
+luminescent
 </pre></div>
 </div>
 </section>
