@@ -464,7 +464,7 @@ document.write(`
 
 <span class="c1"># length units are arbitrary so long as they&#39;re consistent</span>
 <span class="n">wavelength</span> <span class="o">=</span> <span class="mf">1.55</span> <span class="c1"># characteristic wavelength in microns</span>
-<span class="n">wavelengths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.6</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+<span class="n">wavelengths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.4</span><span class="p">,</span> <span class="mf">1.7</span><span class="p">,</span> <span class="mi">81</span><span class="p">)</span>
 <span class="n">d</span> <span class="o">=</span> <span class="mf">0.22</span>
 <span class="n">w_wg</span> <span class="o">=</span> <span class="mf">0.5</span>
 
@@ -512,7 +512,7 @@ document.write(`
 <span class="n">modes</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span>
         <span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="s2">&quot;o2&quot;</span><span class="p">],</span>
-        <span class="n">wavelengths</span><span class="o">=</span><span class="n">lumi</span><span class="o">.</span><span class="n">chebyshev_nodes</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wavelengths</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="n">wavelengths</span><span class="o">=</span><span class="n">lumi</span><span class="o">.</span><span class="n">chebyshev_nodes</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wavelengths</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="mi">7</span><span class="p">),</span>
         <span class="n">start</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">lx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">height_port_margin</span><span class="p">],</span>  <span class="c1"># local xy frame, local y=0 at global zmin of port layer</span>
         <span class="n">stop</span><span class="o">=</span><span class="p">[</span><span class="n">lx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">d</span> <span class="o">+</span> <span class="n">height_port_margin</span><span class="p">],</span>
     <span class="p">)</span>
@@ -570,10 +570,9 @@ document.write(`
     <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span>  <span class="c1"># field decay threshold for stopping simulation</span>
     <span class="n">relative_pml_depths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>  <span class="c1"># relative PML thes in x, y, z</span>
     <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
-    <span class="n">saveat</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">saveat</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
     <span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">)],</span>
 <span class="p">)</span>
-<span class="mi">0</span>
 </pre></div>
 </div>
 </div>
@@ -581,15 +580,12 @@ document.write(`
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving mode plots to runs\bend\modes\1
 showing modes for first wavelength 
 using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\bend
-0.036904761904761905
-0.036904761904761905
+0.0369047619047619
+0.0369047619047619
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>0
-</pre></div>
-</div>
-<img alt="_images/094055ca9a2324d2f79ab0564bc93662abcd0c337dd97a08182598f269b373e9.png" src="_images/094055ca9a2324d2f79ab0564bc93662abcd0c337dd97a08182598f269b373e9.png" />
-<img alt="_images/da2ae2a0a79d53ecfc8cdd4090ef16b8d50576e03a6d5ebe79f5e6e890c12507.png" src="_images/da2ae2a0a79d53ecfc8cdd4090ef16b8d50576e03a6d5ebe79f5e6e890c12507.png" />
+<img alt="_images/747bf8fc6637af69abaaf25527ff1bf7e2e40aea248d0c9462beaeb3eeaa0254.png" src="_images/747bf8fc6637af69abaaf25527ff1bf7e2e40aea248d0c9462beaeb3eeaa0254.png" />
+<img alt="_images/f209e3deacf07bb81af3e6abde5a0b3dc550b8f72ec41c4e975c3cb2d5274480.png" src="_images/f209e3deacf07bb81af3e6abde5a0b3dc550b8f72ec41c4e975c3cb2d5274480.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -622,8 +618,8 @@ can&#39;t find fdtd binary
 failed plotting new frames
 </pre></div>
 </div>
-<img alt="_images/206bd27acda7b987250e7867815c31e4cac1a56ddb56bda0f40e4cfb0302acf7.png" src="_images/206bd27acda7b987250e7867815c31e4cac1a56ddb56bda0f40e4cfb0302acf7.png" />
-<img alt="_images/ec4cc5a585bbeb32753d4b590dcd5c55b2aa5585df34c971d59188d5b0010b4b.png" src="_images/ec4cc5a585bbeb32753d4b590dcd5c55b2aa5585df34c971d59188d5b0010b4b.png" />
+<img alt="_images/e37b4fb6b6cf45398a39f89c17bddbb4ac7566a6a19dc196a59211161296a96d.png" src="_images/e37b4fb6b6cf45398a39f89c17bddbb4ac7566a6a19dc196a59211161296a96d.png" />
+<img alt="_images/3bfb1d1943695d517d04fb1eb30c6d35e533f3a9cc0f2b178363cbf3281c8eb7.png" src="_images/3bfb1d1943695d517d04fb1eb30c6d35e533f3a9cc0f2b178363cbf3281c8eb7.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -639,7 +635,7 @@ failed plotting new frames
 Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\bend\simulation.gif!
 </pre></div>
 </div>
-<img alt="_images/ef531acf34dafe2a7457f1df80f60e296b08fa17f4c4dffa4e260fcc10cef50d.gif" src="_images/ef531acf34dafe2a7457f1df80f60e296b08fa17f4c4dffa4e260fcc10cef50d.gif" />
+<img alt="_images/ea598cd14f9fc92f8f271909220d44fa3bd4b5b67c67ed0e275ffb43495ee288.gif" src="_images/ea598cd14f9fc92f8f271909220d44fa3bd4b5b67c67ed0e275ffb43495ee288.gif" />
 </div>
 </div>
 </section>
@@ -668,7 +664,7 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\bend
 </pre></div>
 </div>
-<img alt="_images/aee4fb9315c08be9c07cda593d998c5418dcfa9eea301235987b8279e56e56a5.png" src="_images/aee4fb9315c08be9c07cda593d998c5418dcfa9eea301235987b8279e56e56a5.png" />
+<img alt="_images/caa9ce5677920b40b4daccda02ea7dcd359bf9e73c19cabc282d7bf4834b169b.png" src="_images/caa9ce5677920b40b4daccda02ea7dcd359bf9e73c19cabc282d7bf4834b169b.png" />
 </div>
 </div>
 </section>
