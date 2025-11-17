@@ -61,7 +61,7 @@
     <link rel="icon" href="_static/logo.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Photonic integrated circuit: ring resonator" href="ring.html" />
+    <link rel="next" title="Photonic integrated circuit: ring resonator" href="test_ring.html" />
     <link rel="prev" title="Product tiers" href="pricing.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -188,11 +188,10 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="ring.html">Photonic integrated circuit: ring resonator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stub.html">RF microstrip: quarter wave stub filter</a></li>
-<li class="toctree-l1"><a class="reference internal" href="FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="patch.html">RF antenna: microstrip fed patch</a></li>
-<li class="toctree-l1"><a class="reference internal" href="monopole.html">RF antenna: coax fed monopole over ground</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_ring.html">Photonic integrated circuit: ring resonator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_stub.html">RF microstrip: quarter wave stub filter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_patch.html">RF antenna: microstrip fed patch</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
 <ul class="nav bd-sidenav">
@@ -419,8 +418,6 @@ document.write(`
 <h2>Google Colab Linux with CUDA<a class="headerlink" href="#google-colab-linux-with-cuda" title="Link to this heading">#</a></h2>
 <p>Easiest way is to run Luminescent on free Google Colab with GPU runtime. For more juice simply upgrade to Colab Pro to use A100 GPU for $1/hr. Run the following code cells.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="s1">&#39;:/usr/local/Luminescent/bin&#39;</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;JULIA_CUDA_USE_COMPAT&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;0&#39;</span>
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;LD_LIBRARY_PATH&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;/temp-nvidia&#39;</span>
 </pre></div>
 </div>
@@ -446,20 +443,16 @@ document.write(`
 <section id="generic-x86-64-linux-with-cuda">
 <h2>Generic x86_64 Linux with CUDA<a class="headerlink" href="#generic-x86-64-linux-with-cuda" title="Link to this heading">#</a></h2>
 <p>You can also run on your own machine or cloud provider. If install fails (probably due to CUDA config), raise an issue on <a class="reference external" href="https://github.com/paulxshen/Luminescent.jl">GitHub</a>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># consider making path modification permanent by adding to ~/.bashrc or ~/.profile
-export PATH=$PATH:/usr/local/Luminescent/bin
-export JULIA_CUDA_USE_COMPAT=0
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># frontend</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">luminescent</span> 
 
-# frontend
-apt-get install -y libglu1-mesa
-pip install -U luminescent mediapy
+<span class="c1"># backend binaries</span>
+<span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">libglu1</span><span class="o">-</span><span class="n">mesa</span>
+<span class="n">gdown</span> <span class="o">--</span><span class="n">fuzzy</span> <span class="n">__INSTALL_LINK__</span>
+<span class="n">tar</span> <span class="o">-</span><span class="n">xf</span> <span class="n">luminescent</span><span class="o">-</span><span class="n">latest</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>  <span class="o">-</span><span class="n">C</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span>
 
-# backend binaries
-gdown --fuzzy __INSTALL_LINK__
-tar -xf luminescent-latest.tar.gz  -C /usr/local/
-
-# first time run downloads artifacts
-luminescent
+<span class="c1"># first time run downloads artifacts</span>
+<span class="n">luminescent</span>
 </pre></div>
 </div>
 </section>
@@ -509,7 +502,7 @@ luminescent
       </div>
     </a>
     <a class="right-next"
-       href="ring.html"
+       href="test_ring.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>

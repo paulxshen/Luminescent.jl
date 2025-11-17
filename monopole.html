@@ -476,7 +476,7 @@ document.write(`
 
 <span class="c1"># coax</span>
 <span class="n">l_ant</span> <span class="o">=</span> <span class="n">wl</span> <span class="o">/</span> <span class="mi">4</span>
-<span class="n">d1</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># center conductor diameter</span>
+<span class="n">d1</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># origin conductor diameter</span>
 <span class="n">d2</span> <span class="o">=</span> <span class="mf">3.8</span>  <span class="c1"># shield inner diameter</span>
 <span class="n">thickness</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># shield thickness</span>
 <span class="n">d3</span> <span class="o">=</span> <span class="n">d2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">thickness</span>  <span class="c1"># shield outer diameter</span>
@@ -561,13 +561,13 @@ document.write(`
 <span class="n">ports</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">lumi</span><span class="o">.</span><span class="n">PlanePort</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span>
-        <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">offset</span><span class="p">),</span>
+        <span class="n">origin</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">offset</span><span class="p">),</span>
         <span class="n">width</span><span class="o">=</span><span class="mf">1.1</span> <span class="o">*</span> <span class="n">d2</span><span class="p">,</span>
         <span class="n">length</span><span class="o">=</span><span class="mf">1.1</span> <span class="o">*</span> <span class="n">d2</span><span class="p">,</span>
         <span class="n">frame</span><span class="o">=</span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span>
     <span class="p">),</span>
     <span class="n">lumi</span><span class="o">.</span><span class="n">SpherePort</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">radius</span><span class="o">=</span><span class="mf">.9</span><span class="o">*</span><span class="n">H</span><span class="p">,</span> <span class="n">angres</span><span class="o">=</span><span class="n">angres</span><span class="p">,</span> <span class="n">θmax</span><span class="o">=</span><span class="n">θmax</span><span class="p">,</span> <span class="n">φmax</span><span class="o">=</span><span class="n">φmax</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">radius</span><span class="o">=</span><span class="mf">.9</span><span class="o">*</span><span class="n">H</span><span class="p">,</span> <span class="n">angres</span><span class="o">=</span><span class="n">angres</span><span class="p">,</span> <span class="n">θmax</span><span class="o">=</span><span class="n">θmax</span><span class="p">,</span> <span class="n">φmax</span><span class="o">=</span><span class="n">φmax</span>
     <span class="p">),</span>
 <span class="p">]</span>
 
@@ -619,7 +619,7 @@ document.write(`
 <span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;peak.png&quot;</span><span class="p">)))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;halfway.png&quot;</span><span class="p">)))</span>
 </pre></div>
 </div>
 </div>

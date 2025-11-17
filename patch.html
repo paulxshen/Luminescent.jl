@@ -532,7 +532,7 @@ document.write(`
 <span class="n">line</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">gf</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">straight</span><span class="p">((</span><span class="n">l_sub</span> <span class="o">-</span> <span class="n">l_patch</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">l_flap</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">)</span>
 <span class="n">line</span><span class="o">.</span><span class="n">movex</span><span class="p">(</span><span class="o">-</span><span class="n">l_sub</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">c</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">WG</span>
+    <span class="sa">f</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="n">l_patch</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">WG</span>
 <span class="p">)</span>
 
 <span class="n">c</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
@@ -600,7 +600,7 @@ document.write(`
 <span class="n">ports</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">lumi</span><span class="o">.</span><span class="n">SpherePort</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span>
-        <span class="n">center</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">origin</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
         <span class="n">radius</span><span class="o">=</span><span class="n">R</span><span class="p">,</span>
         <span class="n">angres</span><span class="o">=</span><span class="n">angres</span><span class="p">,</span>
         <span class="n">θmax</span><span class="o">=</span><span class="n">θmax</span><span class="p">,</span>
@@ -660,7 +660,7 @@ document.write(`
 <span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <span class="c1"># lumi.solve(path)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;peak.png&quot;</span><span class="p">)))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;halfway.png&quot;</span><span class="p">)))</span>
 </pre></div>
 </div>
 </div>

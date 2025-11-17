@@ -465,7 +465,7 @@ document.write(`
 <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;FSS&quot;</span><span class="p">)</span>
 
 <span class="c1"># length and frequency units are arbitrary</span>
-<span class="n">f</span> <span class="o">=</span> <span class="mi">12</span>  <span class="c1"># center frequency GHz</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mi">12</span>  <span class="c1"># origin frequency GHz</span>
 <span class="n">bw</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># bandwidth</span>
 <span class="n">df</span> <span class="o">=</span> <span class="mf">0.05</span>  <span class="c1"># frequency step</span>
 <span class="n">wl1f</span> <span class="o">=</span> <span class="mi">300</span>  <span class="c1"># vacuum wavelength at 1 unit of frequency in your units</span>
@@ -577,7 +577,7 @@ document.write(`
     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration</span>
 <span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;peak.png&quot;</span><span class="p">)))</span>
+<span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;halfway.png&quot;</span><span class="p">)))</span>
 </pre></div>
 </div>
 </div>

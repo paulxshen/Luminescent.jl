@@ -431,6 +431,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#geometry">Geometry</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solve">Solve</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize">Visualize</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">Analysis</a></li>
 </ul>
             </nav>
@@ -447,7 +448,7 @@ document.write(`
 <h1>RF microstrip: quarter wave stub filter<a class="headerlink" href="#rf-microstrip-quarter-wave-stub-filter" title="Link to this heading">#</a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>We simulate a quarter wave stub bandstop filter in RF microstrip with nominal 3.5GHz notch.</p>
+<p>We simulate a quarter wave stub bandstop filter in RF microstrip with nominal 5GHz notch.</p>
 </section>
 <section id="geometry">
 <h2>Geometry<a class="headerlink" href="#geometry" title="Link to this heading">#</a></h2>
@@ -459,15 +460,16 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
 
+<span class="c1"># simulation folder</span>
 <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;stub&quot;</span><span class="p">)</span>
+<span class="n">name</span><span class="o">=</span><span class="s1">&#39;quarter wave microstrip stub filter&#39;</span>
 
-<span class="c1"># length and frequency units are arbitrary</span>
-<span class="n">frequency</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># GHz</span>
-<span class="n">wl1f</span> <span class="o">=</span> <span class="mi">300</span>  <span class="c1"># vacuum wavelength at 1 unit of frequency in your units</span>
-<span class="n">wavelength</span> <span class="o">=</span> <span class="n">wl1f</span> <span class="o">/</span> <span class="n">frequency</span>  <span class="c1"># characteristic wavelength</span>
+<span class="c1"># length and frequency units are arbitrary but must be consistent. here we use mm and GHz</span>
+<span class="n">frequency</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># characteristic frequency in GHz</span>
 <span class="n">frequencies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">81</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">wl1f</span> <span class="o">=</span> <span class="mi">300</span>  <span class="c1"># vacuum wavelength at 1 unit of frequency, all in your units</span>
+<span class="n">wavelength</span> <span class="o">=</span> <span class="n">wl1f</span> <span class="o">/</span> <span class="n">frequency</span>  <span class="c1"># characteristic wavelength</span>
 <span class="n">bandwidth</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">frequencies</span><span class="p">)</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">frequencies</span><span class="p">)</span>
 
 <span class="c1"># microstrip</span>
@@ -476,12 +478,13 @@ document.write(`
 <span class="n">d</span> <span class="o">=</span> <span class="mf">0.8</span>  <span class="c1"># mm</span>
 <span class="n">c</span> <span class="o">=</span> <span class="mf">87.5</span> <span class="o">/</span> <span class="mi">139</span>  <span class="c1"># relative signal speed, from microstrip calculator</span>
 
-<span class="n">wl_sig</span> <span class="o">=</span> <span class="n">wl1f</span> <span class="o">*</span> <span class="n">c</span> <span class="o">/</span> <span class="n">frequency</span>  <span class="c1"># mm</span>
-<span class="n">l_stub</span> <span class="o">=</span> <span class="n">wl_sig</span> <span class="o">/</span> <span class="mi">4</span>
-<span class="n">l_line</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">*</span> <span class="n">l_stub</span>
-<span class="n">lateral_port_margin</span> <span class="o">=</span> <span class="n">height_port_margin</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">d</span>
-<span class="n">margin</span> <span class="o">=</span> <span class="n">zmargin</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">lateral_port_margin</span>
-<span class="n">source_port_margin</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">*</span> <span class="p">(</span><span class="n">w_line</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lateral_port_margin</span><span class="p">)</span>
+<span class="n">wl_sig</span> <span class="o">=</span> <span class="n">wl1f</span> <span class="o">*</span> <span class="n">c</span> <span class="o">/</span> <span class="n">frequency</span>  <span class="c1"># wavelength in the signal line</span>
+<span class="n">l_stub</span> <span class="o">=</span> <span class="n">wl_sig</span> <span class="o">/</span> <span class="mi">4</span> <span class="c1"># quarter-wave stub length</span>
+<span class="n">l_feed</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">*</span> <span class="n">l_stub</span>
+<span class="n">lateral_port_margin</span> <span class="o">=</span> <span class="n">height_port_margin</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">d</span>
+<span class="n">margin</span> <span class="o">=</span> <span class="n">zmargin</span> <span class="o">=</span> <span class="mf">1.25</span> <span class="o">*</span> <span class="n">lateral_port_margin</span>
+<span class="n">lx_mode</span> <span class="o">=</span> <span class="n">w_line</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lateral_port_margin</span>  <span class="c1"># lateral size of mode region</span>
+<span class="n">source_port_margin</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">w_line</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lateral_port_margin</span><span class="p">)</span>
 
 <span class="c1"># layers</span>
 <span class="n">FEED</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span>
@@ -491,11 +494,10 @@ document.write(`
 <span class="c1"># make geometry in gdsfadory</span>
 <span class="c1"># alternatively can import .gds into gdsfadory</span>
 <span class="n">c</span> <span class="o">=</span> <span class="n">gf</span><span class="o">.</span><span class="n">Component</span><span class="p">()</span>
-<span class="n">feed</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">lumi</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">l_line</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">FEED</span><span class="p">)</span>
+<span class="n">feed</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">lumi</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">l_feed</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">FEED</span><span class="p">)</span>
 <span class="n">stub</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">lumi</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="n">l_stub</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">STUB</span><span class="p">)</span>
 <span class="n">stub</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="mi">90</span><span class="p">)</span>
-<span class="n">stub</span><span class="o">.</span><span class="n">movex</span><span class="p">(</span><span class="n">l_line</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">stub</span><span class="o">.</span><span class="n">movey</span><span class="p">(</span><span class="o">-</span><span class="n">w_line</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">stub</span><span class="o">.</span><span class="n">movex</span><span class="p">(</span><span class="n">l_feed</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">ext</span> <span class="o">=</span> <span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="n">lumi</span><span class="o">.</span><span class="n">straight</span><span class="p">(</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w_line</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">FEED</span><span class="p">)</span>
 <span class="n">ext</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;o2&quot;</span><span class="p">,</span> <span class="n">feed</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">])</span>
 
@@ -511,7 +513,7 @@ document.write(`
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>running luminescent python frontend
 </pre></div>
 </div>
-<img alt="_images/176afc68d7db1877e59b0fac91ebc0717dc09fbacd0253e6dec340b156984cc1.png" src="_images/176afc68d7db1877e59b0fac91ebc0717dc09fbacd0253e6dec340b156984cc1.png" />
+<img alt="_images/c372a9a75dd09a00edd47cbc7e53f74d2b29a7f4268cfc3891026f1705e0dc65.png" src="_images/c372a9a75dd09a00edd47cbc7e53f74d2b29a7f4268cfc3891026f1705e0dc65.png" />
 </div>
 </div>
 </section>
@@ -527,21 +529,21 @@ document.write(`
     <span class="n">layers</span><span class="o">=</span><span class="p">{</span>
         <span class="s2">&quot;feed&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">FEED</span><span class="p">),</span>
-            <span class="n">zmin</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+            <span class="n">zmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
             <span class="n">thickness</span><span class="o">=</span><span class="n">th</span><span class="p">,</span>
             <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC_feed&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">&quot;stub&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">STUB</span><span class="p">),</span>
-            <span class="n">zmin</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+            <span class="n">zmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
             <span class="n">thickness</span><span class="o">=</span><span class="n">th</span><span class="p">,</span>
             <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC_stub&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">&quot;core&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">SUB</span><span class="p">),</span>
-            <span class="n">zmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">zmin</span><span class="o">=-</span><span class="n">d</span><span class="p">,</span>
             <span class="n">thickness</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
             <span class="n">material</span><span class="o">=</span><span class="s2">&quot;substrate&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
@@ -551,78 +553,121 @@ document.write(`
 
 <span class="c1"># materials</span>
 <span class="n">eps_substrate</span> <span class="o">=</span> <span class="mf">4.3</span>
-<span class="n">n_substrate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eps_substrate</span><span class="p">)</span> 
+<span class="n">n_substrate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eps_substrate</span><span class="p">)</span>
 
-<span class="n">dx</span> <span class="o">=</span> <span class="n">w_line</span> <span class="o">/</span> <span class="mi">4</span> <span class="c1"># 4 mesh points across the strip</span>
-<span class="n">n_line</span> <span class="o">=</span> <span class="n">dx0</span> <span class="o">/</span> <span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="c1"># mesh density relative to vacuum  </span>
+<span class="n">dx</span> <span class="o">=</span> <span class="n">w_line</span> <span class="o">/</span> <span class="mi">4</span>  <span class="c1"># 4 mesh points across the strip</span>
+<span class="n">n_line</span> <span class="o">=</span> <span class="n">dx0</span> <span class="o">/</span> <span class="p">(</span><span class="n">dx</span><span class="p">)</span>  <span class="c1"># mesh density relative to vacuum</span>
 
 <span class="n">materials_library</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;substrate&#39;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">eps_substrate</span><span class="p">),</span>
-    <span class="s1">&#39;PEC_feed&#39;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">n_line</span><span class="p">),</span>
-    <span class="s1">&#39;PEC_stub&#39;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">n_line</span><span class="p">),</span>
+    <span class="s2">&quot;substrate&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">eps_substrate</span><span class="p">),</span>
+    <span class="s2">&quot;PEC_feed&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">n_line</span><span class="p">),</span>
+    <span class="s2">&quot;PEC_stub&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">n_line</span><span class="p">),</span>
 <span class="p">}</span>
 <span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;background&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 
+<span class="n">_dx</span><span class="o">=</span><span class="n">dx</span> 
+<span class="n">_dy</span><span class="o">=</span><span class="n">th</span>
 <span class="n">modes</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span>
-        <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span>
+        <span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="s2">&quot;o2&quot;</span><span class="p">],</span>
+        <span class="n">frequencies</span><span class="o">=</span><span class="n">lumi</span><span class="o">.</span><span class="n">chebyshev_nodes</span><span class="p">(</span><span class="n">frequencies</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">frequencies</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="mi">5</span><span class="p">),</span>
         <span class="n">metallic_boundaries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;feed&quot;</span><span class="p">],</span>
         <span class="n">nmodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">start</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">lx_mode</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">d</span><span class="p">],</span> <span class="c1"># local xy frame, local y=0 at global zmin of port layer</span>
+        <span class="n">stop</span><span class="o">=</span><span class="p">[</span><span class="n">lx_mode</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">th</span> <span class="o">+</span> <span class="n">height_port_margin</span><span class="p">],</span>
+        <span class="n">voltage_line</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">d</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)],</span> <span class="c1"># optional</span>
+        <span class="n">current_loop</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">(</span><span class="o">-</span><span class="n">w_line</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">_dx</span><span class="p">,</span>  <span class="o">-</span> <span class="n">_dy</span><span class="p">),</span>
+            <span class="p">(</span><span class="o">-</span><span class="n">w_line</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">_dx</span><span class="p">,</span>  <span class="n">th</span> <span class="o">+</span> <span class="n">_dy</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">w_line</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">_dx</span><span class="p">,</span>  <span class="n">th</span> <span class="o">+</span> <span class="n">_dy</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">w_line</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">_dx</span><span class="p">,</span>  <span class="o">-</span> <span class="n">_dy</span><span class="p">),</span>
+        <span class="p">],</span> <span class="c1"># optional</span>
     <span class="p">)</span>
 <span class="p">]</span>
 
 <span class="n">sources</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">lumi</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span>
-        <span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mf">.5</span><span class="p">,</span> <span class="n">source_port_margin</span><span class="o">=</span><span class="n">source_port_margin</span>
-    <span class="p">)</span>
+        <span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">source_port_margin</span><span class="o">=</span><span class="n">source_port_margin</span>
+    <span class="p">)</span> <span class="c1"># modulated Gaussian pulse</span>
 <span class="p">]</span>
-
-<span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>    
+ 
+<span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>
     <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
     <span class="n">component</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
-    <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span>
+    <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span> <span class="c1"># characteristic frequency</span>
     <span class="n">frequencies</span><span class="o">=</span><span class="n">frequencies</span><span class="p">,</span>
     <span class="n">wl1f</span><span class="o">=</span><span class="n">wl1f</span><span class="p">,</span>
     <span class="n">boundaries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;PML&quot;</span><span class="p">,</span> <span class="s2">&quot;PML&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;PEC&quot;</span><span class="p">,</span> <span class="s2">&quot;PML&quot;</span><span class="p">]],</span>
-    <span class="c1">#</span>
     <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
-    <span class="c1">#</span>
     <span class="n">modes</span><span class="o">=</span><span class="n">modes</span><span class="p">,</span>
-    <span class="n">lateral_port_margin</span><span class="o">=</span><span class="n">lateral_port_margin</span><span class="p">,</span>
-    <span class="n">height_port_margin</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">height_port_margin</span><span class="p">],</span>
     <span class="c1">#</span>
     <span class="n">materials_library</span><span class="o">=</span><span class="n">materials_library</span><span class="p">,</span>
     <span class="n">layer_stack</span><span class="o">=</span><span class="n">layer_stack</span><span class="p">,</span>
-    <span class="n">zmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-    <span class="n">zmax</span><span class="o">=</span><span class="n">d</span> <span class="o">+</span> <span class="n">th</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>
-    <span class="c1">#</span>
+    <span class="n">zmin</span><span class="o">=-</span><span class="n">d</span><span class="p">,</span>
+    <span class="n">zmax</span><span class="o">=</span><span class="n">th</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>
+    <span class="c1"># performance</span>
     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration)</span>
     <span class="n">nres</span><span class="o">=</span><span class="n">nres</span><span class="p">,</span>
     <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>  <span class="c1"># relative courant number between 0 and 1</span>
     <span class="n">relative_pml_depths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>
-    <span class="n">Tsim</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>  <span class="c1"># max time</span>
     <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># field decay threshold for stopping simulation</span>
-    <span class="c1"># visualization    </span>
-    <span class="n">saveat</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># save frame for plotting every _ periods</span>
+    <span class="n">saveat</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>  <span class="c1"># save frame for plotting every _ periods</span>
+    <span class="c1"># visualization</span>
+    <span class="n">views</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Ez&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">=-</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">z</span><span class="o">=-</span><span class="n">d</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">=-</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">th</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="p">],</span>
 <span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="n">lumi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">views</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s1">&#39;Ez&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">d</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">x</span><span class="o">=-</span><span class="n">source_port_margin</span><span class="p">),</span>
-        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s1">&#39;Ez&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="n">th</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">x</span><span class="o">=-</span><span class="n">source_port_margin</span><span class="p">)],)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Solving port modes with FEM...
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving mode plots to runs\stub\modes\1
+showing modes for first wavelength 
+solving modes with PEC boundaries
+Solving port modes with FEM...
 </pre></div>
 </div>
-<img alt="_images/57ebdfa08fb66857270652d653977133394d86fc5667b100b962254a8b2660b5.png" src="_images/57ebdfa08fb66857270652d653977133394d86fc5667b100b962254a8b2660b5.png" />
-<img alt="_images/6835dc11102a0e2216f3ba8e8c05742314fdb313c488369f7278f7a241bac765.png" src="_images/6835dc11102a0e2216f3ba8e8c05742314fdb313c488369f7278f7a241bac765.png" />
+<img alt="_images/38d92b181160f344028eb06377a17fa650f1a0f76af515f26b0f94b47aadd252.png" src="_images/38d92b181160f344028eb06377a17fa650f1a0f76af515f26b0f94b47aadd252.png" />
+<img alt="_images/2ea92ecdda72962fa7f92036ea96b73f98825b65b014ce52ada8db3619ad2d44.png" src="_images/2ea92ecdda72962fa7f92036ea96b73f98825b65b014ce52ada8db3619ad2d44.png" />
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
+Solving port modes with FEM...
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
+  data[ixs] = self._kernel(vbasis.basis[i], w, dx)
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
+Solving port modes with FEM...
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
+  data[ixs] = self._kernel(vbasis.basis[i], w, dx)
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
+Solving port modes with FEM...
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
+  data[ixs] = self._kernel(vbasis.basis[i], w, dx)
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
+Solving port modes with FEM...
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
+  data[ixs] = self._kernel(vbasis.basis[i], w, dx)
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub
 0.19
 0.19
 0.19
@@ -630,11 +675,44 @@ document.write(`
 loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub
 ========================================
 
-failed fdtd binary execution
-Video generated successfully at runs\stub\simulation.mp4 and runs\stub\simulation.gif!
+can&#39;t find fdtd binary 
 </pre></div>
 </div>
-<img alt="_images/3c4baf10eb521bd4f77fee1ef7c9c79768ca00982c83919d3c21d897df8fd05c.png" src="_images/3c4baf10eb521bd4f77fee1ef7c9c79768ca00982c83919d3c21d897df8fd05c.png" />
+</div>
+</div>
+</section>
+<section id="visualize">
+<h2>Visualize<a class="headerlink" href="#visualize" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">peek</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="c1"># snapshots at halfway and final time step</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>========================================
+
+failed plotting new frames
+</pre></div>
+</div>
+<img alt="_images/49783af861e326a77247bb6850366a8f42fd6ec1061db1626bccc82e5b335c16.png" src="_images/49783af861e326a77247bb6850366a8f42fd6ec1061db1626bccc82e5b335c16.png" />
+<img alt="_images/d4124b7c2f48e6eefdcb0d6459103b981699464b813a7cecdc7cc54fd97a8c6f.png" src="_images/d4124b7c2f48e6eefdcb0d6459103b981699464b813a7cecdc7cc54fd97a8c6f.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">movie</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="c1"># full movie - may take a while to render</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>========================================
+
+failed plotting new frames
+Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub\simulation.gif!
+</pre></div>
+</div>
+<img alt="_images/eb787199a328eedd5c3e306d3c61eb665f1354e05a3539a0a788998855598aee.gif" src="_images/eb787199a328eedd5c3e306d3c61eb665f1354e05a3539a0a788998855598aee.gif" />
 </div>
 </div>
 </section>
@@ -642,13 +720,15 @@ Video generated successfully at runs\stub\simulation.mp4 and runs\stub\simulatio
 <h2>Analysis<a class="headerlink" href="#analysis" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-
-<span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">frequencies</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;To2@0,o1@0&quot;</span><span class="p">)</span>
-<span class="c1"># y = lumi.query(sol, &quot;T2,1&quot;)</span>
-<span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">y</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;To2,o1&quot;</span><span class="p">)</span> <span class="c1"># convenience function for T-parameters using modal decomposition</span>
+
+<span class="c1"># S-parameters can also be computed explicitly from complex valued modal or voltage waves:</span>
+<span class="c1"># y = np.abs2(sol[&quot;waves&quot;][&quot;o2@0+&quot;] / sol[&quot;waves&quot;][&quot;o1@0-&quot;]) # explicit T21 using forward/backward modal amplitudes</span>
+<span class="c1"># y = np.abs2(sol[&quot;waves&quot;][&quot;o2+&quot;] / sol[&quot;waves&quot;][&quot;o1-&quot;]) # using forward/backward voltage waves</span>
+
+<span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">y</span><span class="p">]</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;f [GHz]&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;S21 [dB]&quot;</span><span class="p">)</span>
@@ -660,7 +740,23 @@ Video generated successfully at runs\stub\simulation.mp4 and runs\stub\simulatio
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub
 </pre></div>
 </div>
-<img alt="_images/a264c6267582a87dc1441b4a92dec6cbaede2c2e5fb7c7f82b7e4dd583a39c0b.png" src="_images/a264c6267582a87dc1441b4a92dec6cbaede2c2e5fb7c7f82b7e4dd583a39c0b.png" />
+<img alt="_images/81e361c3fc9dd32b972b01cf7630b947b14693867f989cfe5e63aa2246d8aab0.png" src="_images/81e361c3fc9dd32b972b01cf7630b947b14693867f989cfe5e63aa2246d8aab0.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">y</span><span class="o">=</span><span class="mi">377</span><span class="o">*</span><span class="n">sol</span><span class="p">[</span><span class="s1">&#39;Z&#39;</span><span class="p">][</span><span class="s1">&#39;o1&#39;</span><span class="p">]</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">y</span><span class="p">),</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Real&quot;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">y</span><span class="p">),</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Imaginary&quot;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;f [GHz]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;complex line impedance [Ohms]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="_images/f48f606c1207460ca4151a046a51ce3cb79f3284ec72c10f79c7aaecf375056d.png" src="_images/f48f606c1207460ca4151a046a51ce3cb79f3284ec72c10f79c7aaecf375056d.png" />
 </div>
 </div>
 </section>
@@ -733,6 +829,7 @@ Video generated successfully at runs\stub\simulation.mp4 and runs\stub\simulatio
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#geometry">Geometry</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solve">Solve</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize">Visualize</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">Analysis</a></li>
 </ul>
   </nav></div>

@@ -431,6 +431,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#geometry">Geometry</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solve">Solve</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize">Visualize</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">Analysis</a></li>
 </ul>
             </nav>
@@ -459,12 +460,12 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
 
 <span class="c1"># simulation folder</span>
 <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;ring&quot;</span><span class="p">)</span>
+<span class="n">name</span><span class="o">=</span><span class="s1">&#39;photonic ring resonator&#39;</span>
 
-<span class="c1"># length units are arbitrary so long as they are consistent, in this case [um]. everything gets normalized around center wavelength and period at backend.</span>
+<span class="c1"># length units are arbitrary so long as they are consistent, in this case [um]. everything gets normalized around origin wavelength and period at backend.</span>
 <span class="n">wavelength</span> <span class="o">=</span> <span class="mf">1.55</span>  <span class="c1"># characteristic wavelength [um]</span>
 <span class="n">bandwidth</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># wavelength bandwidth [um]</span>
 <span class="n">wavelengths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">wavelength</span> <span class="o">-</span> <span class="n">bandwidth</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">wavelength</span> <span class="o">+</span> <span class="n">bandwidth</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">401</span><span class="p">)</span>
@@ -515,6 +516,9 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>running luminescent python frontend
+</pre></div>
+</div>
 <img alt="_images/ab16b06cfeec6b81a2f0bb16b3b8cc3debe030634b12705831d3a37c740a63e1.png" src="_images/ab16b06cfeec6b81a2f0bb16b3b8cc3debe030634b12705831d3a37c740a63e1.png" />
 </div>
 </div>
@@ -555,7 +559,14 @@ document.write(`
     <span class="p">)</span>
 <span class="p">]</span>
 
-<span class="n">modes</span> <span class="o">=</span> <span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">)]</span>
+<span class="n">lx</span><span class="o">=</span><span class="n">w_wg</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lateral_port_margin</span>
+<span class="n">ly</span><span class="o">=</span><span class="n">th</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">height_port_margin</span>
+<span class="n">modes</span> <span class="o">=</span> <span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span>
+    <span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;o</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]],</span> <span class="c1"># ports that this mode applies to</span>
+    <span class="n">wavelengths</span><span class="o">=</span><span class="n">lumi</span><span class="o">.</span><span class="n">chebyshev_nodes</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wavelengths</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+    <span class="n">start</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">lx</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">height_port_margin</span><span class="p">],</span> <span class="c1"># local xy frame, local y=0 at global zmin of port layer</span>
+    <span class="n">stop</span><span class="o">=</span><span class="p">[</span><span class="n">lx</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">th</span> <span class="o">+</span> <span class="n">height_port_margin</span><span class="p">],</span>
+    <span class="p">)]</span>
 
 <span class="n">lumi</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>
     <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
@@ -563,34 +574,32 @@ document.write(`
     <span class="n">wavelengths</span><span class="o">=</span><span class="n">wavelengths</span><span class="p">,</span>
     <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
     <span class="n">modes</span><span class="o">=</span><span class="n">modes</span><span class="p">,</span>
-    <span class="c1"># margins and limits</span>
+    <span class="c1"># limits</span>
     <span class="n">zmin</span><span class="o">=-</span><span class="n">zmargin</span><span class="p">,</span>
     <span class="n">zmax</span><span class="o">=</span><span class="n">th</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>
-    <span class="n">height_port_margin</span><span class="o">=</span><span class="n">height_port_margin</span><span class="p">,</span>
-    <span class="n">lateral_port_margin</span><span class="o">=</span><span class="n">lateral_port_margin</span><span class="p">,</span>
     <span class="c1"># materials and layers</span>
     <span class="n">materials_library</span><span class="o">=</span><span class="n">materials_library</span><span class="p">,</span>
     <span class="n">layer_stack</span><span class="o">=</span><span class="n">layer_stack</span><span class="p">,</span>
-    <span class="c1"># performance</span>
+    <span class="c1"># accuracy and speed settings</span>
     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration</span>
     <span class="n">nres</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>  <span class="c1"># number of grid points per wavelength in material (not vacuum)</span>
-    <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>  <span class="c1"># relative to maximum theoretical Courant number at </span>
+    <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>  <span class="c1"># relative to maximum theoretical Courant number at</span>
     <span class="n">relative_pml_depths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>  <span class="c1"># relative PML thes</span>
-    <span class="n">Tsim</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>  <span class="c1"># max time [periods]</span>
-    <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span>  <span class="c1"># field energy decay threshold for stopping simulation</span>
+    <span class="n">Tsim</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>  <span class="c1"># max time [periods]</span>
+    <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># field energy decay threshold for stopping simulation</span>
     <span class="c1"># visualization</span>
-    <span class="n">saveat</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>  <span class="c1"># save and plot field every n periods </span>
+    <span class="n">saveat</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>  <span class="c1"># save and plot field every n periods</span>
+    <span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="s2">&quot;halfway&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">)],</span>
 <span class="p">)</span>
 
 <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="n">lumi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s1">&#39;Hz&#39;</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="s1">&#39;halfway&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">)])</span> <span class="c1"># 2d slice plots of 3d fields)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/d017323dbb35b014f424865c728b6e616d9379a7d54c265f912944cc00a7d7b3.png" src="_images/d017323dbb35b014f424865c728b6e616d9379a7d54c265f912944cc00a7d7b3.png" />
-<img alt="_images/b21d2e385578b2d46c34d8f9094aa4d9a655b543d21fa6e56c8a1a6755fa7475.png" src="_images/b21d2e385578b2d46c34d8f9094aa4d9a655b543d21fa6e56c8a1a6755fa7475.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving mode plots to runs\ring\modes\1
+showing modes for first wavelength 
+using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring
 0.02767857142857143
 0.02767857142857143
 0.02767857142857143
@@ -598,13 +607,46 @@ document.write(`
 loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring
 ========================================
 
-failed fdtd binary execution
-========================================
-
-Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring\simulation.gif!
+can&#39;t find fdtd binary 
 </pre></div>
 </div>
-<img alt="_images/19717ac4294e6868897028c83d2734b75c682b6f4756dc5fce332e5405a7faa7.gif" src="_images/19717ac4294e6868897028c83d2734b75c682b6f4756dc5fce332e5405a7faa7.gif" />
+<img alt="_images/58bb7be935daefcbd485084145ba667d555761a7babbc34659c56c4baa14c948.png" src="_images/58bb7be935daefcbd485084145ba667d555761a7babbc34659c56c4baa14c948.png" />
+<img alt="_images/5f02a377d7a3c891cc76c941ebec25106cb566b9f99b651c72eed281e0d0822b.png" src="_images/5f02a377d7a3c891cc76c941ebec25106cb566b9f99b651c72eed281e0d0822b.png" />
+</div>
+</div>
+</section>
+<section id="visualize">
+<h2>Visualize<a class="headerlink" href="#visualize" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">peek</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="c1"># halfway and final snapshots</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>========================================
+
+failed plotting new frames
+</pre></div>
+</div>
+<img alt="_images/758427d39e66674d1398719cdaa33f191e88b479f5d5920df76814bbf89cd1c9.png" src="_images/758427d39e66674d1398719cdaa33f191e88b479f5d5920df76814bbf89cd1c9.png" />
+<img alt="_images/0a10af4205ba6dcc634f525ba72742188f50a5fc9acb56d7e0584fe58ea16b63.png" src="_images/0a10af4205ba6dcc634f525ba72742188f50a5fc9acb56d7e0584fe58ea16b63.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">movie</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="c1"># full movie - this may take a while to generate</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>========================================
+
+failed plotting new frames
+Video generated successfully at c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring\simulation.gif!
+</pre></div>
+</div>
+<img alt="_images/7de3aa011af5a7692b9cd14eef4300a002f3e1d6e43ade898ec40a8b5a3a3e66.gif" src="_images/7de3aa011af5a7692b9cd14eef4300a002f3e1d6e43ade898ec40a8b5a3a3e66.gif" />
 </div>
 </div>
 </section>
@@ -614,8 +656,10 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">wavelengths</span>
+
 <span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;T3,1&quot;</span><span class="p">)</span> <span class="c1"># wavelength or frequency ordered depending on problem setup</span>
-<span class="c1"># y = lumi.query(sol, &quot;To3@0,o1@0&quot;)</span>
+<span class="c1"># y=np.abs2(sol[&#39;waves&#39;][&#39;o3@0&#39;]/sol[&#39;waves&#39;][&#39;o1@0&#39;])</span>
+
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;wavelength [um]&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;drop channel transmitted power&quot;</span><span class="p">)</span>
@@ -627,7 +671,7 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring
 </pre></div>
 </div>
-<img alt="_images/be5b4452fdabd3c6513c3b473f4d66fa3f98209e876d74bdba7c2f40f943622a.png" src="_images/be5b4452fdabd3c6513c3b473f4d66fa3f98209e876d74bdba7c2f40f943622a.png" />
+<img alt="_images/a89af48918ba7a6b0cfbc4eeddd86fa0973fa81a2dc699026b0cdaa5003a380a.png" src="_images/a89af48918ba7a6b0cfbc4eeddd86fa0973fa81a2dc699026b0cdaa5003a380a.png" />
 </div>
 </div>
 </section>
@@ -700,6 +744,7 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#geometry">Geometry</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solve">Solve</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize">Visualize</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis">Analysis</a></li>
 </ul>
   </nav></div>
