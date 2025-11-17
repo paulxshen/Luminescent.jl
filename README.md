@@ -1,4 +1,4 @@
-Please visit our docs [website](https://paulxshen.github.io/Luminescent.jl/) on running prebuilt binaries :) This repo now only hosts docs. 
+Please visit our docs [website](https://paulxshen.github.io/Luminescent.jl/) on running prebuilt binaries :) This repo hosts docs and issues. 
 
 # Home
 
