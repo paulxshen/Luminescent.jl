@@ -1,0 +1,25 @@
+{
+    "views": [
+        {
+            "field": "Ez",
+            "prop": "epsilon",
+            "slices": [
+                -6.32,
+                0,
+                0.4
+            ],
+            "saturation": 1.0
+        },
+        {
+            "field": "Ez",
+            "prop": "epsilon",
+            "slices": [
+                -6.32,
+                0,
+                0.8175
+            ],
+            "saturation": 1.0
+        }
+    ],
+    "fps": 5
+}
