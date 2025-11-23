@@ -194,11 +194,6 @@
 <li class="toctree-l1"><a class="reference internal" href="test_FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_patch.html">RF antenna: microstrip fed patch</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="demux.html">Inverse design of photonic wavelength division demultiplexer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="metagrating_coupler.html">Inverse design of perfectly vertical photonic (meta)grating coupler</a></li>
-</ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Guide</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="ref.html">Simulation</a></li>
@@ -459,8 +454,8 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
 <span class="c1"># simulation folder</span>
-<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;bend&quot;</span><span class="p">)</span>
-<span class="n">name</span><span class="o">=</span><span class="s1">&#39;photonic waveguide bend&#39;</span>
+<span class="n">name</span><span class="o">=</span><span class="s1">&#39;photonic_waveguide_bend&#39;</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
 <span class="c1"># length units are arbitrary so long as they&#39;re consistent</span>
 <span class="n">wavelength</span> <span class="o">=</span> <span class="mf">1.55</span> <span class="c1"># characteristic wavelength in microns</span>
@@ -571,15 +566,14 @@ document.write(`
     <span class="n">relative_pml_depths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>  <span class="c1"># relative PML thes in x, y, z</span>
     <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
     <span class="n">saveat</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-    <span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">)],</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving mode plots to runs\bend\modes\1
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving mode plots to runs\photonic_waveguide_bend\modes\1
 showing modes for first wavelength 
-using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\bend
+using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\photonic_waveguide_bend
 0.0369047619047619
 0.0369047619047619
 </pre></div>
@@ -595,7 +589,7 @@ using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescen
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\bend
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\photonic_waveguide_bend
 ========================================
 
 can&#39;t find fdtd binary 
@@ -608,7 +602,8 @@ can&#39;t find fdtd binary
 <h2>Visualize<a class="headerlink" href="#visualize" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">peek</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">)]</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">peek</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">views</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -618,13 +613,13 @@ can&#39;t find fdtd binary
 failed plotting new frames
 </pre></div>
 </div>
-<img alt="_images/e37b4fb6b6cf45398a39f89c17bddbb4ac7566a6a19dc196a59211161296a96d.png" src="_images/e37b4fb6b6cf45398a39f89c17bddbb4ac7566a6a19dc196a59211161296a96d.png" />
-<img alt="_images/3bfb1d1943695d517d04fb1eb30c6d35e533f3a9cc0f2b178363cbf3281c8eb7.png" src="_images/3bfb1d1943695d517d04fb1eb30c6d35e533f3a9cc0f2b178363cbf3281c8eb7.png" />
+<img alt="_images/1bd28bca1d2c1cefcfa5efbff82a8569b3322c44e9cabead9692d8c1ac50233d.png" src="_images/1bd28bca1d2c1cefcfa5efbff82a8569b3322c44e9cabead9692d8c1ac50233d.png" />
+<img alt="_images/13c55fc1e72864cf3c4c91f29ae72e46046c3d358229fbf73d764d27edd87579.png" src="_images/13c55fc1e72864cf3c4c91f29ae72e46046c3d358229fbf73d764d27edd87579.png" />
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">movie</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">movie</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">views</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -635,7 +630,7 @@ failed plotting new frames
 Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\bend\simulation.gif!
 </pre></div>
 </div>
-<img alt="_images/ea598cd14f9fc92f8f271909220d44fa3bd4b5b67c67ed0e275ffb43495ee288.gif" src="_images/ea598cd14f9fc92f8f271909220d44fa3bd4b5b67c67ed0e275ffb43495ee288.gif" />
+<img alt="_images/ee5a5897e4abe4f2b3ad4229704e56fae410fde3a99cc3e5bcfc3cd1858497e0.gif" src="_images/ee5a5897e4abe4f2b3ad4229704e56fae410fde3a99cc3e5bcfc3cd1858497e0.gif" />
 </div>
 </div>
 </section>
@@ -648,7 +643,7 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 <span class="n">x</span> <span class="o">=</span> <span class="n">wavelengths</span>
 
 <span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;To2@0,o1@0&quot;</span><span class="p">)</span>  <span class="c1"># wavelength or frequency ordered depending on problem setup</span>
-<span class="c1"># y = lumi.query(sol, &quot;T2,1&quot;)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;T2,1&quot;</span><span class="p">)</span>
 <span class="c1"># y=np.abs2(sol[&#39;waves&#39;][&#39;o3@0&#39;]/sol[&#39;waves&#39;][&#39;o1@0&#39;])</span>
 
 <span class="c1"># y=[10*np.log10(y) for y in y]</span>
@@ -664,7 +659,7 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\bend
 </pre></div>
 </div>
-<img alt="_images/caa9ce5677920b40b4daccda02ea7dcd359bf9e73c19cabc282d7bf4834b169b.png" src="_images/caa9ce5677920b40b4daccda02ea7dcd359bf9e73c19cabc282d7bf4834b169b.png" />
+<img alt="_images/e602bd4760f4a139168ffcb77b63ead82d009faa09585a410d3ddfd15b5db8b2.png" src="_images/e602bd4760f4a139168ffcb77b63ead82d009faa09585a410d3ddfd15b5db8b2.png" />
 </div>
 </div>
 </section>

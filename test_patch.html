@@ -61,7 +61,6 @@
     <link rel="icon" href="_static/logo.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Inverse design of photonic wavelength division demultiplexer" href="demux.html" />
     <link rel="prev" title="Metasurface: microwave frequency selective surface (FSS)" href="test_FSS.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -193,11 +192,6 @@
 <li class="toctree-l1"><a class="reference internal" href="test_stub.html">RF microstrip: quarter wave stub filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">RF antenna: microstrip fed patch</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="demux.html">Inverse design of photonic wavelength division demultiplexer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="metagrating_coupler.html">Inverse design of perfectly vertical photonic (meta)grating coupler</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Guide</span></p>
 <ul class="nav bd-sidenav">
@@ -453,15 +447,6 @@ document.write(`
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>========================================
-
-failed plotting new frames
-Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\patch\simulation.gif!
-</pre></div>
-</div>
-<img alt="_images/9d86a043314605b59d37d2e64291094a555f5327b563a57e7cb3abb5bd49b09b.gif" src="_images/9d86a043314605b59d37d2e64291094a555f5327b563a57e7cb3abb5bd49b09b.gif" />
-</div>
 </div>
 <section id="geometry">
 <h2>Geometry<a class="headerlink" href="#geometry" title="Link to this heading">#</a></h2>
@@ -475,8 +460,8 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
 <span class="c1"># simulation folder</span>
-<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;patch&quot;</span><span class="p">)</span>
-<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;microstrip patch antenna&quot;</span>
+<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;microstrip_patch_antenna&quot;</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
 <span class="c1"># length and frequency units are arbitrary but must be consistent. Here we use mm and GHz.</span>
 <span class="n">frequency</span> <span class="o">=</span> <span class="mf">1.55</span>  <span class="c1"># characteristic frequency in GHz</span>
@@ -560,6 +545,9 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 </div>
 </div>
 <div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>running luminescent python frontend
+</pre></div>
+</div>
 <img alt="_images/8f08b83f405141843ff9dd3af50b74bad3edf1d8dc169a10409c6bdee753758d.png" src="_images/8f08b83f405141843ff9dd3af50b74bad3edf1d8dc169a10409c6bdee753758d.png" />
 </div>
 </div>
@@ -680,26 +668,26 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
     <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
     <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">.01</span><span class="p">,</span>
     <span class="n">saveat</span><span class="o">=</span><span class="mf">.5</span><span class="p">,</span>  <span class="c1"># save frame every _ periods for plotting movie</span>
-    <span class="n">views</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">th</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>  <span class="n">saturation</span><span class="o">=</span><span class="mi">100</span><span class="p">),</span>
-        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Ez&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=-</span><span class="n">d</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>  <span class="n">saturation</span><span class="o">=</span><span class="mi">100</span><span class="p">),</span>
-    <span class="p">],</span>
 <span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving mode plots to runs\patch\modes\1
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving mode plots to runs\microstrip_patch_antenna\modes\1
 showing modes for first wavelength 
 solving modes with PEC boundaries
 Solving port modes with FEM...
 </pre></div>
 </div>
-<img alt="_images/ee24c1b916e37bf815f420623e9858ec83fc0c3ad56fe431e267612e9a5d8a2b.png" src="_images/ee24c1b916e37bf815f420623e9858ec83fc0c3ad56fe431e267612e9a5d8a2b.png" />
-<img alt="_images/50535dd5f5731cf3126d2bd29d92c2e28cf2ae300128027c2deed20117b7326f.png" src="_images/50535dd5f5731cf3126d2bd29d92c2e28cf2ae300128027c2deed20117b7326f.png" />
+<img alt="_images/e0651e438f0be76aef84cd97b9c1f8144ee1782a2b4664726a5ee2a861c72b4e.png" src="_images/e0651e438f0be76aef84cd97b9c1f8144ee1782a2b4664726a5ee2a861c72b4e.png" />
+<img alt="_images/b4692e7931f5fed0dcf24276a5a201730e83aa79a1b80cf87c78c555b9fad838.png" src="_images/b4692e7931f5fed0dcf24276a5a201730e83aa79a1b80cf87c78c555b9fad838.png" />
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
+  E = np.array(
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
+  H = np.array(
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
@@ -708,6 +696,10 @@ Solving port modes with FEM...
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
+  E = np.array(
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
+  H = np.array(
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
@@ -716,6 +708,10 @@ Solving port modes with FEM...
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
+  E = np.array(
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
+  H = np.array(
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
@@ -724,6 +720,10 @@ Solving port modes with FEM...
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
+  E = np.array(
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
+  H = np.array(
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
@@ -732,15 +732,19 @@ Solving port modes with FEM...
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
+  E = np.array(
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
+  H = np.array(
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\patch
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\microstrip_patch_antenna
 1.3
 1.3
 1.3
 6.048387096774193
 3.2898888702848055
-loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\patch
+loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\microstrip_patch_antenna
 ========================================
 
 can&#39;t find fdtd binary 
@@ -753,7 +757,11 @@ can&#39;t find fdtd binary
 <h2>Visualize<a class="headerlink" href="#visualize" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">peek</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="c1"># snapshots at halfway and final time step</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">views</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">th</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>  <span class="n">color_scaling</span><span class="o">=</span><span class="mi">100</span><span class="p">),</span>
+        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Ez&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=-</span><span class="n">d</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>  <span class="n">color_scaling</span><span class="o">=</span><span class="mi">100</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">peek</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">views</span><span class="p">)</span> <span class="c1"># snapshots at halfway and final time step</span>
 </pre></div>
 </div>
 </div>
@@ -763,13 +771,13 @@ can&#39;t find fdtd binary
 failed plotting new frames
 </pre></div>
 </div>
-<img alt="_images/64d54090d5a23e22dd451e7f6f36ce7761e70a536e780174ab30209028e5f1f4.png" src="_images/64d54090d5a23e22dd451e7f6f36ce7761e70a536e780174ab30209028e5f1f4.png" />
-<img alt="_images/111e2f84aa6286b6c2daf761ba77d8096b6a21e82db6f8f7adb3e65eceaef7ab.png" src="_images/111e2f84aa6286b6c2daf761ba77d8096b6a21e82db6f8f7adb3e65eceaef7ab.png" />
+<img alt="_images/c78b421914f8426e44380c04258fdb222fcb862985957744d3cdb6b93900b55e.png" src="_images/c78b421914f8426e44380c04258fdb222fcb862985957744d3cdb6b93900b55e.png" />
+<img alt="_images/5a24f9bd217a785b2316471b4e27e3d5f52067fbf396e5470f0f26678176d3da.png" src="_images/5a24f9bd217a785b2316471b4e27e3d5f52067fbf396e5470f0f26678176d3da.png" />
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">movie</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="c1"># full movie - this may take a while to render</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">movie</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">views</span><span class="p">)</span> <span class="c1"># full movie - this may take a while to render</span>
 </pre></div>
 </div>
 </div>
@@ -920,15 +928,6 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
         <p class="prev-next-subtitle">previous</p>
         <p class="prev-next-title">Metasurface: microwave frequency selective surface (FSS)</p>
       </div>
-    </a>
-    <a class="right-next"
-       href="demux.html"
-       title="next page">
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Inverse design of photonic wavelength division demultiplexer</p>
-      </div>
-      <i class="fa-solid fa-angle-right"></i>
     </a>
 </div>
                 </footer>

@@ -62,7 +62,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="RF microstrip: quarter wave stub filter" href="test_stub.html" />
-    <link rel="prev" title="Installation" href="install.html" />
+    <link rel="prev" title="Photonic waveguide bend" href="test_bend.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -188,15 +188,11 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
 <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="test_bend.html">Photonic waveguide bend</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Photonic integrated circuit: ring resonator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_stub.html">RF microstrip: quarter wave stub filter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_FSS.html">Metasurface: microwave frequency selective surface (FSS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_patch.html">RF antenna: microstrip fed patch</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="demux.html">Inverse design of photonic wavelength division demultiplexer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="metagrating_coupler.html">Inverse design of perfectly vertical photonic (meta)grating coupler</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Guide</span></p>
 <ul class="nav bd-sidenav">
@@ -459,11 +455,12 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">gdsfactory</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gf</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
 <span class="c1"># simulation folder</span>
-<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;ring&quot;</span><span class="p">)</span>
-<span class="n">name</span><span class="o">=</span><span class="s1">&#39;photonic ring resonator&#39;</span>
+<span class="n">name</span><span class="o">=</span><span class="s1">&#39;photonic_ring_resonator&#39;</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
 <span class="c1"># length units are arbitrary so long as they are consistent, in this case [um]. everything gets normalized around origin wavelength and period at backend.</span>
 <span class="n">wavelength</span> <span class="o">=</span> <span class="mf">1.55</span>  <span class="c1"># characteristic wavelength [um]</span>
@@ -516,9 +513,6 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>running luminescent python frontend
-</pre></div>
-</div>
 <img alt="_images/ab16b06cfeec6b81a2f0bb16b3b8cc3debe030634b12705831d3a37c740a63e1.png" src="_images/ab16b06cfeec6b81a2f0bb16b3b8cc3debe030634b12705831d3a37c740a63e1.png" />
 </div>
 </div>
@@ -556,6 +550,7 @@ document.write(`
         <span class="n">source_port_margin</span><span class="o">=</span><span class="n">source_port_margin</span><span class="p">,</span>
         <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">,</span>
         <span class="n">bandwidth</span><span class="o">=</span><span class="n">wavelength</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">modenums</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># fundamental mode only</span>
     <span class="p">)</span>
 <span class="p">]</span>
 
@@ -584,12 +579,10 @@ document.write(`
     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration</span>
     <span class="n">nres</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>  <span class="c1"># number of grid points per wavelength in material (not vacuum)</span>
     <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>  <span class="c1"># relative to maximum theoretical Courant number at</span>
-    <span class="n">relative_pml_depths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>  <span class="c1"># relative PML thes</span>
-    <span class="n">Tsim</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>  <span class="c1"># max time [periods]</span>
-    <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># field energy decay threshold for stopping simulation</span>
-    <span class="c1"># visualization</span>
+    <span class="n">relative_pml_depths</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>  
+    <span class="n">Tsim</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>  <span class="c1"># max time [periods]</span>
+    <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>  <span class="c1"># field energy decay threshold for stopping simulation</span>
     <span class="n">saveat</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>  <span class="c1"># save and plot field every n periods</span>
-    <span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="s2">&quot;halfway&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">)],</span>
 <span class="p">)</span>
 
 <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
@@ -597,14 +590,14 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving mode plots to runs\ring\modes\1
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving mode plots to runs\photonic_ring_resonator\modes\1
 showing modes for first wavelength 
-using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring
+using simulation folder C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\photonic_ring_resonator
 0.02767857142857143
 0.02767857142857143
 0.02767857142857143
 0.02767857142857143
-loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring
+loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\photonic_ring_resonator
 ========================================
 
 can&#39;t find fdtd binary 
@@ -619,7 +612,8 @@ can&#39;t find fdtd binary
 <h2>Visualize<a class="headerlink" href="#visualize" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">peek</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="c1"># halfway and final snapshots</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="s2">&quot;halfway&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">peek</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">views</span><span class="p">)</span> <span class="c1"># halfway and final snapshots</span>
 </pre></div>
 </div>
 </div>
@@ -629,13 +623,14 @@ can&#39;t find fdtd binary
 failed plotting new frames
 </pre></div>
 </div>
-<img alt="_images/758427d39e66674d1398719cdaa33f191e88b479f5d5920df76814bbf89cd1c9.png" src="_images/758427d39e66674d1398719cdaa33f191e88b479f5d5920df76814bbf89cd1c9.png" />
-<img alt="_images/0a10af4205ba6dcc634f525ba72742188f50a5fc9acb56d7e0584fe58ea16b63.png" src="_images/0a10af4205ba6dcc634f525ba72742188f50a5fc9acb56d7e0584fe58ea16b63.png" />
+<img alt="_images/a5b654dff9919447e2cbf36e800453948a7aace358176d839651fbbf55d0c0bc.png" src="_images/a5b654dff9919447e2cbf36e800453948a7aace358176d839651fbbf55d0c0bc.png" />
+<img alt="_images/c60b37fedf8fd1b66fa95858765e7ee6fa2ceb221e028e61ee9bfffddcc71cab.png" src="_images/c60b37fedf8fd1b66fa95858765e7ee6fa2ceb221e028e61ee9bfffddcc71cab.png" />
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">movie</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="c1"># full movie - this may take a while to generate</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">movie</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">views</span><span class="p">)</span> <span class="c1"># full movie - this may take a while to generate</span>
+<span class="c1"># due to frame aliasing the movie may appear to show the signal going around once when in effect it goes around multiple times. To fix this, use lower `saveat`</span>
 </pre></div>
 </div>
 </div>
@@ -643,10 +638,10 @@ failed plotting new frames
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>========================================
 
 failed plotting new frames
-Video generated successfully at c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring\simulation.gif!
+Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\photonic_ring_resonator\simulation.gif!
 </pre></div>
 </div>
-<img alt="_images/7de3aa011af5a7692b9cd14eef4300a002f3e1d6e43ade898ec40a8b5a3a3e66.gif" src="_images/7de3aa011af5a7692b9cd14eef4300a002f3e1d6e43ade898ec40a8b5a3a3e66.gif" />
+<img alt="_images/3a13a78b12d5c1b8a9d5e26373d24fafcdae0625d57f5ea925e953a31300ede7.gif" src="_images/3a13a78b12d5c1b8a9d5e26373d24fafcdae0625d57f5ea925e953a31300ede7.gif" />
 </div>
 </div>
 </section>
@@ -657,8 +652,9 @@ Video generated successfully at c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sol</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">wavelengths</span>
 
-<span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;T3,1&quot;</span><span class="p">)</span> <span class="c1"># wavelength or frequency ordered depending on problem setup</span>
-<span class="c1"># y=np.abs2(sol[&#39;waves&#39;][&#39;o3@0&#39;]/sol[&#39;waves&#39;][&#39;o1@0&#39;])</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">sol</span><span class="p">,</span> <span class="s2">&quot;To3@0,o1@0&quot;</span><span class="p">)</span>  <span class="c1"># wavelength or frequency ordered depending on problem setup</span>
+<span class="c1"># y = lumi.query(sol, &quot;T3,1&quot;) # wavelength or frequency ordered depending on problem setup</span>
+<span class="c1"># y=math.abs2(sol[&#39;waves&#39;][&#39;o3@0&#39;]/sol[&#39;waves&#39;][&#39;o1@0&#39;])</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;wavelength [um]&quot;</span><span class="p">)</span>
@@ -668,10 +664,10 @@ Video generated successfully at c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\ring
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\photonic_ring_resonator
 </pre></div>
 </div>
-<img alt="_images/a89af48918ba7a6b0cfbc4eeddd86fa0973fa81a2dc699026b0cdaa5003a380a.png" src="_images/a89af48918ba7a6b0cfbc4eeddd86fa0973fa81a2dc699026b0cdaa5003a380a.png" />
+<img alt="_images/58c3f56ddb9f7db24a98fc05dddeecd66a824c245e578b0bd68cb754fbcf386f.png" src="_images/58c3f56ddb9f7db24a98fc05dddeecd66a824c245e578b0bd68cb754fbcf386f.png" />
 </div>
 </div>
 </section>
@@ -708,12 +704,12 @@ Video generated successfully at c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="install.html"
+       href="test_bend.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Installation</p>
+        <p class="prev-next-title">Photonic waveguide bend</p>
       </div>
     </a>
     <a class="right-next"

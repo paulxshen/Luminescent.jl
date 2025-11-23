@@ -188,15 +188,11 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Simulation tutorials</span></p>
 <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="test_bend.html">Photonic waveguide bend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_ring.html">Photonic integrated circuit: ring resonator</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_stub.html">RF microstrip: quarter wave stub filter</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Metasurface: microwave frequency selective surface (FSS)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_patch.html">RF antenna: microstrip fed patch</a></li>
-</ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Inverse design tutorials</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="demux.html">Inverse design of photonic wavelength division demultiplexer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="metagrating_coupler.html">Inverse design of perfectly vertical photonic (meta)grating coupler</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Guide</span></p>
 <ul class="nav bd-sidenav">
@@ -460,10 +456,9 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">display</span>
 
-<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="s2">&quot;FSS&quot;</span><span class="p">)</span>
-<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;microwave frequency selective surface&quot;</span>
+<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;microwave_frequency_selective_surface&quot;</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;runs&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
 <span class="c1"># length and frequency units are arbitrary</span>
 <span class="n">frequency</span> <span class="o">=</span> <span class="mi">12</span>  <span class="c1"># origin frequency GHz</span>
@@ -574,19 +569,18 @@ document.write(`
     <span class="n">Tsim</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>  <span class="c1"># max time [periods]</span>
     <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">0.003</span><span class="p">,</span>  <span class="c1"># field decay threshold for stopping simulation</span>
     <span class="n">saveat</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
-    <span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s1">&#39;Ex&#39;</span><span class="p">,</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">th</span><span class="o">/</span><span class="mi">2</span><span class="p">)]</span>
 <span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving mode plots to runs\FSS\modes\1
-using simulation folder C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\FSS
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>saving mode plots to runs\microwave_frequency_selective_surface\modes\1
+using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\microwave_frequency_selective_surface
 0.25
 0.25
 0.25
-loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\FSS
+loading problem from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\microwave_frequency_selective_surface
 ========================================
 
 can&#39;t find fdtd binary 
@@ -596,17 +590,19 @@ can&#39;t find fdtd binary
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lumi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s1">&#39;Ex&#39;</span><span class="p">,</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">th</span><span class="o">/</span><span class="mi">2</span><span class="p">)]</span>
+<span class="n">lumi</span><span class="o">.</span><span class="n">movie</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">views</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>========================================
 
-Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\FSS\simulation.gif!
+failed plotting new frames
+Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\microwave_frequency_selective_surface\simulation.gif!
 </pre></div>
 </div>
-<img alt="_images/b4d16eee253b35f9adb8804430babb609b1961d66e40542332d61b4e30f5bafd.gif" src="_images/b4d16eee253b35f9adb8804430babb609b1961d66e40542332d61b4e30f5bafd.gif" />
+<img alt="_images/7d5d79b44a49d4c91aa881bd12801bca1693570c50d5ca13a9ec62f97fe3fe05.gif" src="_images/7d5d79b44a49d4c91aa881bd12801bca1693570c50d5ca13a9ec62f97fe3fe05.gif" />
 </div>
 </div>
 </section>
