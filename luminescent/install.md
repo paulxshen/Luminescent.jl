@@ -15,7 +15,7 @@ pip install -U luminescent mediapy
 
 # backend binaries
 gdown --fuzzy https://drive.google.com/file/d/1-ABBSt6-wGlvTNWd8ojg-jY_tfaXNvQu/view?usp=sharing
-tar -xf luminescent-colab-linux-latest.tar.gz  -C /usr/local/
+tar -xf luminescent-linux-cuda-12.tar.gz  -C /usr/local/
 
 # use prebundled CUDA but prevent LD_LIBRARY_PATH from interfering other packages
 mkdir -p /temp-nvidia
@@ -34,7 +34,7 @@ pip install -U luminescent
 # backend binaries
 apt-get install -y libglu1-mesa
 gdown --fuzzy https://drive.google.com/file/d/1-ABBSt6-wGlvTNWd8ojg-jY_tfaXNvQu/view?usp=sharing
-tar -xf luminescent-x86-linux-latest.tar.gz  -C /usr/local/
+tar -xf luminescent-linux-cuda-12.tar.gz  -C /usr/local/
 
 export JULIA_CUDA_USE_COMPAT=0
 export PATH=$PATH:/usr/local/Luminescent/bin
