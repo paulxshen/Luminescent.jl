@@ -8,7 +8,7 @@
                 0,
                 0.4
             ],
-            "saturation": 1.0
+            "color_scaling": 1.0
         },
         {
             "field": "Ez",
@@ -18,7 +18,7 @@
                 0,
                 0.8175
             ],
-            "saturation": 1.0
+            "color_scaling": 1.0
         }
     ],
     "fps": 5

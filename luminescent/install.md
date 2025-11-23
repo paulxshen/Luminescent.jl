@@ -14,8 +14,8 @@ apt-get install -y libglu1-mesa
 pip install -U luminescent mediapy
 
 # backend binaries
-gdown --fuzzy https://drive.google.com/file/d/1y9_HL5GPekKrxvpHzFGrqH8WXoeazMxx/view?usp=sharing
-tar -xf luminescent-latest.tar.gz  -C /usr/local/
+gdown --fuzzy https://drive.google.com/file/d/1-ABBSt6-wGlvTNWd8ojg-jY_tfaXNvQu/view?usp=sharing
+tar -xf luminescent-colab-linux-latest.tar.gz  -C /usr/local/
 
 # use prebundled CUDA but prevent LD_LIBRARY_PATH from interfering other packages
 mkdir -p /temp-nvidia
@@ -25,7 +25,7 @@ mv /usr/lib64-nvidia/libnv* /temp-nvidia
 # first time run downloads artifacts
 luminescent
 ```
-## Generic x86_64 Linux with CUDA
+## Generic x86 Linux with CUDA
 You can also run on your own machine or cloud provider. If install fails (probably due to CUDA config), raise an issue on [GitHub](https://github.com/paulxshen/Luminescent.jl).
 ```
 # frontend
@@ -33,8 +33,8 @@ pip install -U luminescent
 
 # backend binaries
 apt-get install -y libglu1-mesa
-gdown --fuzzy https://drive.google.com/file/d/1y9_HL5GPekKrxvpHzFGrqH8WXoeazMxx/view?usp=sharing
-tar -xf luminescent-latest.tar.gz  -C /usr/local/
+gdown --fuzzy https://drive.google.com/file/d/1-ABBSt6-wGlvTNWd8ojg-jY_tfaXNvQu/view?usp=sharing
+tar -xf luminescent-x86-linux-latest.tar.gz  -C /usr/local/
 
 export JULIA_CUDA_USE_COMPAT=0
 export PATH=$PATH:/usr/local/Luminescent/bin
