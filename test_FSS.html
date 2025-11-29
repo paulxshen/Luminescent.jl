@@ -482,10 +482,10 @@ document.write(`
 <span class="n">dx0</span> <span class="o">=</span> <span class="n">wl</span> <span class="o">/</span> <span class="n">nres</span>
 <span class="n">mesh_density</span> <span class="o">=</span> <span class="n">dx0</span> <span class="o">/</span> <span class="mf">0.5</span>
 
-<span class="c1"># materials_library</span>
-<span class="n">materials_library</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">MATERIALS_LIBRARY</span>
-<span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;sub&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">mesh_density</span><span class="o">=</span><span class="n">mesh_density</span><span class="p">)</span>
-<span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;PEC&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">mesh_density</span><span class="p">)</span>
+<span class="c1"># material_library</span>
+<span class="n">material_library</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">MATERIAL_LIBRARY</span>
+<span class="n">material_library</span><span class="p">[</span><span class="s2">&quot;sub&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">mesh_density</span><span class="o">=</span><span class="n">mesh_density</span><span class="p">)</span>
+<span class="n">material_library</span><span class="p">[</span><span class="s2">&quot;PEC&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">mesh_density</span><span class="p">)</span>
 
 <span class="c1"># make geometry in gdsfactory. 1/4 section of unit cell due to symmetry</span>
 <span class="c1"># alternatively can import .gds into gdsfactory</span>
@@ -560,7 +560,7 @@ document.write(`
     <span class="n">zmin</span><span class="o">=-</span><span class="n">gap</span><span class="o">-</span><span class="n">d</span><span class="p">,</span>
     <span class="n">zmax</span><span class="o">=</span> <span class="n">th</span> <span class="o">+</span> <span class="n">gap</span> <span class="o">+</span> <span class="n">margin</span><span class="p">,</span>
     <span class="c1">#</span>
-    <span class="n">materials_library</span><span class="o">=</span><span class="n">materials_library</span><span class="p">,</span>
+    <span class="n">material_library</span><span class="o">=</span><span class="n">material_library</span><span class="p">,</span>
     <span class="n">layer_stack</span><span class="o">=</span><span class="n">layer_stack</span><span class="p">,</span>
     <span class="c1">#</span>
     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration</span>

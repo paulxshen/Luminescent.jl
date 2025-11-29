@@ -513,7 +513,7 @@ document.write(`
     <span class="p">)</span>
 <span class="p">]</span>
 
-<span class="n">materials_library</span> <span class="o">=</span> <span class="p">{</span>
+<span class="n">material_library</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;Si&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span>
         <span class="n">epsilon</span><span class="o">=</span><span class="mf">12.25</span><span class="p">,</span>
         <span class="c1"># sigma=0.001,</span>
@@ -523,7 +523,7 @@ document.write(`
     <span class="p">),</span>
     <span class="s2">&quot;SiO2&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">2.25</span><span class="p">),</span>
 <span class="p">}</span>
-<span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;background&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;SiO2&quot;</span><span class="p">]</span>  <span class="c1"># set background material</span>
+<span class="n">material_library</span><span class="p">[</span><span class="s2">&quot;background&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">material_library</span><span class="p">[</span><span class="s2">&quot;SiO2&quot;</span><span class="p">]</span>  <span class="c1"># set background material</span>
 
 <span class="n">layer_stack</span> <span class="o">=</span> <span class="n">LayerStack</span><span class="p">(</span>
     <span class="n">layers</span><span class="o">=</span><span class="p">{</span>
@@ -557,7 +557,7 @@ document.write(`
     <span class="n">zmin</span><span class="o">=-</span><span class="n">zmargin</span><span class="p">,</span>
     <span class="n">zmax</span><span class="o">=</span><span class="n">d</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>
     <span class="c1">#</span>
-    <span class="n">materials_library</span><span class="o">=</span><span class="n">materials_library</span><span class="p">,</span>
+    <span class="n">material_library</span><span class="o">=</span><span class="n">material_library</span><span class="p">,</span>
     <span class="n">layer_stack</span><span class="o">=</span><span class="n">layer_stack</span><span class="p">,</span>
     <span class="c1">#</span>
     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration</span>
@@ -627,10 +627,10 @@ failed plotting new frames
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>========================================
 
 failed plotting new frames
-Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\bend\simulation.gif!
+Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\photonic_waveguide_bend\simulation.gif!
 </pre></div>
 </div>
-<img alt="_images/ee5a5897e4abe4f2b3ad4229704e56fae410fde3a99cc3e5bcfc3cd1858497e0.gif" src="_images/ee5a5897e4abe4f2b3ad4229704e56fae410fde3a99cc3e5bcfc3cd1858497e0.gif" />
+<img alt="_images/f8998c990d476d1d3bcc38abafdfadd0ad5149dea9c236c79dbf98ca5292d2bd.gif" src="_images/f8998c990d476d1d3bcc38abafdfadd0ad5149dea9c236c79dbf98ca5292d2bd.gif" />
 </div>
 </div>
 </section>
@@ -656,7 +656,7 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\bend
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\photonic_waveguide_bend
 </pre></div>
 </div>
 <img alt="_images/e602bd4760f4a139168ffcb77b63ead82d009faa09585a410d3ddfd15b5db8b2.png" src="_images/e602bd4760f4a139168ffcb77b63ead82d009faa09585a410d3ddfd15b5db8b2.png" />

@@ -534,12 +534,12 @@ document.write(`
     <span class="p">}</span>
 <span class="p">)</span>
 
-<span class="c1"># our default lumi.MATERIALS_LIBRARY lib covers limited range of photonic and PCB materials_library. here we create our own materials_library. `background` is special and tags regions outside any bodies during meshing</span>
-<span class="n">materials_library</span> <span class="o">=</span> <span class="p">{</span>
+<span class="c1"># our default lumi.MATERIAL_LIBRARY lib covers limited range of photonic and PCB material_library. here we create our own material_library. `background` is special and tags regions outside any bodies during meshing</span>
+<span class="n">material_library</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;Si&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">12.25</span><span class="p">),</span>
     <span class="s2">&quot;SiO2&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">2.25</span><span class="p">),</span>
 <span class="p">}</span>
-<span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;background&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">materials_library</span><span class="p">[</span>
+<span class="n">material_library</span><span class="p">[</span><span class="s2">&quot;background&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">material_library</span><span class="p">[</span>
     <span class="s2">&quot;SiO2&quot;</span>
 <span class="p">]</span>  
 
@@ -573,7 +573,7 @@ document.write(`
     <span class="n">zmin</span><span class="o">=-</span><span class="n">zmargin</span><span class="p">,</span>
     <span class="n">zmax</span><span class="o">=</span><span class="n">th</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>
     <span class="c1"># materials and layers</span>
-    <span class="n">materials_library</span><span class="o">=</span><span class="n">materials_library</span><span class="p">,</span>
+    <span class="n">material_library</span><span class="o">=</span><span class="n">material_library</span><span class="p">,</span>
     <span class="n">layer_stack</span><span class="o">=</span><span class="n">layer_stack</span><span class="p">,</span>
     <span class="c1"># accuracy and speed settings</span>
     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>  <span class="c1"># use GPU acceleration</span>

@@ -534,47 +534,46 @@ document.write(`
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">FEED</span><span class="p">),</span>
             <span class="n">zmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
             <span class="n">thickness</span><span class="o">=</span><span class="n">th</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC_feed&quot;</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">&quot;stub&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">STUB</span><span class="p">),</span>
             <span class="n">zmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
             <span class="n">thickness</span><span class="o">=</span><span class="n">th</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC_stub&quot;</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">&quot;core&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">SUB</span><span class="p">),</span>
             <span class="n">zmin</span><span class="o">=-</span><span class="n">d</span><span class="p">,</span>
             <span class="n">thickness</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;substrate&quot;</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;sub&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">}</span>
 <span class="p">)</span>
 
 <span class="c1"># materials</span>
-<span class="n">eps_substrate</span> <span class="o">=</span> <span class="mf">4.3</span>
-<span class="n">n_substrate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eps_substrate</span><span class="p">)</span>
+<span class="n">eps_sub</span> <span class="o">=</span> <span class="mf">4.3</span>
+<span class="n">n_sub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eps_sub</span><span class="p">)</span>
 
 <span class="n">dx</span> <span class="o">=</span> <span class="n">w_line</span> <span class="o">/</span> <span class="mi">4</span>  <span class="c1"># 4 mesh points across the strip</span>
-<span class="n">n_line</span> <span class="o">=</span> <span class="n">dx0</span> <span class="o">/</span> <span class="p">(</span><span class="n">dx</span><span class="p">)</span>  <span class="c1"># mesh density relative to vacuum</span>
+<span class="n">n_PEC</span> <span class="o">=</span> <span class="n">dx0</span> <span class="o">/</span> <span class="p">(</span><span class="n">dx</span><span class="p">)</span>  <span class="c1"># mesh density relative to vacuum</span>
 
-<span class="n">materials_library</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;substrate&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">eps_substrate</span><span class="p">),</span>
-    <span class="s2">&quot;PEC_feed&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">n_line</span><span class="p">),</span>
-    <span class="s2">&quot;PEC_stub&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">n_line</span><span class="p">),</span>
+<span class="n">material_library</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;sub&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">eps_sub</span><span class="p">),</span>
+    <span class="s2">&quot;PEC&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">n_PEC</span><span class="p">),</span>
 <span class="p">}</span>
-<span class="n">materials_library</span><span class="p">[</span><span class="s2">&quot;background&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">material_library</span><span class="p">[</span><span class="s2">&quot;background&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 
 <span class="n">_dx</span><span class="o">=</span><span class="n">dx</span> 
 <span class="n">_dy</span><span class="o">=</span><span class="n">th</span>
 <span class="n">modes</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span>
         <span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">,</span> <span class="s2">&quot;o2&quot;</span><span class="p">],</span>
-        <span class="n">frequencies</span><span class="o">=</span><span class="n">lumi</span><span class="o">.</span><span class="n">chebyshev_nodes</span><span class="p">(</span><span class="n">frequencies</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">frequencies</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="mi">5</span><span class="p">),</span>
-        <span class="n">metallic_boundaries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;feed&quot;</span><span class="p">],</span>
+        <span class="n">frequencies</span><span class="o">=</span><span class="p">[</span><span class="n">frequency</span><span class="p">],</span>
+        <span class="n">metallic_boundaries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;y-&quot;</span><span class="p">,</span> <span class="s2">&quot;feed&quot;</span><span class="p">],</span>
         <span class="n">nmodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">start</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">lx_mode</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">d</span><span class="p">],</span> <span class="c1"># local xy frame, local y=0 at global zmin of port layer</span>
         <span class="n">stop</span><span class="o">=</span><span class="p">[</span><span class="n">lx_mode</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">th</span> <span class="o">+</span> <span class="n">height_port_margin</span><span class="p">],</span>
@@ -604,7 +603,7 @@ document.write(`
     <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">,</span>
     <span class="n">modes</span><span class="o">=</span><span class="n">modes</span><span class="p">,</span>
     <span class="c1">#</span>
-    <span class="n">materials_library</span><span class="o">=</span><span class="n">materials_library</span><span class="p">,</span>
+    <span class="n">material_library</span><span class="o">=</span><span class="n">material_library</span><span class="p">,</span>
     <span class="n">layer_stack</span><span class="o">=</span><span class="n">layer_stack</span><span class="p">,</span>
     <span class="n">zmin</span><span class="o">=-</span><span class="n">d</span><span class="p">,</span>
     <span class="n">zmax</span><span class="o">=</span><span class="n">th</span> <span class="o">+</span> <span class="n">zmargin</span><span class="p">,</span>
@@ -627,61 +626,13 @@ solving modes with PEC boundaries
 Solving port modes with FEM...
 </pre></div>
 </div>
-<img alt="_images/49cea476954d53ea96c8374706305dc165b199af48f9dbc9ca1f67f09c0cfc15.png" src="_images/49cea476954d53ea96c8374706305dc165b199af48f9dbc9ca1f67f09c0cfc15.png" />
-<img alt="_images/3185e6a463b150c5ad4aa8a874fd5b9020361d439ab3934aabf32d737fc328aa.png" src="_images/3185e6a463b150c5ad4aa8a874fd5b9020361d439ab3934aabf32d737fc328aa.png" />
+<img alt="_images/6e7e847a57818567cb80873f895440e25f0cf157937525b8550e4a4cb11c50c7.png" src="_images/6e7e847a57818567cb80873f895440e25f0cf157937525b8550e4a4cb11c50c7.png" />
+<img alt="_images/4c82f7b382b670aa06292f3f6fc2e1eb2d38a3a4315270e01c60514f96cd2805.png" src="_images/4c82f7b382b670aa06292f3f6fc2e1eb2d38a3a4315270e01c60514f96cd2805.png" />
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:616: ComplexWarning: Casting complex values to real discards the imaginary part
   E = np.array(
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
-  H = np.array(
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
-Solving port modes with FEM...
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
-  data[ixs] = self._kernel(vbasis.basis[i], w, dx)
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
-  E = np.array(
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
-  H = np.array(
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
-Solving port modes with FEM...
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
-  data[ixs] = self._kernel(vbasis.basis[i], w, dx)
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
-  E = np.array(
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
-  H = np.array(
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
-Solving port modes with FEM...
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
-  data[ixs] = self._kernel(vbasis.basis[i], w, dx)
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
-  E = np.array(
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
-  H = np.array(
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>solving modes with PEC boundaries
-Solving port modes with FEM...
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
-  data[ixs] = self._kernel(vbasis.basis[i], w, dx)
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
-  E = np.array(
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:629: ComplexWarning: Casting complex values to real discards the imaginary part
   H = np.array(
 </pre></div>
 </div>
@@ -703,9 +654,14 @@ can&#39;t find fdtd binary
 <h2>Visualize<a class="headerlink" href="#visualize" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">views</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Ez&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">=-</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">z</span><span class="o">=-</span><span class="n">d</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
-        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">=-</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">th</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">material_color_map</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;background&#39;</span><span class="p">:</span><span class="s1">&#39;transparent&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;sub&#39;</span><span class="p">:(</span><span class="s1">&#39;yellow&#39;</span><span class="p">,</span><span class="mf">.5</span><span class="p">),</span>
+        <span class="s1">&#39;PEC&#39;</span><span class="p">:(</span><span class="s1">&#39;black&#39;</span><span class="p">,</span><span class="mf">.5</span><span class="p">),</span> <span class="c1"># (color, alpha)</span>
+<span class="p">}</span>
+<span class="n">views</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Ez&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">=-</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">z</span><span class="o">=-</span><span class="n">d</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">material_color_map</span><span class="o">=</span><span class="n">material_color_map</span><span class="p">,</span><span class="n">material_library</span><span class="o">=</span><span class="n">material_library</span><span class="p">),</span>
+        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">=-</span><span class="n">source_port_margin</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">th</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">material_color_map</span><span class="o">=</span><span class="n">material_color_map</span><span class="p">,</span><span class="n">material_library</span><span class="o">=</span><span class="n">material_library</span><span class="p">),</span>
     <span class="p">]</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">peek</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">views</span><span class="p">)</span> <span class="c1"># snapshots at halfway and final time step</span>
 </pre></div>
@@ -717,8 +673,8 @@ can&#39;t find fdtd binary
 failed plotting new frames
 </pre></div>
 </div>
-<img alt="_images/23c8faecb383bf75698b6c033d7842b68a11827834a7fe2556da2fca808193d6.png" src="_images/23c8faecb383bf75698b6c033d7842b68a11827834a7fe2556da2fca808193d6.png" />
-<img alt="_images/85aefb92c6e309ab75c0c533298019ca0e1012956221871bee57a84de2b215f1.png" src="_images/85aefb92c6e309ab75c0c533298019ca0e1012956221871bee57a84de2b215f1.png" />
+<img alt="_images/f4a10d174559dc0abad95b34baec1684e689a271d388c1857fce00ecea08f169.png" src="_images/f4a10d174559dc0abad95b34baec1684e689a271d388c1857fce00ecea08f169.png" />
+<img alt="_images/a9a0b30898cb1ddf2e029e324268a65e345acdfcd455034c27b0127f6172b82f.png" src="_images/a9a0b30898cb1ddf2e029e324268a65e345acdfcd455034c27b0127f6172b82f.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -731,10 +687,10 @@ failed plotting new frames
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>========================================
 
 failed plotting new frames
-Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub\simulation.gif!
+Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\microstrip_stub_filter\simulation.gif!
 </pre></div>
 </div>
-<img alt="_images/eb787199a328eedd5c3e306d3c61eb665f1354e05a3539a0a788998855598aee.gif" src="_images/eb787199a328eedd5c3e306d3c61eb665f1354e05a3539a0a788998855598aee.gif" />
+<img alt="_images/e05dad72efdc5a3b2c704b591f3c7b7a01fdfdec586c0b192d4b03a38d2a7004.gif" src="_images/e05dad72efdc5a3b2c704b591f3c7b7a01fdfdec586c0b192d4b03a38d2a7004.gif" />
 </div>
 </div>
 </section>
@@ -759,10 +715,10 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\stub
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\microstrip_stub_filter
 </pre></div>
 </div>
-<img alt="_images/81e361c3fc9dd32b972b01cf7630b947b14693867f989cfe5e63aa2246d8aab0.png" src="_images/81e361c3fc9dd32b972b01cf7630b947b14693867f989cfe5e63aa2246d8aab0.png" />
+<img alt="_images/0068ccdff6cc1016a389086b91d7990843f3c1427168503394784951e1a59815.png" src="_images/0068ccdff6cc1016a389086b91d7990843f3c1427168503394784951e1a59815.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -778,7 +734,7 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/f48f606c1207460ca4151a046a51ce3cb79f3284ec72c10f79c7aaecf375056d.png" src="_images/f48f606c1207460ca4151a046a51ce3cb79f3284ec72c10f79c7aaecf375056d.png" />
+<img alt="_images/cbfe103d2fccd7d8f502b4dde5b4d813bd6e12f57bb218d229ed2124a8335b93.png" src="_images/cbfe103d2fccd7d8f502b4dde5b4d813bd6e12f57bb218d229ed2124a8335b93.png" />
 </div>
 </div>
 </section>

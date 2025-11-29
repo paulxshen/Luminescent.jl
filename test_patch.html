@@ -470,15 +470,15 @@ document.write(`
 <span class="n">wavelength</span> <span class="o">=</span> <span class="n">wl1f</span> <span class="o">/</span> <span class="n">frequency</span>  <span class="c1"># characteristic wavelength</span>
 
 <span class="c1"># microstrip patch [mm]</span>
-<span class="n">d</span> <span class="o">=</span> <span class="mf">1.524</span> <span class="c1"># Substrate depth</span>
+<span class="n">d</span> <span class="o">=</span> <span class="mf">1.524</span> <span class="c1"># sub depth</span>
 <span class="n">w_line</span> <span class="o">=</span> <span class="mf">3.2</span> <span class="c1"># 50 ohm line width</span>
 <span class="n">w_patch</span> <span class="o">=</span> <span class="mi">53</span> <span class="c1"># Patch width</span>
 <span class="n">l_patch</span> <span class="o">=</span> <span class="mi">52</span> <span class="c1"># Patch length</span>
 <span class="n">w_slot</span> <span class="o">=</span> <span class="mi">7</span> <span class="c1"># slot width</span>
 <span class="n">l_flap</span> <span class="o">=</span> <span class="mf">15.5</span> <span class="c1"># flap or slot length</span>
 <span class="n">w_flap</span><span class="o">=</span><span class="n">w_patch</span><span class="o">/</span><span class="mi">2</span><span class="o">-</span><span class="n">w_slot</span><span class="o">-</span><span class="n">w_line</span><span class="o">/</span><span class="mi">2</span>
-<span class="n">w_sub</span> <span class="o">=</span> <span class="mi">200</span> <span class="c1"># Substrate width</span>
-<span class="n">l_sub</span> <span class="o">=</span> <span class="mi">200</span> <span class="c1"># Substrate length</span>
+<span class="n">w_sub</span> <span class="o">=</span> <span class="mi">200</span> <span class="c1"># sub width</span>
+<span class="n">l_sub</span> <span class="o">=</span> <span class="mi">200</span> <span class="c1"># sub length</span>
 <span class="n">th</span><span class="o">=</span><span class="mf">.1</span> <span class="c1"># metal thickness</span>
 
 <span class="n">lateral_port_margin</span> <span class="o">=</span> <span class="n">height_port_margin</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">d</span>
@@ -545,9 +545,6 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>running luminescent python frontend
-</pre></div>
-</div>
 <img alt="_images/8f08b83f405141843ff9dd3af50b74bad3edf1d8dc169a10409c6bdee753758d.png" src="_images/8f08b83f405141843ff9dd3af50b74bad3edf1d8dc169a10409c6bdee753758d.png" />
 </div>
 </div>
@@ -566,7 +563,7 @@ document.write(`
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">PATCH</span><span class="p">),</span>
             <span class="n">zmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
             <span class="n">thickness</span><span class="o">=</span><span class="n">th</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC_patch&quot;</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;PEC&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">&quot;line&quot;</span><span class="p">:</span> <span class="n">LayerLevel</span><span class="p">(</span>
@@ -580,7 +577,7 @@ document.write(`
             <span class="n">layer</span><span class="o">=</span><span class="n">LogicalLayer</span><span class="p">(</span><span class="n">layer</span><span class="o">=</span><span class="n">SUB</span><span class="p">),</span>
             <span class="n">zmin</span><span class="o">=-</span><span class="n">d</span><span class="p">,</span>
             <span class="n">thickness</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
-            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;substrate&quot;</span><span class="p">,</span>
+            <span class="n">material</span><span class="o">=</span><span class="s2">&quot;sub&quot;</span><span class="p">,</span>
             <span class="n">mesh_order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">}</span>
@@ -589,14 +586,14 @@ document.write(`
 <span class="n">dx_line</span> <span class="o">=</span> <span class="n">w_line</span> <span class="o">/</span> <span class="mi">6</span>  <span class="c1"># 6 mesh points across the strip</span>
 <span class="n">dx_patch</span> <span class="o">=</span> <span class="n">l_patch</span> <span class="o">/</span> <span class="mi">20</span>  <span class="c1"># 20 mesh points across the patch</span>
 
-<span class="n">eps_substrate</span> <span class="o">=</span> <span class="mf">3.38</span>
-<span class="n">n_substrate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eps_substrate</span><span class="p">)</span>
+<span class="n">eps_sub</span> <span class="o">=</span> <span class="mf">3.38</span>
+<span class="n">n_sub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eps_sub</span><span class="p">)</span>
 
-<span class="n">materials_library</span> <span class="o">=</span> <span class="p">{</span>
+<span class="n">material_library</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;air&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(),</span>
-    <span class="s2">&quot;substrate&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">eps_substrate</span><span class="p">),</span>
-    <span class="s2">&quot;PEC_patch&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">dx0</span><span class="o">/</span><span class="n">dx_patch</span><span class="p">),</span>
-    <span class="s2">&quot;PEC_line&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="p">[</span><span class="n">n_substrate</span><span class="p">,</span> <span class="n">dx0</span><span class="o">/</span><span class="n">dx_line</span><span class="p">,</span><span class="mi">1</span><span class="p">]),</span>
+    <span class="s2">&quot;sub&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">eps_sub</span><span class="p">),</span>
+    <span class="s2">&quot;PEC&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="n">dx0</span><span class="o">/</span><span class="n">dx_patch</span><span class="p">),</span>
+    <span class="s2">&quot;PEC_line&quot;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">PECMaterial</span><span class="p">(</span><span class="n">mesh_density</span><span class="o">=</span><span class="p">[</span><span class="n">n_sub</span><span class="p">,</span> <span class="n">dx0</span><span class="o">/</span><span class="n">dx_line</span><span class="p">,</span><span class="mi">1</span><span class="p">]),</span>
     <span class="s1">&#39;background&#39;</span><span class="p">:</span> <span class="n">lumi</span><span class="o">.</span><span class="n">Material</span><span class="p">(),</span>
 <span class="p">}</span>
 
@@ -623,7 +620,7 @@ document.write(`
     <span class="n">lumi</span><span class="o">.</span><span class="n">Mode</span><span class="p">(</span>
         <span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;o1&quot;</span><span class="p">],</span>
         <span class="n">frequencies</span><span class="o">=</span><span class="n">lumi</span><span class="o">.</span><span class="n">chebyshev_nodes</span><span class="p">(</span><span class="n">frequencies</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">frequencies</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">5</span><span class="p">),</span>
-        <span class="n">metallic_boundaries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;line&quot;</span><span class="p">],</span>
+        <span class="n">metallic_boundaries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;y-&quot;</span><span class="p">,</span> <span class="s2">&quot;line&quot;</span><span class="p">],</span>
         <span class="n">nmodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">start</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">lx_mode</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">d</span><span class="p">,],</span>  <span class="c1"># local xy frame, local y=0 at global zmin of port layer</span>
         <span class="n">stop</span><span class="o">=</span><span class="p">[</span><span class="n">lx_mode</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">th</span> <span class="o">+</span> <span class="n">height_port_margin</span><span class="p">],</span>
@@ -660,13 +657,13 @@ document.write(`
     <span class="n">zmin</span><span class="o">=-</span><span class="n">d</span><span class="p">,</span>
     <span class="n">zmax</span><span class="o">=</span><span class="n">H</span><span class="p">,</span>
     <span class="c1">#</span>
-    <span class="n">materials_library</span><span class="o">=</span><span class="n">materials_library</span><span class="p">,</span>
+    <span class="n">material_library</span><span class="o">=</span><span class="n">material_library</span><span class="p">,</span>
     <span class="n">layer_stack</span><span class="o">=</span><span class="n">layer_stack</span><span class="p">,</span>
     <span class="c1">#</span>
     <span class="n">gpu</span><span class="o">=</span><span class="s2">&quot;CUDA&quot;</span><span class="p">,</span>
     <span class="n">nres</span><span class="o">=</span><span class="n">nres</span><span class="p">,</span>  <span class="c1"># number of grid points per wavelength in material (not vacuum)</span>
     <span class="n">relative_courant</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
-    <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">.01</span><span class="p">,</span>
+    <span class="n">field_decay_threshold</span><span class="o">=</span><span class="mf">.001</span><span class="p">,</span>  <span class="c1"># stop when energy have decayed to this fraction of peak</span>
     <span class="n">saveat</span><span class="o">=</span><span class="mf">.5</span><span class="p">,</span>  <span class="c1"># save frame every _ periods for plotting movie</span>
 <span class="p">)</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
@@ -681,12 +678,12 @@ Solving port modes with FEM...
 </pre></div>
 </div>
 <img alt="_images/e0651e438f0be76aef84cd97b9c1f8144ee1782a2b4664726a5ee2a861c72b4e.png" src="_images/e0651e438f0be76aef84cd97b9c1f8144ee1782a2b4664726a5ee2a861c72b4e.png" />
-<img alt="_images/b4692e7931f5fed0dcf24276a5a201730e83aa79a1b80cf87c78c555b9fad838.png" src="_images/b4692e7931f5fed0dcf24276a5a201730e83aa79a1b80cf87c78c555b9fad838.png" />
+<img alt="_images/d8f7a818a4e398721c6b0fa561dfdf7e8fb3a0f895d4a147cf0d61c7a64b89c5.png" src="_images/d8f7a818a4e398721c6b0fa561dfdf7e8fb3a0f895d4a147cf0d61c7a64b89c5.png" />
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:616: ComplexWarning: Casting complex values to real discards the imaginary part
   E = np.array(
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:629: ComplexWarning: Casting complex values to real discards the imaginary part
   H = np.array(
 </pre></div>
 </div>
@@ -696,9 +693,9 @@ Solving port modes with FEM...
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:616: ComplexWarning: Casting complex values to real discards the imaginary part
   E = np.array(
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:629: ComplexWarning: Casting complex values to real discards the imaginary part
   H = np.array(
 </pre></div>
 </div>
@@ -708,9 +705,9 @@ Solving port modes with FEM...
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:616: ComplexWarning: Casting complex values to real discards the imaginary part
   E = np.array(
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:629: ComplexWarning: Casting complex values to real discards the imaginary part
   H = np.array(
 </pre></div>
 </div>
@@ -720,9 +717,9 @@ Solving port modes with FEM...
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:616: ComplexWarning: Casting complex values to real discards the imaginary part
   E = np.array(
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:629: ComplexWarning: Casting complex values to real discards the imaginary part
   H = np.array(
 </pre></div>
 </div>
@@ -732,13 +729,13 @@ Solving port modes with FEM...
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>c:\Users\default.LAPTOP-HMRU58MH\anaconda3\Lib\site-packages\skfem\assembly\form\linear_form.py:44: ComplexWarning: Casting complex values to real discards the imaginary part
   data[ixs] = self._kernel(vbasis.basis[i], w, dx)
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:615: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:616: ComplexWarning: Casting complex values to real discards the imaginary part
   E = np.array(
-c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:628: ComplexWarning: Casting complex values to real discards the imaginary part
+c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:629: ComplexWarning: Casting complex values to real discards the imaginary part
   H = np.array(
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\microstrip_patch_antenna
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>using simulation folder C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\microstrip_patch_antenna
 1.3
 1.3
 1.3
@@ -757,9 +754,14 @@ can&#39;t find fdtd binary
 <h2>Visualize<a class="headerlink" href="#visualize" title="Link to this heading">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">views</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">th</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>  <span class="n">color_scaling</span><span class="o">=</span><span class="mi">100</span><span class="p">),</span>
-        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Ez&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=-</span><span class="n">d</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>  <span class="n">color_scaling</span><span class="o">=</span><span class="mi">100</span><span class="p">),</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">material_color_map</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;background&#39;</span><span class="p">:</span><span class="s1">&#39;transparent&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;sub&#39;</span><span class="p">:(</span><span class="s1">&#39;yellow&#39;</span><span class="p">,</span><span class="mf">.5</span><span class="p">),</span>
+        <span class="s1">&#39;PEC&#39;</span><span class="p">:(</span><span class="s1">&#39;black&#39;</span><span class="p">,</span><span class="mf">.5</span><span class="p">),</span> <span class="c1"># (color, alpha)</span>
+<span class="p">}</span>
+<span class="n">views</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">lumi</span><span class="o">.</span><span class="n">View</span><span class="p">(</span><span class="s2">&quot;Ex&quot;</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">th</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>  <span class="n">field_color_intensity</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">material_color_map</span><span class="o">=</span><span class="n">material_color_map</span><span class="p">,</span><span class="n">material_library</span><span class="o">=</span><span class="n">material_library</span><span class="p">),</span>
+        <span class="c1"># lumi.View(&quot;Ez&quot;, z=-d / 2,  field_color_intensity=10,material_color_map=material_color_map,material_library=material_library),</span>
     <span class="p">]</span>
 <span class="n">lumi</span><span class="o">.</span><span class="n">peek</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">views</span><span class="p">)</span> <span class="c1"># snapshots at halfway and final time step</span>
 </pre></div>
@@ -771,8 +773,6 @@ can&#39;t find fdtd binary
 failed plotting new frames
 </pre></div>
 </div>
-<img alt="_images/c78b421914f8426e44380c04258fdb222fcb862985957744d3cdb6b93900b55e.png" src="_images/c78b421914f8426e44380c04258fdb222fcb862985957744d3cdb6b93900b55e.png" />
-<img alt="_images/5a24f9bd217a785b2316471b4e27e3d5f52067fbf396e5470f0f26678176d3da.png" src="_images/5a24f9bd217a785b2316471b4e27e3d5f52067fbf396e5470f0f26678176d3da.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -785,10 +785,38 @@ failed plotting new frames
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>========================================
 
 failed plotting new frames
-Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\patch\simulation.gif!
 </pre></div>
 </div>
-<img alt="_images/2777aab2b28fe3896146bf304cd72ec167b36dcbfdd97c575ac7a91f46d29f39.gif" src="_images/2777aab2b28fe3896146bf304cd72ec167b36dcbfdd97c575ac7a91f46d29f39.gif" />
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">IndexError</span><span class="g g-Whitespace">                                </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">13</span><span class="p">],</span> <span class="n">line</span> <span class="mi">1</span>
+<span class="ne">----&gt; </span><span class="mi">1</span> <span class="n">lumi</span><span class="o">.</span><span class="n">movie</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">views</span><span class="p">)</span>
+
+<span class="nn">File c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:841,</span> in <span class="ni">movie</span><span class="nt">(path, views, fps)</span>
+<span class="g g-Whitespace">    </span><span class="mi">823</span> <span class="c1"># # Set frame from the first image</span>
+<span class="g g-Whitespace">    </span><span class="mi">824</span> <span class="c1"># frame = cv2.imread(os.path.join(frames_folder, images[0]))</span>
+<span class="g g-Whitespace">    </span><span class="mi">825</span> <span class="c1"># height, width, layers = frame.shape</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>    <span class="mi">837</span> <span class="c1"># video.release()</span>
+<span class="g g-Whitespace">    </span><span class="mi">838</span> <span class="c1"># cv2.destroyAllWindows()</span>
+<span class="g g-Whitespace">    </span><span class="mi">840</span> <span class="n">GIF</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;simulation.gif&quot;</span><span class="p">))</span>
+<span class="ne">--&gt; </span><span class="mi">841</span> <span class="n">create_gif</span><span class="p">(</span><span class="n">frames_folder</span><span class="p">,</span> <span class="n">GIF</span><span class="p">,</span> <span class="mi">1000</span> <span class="o">/</span> <span class="n">fps</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">842</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Video generated successfully at </span><span class="si">{</span><span class="n">GIF</span><span class="si">}</span><span class="s2">!&quot;</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">843</span> <span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;simulation.gif&quot;</span><span class="p">)))</span>
+
+<span class="nn">File c:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\luminescent\utils.py:733,</span> in <span class="ni">create_gif</span><span class="nt">(image_path, output_path, duration)</span>
+<span class="g g-Whitespace">    </span><span class="mi">730</span>     <span class="k">if</span> <span class="n">frames</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">&quot;RGB&quot;</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">731</span>         <span class="n">frames</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">frames</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">733</span> <span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">734</span>     <span class="n">output_path</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">735</span>     <span class="n">save_all</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">736</span>     <span class="n">append_images</span><span class="o">=</span><span class="n">frames</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+<span class="g g-Whitespace">    </span><span class="mi">737</span>     <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">738</span>     <span class="n">loop</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># 0 means infinite loop</span>
+<span class="g g-Whitespace">    </span><span class="mi">739</span> <span class="p">)</span>
+
+<span class="ne">IndexError</span>: list index out of range
+</pre></div>
+</div>
 </div>
 </div>
 </section>
@@ -843,14 +871,14 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\patch
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>loading solution from C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\luminescent\runs\microstrip_patch_antenna
 </pre></div>
 </div>
-<img alt="_images/2a0a100cd43c361ec762b096992a75b810b454b355f1f09ee66d6096e8e45656.png" src="_images/2a0a100cd43c361ec762b096992a75b810b454b355f1f09ee66d6096e8e45656.png" />
+<img alt="_images/df4e2a5f2d762e05e2eb9a34385d905ba8b8e2ae6896b4cffdedb58964278376.png" src="_images/df4e2a5f2d762e05e2eb9a34385d905ba8b8e2ae6896b4cffdedb58964278376.png" />
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;H-Plane Radiation Pattern&#39;)
 </pre></div>
 </div>
-<img alt="_images/47661002b00417ab45fbacb0d8a3f1619bccef738a529756ff2821e02b277fda.png" src="_images/47661002b00417ab45fbacb0d8a3f1619bccef738a529756ff2821e02b277fda.png" />
+<img alt="_images/fdf57c8b38844c0cb53b63ba7cbc78d30462ef93c49d433ee45769d4d77a912b.png" src="_images/fdf57c8b38844c0cb53b63ba7cbc78d30462ef93c49d433ee45769d4d77a912b.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -866,7 +894,7 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/9fc94b5eca7b608d2b19ba71c1d3d92d2add30db8d41ad9829c9656496e5cb65.png" src="_images/9fc94b5eca7b608d2b19ba71c1d3d92d2add30db8d41ad9829c9656496e5cb65.png" />
+<img alt="_images/1f4429c74fb121fcbf6b9f0ffea32ee427b23b01a744edf2cf10e925aefb4c89.png" src="_images/1f4429c74fb121fcbf6b9f0ffea32ee427b23b01a744edf2cf10e925aefb4c89.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -884,7 +912,7 @@ Video generated successfully at C:\Users\default.LAPTOP-HMRU58MH\Desktop\lumi\lu
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="_images/b245d707a2016084c4c1bd465678e545cc623d15e01684816ef89ff6870872a0.png" src="_images/b245d707a2016084c4c1bd465678e545cc623d15e01684816ef89ff6870872a0.png" />
+<img alt="_images/491c2653ba8b6cd12174ff94453d3a0551af01266a9969f8f2e5824daa69d96b.png" src="_images/491c2653ba8b6cd12174ff94453d3a0551af01266a9969f8f2e5824daa69d96b.png" />
 </div>
 </div>
 </section>
