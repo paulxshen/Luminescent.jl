@@ -1,1 +1,1 @@
-import{a}from"/home/weihu/Luminescent.jl/build/_shared/chunk-26VS2IBC.js";import"/home/weihu/Luminescent.jl/build/_shared/chunk-J3PKFMLQ.js";import"/home/weihu/Luminescent.jl/build/_shared/chunk-OZE3FFNP.js";export default a();
+import{a}from"./build/_shared/chunk-26VS2IBC.js";import"./build/_shared/chunk-J3PKFMLQ.js";import"./build/_shared/chunk-OZE3FFNP.js";export default a();
