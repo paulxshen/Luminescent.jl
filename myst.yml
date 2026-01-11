@@ -8,8 +8,8 @@ project:
         - file: install.md
         - title: Simulation tutorials
           children:
-            - file: test_ring.ipynb
             - file: test_FSS.ipynb
+            - file: test_ring.ipynb
             - file: test_stub.ipynb
     - title: Lumi photonic PDK
       children:
