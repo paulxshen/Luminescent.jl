@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="http://localhost:3006/sitemap_style.xsl" ?>
+<?xml-stylesheet type="text/xsl" href="http://localhost:3007/sitemap_style.xsl" ?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>http://localhost:3006</loc>
+    <loc>http://localhost:3007</loc>
   </url>
   <url>
-    <loc>http://localhost:3006/features</loc>
+    <loc>http://localhost:3007/features</loc>
   </url>
   <url>
-    <loc>http://localhost:3006/install</loc>
+    <loc>http://localhost:3007/install</loc>
   </url>
   <url>
-    <loc>http://localhost:3006/test-fss</loc>
+    <loc>http://localhost:3007/test-fss</loc>
   </url>
   <url>
-    <loc>http://localhost:3006/test-ring</loc>
+    <loc>http://localhost:3007/test-ring</loc>
   </url>
   <url>
-    <loc>http://localhost:3006/test-stub</loc>
+    <loc>http://localhost:3007/test-stub</loc>
   </url>
   <url>
-    <loc>http://localhost:3006/pdk</loc>
+    <loc>http://localhost:3007/pdk</loc>
   </url>
 </urlset>
