@@ -1,7 +1,4 @@
 # Installation
-Please fill out [new user form](https://forms.gle/fP9wAkdJinT8t66w8) to obtain install scripts for unrestricted simulation. Doesn't include inverse design.
-
-Holiday notice: Luminescent Community Cluster will come online on 01-12
 
 ## Option 1: Luminescent Community Cluster (free and public)
 Run on our latest Nvidia Blackwell GPUs for free! Just [register](https://forms.gle/fP9wAkdJinT8t66w8) (allow 1 business day for processing) and install our python frontend via `pip install luminescent`. Then see our simulation tutorials. All your jobs on the community cluster are publicly visible. If you want a private and secured environment, please upgrade to an enterprise cluster.
