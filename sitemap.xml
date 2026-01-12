@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="http://localhost:3004/sitemap_style.xsl" ?>
+<?xml-stylesheet type="text/xsl" href="http://localhost:3005/sitemap_style.xsl" ?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>http://localhost:3004</loc>
+    <loc>http://localhost:3005</loc>
   </url>
   <url>
-    <loc>http://localhost:3004/install</loc>
+    <loc>http://localhost:3005/install</loc>
   </url>
   <url>
-    <loc>http://localhost:3004/test-fss</loc>
+    <loc>http://localhost:3005/test-fss</loc>
   </url>
   <url>
-    <loc>http://localhost:3004/test-ring</loc>
+    <loc>http://localhost:3005/test-ring</loc>
   </url>
   <url>
-    <loc>http://localhost:3004/test-stub</loc>
+    <loc>http://localhost:3005/test-stub</loc>
   </url>
   <url>
-    <loc>http://localhost:3004/opt-demux</loc>
+    <loc>http://localhost:3005/opt-demux</loc>
   </url>
   <url>
-    <loc>http://localhost:3004/opt-pvgc</loc>
+    <loc>http://localhost:3005/opt-pvgc</loc>
   </url>
   <url>
-    <loc>http://localhost:3004/sim</loc>
+    <loc>http://localhost:3005/sim</loc>
   </url>
   <url>
-    <loc>http://localhost:3004/opt</loc>
+    <loc>http://localhost:3005/opt</loc>
   </url>
   <url>
-    <loc>http://localhost:3004/pdk</loc>
+    <loc>http://localhost:3005/pdk</loc>
   </url>
 </urlset>
