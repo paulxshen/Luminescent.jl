@@ -15,10 +15,10 @@ project:
           children:
             - file: opt_demux.ipynb
             - file: opt_PVGC.ipynb
-        - title: Guide
-          children:
-            - file: sim.md
-            - file: opt.md
+        # - title: Guide
+        #   children:
+        #     - file: sim.md
+        #     - file: opt.md
     - title: Lumi inverse design PDK (under development)
       children:
         - file: pdk.md
