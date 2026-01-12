@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="http://localhost:3002/sitemap_style.xsl" ?>
+<?xml-stylesheet type="text/xsl" href="http://localhost:3000/sitemap_style.xsl" ?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>http://localhost:3002</loc>
+    <loc>http://localhost:3000</loc>
   </url>
   <url>
-    <loc>http://localhost:3002/features</loc>
+    <loc>http://localhost:3000/features</loc>
   </url>
   <url>
-    <loc>http://localhost:3002/install</loc>
+    <loc>http://localhost:3000/install</loc>
   </url>
   <url>
-    <loc>http://localhost:3002/test-fss</loc>
+    <loc>http://localhost:3000/test-fss</loc>
   </url>
   <url>
-    <loc>http://localhost:3002/test-ring</loc>
+    <loc>http://localhost:3000/test-ring</loc>
   </url>
   <url>
-    <loc>http://localhost:3002/test-stub</loc>
+    <loc>http://localhost:3000/test-stub</loc>
   </url>
   <url>
-    <loc>http://localhost:3002/opt-demux</loc>
+    <loc>http://localhost:3000/opt-demux</loc>
   </url>
   <url>
-    <loc>http://localhost:3002/opt-pvgc</loc>
+    <loc>http://localhost:3000/opt-pvgc</loc>
   </url>
   <url>
-    <loc>http://localhost:3002/sim</loc>
+    <loc>http://localhost:3000/sim</loc>
   </url>
   <url>
-    <loc>http://localhost:3002/opt</loc>
+    <loc>http://localhost:3000/opt</loc>
   </url>
   <url>
-    <loc>http://localhost:3002/pdk</loc>
+    <loc>http://localhost:3000/pdk</loc>
   </url>
 </urlset>
