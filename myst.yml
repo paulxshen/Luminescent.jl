@@ -4,7 +4,6 @@ project:
     - file: index.md
     - title: Lumi FDTD 
       children:
-        - file: features.md
         - file: install.md
         - title: Simulation tutorials
           children:
