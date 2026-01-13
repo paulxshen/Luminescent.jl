@@ -12,6 +12,7 @@ Bandwidth (1dB): ~10nm
 ### Broadband Bidirectional PVGC
 Bandwidth (1dB): ~60nm
 Bandwidth (3dB): ~100nm
+
 ![alt text](image.png)
 
 ## MMI aka splitters and combiners

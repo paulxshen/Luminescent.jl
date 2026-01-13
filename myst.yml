@@ -24,3 +24,6 @@ project:
         - file: pdk.md
 site:
   template: book-theme
+  options:
+    favicon: logo.png
+    logo: logo.png
