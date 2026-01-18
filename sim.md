@@ -1,9 +1,9 @@
 # Simulation
 We recommend first going through a tutorial to get a feel on running simulations. Then come back here for detailed explanations.
 ## Overview
-Everything revolves around the simulation folder `path` you specify in `make`, which uses Python frontend to write `problem.json` and other config files. `solve` then reads them and invokes compiled Julia backend to run simulation, producing `solution.json`. `load` then loads it into a 
+Everything revolves around the simulation folder `path` you specify in `make`, which uses Python frontend to write `problem.json` and other config files. `solve` then reads them and either uploads to the GPU cloud specified by `client` or runs them locally on an installed backend. In cloud simulations, the client will retrieve results into `solution.json`.  
 ## Units
-Length and frequency units are arbitrary so long as they are consistent. Time is in periods of the characteristic wavelength. Under the hood everything gets normalized around the characteristic wavelength and its period. 
+Length and frequency units are arbitrary so long as they are consistent. Time is in periods of the characteristic wavelength. Under the hood everything gets normalized around the characteristic wavelength and its period. However, for numerical efficiency, it's preferred to keep unit values around 1. For example, use microns instead of nm for photonics.
 ## Geometry
 ### Option 1: `gdsfactory`
 `gdsfactory` is a popular Python library for programmatic electronic layout. It uses `layer_stack` to convert 2D layers to 3D geometry. `make` accepts `gdsfactory` `layer_stack` and `component` whose ports automatically become simulation ports. .gds and .gerber files can also be imported into `gdsfactory` components.

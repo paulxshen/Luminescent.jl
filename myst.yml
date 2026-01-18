@@ -8,13 +8,13 @@ project:
         - file: install.md
         - title: Simulation tutorials
           children:
-            - file: test_FSS.ipynb
             - file: test_ring.ipynb
+            - file: test_FSS.ipynb
             - file: test_stub.ipynb
         - title: Inverse design tutorials
           children:
-            - file: opt_demux.ipynb
             - file: opt_PVGC.ipynb
+            - file: opt_demux.ipynb
         # - title: Guide
         #   children:
         #     - file: sim.md
