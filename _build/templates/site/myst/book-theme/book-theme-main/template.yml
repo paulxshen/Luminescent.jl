@@ -78,7 +78,7 @@ parts:
     description: The primary sidebar footer, to replace Made with MyST
     required: false
 build:
-  install: npm install
+  install: npm ci --ignore-scripts
   start: npm run start
 files:
   - server.js
