@@ -4,12 +4,12 @@
 
 [![Video](https://img.youtube.com/vi/i6SzxWQlEZ4/0.jpg)](https://youtu.be/i6SzxWQlEZ4)
 
-Example: inverse designed perfectly vertical grating coupler
+Click for video: inverse designed perfectly vertical grating coupler
 
 ## About
 We're Stanford alum and founded Luminescent AI in 2025 to democratize photonic and RF design with physics grounded AI.
 
 [LinkedIn](https://www.linkedin.com/company/luminescent-ai): follow us for updates and opportunities!  
-[Website](https://luminescentai.com)
+[Website](https://luminescentai.com)  
 Email: paul@luminescentai.com  
 WhatsApp and WeChat: +1 (650) 776-7724
