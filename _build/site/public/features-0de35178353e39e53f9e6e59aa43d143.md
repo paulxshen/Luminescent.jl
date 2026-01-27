@@ -1,4 +1,9 @@
 # Features
+
+[![Video](https://img.youtube.com/vi/i6SzxWQlEZ4/0.jpg)](https://youtu.be/i6SzxWQlEZ4)
+
+Example: inverse designed perfectly vertical grating coupler
+
 **Fully differentiable and GPU-accelerated finite difference time domain (FDTD)** engine for full wave electromagnetic simulation and inverse design.
 
 **Powerful**

@@ -2,7 +2,9 @@
 ## Overview
 [Luminescent AI](https://luminescentai.com) harnesses physics grounded AI for designing electromagnetic structures in photonics and RF. We offer Lumi FDTD for full wave simulations and inverse design, and Lumi Photonic PDK of inverse designed photonic components.
 
+[![Video](https://img.youtube.com/vi/i6SzxWQlEZ4/0.jpg)](https://youtu.be/i6SzxWQlEZ4)
 
+Example: inverse designed perfectly vertical grating coupler
 
 ## About
 We're Stanford alum and founded Luminescent AI in 2025 to democratize photonic and RF design with physics grounded AI.
