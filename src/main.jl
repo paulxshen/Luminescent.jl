@@ -28,9 +28,13 @@ include("core/mesh.jl")
 include("sim/setup.jl")
 include("sim/solve.jl")
 
-include("opt/designs.jl")
-include("opt/adjoint.jl")
-include("opt/topopt.jl")
+try
+    include("opt/designs.jl")
+    include("opt/adjoint.jl")
+    include("opt/topopt.jl")
+catch e
+    @warn "inverse design not available in open source version"
+end
 
 include("format.jl")
 
