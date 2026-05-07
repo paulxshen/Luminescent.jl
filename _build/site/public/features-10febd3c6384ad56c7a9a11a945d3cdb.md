@@ -1,10 +1,6 @@
 # Features
 
-[![Video](https://img.youtube.com/vi/i6SzxWQlEZ4/0.jpg)](https://youtu.be/i6SzxWQlEZ4)
-
-Click for video: inverse designed perfectly vertical grating coupler
-
-**Fully differentiable and GPU compatible finite difference time domain (FDTD)** engine for full wave electromagnetic simulation and inverse design. GPU acceleration and inverse design are not in the open source version but available to our consulting clients. Contact pxshen@alumni.stanford.edu for details!
+**Fully differentiable and GPU compatible finite difference time domain (FDTD)** engine for full wave electromagnetic simulation and inverse design. GPU acceleration and inverse design are not in the open source version but available to our consulting clients.
 
 **Powerful**
 - Generative inverse design and simulation in just few lines of Python code!
@@ -19,7 +15,7 @@ Click for video: inverse designed perfectly vertical grating coupler
 - Length scale controlled geometry optimizer with fabrication constraints
 
 **Fast**
-- GPU acceleration on NVIDIA, AMD, and Apple Silicon
+- GPU acceleration on NVIDIA
 - Adaptive graded mesh reduces cell count
 - Tensor subpixel smoothing boosts accuracy
 

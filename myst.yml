@@ -2,18 +2,18 @@ version: 1
 project:
   toc:
     - file: index.md
-    - title: Lumi FDTD 
+    # - title: Lumi FDTD 
+    #   children:
+    - file: features.md
+    - file: install.md
+    - title: Simulation tutorials
       children:
-        - file: features.md
-        - file: install.md
-        - title: Simulation tutorials
-          children:
-            - file: test_ring.ipynb
-            - file: test_FSS.ipynb
-        - title: Inverse design tutorials
-          children:
-            - file: opt_PVGC.ipynb
-            - file: opt_demux.ipynb
+        - file: test_ring.ipynb
+        - file: test_FSS.ipynb
+    - title: Inverse design tutorials
+      children:
+        - file: opt_PVGC.ipynb
+        - file: opt_demux.ipynb
 site:
   template: book-theme
   options:
