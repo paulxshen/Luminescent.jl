@@ -17,15 +17,9 @@
     <loc>http://localhost:3000/test-fss</loc>
   </url>
   <url>
-    <loc>http://localhost:3000/test-stub</loc>
-  </url>
-  <url>
     <loc>http://localhost:3000/opt-pvgc</loc>
   </url>
   <url>
     <loc>http://localhost:3000/opt-demux</loc>
-  </url>
-  <url>
-    <loc>http://localhost:3000/pdk</loc>
   </url>
 </urlset>

@@ -611,7 +611,11 @@ function setup(λ, λs, bbox, nres, geometry, boundaries, sources, monitors, mod
     println("making monitors...")
     monitor_instances = MonitorInstance.(monitors, λ, (λs,), (grid,), (ϵ,); z, mode_solutions,)
     println("making designs...")
-    design_instances = DesignInstance.(designs, λ, (grid,), [centgeom];)
+    if isempty(designs)
+        design_instances = []
+    else
+        design_instances = DesignInstance.(designs, λ, (grid,), [centgeom];)
+    end
     dimensions = last.(rulers) - first.(rulers)
     source_duration = maximum(duration.(source_instances))
 

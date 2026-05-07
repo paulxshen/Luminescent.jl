@@ -10,18 +10,10 @@ project:
           children:
             - file: test_ring.ipynb
             - file: test_FSS.ipynb
-            - file: test_stub.ipynb
         - title: Inverse design tutorials
           children:
             - file: opt_PVGC.ipynb
             - file: opt_demux.ipynb
-        # - title: Guide
-        #   children:
-        #     - file: sim.md
-        #     - file: opt.md
-    - title: Lumi inverse design PDK (under development)
-      children:
-        - file: pdk.md
 site:
   template: book-theme
   options:
