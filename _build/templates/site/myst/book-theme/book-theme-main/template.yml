@@ -56,6 +56,9 @@ options:
     id: logo_url
     description: If specified, link logo to this URL. Otherwise, point to root page.
   - type: string
+    id: logo_alt
+    description: Alt text to attach to the logo
+  - type: string
     id: analytics_google
     description: Google analytics key
   - type: string
@@ -67,6 +70,11 @@ options:
   - type: boolean
     id: folders
     description: Respect nested folder structure in URL paths
+  - type: string
+    id: internal_domains
+    description: >-
+      A domain to treat as internal links (no external icon, opens in same tab).
+      Supports wildcard subdomains with *. Example: "jupyter.org" or "*.jupyter.org"
   - type: file
     id: style
     description: Local path to a CSS file
@@ -76,6 +84,9 @@ parts:
     required: false
   - id: primary_sidebar_footer
     description: The primary sidebar footer, to replace Made with MyST
+    required: false
+  - id: navbar_end
+    description: Custom content displayed at the end of the top navbar
     required: false
 build:
   install: npm ci --ignore-scripts

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.9](https://github.com/ljharb/call-bind/compare/v1.0.8...v1.0.9) - 2026-04-09
+
+### Commits
+
+- [Fix] correct `.length` computation when partial args exceed function arity [`95c406d`](https://github.com/ljharb/call-bind/commit/95c406dff9e763ff840585dc6c375b0129adb248)
+- [Dev Deps] update `@ljharb/eslint-config`, `es-value-fixtures`, `eslint`, `for-each`, `has-strict-mode`, `npmignore`, `object-inspect` [`06a4e21`](https://github.com/ljharb/call-bind/commit/06a4e2107ebe5411c781c8a4aab7ef34f83bc8f5)
+- [Deps] update `call-bind-apply-helpers`, `es-define-property`, `get-intrinsic` [`3fea81e`](https://github.com/ljharb/call-bind/commit/3fea81e9a57a2a4bc283c20883ae72fb310a3e0e)
+- [readme] replace runkit CI badge with shields.io check-runs badge [`23437d4`](https://github.com/ljharb/call-bind/commit/23437d42c9ca880feba441a23a141313d558fc30)
+
 ## [v1.0.8](https://github.com/ljharb/call-bind/compare/v1.0.7...v1.0.8) - 2024-12-05
 
 ### Commits
