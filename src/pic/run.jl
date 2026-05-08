@@ -1,4 +1,4 @@
-function picrun(path; kwargs...)
+function picrun(path; array=Array, kwargs...)
     # $(abspath(path)) 
     println("""
     $BREAK
@@ -14,6 +14,7 @@ function picrun(path; kwargs...)
     for (k, v) = kwargs
         prob[k] = v
     end
+
 
     @unpack name, N, approx_2D_mode, dtype, boundaries, wavelength, wavelengths, monitors, sources, relative_courant, relative_pml_depths, z, magic, layer_stack, material_library, tmax, energy_decay_threshold, path_length_multiple, bbox, nres, dx, dy, dz, modes, saveat, gradient_checkpoint, ordering, secret, subpixel_smoothing, subpixel_smoothing_sampling_distance, designs, load_saved_designs, targets, time_extrapolation, timestamp, study_type = prob
     pro = hash(secret) == 0x31634f070f133a63
@@ -124,7 +125,7 @@ function picrun(path; kwargs...)
         F, tmax, energy_decay_threshold, path_length_multiple, path,
         subpixel_smoothing, name,
         bg, time_extrapolation, timestamp,
-        designs, targets, gradckptat,
+        designs, targets, gradckptat, array
     )
     @unpack design_instances = prob
     models = getfield.(design_instances, :model)
