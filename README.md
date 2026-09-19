@@ -1,1 +1,0 @@
-Differentiable GPU-accelerated FDTD for full wave electromagnetic simulation and inverse design in photonics and RF. Please visit our project [website](https://paulxshen.github.io/Luminescent.jl) :) 

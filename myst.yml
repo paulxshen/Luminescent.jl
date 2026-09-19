@@ -1,19 +1,25 @@
+# See docs at: https://mystmd.org/guide/frontmatter
+  # title:
+  # description:
+  # keywords: []
+  # authors: []
+
 version: 1
 project:
+  id: 8bcd1e0b-60a3-45a7-b533-dda6ec9da888
+  github: https://github.com/paulxshen/Luminescent.jl
   toc:
     - file: index.md
     # - title: Lumi FDTD 
     #   children:
-    - file: features.md
     - file: install.md
     - title: Simulation tutorials
       children:
-        - file: test_ring.ipynb
-        - file: test_FSS.ipynb
+        - file: bend.ipynb
+        - file: ring.ipynb
     - title: Inverse design tutorials
       children:
         - file: opt_PVGC.ipynb
-        - file: opt_demux.ipynb
 site:
   template: book-theme
   options:
