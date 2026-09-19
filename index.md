@@ -2,7 +2,8 @@
 ## Overview
 Lumi FDTD (finite difference time domain) powers full wave electromagnetic simulation and inverse design in photonics and RF. Maintained by Luminescent AI, founded by Stanford alum designing next generation photonic chips.
 
-![](simulation.gif)
+![](simulation.gif)  
+
 Click for demo: inverse designed perfectly vertical grating coupler
 
 Star on [GitHub](https://github.com/paulxshen/Luminescent.jl)  
