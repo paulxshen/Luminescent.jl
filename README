@@ -1,1 +1,3 @@
 Fully differentiable FDTD for simulation and inverse design of photonics and RF. Docs: https://paulxshen.github.io/Luminescent.jl
+
+![](simulation.gif)  

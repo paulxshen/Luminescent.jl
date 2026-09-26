@@ -5,7 +5,7 @@ Lumi FDTD (finite difference time domain) powers full wave electromagnetic simul
 ![](simulation.gif)  
 
 
-Star on [GitHub](https://github.com/paulxshen/Luminescent.jl)  
+Raise Issues at [GitHub](https://github.com/paulxshen/Luminescent.jl)  
 Follow on [LinkedIn](https://www.linkedin.com/company/luminescent-ai)  
 Email: pxshen@alumni.stanford.edu  
 WhatsApp and WeChat: +1 (650) 776-7724
