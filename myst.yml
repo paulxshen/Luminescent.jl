@@ -18,9 +18,10 @@ project:
         - file: bend.ipynb
         - file: ring.ipynb
         - file: TFLN_coupler.ipynb
+        - file: GC.ipynb
     - title: Inverse design tutorials
       children:
-        - file: GC.ipynb
+        - file: GC_topopt.ipynb
 site:
   template: book-theme
   options:
