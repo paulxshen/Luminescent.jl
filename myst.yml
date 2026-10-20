@@ -12,16 +12,21 @@ project:
     - file: index.md
     # - title: Lumi FDTD 
     #   children:
-    - file: install.md
-    - title: Simulation tutorials
+    - file: usage.md
+    - title: Photonics tutorials
       children:
         - file: bend.ipynb
         - file: ring.ipynb
         - file: TFLN_coupler.ipynb
         - file: GC.ipynb
+    - title: RF tutorials
+      children:
+        - file: FSS.ipynb
+        - file: stub_filter.ipynb
     - title: Inverse design tutorials
       children:
         - file: GC_topopt.ipynb
+        - file: GC_invd.ipynb
 site:
   template: book-theme
   options:

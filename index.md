@@ -1,6 +1,6 @@
 # Home
 ## Overview
-Lumi FDTD (finite difference time domain) powers full wave electromagnetic simulation and inverse design in photonics and RF. Maintained by Luminescent AI founded by Stanford alum designing next generation photonic chips. Design consulting also available. Below example is AI designed perfectly vertical grating coupler:
+Lumi FDTD (finite difference time domain) powers full wave electromagnetic simulation and inverse design in photonics and RF. Maintained by Luminescent AI, founded by a Stanford alum designing next generation photonic chips. Design consulting also available. Below is an AI designed, perfectly vertical grating coupler:
 
 ![](simulation.gif)  
 
@@ -20,7 +20,7 @@ WhatsApp and WeChat: +1 (650) 776-7724
 **Comprehensive**
 - Anisotropic, nonlinear, dispersive, metallic materials
 - PML, periodic, PEC, PMC boundaries
-- Adaptive mesh for thin or sharp geoemtries 
+- Adaptive mesh for thin or sharp geometries 
 - Modal or field monitors in time or frequency domain
 - Embedded FDFD and FEM mode solver 
 <!-- - Near and far field radiation patterns -->
@@ -37,6 +37,4 @@ WhatsApp and WeChat: +1 (650) 776-7724
 
 **Coming soon**
 - Bloch boundary
-- RF features
--- Radiation patterns
--- farfield projections
+- RF radiation patterns and far field projections

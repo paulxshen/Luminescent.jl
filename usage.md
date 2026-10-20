@@ -1,21 +1,34 @@
-# Installation
-Unavailable until 2026-10-10 for maintenance
-## Linux x64
-The free version has most simulation features but excludes inverse design.
+# Usage
+## Lumi Hub (cloud)
+Run FDTD notebooks for free on [Lumi Hub Playground](https://hub.luminescentai.com/)! Similar to Google Colab but preloaded with Lumi FDTD, Copilot AI and persistent storage. Has runtime and size restrictions and excludes inverse design. Upgrade to Lumi Hub Enterprise for unrestricted usage: info@luminescentai.com
+## Claude AI
+Experimental feature letting Claude use Lumi FDTD! Say for example "design SOI220 ring resonator critically coupled Q>1000". Claude can optimize parameters and summarize results in a notebook. What can't Claude do?! First, [obtain token from Lumi Hub](https://hub.luminescentai.com/hub/token). Then, in Claude Code or Desktop (requires Claude Pro) connect our tool (replace YOUR_TOKEN)
+`claude mcp add --transport http lumi https://api.luminescentai.com/mcp --header "Authorization: token YOUR_TOKEN"`
+
+## Local machine
+Recommended only for expert users. Backend still uses Lumi Hub server unless you bought binaries.
+### Prereqs
+- Python (Anaconda distro recommended for Windows users)
+- VS Code or another IDE
+- On a Linux VM you may need
 ```
-# frontend
-pip install luminescent
-
-# backend
-wget https://storage.googleapis.com/lumi-fdtd/lumi.tar.gz -O /tmp/lumi.tar.gz 
-sudo tar -x -f /tmp/lumi.tar.gz -C /usr/local --strip-components 1
-
-# dependencies
 sudo apt-get update
 sudo apt install -y harminv  libxi6 libxxf86vm1 libxrender1 libgl1 libglx-mesa0 libsm6 libice6 libxext6 libglib2.0-0 libglu1-mesa libxcursor1 libxft2 libxinerama1
 ```
-## Windows
-Install Windows Subsystem for Linux (WSL), WSL Ubuntu, VS Code and VS Code WSL extension. Connect to WSL in VS Code, open terminal and use Linux backend instructions above.
+### Frontend
+`pip install luminescent`
+### Backend options
+Lumi Hub server: `lumi.solve` sends jobs to Lumi Hub when `LUMI_API` is set. Use the token from [Lumi Hub](https://hub.luminescentai.com/hub/token). Lumi Hub's size and runtime limits apply.
+```
+export LUMI_API=https://api.luminescentai.com
+export LUMI_TOKEN=YOUR_TOKEN
+```
+On Windows (PowerShell), then restart your terminal or IDE:
+```
+setx LUMI_API https://api.luminescentai.com
+setx LUMI_TOKEN YOUR_TOKEN
+```
+Local binaries: executables can be compiled for enterprise customers above certain spend threshold. Buy once run forever no license server. Available for Linux and Windows.
 
 <!-- sudo python -e 'import luminescent' # installs backend for first time -->
 <!-- Install Windwos Subsystem for Linux (WSL) Ubuntu. In VS Code cd to Ubuntu drive and follow previous Linux backend instructions.  -->
