@@ -1,9 +1,28 @@
 # Usage
 ## Lumi Hub (cloud)
 Run FDTD notebooks for free on [Lumi Hub Playground](https://hub.luminescentai.com/)! Similar to Google Colab but preloaded with Lumi FDTD, Copilot AI and persistent storage. Has runtime and size restrictions and excludes inverse design. Upgrade to Lumi Hub Enterprise for unrestricted usage: info@luminescentai.com
-## Claude AI
-Experimental feature letting Claude use Lumi FDTD! Say for example "design SOI220 ring resonator critically coupled Q>1000". Claude can optimize parameters and summarize results in a notebook. What can't Claude do?! First, [obtain token from Lumi Hub](https://hub.luminescentai.com/hub/token). Then, in Claude Code or Desktop (requires Claude Pro) connect our tool (replace YOUR_TOKEN)
-`claude mcp add --transport http lumi https://api.luminescentai.com/mcp --header "Authorization: token YOUR_TOKEN"`
+## Lumi Agent
+### Github Copilot
+Let Copilot edit notebook code on Lumi Hub just like in VS Code!
+### Claude
+Experimental feature letting Claude use Lumi FDTD! Say for example "design 2 bus SOI220 ring resonator critically coupled Q>1000". Claude can optimize parameters and summarize results in a notebook. What can't Claude do?! Not yet production ready but something fun to try.
+
+claude.ai: Settings → Connectors → Add custom connector  
+URL: https://api.luminescentai.com/mcp  
+It should send you to GitHub (through the hub), then show the hub's "authorize lumi-mcp" page, then return to Claude with the 7 tools.
+
+### ChatGPT
+Similar to Claude.
+
+ChatGPT: Settings → Apps & Connectors → add a custom MCP server  
+URL: https://api.luminescentai.com/mcp  
+authentication: OAuth
+
+### DeepSeek (untested)
+DeepSeek Harness: add a remote (HTTP) MCP server  
+URL: https://api.luminescentai.com/mcp  
+header: `Authorization: Bearer <token>`, with a token from https://hub.luminescentai.com/hub/token  
+DeepSeek's chat app doesn't support MCP.
 
 ## Local machine
 Recommended only for expert users. Backend still uses Lumi Hub server unless you bought binaries.

@@ -25,7 +25,6 @@ project:
         - file: stub_filter.ipynb
     - title: Inverse design tutorials
       children:
-        - file: GC_topopt.ipynb
         - file: GC_invd.ipynb
 site:
   template: book-theme
