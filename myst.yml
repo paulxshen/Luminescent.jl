@@ -13,6 +13,8 @@ project:
     # - title: Lumi FDTD 
     #   children:
     - file: usage.md
+    - file: guide.md
+    - file: api.md
     - title: Photonics tutorials
       children:
         - file: bend.ipynb
