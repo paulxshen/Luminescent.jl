@@ -1,4 +1,4 @@
-# Guide
+# Simulation Guide
 ## Workflow
 1. Draw the device as a gdsfactory component (or import a .gds) with ports, plus a `LayerStack` assigning thickness and material per layer.
 2. Define `materials`, `frames`, `sources` and `monitors`.
@@ -34,7 +34,7 @@ See [bend](bend.ipynb) for a minimal example.
 - Leave `dtype` unset; it's chosen automatically.
 
 ### Frames
-- A frame is a named shape in local port coordinates, reusable by any number of sources and monitors at different positions via `frame="name"`. Pass all frames to `setup(frames=...)`.
+- Coordinate frame with sampling regions or points, reusable by any number of sources and monitors at different positions via `frame="name"`. Pass all frames to `setup(frames=...)`.
 - Local coordinates: origin at the source or monitor `origin`, axes from its basis. `mirrored=True` flips local x, eg for a port on the opposite side of a symmetric device.
 - Types and results:
   - `plane_frame`: port cross section with solved modes. Results `modes`, `flux`, `power`. Sources need one.
@@ -55,6 +55,17 @@ S21 = sol["monitors"]["o2"]["modes"][0]["+"] / sol["monitors"]["o1"]["modes"][0]
 S11 = sol["monitors"]["o1"]["modes"][0]["+"] / sol["monitors"]["o1"]["modes"][0]["-"]
 ```
 - Inverse design targets use `"port@mode±"`, eg `lumi.target("o1@0-", "o2@0+", 1)`.
+
+### Inverse design
+Optimizes the material layout in design regions to meet S-parameter targets. Not in the free tier. See [GC_invd](GC_invd.ipynb).
+1. Draw the design region on its own layer in the component.
+2. Give that layer the material `lumi.placeholder_material(n)` in the `LayerStack`, with the lowest `mesh_order` so it overrides other layers, and the vertical extent to be patterned.
+3. `lumi.design(name, layer, lmin, fill_material, void_material, ...)`: region patterned with `fill_material` and `void_material` at minimum feature size `lmin`. `repdims=[3]` extrudes a planar pattern along z; `symdims` enforces symmetry.
+4. `lumi.target(src, dst, target, wl=...)`: one per objective, eg `"o2@0-"` to `"o1@0+"` with `target=1` for full transmission. Loss is the weighted sum of target errors; use one target per wavelength for broadband.
+5. `lumi.optimizer(iters, stoploss, ...)`: stops after `iters` or below `stoploss`. `contrast` below 1 allows topology change and rises to 1 (binary) as loss approaches `lowloss`.
+6. Pass `designs`, `targets`, `optimizer` to `setup`, then `solve` runs the optimization.
+
+Outputs in the run folder: `history.json` (loss per iteration) and `designs/<name>/mask.npy` (optimized boolean fill mask).
 
 ### Run folder & files
 One folder per simulation, eg `runs/bend`:
