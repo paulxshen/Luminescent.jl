@@ -62,7 +62,7 @@ Optimizes the material layout in design regions to meet S-parameter targets. Not
 2. Give that layer the material `lumi.placeholder_material(n)` in the `LayerStack`, with the lowest `mesh_order` so it overrides other layers, and the vertical extent to be patterned.
 3. `lumi.design(name, layer, lmin, fill_material, void_material, ...)`: region patterned with `fill_material` and `void_material` at minimum feature size `lmin`. `repdims=[3]` extrudes a planar pattern along z; `symdims` enforces symmetry.
 4. `lumi.target(src, dst, target, wl=...)`: one per objective, eg `"o2@0-"` to `"o1@0+"` with `target=1` for full transmission. Loss is the weighted sum of target errors; use one target per wavelength for broadband.
-5. `lumi.optimizer(iters, stoploss, ...)`: stops after `iters` or below `stoploss`. `contrast` below 1 allows topology change and rises to 1 (binary) as loss approaches `lowloss`.
+5. `lumi.optimizer(iters, stoploss, ...)`: stops after `iters` or below `stoploss`. `contrast` below 1 allows topology change and rises quadratically to 1 (binary) as loss approaches `lowloss`, or by iteration 25.
 6. Pass `designs`, `targets`, `optimizer` to `setup`, then `solve` runs the optimization.
 
 Outputs in the run folder: `history.json` (loss per iteration) and `designs/<name>/mask.npy` (optimized boolean fill mask).

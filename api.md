@@ -1,4 +1,4 @@
-# Python API
+# API
 ## Workflow
 ### mesh
 ```python
@@ -249,7 +249,7 @@ Args:
 - startloss: initial loss estimate
 - lowloss: loss at which contrast reaches 1. defaults to 0.2 * stoploss + 0.8 * startloss
 - momentum: optimizer momentum
-- contrast: initial binary contrast (0 to 1). slightly <1 enables topology change (new holes or islands). =1 freezes topology eg shape optimization. contrast automatically increases to 1 as loss decreases to `lowloss`
+- contrast: initial binary contrast (0 to 1). slightly <1 enables topology change (new holes or islands). =1 freezes topology eg shape optimization. contrast automatically increases quadratically to 1 as loss decreases to `lowloss` or by iteration 25, whichever first
 - init_dA: fraction of design area changed by the first step. sets the initial step size
 - ckptat: save optimization checkpoint every _ iterations
 - gradckptat: gradient checkpointing

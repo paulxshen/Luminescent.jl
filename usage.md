@@ -1,4 +1,4 @@
-# Usage
+# Install
 ## Lumi Hub (cloud)
 Run FDTD notebooks for free on [Lumi Hub Playground](https://hub.luminescentai.com/)! Similar to Google Colab but preloaded with Lumi FDTD, Copilot AI and persistent storage. Has runtime and size restrictions and excludes inverse design. Upgrade to Lumi Hub Enterprise for unrestricted usage: info@luminescentai.com
 ## Lumi Agent
@@ -25,7 +25,7 @@ header: `Authorization: Bearer <token>`, with a token from https://hub.luminesce
 DeepSeek's chat app doesn't support MCP.
 
 ## Local machine
-Recommended only for expert users. Backend still uses Lumi Hub server unless you bought binaries.
+Lumi Hub is recommended but you're welcome to install locally. Frontend is open source Python. Backend uses either Lumi Hub server or (upon purchase) local executable.
 ### Prereqs
 - Python (Anaconda distro recommended for Windows users)
 - VS Code or another IDE
