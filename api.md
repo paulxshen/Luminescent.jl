@@ -1,4 +1,4 @@
-# API
+# Python API
 ## Workflow
 ### mesh
 ```python
@@ -22,15 +22,17 @@ Args:
 - background: material name filling empty space
 - bbox: simulation box [[xmin, ymin, zmin], [xmax, ymax, zmax]]
 - boundaries: per axis "PML", "PEC", "PMC", "periodic" or pair (min side, max side) eg ("PEC", "PML")
+- k_bloch: Bloch wavevector [kx, ky, kz] in rad per length unit on periodic axes, eg from `k_bloch`. Fields pick up phase e^(i k L) across each period. Nonzero makes fields complex (2x memory)
 - nres: grid points per wavelength in material. 6 is a good starting point for photonics; increase to check convergence
-- tmax: max simulation time [periods]
-- stop_decay: stop early once field energy decays to this fraction
+- tmax: max simulation time [periods]. Optional with `stop_decay`, except with time-domain monitors or inverse design
+- stop_decay: stop early once field energy decays to this fraction. One of `tmax`, `stop_decay` is required
 - PML_decay: PML field attenuation, scalar or per axis
-- relative_courant: time step relative to max stable
+- courant: time step relative to max stable
 - subpixel_smoothing: subpixel averaging of material boundaries
 - views: from `view`, for movie
 - shot_every: save movie frame every _ periods
-- device: "cpu" or "gpu"
+- full_fields: save full 3D field snapshots instead of only view slices, so `movie(path, views=...)` can re-render new slices
+- device: "gpu" (default) or "cpu"
 - dtype: leave unset; chosen automatically. Pass "f32" or "f16" only to override
 - approx_2D_mode: 2D approximation
 - designs, targets, optimizer: inverse design, from `design`, `target`, `optimizer`
@@ -51,10 +53,12 @@ Load solution dict from `path`. Monitor results in sol["monitors"][name], eg ["m
 
 ### movie
 ```python
-lumi.movie(path, views=None, fps=None)
+lumi.movie(path, views=None, fps=None, src='frames')
 ```
 Show simulation movie in `path`, rendered by `solve`.
 `views` (overrides views from setup) or `fps` re-render it from field snapshots, which cloud solves don't keep.
+Also re-renders if snapshots are newer than the movie.
+`src`: "frames" for time snapshots, "history" for peak snapshot per optimization iteration.
 
 ### view
 ```python
@@ -106,16 +110,17 @@ placeholder material contributes to meshing but not to physical properties, eg u
 ## Sources & monitors
 ### source
 ```python
-lumi.source(name, origin, basis, frame, mirrored=False, wl=None, f=None, bandwidth=None, duration=None, modenums=[0])
+lumi.source(name, origin, basis=None, frame=None, dim=None, mirrored=False, wl=None, f=None, bandwidth=None, duration=None, modenums=[0])
 ```
 Modulated Gaussian pulse source with gradual spectral roll off  at bandwidth limits. Becomes continuous wave if `bandwidth=0`.
 
 Args:
 
 - name: should match a port name eg "o1"
-- origin: position [x, y, z]
+- origin: position [x, y, z], or coordinate along `dim` for `face` frames
 - basis: rows local x, local y, outward normal. source injects bidirectionally (along both ±normal)
-- frame: name of `plane_frame` holding mode profile
+- frame: name of `plane_frame` or `face` holding mode profile
+- dim: outward normal along axis ±1, ±2, ±3 (x, y, z) instead of `basis`
 - mirrored: reflect frame and modes across local x=0, eg for port on opposite side of a symmetric frame
 - wl or f: wavelength or frequency, specify either (not both). f requires c0 in setup
 - bandwidth: in same units as above
@@ -123,16 +128,17 @@ Args:
 
 ### monitor
 ```python
-lumi.monitor(name, origin, basis, frame=None, mirrored=False, t0=0, x=None, y=None, z=None, direction='+', layer=None)
+lumi.monitor(name, origin, basis=None, frame=None, dim=None, mirrored=False, t0=0, x=None, y=None, z=None, direction='+', layer=None)
 ```
 Monitor recording results of `frame` at `origin` in `basis`.
 
 Args:
 
 - name: should match a port name eg "o1". Unique among monitors
-- origin: position [x, y, z]
+- origin: position [x, y, z], or coordinate along `dim` for `face` frames
 - basis: rows local x, local y, outward normal. "+" results propagate along normal, "-" against
 - frame: frame name
+- dim: outward normal along axis ±1, ±2, ±3 (x, y, z) instead of `basis`
 - mirrored: reflect frame and modes across local x=0
 - t0: start recording time-domain signals at t0 [periods]
 
@@ -150,19 +156,19 @@ lumi.gf_monitor(port, c, layer_stack, offset=0, name=None, **kwargs)
 
 ### gaussian_mode
 ```python
-lumi.gaussian_mode(r, R, Z, dx, wl, theta=0, half=None)
+lumi.gaussian_mode(D, n, dx, wl, theta=0, half=None, Dlim=None)
 ```
 Tilted Gaussian beam mode for `plane_frame(modes=...)`, eg fiber.
 
 Args:
 
-- r: beam radius (1/e field at r*sqrt(2))
-- R: frame half width
-- Z: wave impedance in vacuum units, eg 1/n
+- D: mode field diameter (1/e^2 intensity)
+- n: refractive index of medium
 - dx: sampling
-- wl: wavelength
-- theta: tilt angle [rad] in local xz plane
+- wl: vacuum wavelength
+- theta: tilt angle [rad] in medium in local xz plane
 - half: "y+" for half frame y>=0 (symmetry plane at y=0)
+- Dlim: frame full width, default 1.5*D
 
 ## Frames
 ### plane_frame
@@ -209,7 +215,7 @@ Sphere (circle in 2D) of radius `r` about monitor origin, in monitor basis. thet
 ## Inverse design
 ### design
 ```python
-lumi.design(name, layer, lmin, fill_material, void_material, component, layer_stack, materials, symdims=[], repdims=[3], anchordims=[], dependent=False, topopt=True)
+lumi.design(name, layer, lmin, fill_material, void_material, component, layer_stack, materials, symdims=[], repdims=[3], anchordims=[], dependent=False, topopt=True, contour_layer=None)
 ```
 Design region to be optimized
 
@@ -225,6 +231,7 @@ Args:
 - repdims: eg [3] for planar design region extruded along z
 - anchordims: signed dims eg [-1, 2] whose design edges (x-, y+) are closed instead of open
 - topopt: allow topology change
+- contour_layer: optional layer whose polygons mask the design region; only pixels inside are optimized, rest keep initial geometry
 
 ### target
 ```python
@@ -240,7 +247,7 @@ lumi.target(src, dst, target, target_func='abs2', error_func='abs', weight=1, f=
 
 ### optimizer
 ```python
-lumi.optimizer(iters, stoploss, startloss=1, lowloss=None, momentum=0.7, contrast=0.8, init_dA=0.03, ckptat=None, gradckptat=None)
+lumi.optimizer(iters, stoploss, startloss=1, lowloss=None, highiter=None, momentum=0.7, contrast=0.7, init_dA=0.03, ckptat=None, gradckptat=None)
 ```
 Args:
 
@@ -248,8 +255,9 @@ Args:
 - stoploss: stop optimization if loss goes below this value
 - startloss: initial loss estimate
 - lowloss: loss at which contrast reaches 1. defaults to 0.2 * stoploss + 0.8 * startloss
+- highiter: iteration at which contrast reaches 1. None ramps by loss only
 - momentum: optimizer momentum
-- contrast: initial binary contrast (0 to 1). slightly <1 enables topology change (new holes or islands). =1 freezes topology eg shape optimization. contrast automatically increases quadratically to 1 as loss decreases to `lowloss` or by iteration 25, whichever first
+- contrast: initial binary contrast (0 to 1). slightly <1 enables topology change (new holes or islands). =1 freezes topology eg shape optimization. contrast automatically increases quadratically to 1 as loss decreases to `lowloss` or by iteration `highiter`, whichever first
 - init_dA: fraction of design area changed by the first step. sets the initial step size
 - ckptat: save optimization checkpoint every _ iterations
 - gradckptat: gradient checkpointing

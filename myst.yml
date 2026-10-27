@@ -19,12 +19,16 @@ project:
     - title: Photonics tutorials
       children:
         - file: bend.ipynb
-        - file: ring.ipynb
+        - file: SOI_coupler.ipynb
         - file: TFLN_coupler.ipynb
+        - file: ring.ipynb
         - file: GC.ipynb
-    - title: RF tutorials
+    - title: Metasurface tutorials
       children:
         - file: FSS.ipynb
+        - file: metalens.ipynb
+    - title: RF tutorials
+      children:
         - file: stub_filter.ipynb
     - title: Inverse design tutorials
       children:

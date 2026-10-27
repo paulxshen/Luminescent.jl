@@ -1,4 +1,4 @@
-# FDTD Install
+# FDTD Colab Setup
 ## Option 1: Lumi Colab 
 Run FDTD notebooks for free on [Lumi Colab](https://hub.luminescentai.com/)! Similar to Google Colab but preloaded with Lumi FDTD, Copilot AI and persistent storage. Has runtime and size restrictions and excludes inverse design. Upgrade to Lumi Colab Enterprise tier for unrestricted usage: info@luminescentai.com
 
