@@ -1,31 +1,10 @@
-# Install
-## Lumi Hub (cloud)
-Run FDTD notebooks for free on [Lumi Hub Playground](https://hub.luminescentai.com/)! Similar to Google Colab but preloaded with Lumi FDTD, Copilot AI and persistent storage. Has runtime and size restrictions and excludes inverse design. Upgrade to Lumi Hub Enterprise for unrestricted usage: info@luminescentai.com
-## Lumi Agent
-### Github Copilot
-Let Copilot edit notebook code on Lumi Hub just like in VS Code!
-### Claude
-Experimental feature letting Claude use Lumi FDTD! Say for example "design 2 bus SOI220 ring resonator critically coupled Q>1000". Claude can optimize parameters and summarize results in a notebook. What can't Claude do?! Not yet production ready but something fun to try.
+# FDTD Install
+## Option 1: Lumi Colab 
+Run FDTD notebooks for free on [Lumi Colab](https://hub.luminescentai.com/)! Similar to Google Colab but preloaded with Lumi FDTD, Copilot AI and persistent storage. Has runtime and size restrictions and excludes inverse design. Upgrade to Lumi Colab Enterprise tier for unrestricted usage: info@luminescentai.com
 
-claude.ai: Settings → Connectors → Add custom connector  
-URL: https://api.luminescentai.com/mcp  
-It should send you to GitHub (through the hub), then show the hub's "authorize lumi-mcp" page, then return to Claude with the 7 tools.
 
-### ChatGPT
-Similar to Claude.
-
-ChatGPT: Settings → Apps & Connectors → add a custom MCP server  
-URL: https://api.luminescentai.com/mcp  
-authentication: OAuth
-
-### DeepSeek (untested)
-DeepSeek Harness: add a remote (HTTP) MCP server  
-URL: https://api.luminescentai.com/mcp  
-header: `Authorization: Bearer <token>`, with a token from https://hub.luminescentai.com/hub/token  
-DeepSeek's chat app doesn't support MCP.
-
-## Local machine
-Lumi Hub is recommended but you're welcome to install locally. Frontend is open source Python. Backend uses either Lumi Hub server or (upon purchase) local executable.
+## Option 2: Local Python frontend + Lumi Colab backend
+Run Python notebooks locally. `lumi.solve` uploads problem files to Lumi Colab server and downloads solution files. Same tiers apply
 ### Prereqs
 - Python (Anaconda distro recommended for Windows users)
 - VS Code or another IDE
@@ -36,8 +15,9 @@ sudo apt install -y harminv  libxi6 libxxf86vm1 libxrender1 libgl1 libglx-mesa0 
 ```
 ### Frontend
 `pip install luminescent`
-### Backend options
-Lumi Hub server: `lumi.solve` sends jobs to Lumi Hub when `LUMI_API` is set. Use the token from [Lumi Hub](https://hub.luminescentai.com/hub/token). Lumi Hub's size and runtime limits apply.
+### Backend
+Set environmental variables with YOUR_TOKEN from [Lumi Colab](https://hub.luminescentai.com/hub/token). A copy of each run is kept in your Lumi Colab home at `~/local/runs/<run folder name>`.
+On Linux:  
 ```
 export LUMI_API=https://api.luminescentai.com
 export LUMI_TOKEN=YOUR_TOKEN
@@ -47,7 +27,10 @@ On Windows (PowerShell), then restart your terminal or IDE:
 setx LUMI_API https://api.luminescentai.com
 setx LUMI_TOKEN YOUR_TOKEN
 ```
-Local binaries: executables can be compiled for enterprise customers above certain spend threshold. Buy once run forever no license server. Available for Linux and Windows.
+## Option 3: fully local 
+Executables can be compiled for enterprise customers above major spend threshold. 
+<!-- Only relevant for customers who  -->
+<!-- Buy once run forever no license server.  -->
 
 <!-- sudo python -e 'import luminescent' # installs backend for first time -->
 <!-- Install Windwos Subsystem for Linux (WSL) Ubuntu. In VS Code cd to Ubuntu drive and follow previous Linux backend instructions.  -->

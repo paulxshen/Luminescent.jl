@@ -4,7 +4,7 @@
 2. Define `materials`, `frames`, `sources` and `monitors`.
 3. `lumi.mesh(path, c, layer_stack, materials, zmin, zmax)` writes 3D meshes into simulation folder `path`.
 4. `lumi.setup(path, ...)` writes the simulation problem and solves port modes.
-5. `lumi.solve(path)` runs FDTD. Runs on Lumi Hub server if `LUMI_API` is set.
+5. `lumi.solve(path)` runs FDTD. Runs on Lumi Colab server if `LUMI_API` is set.
 6. `lumi.movie(path)` shows the field movie; `sol = lumi.load(path)` loads results.
 
 See [bend](bend.ipynb) for a minimal example.

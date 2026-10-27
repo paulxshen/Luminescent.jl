@@ -1,6 +1,6 @@
 # Home
 ## Overview
-Lumi FDTD (finite difference time domain) powers full wave electromagnetic simulation and inverse design in photonics and RF. Maintained by Luminescent AI, founded by a Stanford alum designing next generation photonic chips. Design consulting also available. Below is an AI designed, perfectly vertical grating coupler:
+Lumi FDTD (finite difference time domain) powers full wave electromagnetic simulation and inverse design in photonics and RF. Free GPU cloud notebooks available on Lumi Colab. Maintained by Luminescent AI, founded by a Stanford alum designing next generation photonic chips. Design consulting also available. Below is an AI designed, perfectly vertical grating coupler:
 
 ![](simulation.gif)  
 
@@ -11,6 +11,11 @@ Email: pxshen@alumni.stanford.edu
 WhatsApp and WeChat: +1 (650) 776-7724
 
 # Features
+
+**Performant**
+- GPU accelerated up to 5000 MCells/s
+- Up to billion(s) cell domains
+- Adaptive mesh and tensor subpixel smoothing for accuracy and efficiency
 
 **AI design**  
 - Fully differentiable for inverse design
@@ -29,11 +34,6 @@ WhatsApp and WeChat: +1 (650) 776-7724
 - Inverse design and simulation in Python frontend 
 - .gds KLayout and `gdsfactory` integration
 - .stl / .step 3D geometry import
-
-**Performant**
-- Adaptive mesh for cell count efficiency
-- Tensor subpixel smoothing for accuracy
-- Optional GPU acceleration on NVIDIA, AMD or Apple
 
 **Coming soon**
 - Bloch boundary

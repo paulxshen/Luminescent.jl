@@ -13,6 +13,7 @@ project:
     # - title: Lumi FDTD 
     #   children:
     - file: usage.md
+    - file: agent.md
     - file: guide.md
     - file: api.md
     - title: Photonics tutorials

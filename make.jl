@@ -5,10 +5,10 @@ for t = tuts
     x = basename(t)
     s = read("../moon/tutorials/$t/$x.ipynb", String)
     s = replace(s, r"/home/[^/\"]+/moon/tutorials/[^/\"]+/[^/\"]+/" => "", r"/home/[^/\"]+/" => "~/")
-    # Lumi Hub excludes inverse design
+    # Lumi Colab excludes inverse design
     if !startswith(t, "inverse_design")
         # after the title cell so MyST still takes its heading as the page title
-        link = """{"cell_type": "markdown", "metadata": {}, "source": ["[Run in Lumi Hub]($hub/$t/$x.ipynb)"]},"""
+        link = """{"cell_type": "markdown", "metadata": {}, "source": ["[Run in Lumi Colab]($hub/$t/$x.ipynb)"]},"""
         s = replace(s, r"\"cells\":\s*\[\n( *)\{.*?\n\1\},"s => SubstitutionString("\\0" * link); count=1)
     end
     write("$x.ipynb", s)

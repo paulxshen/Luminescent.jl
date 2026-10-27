@@ -280,6 +280,7 @@ lumi.remote_solve(path, api=None, token=None, poll=3)
 Run simulation in folder `path` on a Luminescent server. Uploads inputs, streams the log, downloads results into `path`.
 The server renders the movie; field snapshots are not downloaded.
 `api` and `token` default to env LUMI_API and LUMI_TOKEN (or JUPYTERHUB_API_TOKEN in hosted notebooks).
+Run from your own machine, a copy is also kept in your Lumi Colab home at ~/local/runs/<folder name>.
 
 ### load_sparams
 ```python
