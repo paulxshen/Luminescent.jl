@@ -39,10 +39,10 @@ Args:
 
 ### solve
 ```python
-lumi.solve(path)
+lumi.solve(path, fields=False)
 ```
 Run simulation in folder `path` prepared by `setup`. Writes solution.json.
-Runs on a Luminescent server if env LUMI_API is set (see `remote_solve`).
+Runs on a Luminescent server if env LUMI_API is set (see `remote_solve`; `fields` is passed to it).
 Runs the Julia source instead of the compiled binary if env LUMIDEV is set.
 
 ### load
@@ -283,10 +283,11 @@ Rectangular gdsfactory component with ports "o1" (west) and "o2" (east).
 
 ### remote_solve
 ```python
-lumi.remote_solve(path, api=None, token=None, poll=3)
+lumi.remote_solve(path, api=None, token=None, poll=3, fields=False)
 ```
 Run simulation in folder `path` on a Luminescent server. Uploads inputs, streams the log, downloads results into `path`.
 The server renders the movie; field snapshots are not downloaded.
+Port monitors' field planes (large: every component at every wavelength) are downloaded only if `fields`.
 `api` and `token` default to env LUMI_API and LUMI_TOKEN (or JUPYTERHUB_API_TOKEN in hosted notebooks).
 Run from your own machine, a copy is also kept in your Lumi Colab home at ~/local/runs/<folder name>.
 
