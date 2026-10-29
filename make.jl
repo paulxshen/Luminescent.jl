@@ -1,7 +1,7 @@
 tuts = ["photonic_circuits/bend", "photonic_circuits/SOI_coupler", "photonic_circuits/ring",
     "photonic_circuits/TFLN_coupler", "photonic_circuits/GC",
     "metasurfaces/FSS", "metasurfaces/metalens", "RF_circuits/stub_filter", "inverse_design/GC_invd"]
-hub = "https://hub.luminescentai.com/hub/user-redirect/lab/tree/tutorials"
+hub = "https://colab.luminescentai.com/hub/user-redirect/lab/tree/tutorials"
 for t = tuts
     x = basename(t)
     s = read("../moon/tutorials/$t/$x.ipynb", String)

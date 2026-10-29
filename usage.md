@@ -1,6 +1,6 @@
-# FDTD Colab Setup
+# Lumi Colab Setup (FDTD)
 ## Option 1: Lumi Colab 
-Run FDTD notebooks for free on [Lumi Colab](https://hub.luminescentai.com/)! Similar to Google Colab but preloaded with Lumi FDTD, Copilot AI and persistent storage. Has runtime and size restrictions and excludes inverse design. Upgrade to Lumi Colab Enterprise tier for unrestricted usage: info@luminescentai.com
+Run FDTD notebooks for free on [Lumi Colab](https://colab.luminescentai.com/)! Similar to Google Colab but preloaded with Lumi FDTD, Copilot AI and persistent storage. Has runtime and size restrictions and excludes inverse design. Upgrade to Lumi Colab Enterprise tier for unrestricted usage: info@luminescentai.com
 
 
 ## Option 2: Local Python frontend + Lumi Colab backend
@@ -16,7 +16,7 @@ sudo apt install -y harminv  libxi6 libxxf86vm1 libxrender1 libgl1 libglx-mesa0 
 ### Frontend
 `pip install luminescent`
 ### Backend
-Set environmental variables with YOUR_TOKEN from [Lumi Colab](https://hub.luminescentai.com/hub/token). A copy of each run is kept in your Lumi Colab home at `~/local/runs/<run folder name>`.
+Set environmental variables with YOUR_TOKEN from [Lumi Colab](https://colab.luminescentai.com/hub/token). A copy of each run is kept in your Lumi Colab home at `~/local/runs/<run folder name>`.
 On Linux:  
 ```
 export LUMI_API=https://api.luminescentai.com

@@ -18,6 +18,14 @@ See [bend](bend.ipynb) for a minimal example.
 - Times (`tmax`, `shot_every`, `t0`) are in periods of the center frequency.
 - One run computes the whole spectrum; more wavelengths add little runtime.
 
+### Grid & resolution
+- `nres`: grid points per wavelength in material. 6 is a good start for photonics. Convergence typically <1% after nres=8
+- Keep `nres` low! Due to subpixel smoothing tensors Lumi can achieve comparable accuracy at lower nres. Runtime scales O(N^4) and domain size O(N^3). High nres is useless and will breach free tier cell limit.
+- Grid adapts to each material's `n`; `subpixel_smoothing` averages material boundaries for accuracy.
+- Check convergence by increasing `nres` until results stop changing.
+- Use symmetry to halve the domain: PMC or PEC boundary on one side, eg `("PMC", "PML")`.
+- Leave `dtype` unset; it's chosen automatically.
+
 ### Material properties
 - `lumi.material(n)` or `lumi.material(epsilon=...)`: relative permittivity, scalar or 3x3 tensor for anisotropic materials.
 - Also `mu`, `sigma` (relative units: multiply S/m by `377 * (characteristic wavelength in m)`), `chi2`, `chi3`, `dispersion` (Meep convention).
@@ -26,12 +34,6 @@ See [bend](bend.ipynb) for a minimal example.
 - `lumi.placeholder_material(n)`: meshed but no physical properties, eg design regions.
 - `materials` is a dict of name to material; `LayerStack` layers and `background` refer to these names.
 
-### Grid & resolution
-- `nres`: grid points per wavelength in material. 6 is a good start for photonics; RF usually needs more to resolve thin features.
-- Grid adapts to each material's `n`; `subpixel_smoothing` averages material boundaries for accuracy.
-- Check convergence by increasing `nres` until results stop changing.
-- Use symmetry to halve the domain: PMC or PEC boundary on one side, eg `("PMC", "PML")`.
-- Leave `dtype` unset; it's chosen automatically.
 
 ### Frames
 - Coordinate frame with sampling regions or points, reusable by any number of sources and monitors at different positions via `frame="name"`. Pass all frames to `setup(frames=...)`.
