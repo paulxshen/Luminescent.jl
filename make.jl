@@ -20,7 +20,7 @@ api = """
 import inspect, luminescent as lumi
 groups = {
     "Workflow": ["mesh", "setup", "solve", "load", "movie", "view"],
-    "Materials": ["material", "PEC_material", "placeholder_material"],
+    "Materials": ["material", "PEC_material", "placeholder_material", "lorentzian", "drude", "gain"],
     "Sources & monitors": ["source", "monitor", "gf_source", "gf_monitor", "gaussian_mode"],
     "Frames": ["plane_frame", "points_frame", "box_frame", "cage_frame", "spherical_frame"],
     "Inverse design": ["design", "target", "optimizer", "apply_design", "design_from_gds"],

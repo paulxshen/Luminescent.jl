@@ -24,8 +24,8 @@ Args:
 - boundaries: per axis "PML", "PEC", "PMC", "periodic" or pair (min side, max side) eg ("PEC", "PML")
 - k_bloch: Bloch wavevector [kx, ky, kz] in rad per length unit on periodic axes, eg from `k_bloch`. Fields pick up phase e^(i k L) across each period. Nonzero makes fields complex (2x memory)
 - nres: grid points per wavelength in material. 6 is a good starting point for photonics; increase to check convergence
-- tmax: max simulation time [periods]. Optional with `stop_decay`, except with time-domain monitors or inverse design
-- stop_decay: stop early once field energy decays to this fraction. One of `tmax`, `stop_decay` is required
+- tmax: max simulation time [periods]. Required to solve; if unset, only setup runs
+- shutoff: stop before `tmax` once field energy decays to this fraction. Needs `tmax`. At least 1e-3 when nres <= 10
 - PML_decay: PML field attenuation, scalar or per axis
 - courant: time step relative to max stable
 - subpixel_smoothing: subpixel averaging of material boundaries
@@ -33,23 +33,22 @@ Args:
 - shot_every: save movie frame every _ periods
 - full_fields: save full 3D field snapshots instead of only view slices, so `movie(path, views=...)` can re-render new slices
 - device: "gpu" (default) or "cpu"
-- dtype: leave unset; chosen automatically. Pass "f32" or "f16" only to override
 - approx_2D_mode: 2D approximation
 - designs, targets, optimizer: inverse design, from `design`, `target`, `optimizer`
 
 ### solve
 ```python
-lumi.solve(path, fields=False)
+lumi.solve(path, fields=False, dev=False, gzip=False)
 ```
 Run simulation in folder `path` prepared by `setup`. Writes solution.json.
-Runs on a Luminescent server if env LUMI_API is set (see `remote_solve`; `fields` is passed to it).
-Runs the Julia source instead of the compiled binary if env LUMIDEV is set.
+Runs on a Luminescent server if env LUMI_API is set (see `remote_solve`; `fields` and `gzip` are passed to it).
+Runs the Julia source instead of the compiled binary if `dev` or env LUMIDEV is set.
 
 ### load
 ```python
 lumi.load(path, show=True)
 ```
-Load solution dict from `path`. Monitor results in sol["monitors"][name], eg ["modes"][mode number]["+" or "-"] as array over wavelengths (or frequencies if setup with fs).
+Load solution dict from `path`. Monitor results in sol["monitors"][name], eg ["modes"][mode number]["+" or "-"] as array over wavelengths (or frequencies if setup with fs). Frequency-domain arrays have wavelength as last axis: ["fields"][component] eg [x, y, wavelength], ["flux"], ["power"], ["farfield"] and ["directivity"] [theta, phi, wavelength], cage ["flux"][face]. Box monitor volume modes have no direction: ["modes"][mode number] is the mean mode amplitude after t0, |a|^2 the stored energy.
 
 ### movie
 ```python
@@ -81,31 +80,50 @@ Args:
 ## Materials
 ### material
 ```python
-lumi.material(n=None, epsilon=None, mu=1, sigma=0, chi2=0, chi3=0, dispersion=[], placeholder=False)
+lumi.material(n=None, epsilon=None, mu=1, sigma=0, chi2=0, chi3=0, dispersion=[], placeholder=False, dx=None)
 ```
 Define material properties in relative units
 
 Args:
 
-- epsilon: relative permittivity
+- epsilon: real relative permittivity; the instantaneous (infinite frequency) value when `dispersion` is set. Use `sigma` or `dispersion` for loss
 - mu: relative permeability
 - sigma: conductivity (multiply by `377 * (characteristic wavelength in m)` to convert from metric (`S/m, 1 /(Ω m)`) to relative units)
 - chi2: Pockels second order nonlinear susceptibility
 - chi3: Kerr third order nonlinear susceptibility
-- dispersion: list of tuples [(gamma, omega, is_lorentzian)...] each defining a dispersion term. `is_lorentzian=True` for Lorentzian, `False` for Drude. We use Meep convention https://meep.readthedocs.io/en/latest/Materials/#material-dispersion and relative units.
-- n: mesh density relative to vacuum, defaults to square root of relative permittivity
+- dispersion: list of terms from `lorentzian`, `drude` or `gain`, eg `[lumi.lorentzian(f, gamma, sigma)]`. We use Meep convention https://meep.readthedocs.io/en/latest/Materials/#material-dispersion and relative units.
+- n: real mesh density relative to vacuum, defaults to square root of relative permittivity. Sets epsilon if epsilon not given
+- dx: max grid spacing in this material, in geometry length units. Raises mesh density to `wavelength / (dx * nres)` at `setup`, never lowers it. Requires n or epsilon
 
 ### PEC_material
 ```python
-lumi.PEC_material(n)
+lumi.PEC_material(n=1, dx=None)
 ```
 Perfect electric conductor material for modeling metals
 
 ### placeholder_material
 ```python
-lumi.placeholder_material(n)
+lumi.placeholder_material(n=1, dx=None)
 ```
 placeholder material contributes to meshing but not to physical properties, eg used for design region
+
+### lorentzian
+```python
+lumi.lorentzian(f, gamma, sigma)
+```
+Lorentzian dispersion term for `material(dispersion=[...])`: resonance frequency `f`, damping `gamma`, strength `sigma` (Meep convention, relative units)
+
+### drude
+```python
+lumi.drude(f, gamma, sigma)
+```
+Drude dispersion term for `material(dispersion=[...])`: plasma-like frequency `f`, damping `gamma`, strength `sigma` (Meep convention, relative units)
+
+### gain
+```python
+lumi.gain(f, gamma, sigma)
+```
+Lorentzian gain term for `material(dispersion=[...])`: like `lorentzian` with negative strength
 
 ## Sources & monitors
 ### source
@@ -196,9 +214,12 @@ Args:
 
 ### box_frame
 ```python
-lumi.box_frame(name, start, stop, dr, time_domain=None, frequency_domain=None)
+lumi.box_frame(name, start, stop, dr, modes=None, wavelengths=[], time_domain=None, frequency_domain=None)
 ```
 Box volume frame between local `start`, `stop` (3 coords in 3D), sampled every `dr` (scalar or per axis). Results: fields in monitor basis. Records frequency-domain results by default, or time-domain signals if `time_domain=True` (or `frequency_domain=False`).
+
+- modes: optional volume modes eg resonator modes [[{'Ex': np_array, ..., 'Hz': ...}, ...], ...] per wavelength, sampled on the box (overrides `dr`). Results then also include modes: mean projection after monitor t0 onto each mode normalized to unit stored energy, so |a|^2 is energy in the mode. No direction: use in targets as eg "o2@0"
+- wavelengths: wavelengths of `modes`. Empty uses the same modes at all wavelengths
 
 ### cage_frame
 ```python
@@ -235,19 +256,20 @@ Args:
 
 ### target
 ```python
-lumi.target(src, dst, target, target_func='abs2', error_func='abs', weight=1, f=None, wl=None)
+lumi.target(src, dst, target, target_func='abs2', error_func='abs', weight=1, f=None, wl=None, Q0=None)
 ```
 - src: source port and mode eg "o1@0-" (mode 0 incoming)
-- dst: destination port and mode eg "o2@0+" (mode 0 outgoing)
+- dst: destination port and mode eg "o2@0+" (mode 0 outgoing), or volume mode of a box monitor eg "o2@0" (no direction): then abs2 is stored energy in the mode per incident spectral density at `src`, independent of pulse shape
 - target: target value
 - target_func: applied to S parameter before comparing to target eg "abs2" for power
 - weight: weight of this target in overall loss function
 - f or wl: frequency or wavelength, specify one (not both)
 - error_func: error function `abs, identity, -, relu, relu-'
+- Q0: with volume mode `dst`, its Q from losses other than `src` coupling. Value becomes the steady state power fraction from `src` into the mode, 4 g g0 / (g + g0)^2, where g = abs2 above is the coupling rate and g0 = 2 pi f / Q0. Target 1 is critical coupling
 
 ### optimizer
 ```python
-lumi.optimizer(iters, stoploss, startloss=1, lowloss=None, highiter=None, momentum=0.7, contrast=0.7, init_dA=0.03, ckptat=None, gradckptat=None)
+lumi.optimizer(iters, stoploss, startloss=1, lowloss=None, momentum=0.7, contrast=0.7, init_dA=0.03, ckptat=None, gradckptat=None)
 ```
 Args:
 
@@ -255,9 +277,9 @@ Args:
 - stoploss: stop optimization if loss goes below this value
 - startloss: initial loss estimate
 - lowloss: loss at which contrast reaches 1. defaults to 0.2 * stoploss + 0.8 * startloss
-- highiter: iteration at which contrast reaches 1. None ramps by loss only
+# - highiter: iteration at which contrast reaches 1. None ramps by loss only
 - momentum: optimizer momentum
-- contrast: initial binary contrast (0 to 1). slightly <1 enables topology change (new holes or islands). =1 freezes topology eg shape optimization. contrast automatically increases quadratically to 1 as loss decreases to `lowloss` or by iteration `highiter`, whichever first
+- contrast: initial binary contrast (0 to 1). slightly <1 enables topology change (new holes or islands). =1 freezes topology eg shape optimization. contrast automatically increases linearly to 1 as loss decreases to `lowloss`
 - init_dA: fraction of design area changed by the first step. sets the initial step size
 - ckptat: save optimization checkpoint every _ iterations
 - gradckptat: gradient checkpointing
@@ -283,11 +305,12 @@ Rectangular gdsfactory component with ports "o1" (west) and "o2" (east).
 
 ### remote_solve
 ```python
-lumi.remote_solve(path, api=None, token=None, poll=3, fields=False)
+lumi.remote_solve(path, api=None, token=None, poll=3, fields=False, gzip=False)
 ```
 Run simulation in folder `path` on a Luminescent server. Uploads inputs, streams the log, downloads results into `path`.
 The server renders the movie; field snapshots are not downloaded.
 Port monitors' field planes (large: every component at every wavelength) are downloaded only if `fields`.
+Uploads and downloads are gzip-compressed only if `gzip`.
 `api` and `token` default to env LUMI_API and LUMI_TOKEN (or JUPYTERHUB_API_TOKEN in hosted notebooks).
 Run from your own machine, a copy is also kept in your Lumi Colab home at ~/local/runs/<folder name>.
 
