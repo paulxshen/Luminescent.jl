@@ -1,0 +1,315 @@
+========================================
+backend using simulation folder runs/GC_invd
+========================================
+setting up simulation...
+processing geometry bodies...
+generating voxels...
+voxelation: 3.285575 seconds (70.84 M allocations: 1.995 GiB, 9.47% gc time, 210.60% compilation time)
+Yee mode λ=1.0: neff 2.4593
+making sources o2 ...
+making monitors o1 o2 ...
+making designs design ...
+========================================
+run: runs/GC_invd
+processor: GPU
+cpu threads: 48
+
+nres: 10.0
+courant: 0.95
+subpixel_smoothing: 1
+  
+boundaries: [:PML :PML; :PEC :PML; :PML :PML]
+
+sources
+   o2: -0.61, 0, 1.72 
+
+monitors
+   o1: -21.84, 0, 0 
+   o2: -0.65, 0, 1.42 
+
+original size: (656, 220, 67)
+padded size: (681, 226, 102)
+cell count: 15,698,412
+
+step size: 55.0 steps/period
+source duration: 7.96 periods
+
+max time: 115.8 periods
+max steps: 6,369
+max load: 91,003,694,364 cell-steps
+
+
+starting optimization... first iter will be slow due to adjoint compilation.
+
+[1]
+contrast: 1.0, momentum: 0.0
+saving designs to runs/GC_invd/designs...
+========================================
+running simulation...
+applying design region: design
+grad ckpt at 579
+simulation completed.
+- o2@0-->o1@0+ λ=1.5450000000000002 target=1 value=0.3046134232832359 loss=0.23179553248029972
+- o2@0-->o1@0+ λ=1.55 target=1 value=0.3148515793349166 loss=0.22838281369469918
+- o2@0-->o1@0+ λ=1.555 target=1 value=0.3152939403989262 loss=0.2282353600023015
+loss: 0.6884137061773004
+gradient: 230.6 s
+123
+η: 123395.79, dA: 0.00303
+design regions change fracs: Any[0.00303035f0]
+memory usage: 13.36 GB / 189.91 GB (7.0%)
+GPU memory usage: 48.23 GB / 101.98 GB (47.3%)
+losses: Any[0.6884137061773004]
+
+[2]
+contrast: 1.0, momentum: 0.25
+saving designs to runs/GC_invd/designs...
+========================================
+running simulation...
+applying design region: design
+grad ckpt at 579
+simulation completed.
+- o2@0-->o1@0+ λ=1.5450000000000002 target=1 value=0.3044468496975058 loss=0.23185105701053113
+- o2@0-->o1@0+ λ=1.55 target=1 value=0.31273014440322455 loss=0.22908995869300441
+- o2@0-->o1@0+ λ=1.555 target=1 value=0.3103859467039546 loss=0.2298713579493819
+loss: 0.6908123736529175
+gradient: 86.5 s
+loss went up, retracing halfway
+η: 61697.895, dA: 0.00073
+design regions change fracs: Any[0.000726604f0, 0.00303035f0]
+memory usage: 13.64 GB / 189.91 GB (7.2%)
+GPU memory usage: 52.2 GB / 101.98 GB (51.2%)
+losses: Any[0.6908123736529175, 0.6884137061773004]
+
+[3]
+contrast: 1.0, momentum: 0.333
+saving designs to runs/GC_invd/designs...
+========================================
+running simulation...
+applying design region: design
+grad ckpt at 579
+simulation completed.
+- o2@0-->o1@0+ λ=1.5450000000000002 target=1 value=0.31434660146282356 loss=0.22855113965708002
+- o2@0-->o1@0+ λ=1.55 target=1 value=0.3232617436637129 loss=0.22557942550155294
+- o2@0-->o1@0+ λ=1.555 target=1 value=0.32171551855193237 loss=0.2260948338875068
+loss: 0.6802253990461398
+gradient: 92.2 s
+0
+η: 64782.79, dA: 0.00084
+design regions change fracs: Any[0.00084063614f0, 0.000726604f0, 0.00303035f0]
+memory usage: 13.69 GB / 189.91 GB (7.2%)
+GPU memory usage: 54.4 GB / 101.98 GB (53.3%)
+losses: Any[0.6802253990461398, 0.6908123736529175, 0.6884137061773004]
+
+[4]
+contrast: 1.0, momentum: 0.375
+saving designs to runs/GC_invd/designs...
+========================================
+running simulation...
+applying design region: design
+grad ckpt at 579
+simulation completed.
+- o2@0-->o1@0+ λ=1.5450000000000002 target=1 value=0.30447488446609416 loss=0.23184171208738985
+- o2@0-->o1@0+ λ=1.55 target=1 value=0.31368137541569424 loss=0.22877288167939824
+- o2@0-->o1@0+ λ=1.555 target=1 value=0.3122207956312794 loss=0.22925974162204604
+loss: 0.6898743353888341
+gradient: 94.0 s
+loss went up, retracing halfway
+η: 32391.395, dA: 0.00051
+design regions change fracs: Any[0.00050733483f0, 0.00084063614f0, 0.000726604f0, 0.00303035f0]
+memory usage: 14.15 GB / 189.91 GB (7.5%)
+GPU memory usage: 54.4 GB / 101.98 GB (53.3%)
+losses: Any[0.6898743353888341, 0.6802253990461398, 0.6908123736529175, 0.6884137061773004]
+
+[5]
+contrast: 1.0, momentum: 0.4
+saving designs to runs/GC_invd/designs...
+========================================
+running simulation...
+applying design region: design
+grad ckpt at 579
+simulation completed.
+- o2@0-->o1@0+ λ=1.5450000000000002 target=1 value=0.3175542086228449 loss=0.22748193723854154
+- o2@0-->o1@0+ λ=1.55 target=1 value=0.3264214638573223 loss=0.22452618540562747
+- o2@0-->o1@0+ λ=1.555 target=1 value=0.32460557989124267 loss=0.22513148007902656
+loss: 0.6771396027231955
+gradient: 93.5 s
+0
+η: 34010.965, dA: 0.00054
+design regions change fracs: Any[0.0005405427f0, 0.00050733483f0, 0.00084063614f0, 0.000726604f0, 0.00303035f0]
+memory usage: 15.13 GB / 189.91 GB (8.0%)
+GPU memory usage: 57.14 GB / 101.98 GB (56.0%)
+losses: Any[0.6771396027231955, 0.6898743353888341, 0.6802253990461398, 0.6908123736529175, 0.6884137061773004]
+
+[6]
+contrast: 1.0, momentum: 0.417
+saving designs to runs/GC_invd/designs...
+========================================
+running simulation...
+applying design region: design
+grad ckpt at 579
+simulation completed.
+- o2@0-->o1@0+ λ=1.5450000000000002 target=1 value=0.31518471889756666 loss=0.22827176717050635
+- o2@0-->o1@0+ λ=1.55 target=1 value=0.3238391597734725 loss=0.2253869534592303
+- o2@0-->o1@0+ λ=1.555 target=1 value=0.3217092624701256 loss=0.22609691924817119
+loss: 0.6797556398779079
+gradient: 85.9 s
+loss went up, retracing halfway
+η: 17005.482, dA: 0.00027
+design regions change fracs: Any[0.00027102037f0, 0.0005405427f0, 0.00050733483f0, 0.00084063614f0, 0.000726604f0, 0.00303035f0]
+memory usage: 15.06 GB / 189.91 GB (7.9%)
+GPU memory usage: 65.66 GB / 101.98 GB (64.4%)
+losses: Any[0.6797556398779079, 0.6771396027231955, 0.6898743353888341, 0.6802253990461398, 0.6908123736529175, 0.6884137061773004]
+
+[7]
+contrast: 1.0, momentum: 0.429
+saving designs to runs/GC_invd/designs...
+========================================
+running simulation...
+applying design region: design
+grad ckpt at 579
+simulation completed.
+- o2@0-->o1@0+ λ=1.5450000000000002 target=1 value=0.3173505897370198 loss=0.227549810202506
+- o2@0-->o1@0+ λ=1.55 target=1 value=0.3261100298952432 loss=0.22462999672941433
+- o2@0-->o1@0+ λ=1.555 target=1 value=0.32431156692372654 loss=0.22522948440445267
+loss: 0.677409291336373
+gradient: 86.2 s
+loss went up, retracing halfway
+η: 8502.741, dA: 0.00013
+design regions change fracs: Any[0.00013226153f0, 0.00027102037f0, 0.0005405427f0, 0.00050733483f0, 0.00084063614f0, 0.000726604f0, 0.00303035f0]
+memory usage: 15.11 GB / 189.91 GB (8.0%)
+GPU memory usage: 65.19 GB / 101.98 GB (63.9%)
+losses: Any[0.677409291336373, 0.6797556398779079, 0.6771396027231955, 0.6898743353888341, 0.6802253990461398, 0.6908123736529175, 0.6884137061773004]
+
+[8]
+contrast: 1.0, momentum: 0.438
+saving designs to runs/GC_invd/designs...
+========================================
+running simulation...
+applying design region: design
+grad ckpt at 579
+simulation completed.
+- o2@0-->o1@0+ λ=1.5450000000000002 target=1 value=0.317882325467372 loss=0.22737256495377298
+- o2@0-->o1@0+ λ=1.55 target=1 value=0.32654434328540083 loss=0.22448522559504724
+- o2@0-->o1@0+ λ=1.555 target=1 value=0.32452789961325 loss=0.22515737350579576
+loss: 0.677015164054616
+gradient: 86.2 s
+0
+η: 8927.878, dA: 0.00018
+design regions change fracs: Any[0.00017851104f0, 0.00013226153f0, 0.00027102037f0, 0.0005405427f0, 0.00050733483f0, 0.00084063614f0, 0.000726604f0, 0.00303035f0]
+memory usage: 15.09 GB / 189.91 GB (7.9%)
+GPU memory usage: 64.75 GB / 101.98 GB (63.5%)
+losses: Any[0.677015164054616, 0.677409291336373, 0.6797556398779079, 0.6771396027231955, 0.6898743353888341, 0.6802253990461398, 0.6908123736529175, 0.6884137061773004]
+
+[9]
+contrast: 1.0, momentum: 0.444
+saving designs to runs/GC_invd/designs...
+========================================
+running simulation...
+applying design region: design
+grad ckpt at 579
+simulation completed.
+- o2@0-->o1@0+ λ=1.5450000000000002 target=1 value=0.3207691264783281 loss=0.22641029792144313
+- o2@0-->o1@0+ λ=1.55 target=1 value=0.32954108119048764 loss=0.2234863129302484
+- o2@0-->o1@0+ λ=1.555 target=1 value=0.32727711770462775 loss=0.2242409674480255
+loss: 0.674137578299717
+gradient: 85.9 s
+0
+η: 9374.271, dA: 0.00017
+design regions change fracs: Any[0.00016765666f0, 0.00017851104f0, 0.00013226153f0, 0.00027102037f0, 0.0005405427f0, 0.00050733483f0, 0.00084063614f0, 0.000726604f0, 0.00303035f0]
+memory usage: 16.17 GB / 189.91 GB (8.5%)
+GPU memory usage: 64.78 GB / 101.98 GB (63.5%)
+losses: Any[0.674137578299717, 0.677015164054616, 0.677409291336373, 0.6797556398779079, 0.6771396027231955, 0.6898743353888341, 0.6802253990461398, 0.6908123736529175, 0.6884137061773004]
+
+[10]
+contrast: 1.0, momentum: 0.45
+saving designs to runs/GC_invd/designs...
+========================================
+running simulation...
+applying design region: design
+grad ckpt at 579
+simulation completed.
+- o2@0-->o1@0+ λ=1.5450000000000002 target=1 value=0.32043037573595173 loss=0.22652321483893378
+- o2@0-->o1@0+ λ=1.55 target=1 value=0.3297684873741653 loss=0.22341051086676345
+- o2@0-->o1@0+ λ=1.555 target=1 value=0.32787986800224733 loss=0.2240400506761645
+loss: 0.6739737763818617
+gradient: 92.8 s
+0
+η: 9842.985, dA: 0.00014
+design regions change fracs: Any[0.00013775505f0, 0.00016765666f0, 0.00017851104f0, 0.00013226153f0, 0.00027102037f0, 0.0005405427f0, 0.00050733483f0, 0.00084063614f0, 0.000726604f0, 0.00303035f0]
+memory usage: 16.38 GB / 189.91 GB (8.6%)
+GPU memory usage: 64.65 GB / 101.98 GB (63.4%)
+losses: Any[0.6739737763818617, 0.674137578299717, 0.677015164054616, 0.677409291336373, 0.6797556398779079, 0.6771396027231955, 0.6898743353888341, 0.6802253990461398, 0.6908123736529175, 0.6884137061773004]
+
+[11]
+contrast: 1.0, momentum: 0.455
+saving designs to runs/GC_invd/designs...
+========================================
+running simulation...
+applying design region: design
+grad ckpt at 579
+[91m[1mERROR: [22m[39mLoadError: instability at period 67.49: field energy growing. try lower `courant` or `subpixel_smoothing`
+Stacktrace:
+  [1] [0m[1merror[22m[0m[1m([22m[90ms[39m::[0mString[0m[1m)[22m
+ [90m   @[39m [90mBase[39m [90m./[39m[90m[4merror.jl:44[24m[39m
+  [2] [0m[1m(::var"#934#935"{Int64, Vector{UnitRange{Int64}}, Int64, Nothing, Vector{Tuple{Int64, Int64}}, Dict{Symbol, Int64}, Type{Float32}, @NamedTuple{E::CuArray{Float32, 4, CUDACore.DeviceMemory}, H::CuArray{Float32, 4, CUDACore.DeviceMemory}, Pn::CuArray{Float32, 5, CUDACore.DeviceMemory}, Jn::CuArray{Float32, 5, CUDACore.DeviceMemory}, ix::@NamedTuple{Ex::Tuple{Symbol, Int64}, Ey::Tuple{Symbol, Int64}, Ez::Tuple{Symbol, Int64}, Hx::Tuple{Symbol, Int64}, Hy::Tuple{Symbol, Int64}, Hz::Tuple{Symbol, Int64}}}})[22m[0m[1m([22m[0m[1m)[22m
+ [90m   @[39m [35mMain[39m [90m~/moon/src/sim/[39m[90m[4m.solve.jl:123[24m[39m
+  [3] [0m[1mignore_derivatives[22m[0m[1m([22m[90mf[39m::[0mvar"#934#935"[90m{Int64, Vector{UnitRange{Int64}}, Int64, Nothing, Vector{Tuple{Int64, Int64}}, Dict{Symbol, Int64}, Type{Float32}, @NamedTuple{E::CuArray{Float32, 4, CUDACore.DeviceMemory}, H::CuArray{Float32, 4, CUDACore.DeviceMemory}, Pn::CuArray{Float32, 5, CUDACore.DeviceMemory}, Jn::CuArray{Float32, 5, CUDACore.DeviceMemory}, ix::@NamedTuple{Ex::Tuple{Symbol, Int64}, Ey::Tuple{Symbol, Int64}, Ez::Tuple{Symbol, Int64}, Hx::Tuple{Symbol, Int64}, Hy::Tuple{Symbol, Int64}, Hz::Tuple{Symbol, Int64}}}}[39m[0m[1m)[22m
+ [90m   @[39m [36mChainRulesCore[39m [90m~/.julia/packages/ChainRulesCore/9QALR/src/[39m[90m[4mignore_derivatives.jl:26[24m[39m
+  [4] [0m[1mstepper[22m[0m[1m([22m[90mu[39m::[0m@NamedTuple[90m{E::CuArray{Float32, 4, CUDACore.DeviceMemory}, H::CuArray{Float32, 4, CUDACore.DeviceMemory}, Pn::CuArray{Float32, 5, CUDACore.DeviceMemory}, Jn::CuArray{Float32, 5, CUDACore.DeviceMemory}, ix::@NamedTuple{Ex::Tuple{Symbol, Int64}, Ey::Tuple{Symbol, Int64}, Ez::Tuple{Symbol, Int64}, Hx::Tuple{Symbol, Int64}, Hy::Tuple{Symbol, Int64}, Hz::Tuple{Symbol, Int64}}}[39m, [90mp[39m::[0m@NamedTuple[90m{invϵ::CuArray{Float32, 4, CUDACore.DeviceMemory}, invμ::Int64, σ::CuArray{Float32, 3, CUDACore.DeviceMemory}, m::CuArray{Float32, 3, CUDACore.DeviceMemory}, ϵ::CuArray{Float32, 3, CUDACore.DeviceMemory}, μ::Float32, χ2::Float32, χ3::Float32, An::Vector{Any}, Bn::Vector{Any}, Cn::Vector{Any}, disps::Vector{Any}}[39m, [90ms[39m::[0m@NamedTuple[90m{i::Int64, t::Float32}[39m, [90mudft[39m::[0m@NamedTuple[90m{o1::@NamedTuple{Ex::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ey::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ez::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hx::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hy::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hz::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}}, o2::@NamedTuple{Ex::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ey::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ez::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hx::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hy::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hz::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}}}[39m; [90msignals[39m::[0m@NamedTuple[90m{}[39m, [90mdt[39m::[0mFloat32, [90mndt[39m::[0mInt64, [90mnt[39m::[0mInt64, [90mN[39m::[0mInt64, [90mIbbox[39m::[0mVector[90m{UnitRange{Int64}}[39m, [90msource_instances[39m::[0mVector[90m{SourceInstance{Float32}}[39m, [90mmonitor_instances[39m::[0m@NamedTuple[90m{o1::RectMonitorInstance, o2::RectMonitorInstance}[39m, [90mframeat[39m::[0mInt64, [90mlogat[39m::[0mNothing, [90mcuts[39m::[0mVector[90m{Tuple{Int64, Int64}}[39m, [90msignalat[39m::[0mDict[90m{Symbol, Int64}[39m, [90msignalct[39m::[0mDict[90m{Symbol, Int64}[39m, [90mϵ[39m::[0mCuArray[90m{Float32, 3, CUDACore.DeviceMemory}[39m, [90mdV[39m::[0mCuArray[90m{Float32, 3, CUDACore.DeviceMemory}[39m, [90mFIELDS[39m::[0mString, [90misource[39m::[0mInt64, [90maccumat[39m::[0mInt64, [90m∇ₕ[39m::[0mDel, [90m∇ₑ[39m::[0mDel, [90mks[39m::[0mVector[90m{Symbol}[39m, [90mfs[39m::[0mVector[90m{Float32}[39m, [90m_dt[39m::[0mFloat32, [90mshutoff[39m::[0mNothing, [90mF[39m::[0mType, [90mmeta[39m::[0mDict[90m{Symbol, Any}[39m, [90mew[39m::[0m@NamedTuple[90m{E::CuArray{Float32, 3, CUDACore.DeviceMemory}, H::CuArray{Float32, 3, CUDACore.DeviceMemory}}[39m, [90mbuf[39m::[0m@NamedTuple[90m{dD::CuArray{Float32, 4, CUDACore.DeviceMemory}, dB::CuArray{Float32, 4, CUDACore.DeviceMemory}, tmp::CuArray{Float32, 4, CUDACore.DeviceMemory}}[39m[0m[1m)[22m
+ [90m   @[39m [35mMain[39m [90m~/moon/src/sim/[39m[90m[4m.solve.jl:107[24m[39m
+  [5] [0m[1mrrule_inplace[22m[0m[1m([22m[90mconfig[39m::[0mZygote.ZygoteRuleConfig[90m{Zygote.Context{false}}[39m, [90mf[39m::[0mtypeof(stepper), [90mu[39m::[0m@NamedTuple[90m{E::CuArray{Float32, 4, CUDACore.DeviceMemory}, H::CuArray{Float32, 4, CUDACore.DeviceMemory}, Pn::CuArray{Float32, 5, CUDACore.DeviceMemory}, Jn::CuArray{Float32, 5, CUDACore.DeviceMemory}, ix::@NamedTuple{Ex::Tuple{Symbol, Int64}, Ey::Tuple{Symbol, Int64}, Ez::Tuple{Symbol, Int64}, Hx::Tuple{Symbol, Int64}, Hy::Tuple{Symbol, Int64}, Hz::Tuple{Symbol, Int64}}}[39m, [90mp[39m::[0m@NamedTuple[90m{invϵ::CuArray{Float32, 4, CUDACore.DeviceMemory}, invμ::Int64, σ::CuArray{Float32, 3, CUDACore.DeviceMemory}, m::CuArray{Float32, 3, CUDACore.DeviceMemory}, ϵ::CuArray{Float32, 3, CUDACore.DeviceMemory}, μ::Float32, χ2::Float32, χ3::Float32, An::Vector{Any}, Bn::Vector{Any}, Cn::Vector{Any}, disps::Vector{Any}}[39m, [90ms[39m::[0m@NamedTuple[90m{i::Int64, t::Int64}[39m, [90ma[39m::[0m@NamedTuple[90m{o1::@NamedTuple{Ex::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ey::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ez::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hx::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hy::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hz::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}}, o2::@NamedTuple{Ex::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ey::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ez::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hx::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hy::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hz::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}}}[39m; [90mU[39m::[0mVector[90m{@NamedTuple{E::CuArray{Float32, 4, CUDACore.DeviceMemory}, H::CuArray{Float32, 4, CUDACore.DeviceMemory}, Pn::CuArray{Float32, 5, CUDACore.DeviceMemory}, Jn::CuArray{Float32, 5, CUDACore.DeviceMemory}, ix::@NamedTuple{Ex::Tuple{Symbol, Int64}, Ey::Tuple{Symbol, Int64}, Ez::Tuple{Symbol, Int64}, Hx::Tuple{Symbol, Int64}, Hy::Tuple{Symbol, Int64}, Hz::Tuple{Symbol, Int64}}}}[39m, [90mA[39m::[0mNothing, [90mgradckptat[39m::[0mInt64, [90marray[39m::[0mFunction, [90mgradbox[39m::[0mTuple[90m{UnitRange{Int64}, UnitRange{Int64}, UnitRange{Int64}}[39m, [90mkw[39m::[0m@Kwargs[90m{N::Int64, source_instances::Vector{SourceInstance{Float32}}, monitor_instances::@NamedTuple{o1::RectMonitorInstance, o2::RectMonitorInstance}, frameat::Int64, logat::Nothing, cuts::Vector{Tuple{Int64, Int64}}, signalat::Dict{Symbol, Int64}, signalct::Dict{Symbol, Int64}, ϵ::CuArray{Float32, 3, CUDACore.DeviceMemory}, dV::CuArray{Float32, 3, CUDACore.DeviceMemory}, FIELDS::String, isource::Int64, accumat::Int64, ∇ₕ::Del, ∇ₑ::Del, ks::Vector{Symbol}, fs::Vector{Float32}, dt::Float32, ndt::Int64, nt::Int64, _dt::Float32, shutoff::Nothing, Ibbox::Vector{UnitRange{Int64}}, F::DataType, meta::Dict{Symbol, Any}, signals::@NamedTuple{}, ew::@NamedTuple{E::CuArray{Float32, 3, CUDACore.DeviceMemory}, H::CuArray{Float32, 3, CUDACore.DeviceMemory}}}[39m[0m[1m)[22m
+ [90m   @[39m [35mMain[39m [90m~/moon/src/opt/[39m[90m[4m.adjoint.jl:109[24m[39m
+  [6] [0m[1mrrule_inplace[22m
+ [90m   @[39m [90m~/moon/src/opt/[39m[90m[4m.adjoint.jl:97[24m[39m[90m [inlined][39m
+  [7] [0m[1m#rrule#1173[22m
+ [90m   @[39m [90m~/moon/src/opt/[39m[90m[4m.adjoint.jl:15[24m[39m[90m [inlined][39m
+  [8] [0m[1mrrule[22m
+ [90m   @[39m [90m~/moon/src/opt/[39m[90m[4m.adjoint.jl:13[24m[39m[90m [inlined][39m
+  [9] [0m[1mchain_rrule_kw[22m
+ [90m   @[39m [90m~/.julia/packages/Zygote/Z3COV/src/compiler/[39m[90m[4mchainrules.jl:269[24m[39m[90m [inlined][39m
+ [10] [0m[1mmacro expansion[22m
+ [90m   @[39m [90m~/.julia/packages/Zygote/Z3COV/src/compiler/[39m[90m[4minterface2.jl:-1[24m[39m[90m [inlined][39m
+ [11] [0m[1m_pullback[22m[0m[1m([22m::[0mZygote.Context[90m{false}[39m, ::[0mtypeof(Core.kwcall), ::[0m@NamedTuple[90m{U::Vector{@NamedTuple{E::CuArray{Float32, 4, CUDACore.DeviceMemory}, H::CuArray{Float32, 4, CUDACore.DeviceMemory}, Pn::CuArray{Float32, 5, CUDACore.DeviceMemory}, Jn::CuArray{Float32, 5, CUDACore.DeviceMemory}, ix::@NamedTuple{Ex::Tuple{Symbol, Int64}, Ey::Tuple{Symbol, Int64}, Ez::Tuple{Symbol, Int64}, Hx::Tuple{Symbol, Int64}, Hy::Tuple{Symbol, Int64}, Hz::Tuple{Symbol, Int64}}}}, A::Nothing, gradckptat::Int64, array::typeof(cu), gradbox::Tuple{UnitRange{Int64}, UnitRange{Int64}, UnitRange{Int64}}, source_instances::Vector{SourceInstance{Float32}}, monitor_instances::@NamedTuple{o1::RectMonitorInstance, o2::RectMonitorInstance}, frameat::Int64, logat::Nothing, cuts::Vector{Tuple{Int64, Int64}}, signalat::Dict{Symbol, Int64}, signalct::Dict{Symbol, Int64}, ϵ::CuArray{Float32, 3, CUDACore.DeviceMemory}, dV::CuArray{Float32, 3, CUDACore.DeviceMemory}, FIELDS::String, isource::Int64, accumat::Int64, ∇ₕ::Del, ∇ₑ::Del, ks::Vector{Symbol}, fs::Vector{Float32}, dt::Float32, ndt::Int64, nt::Int64, _dt::Float32, N::Int64, shutoff::Nothing, Ibbox::Vector{UnitRange{Int64}}, F::DataType, meta::Dict{Symbol, Any}, signals::@NamedTuple{}, ew::@NamedTuple{E::CuArray{Float32, 3, CUDACore.DeviceMemory}, H::CuArray{Float32, 3, CUDACore.DeviceMemory}}}[39m, ::[0mtypeof(adjoint_reduce), ::[0mtypeof(stepper), ::[0m@NamedTuple[90m{E::CuArray{Float32, 4, CUDACore.DeviceMemory}, H::CuArray{Float32, 4, CUDACore.DeviceMemory}, Pn::CuArray{Float32, 5, CUDACore.DeviceMemory}, Jn::CuArray{Float32, 5, CUDACore.DeviceMemory}, ix::@NamedTuple{Ex::Tuple{Symbol, Int64}, Ey::Tuple{Symbol, Int64}, Ez::Tuple{Symbol, Int64}, Hx::Tuple{Symbol, Int64}, Hy::Tuple{Symbol, Int64}, Hz::Tuple{Symbol, Int64}}}[39m, ::[0m@NamedTuple[90m{invϵ::CuArray{Float32, 4, CUDACore.DeviceMemory}, invμ::Int64, σ::CuArray{Float32, 3, CUDACore.DeviceMemory}, m::CuArray{Float32, 3, CUDACore.DeviceMemory}, ϵ::CuArray{Float32, 3, CUDACore.DeviceMemory}, μ::Float32, χ2::Float32, χ3::Float32, An::Vector{Any}, Bn::Vector{Any}, Cn::Vector{Any}, disps::Vector{Any}}[39m, ::[0m@NamedTuple[90m{i::Int64, t::Int64}[39m, ::[0m@NamedTuple[90m{o1::@NamedTuple{Ex::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ey::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ez::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hx::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hy::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hz::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}}, o2::@NamedTuple{Ex::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ey::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Ez::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hx::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hy::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}, Hz::CuArray{ComplexF32, 4, CUDACore.DeviceMemory}}}[39m[0m[1m)[22m
+ [90m   @[39m [32mZygote[39m [90m~/.julia/packages/Zygote/Z3COV/src/compiler/[39m[90m[4minterface2.jl:89[24m[39m
+ [12] [0m[1m#foo#948[22m
+ [90m   @[39m [90m~/moon/src/sim/[39m[90m[4m.solve.jl:305[24m[39m[90m [inlined][39m
+ [13] [0m[1m_pullback[22m[0m[1m([22m::[0mZygote.Context[90m{false}[39m, ::[0mvar"##foo#948", ::[0mOrderedDict[90m{Symbol, Any}[39m, ::[0mtypeof(foo), ::[0mVector[90m{ConvBlob}[39m[0m[1m)[22m
+ [90m   @[39m [32mZygote[39m [90m~/.julia/packages/Zygote/Z3COV/src/compiler/[39m[90m[4minterface2.jl:0[24m[39m
+ [14] [0m[1mfoo[22m
+ [90m   @[39m [90m~/moon/src/sim/[39m[90m[4m.solve.jl:191[24m[39m[90m [inlined][39m
+ [15] [0m[1m_pullback[22m[0m[1m([22m::[0mZygote.Context[90m{false}[39m, ::[0mtypeof(Core.kwcall), ::[0m@NamedTuple[90m{prob::OrderedDict{Symbol, Any}}[39m, ::[0mtypeof(foo), ::[0mVector[90m{ConvBlob}[39m[0m[1m)[22m
+ [90m   @[39m [32mZygote[39m [90m~/.julia/packages/Zygote/Z3COV/src/compiler/[39m[90m[4minterface2.jl:0[24m[39m
+ [16] [0m[1m#loss#1228[22m
+ [90m   @[39m [90m~/moon/src/opt/[39m[90m[4mtopopt.jl:48[24m[39m[90m [inlined][39m
+ [17] [0m[1m_pullback[22m[0m[1m([22m::[0mZygote.Context[90m{false}[39m, ::[0mvar"##loss#1228", ::[0mOrderedDict[90m{Symbol, Any}[39m, ::[0mtypeof(loss), ::[0mVector[90m{ConvBlob}[39m[0m[1m)[22m
+ [90m   @[39m [32mZygote[39m [90m~/.julia/packages/Zygote/Z3COV/src/compiler/[39m[90m[4minterface2.jl:0[24m[39m
+ [18] [0m[1mloss[22m
+ [90m   @[39m [90m~/moon/src/opt/[39m[90m[4mtopopt.jl:47[24m[39m[90m [inlined][39m
+ [19] [0m[1m_pullback[22m[0m[1m([22m::[0mZygote.Context[90m{false}[39m, ::[0mtypeof(Core.kwcall), ::[0m@NamedTuple[90m{prob::OrderedDict{Symbol, Any}}[39m, ::[0mtypeof(loss), ::[0mVector[90m{ConvBlob}[39m[0m[1m)[22m
+ [90m   @[39m [32mZygote[39m [90m~/.julia/packages/Zygote/Z3COV/src/compiler/[39m[90m[4minterface2.jl:0[24m[39m
+ [20] [0m[1m#1280[22m
+ [90m   @[39m [90m~/moon/src/pic/[39m[90m[4mrun.jl:287[24m[39m[90m [inlined][39m
+ [21] [0m[1m_pullback[22m[0m[1m([22m[90mctx[39m::[0mZygote.Context[90m{false}[39m, [90mf[39m::[0mvar"#1280#1281", [90margs[39m::[0mVector[90m{ConvBlob}[39m[0m[1m)[22m
+ [90m   @[39m [32mZygote[39m [90m~/.julia/packages/Zygote/Z3COV/src/compiler/[39m[90m[4minterface2.jl:0[24m[39m
+ [22] [0m[1mpullback[22m[0m[1m([22m[90mf[39m::[0mFunction, [90mcx[39m::[0mZygote.Context[90m{false}[39m, [90margs[39m::[0mVector[90m{ConvBlob}[39m[0m[1m)[22m
+ [90m   @[39m [32mZygote[39m [90m~/.julia/packages/Zygote/Z3COV/src/compiler/[39m[90m[4minterface.jl:121[24m[39m
+ [23] [0m[1mpullback[22m
+ [90m   @[39m [90m~/.julia/packages/Zygote/Z3COV/src/compiler/[39m[90m[4minterface.jl:119[24m[39m[90m [inlined][39m
+ [24] [0m[1mwithgradient[22m[0m[1m([22m[90mf[39m::[0mFunction, [90margs[39m::[0mVector[90m{ConvBlob}[39m[0m[1m)[22m
+ [90m   @[39m [32mZygote[39m [90m~/.julia/packages/Zygote/Z3COV/src/compiler/[39m[90m[4minterface.jl:236[24m[39m
+ [25] [0m[1mmacro expansion[22m
+ [90m   @[39m [90m./[39m[90m[4mtiming.jl:463[24m[39m[90m [inlined][39m
+ [26] [0m[1mpicrun[22m[0m[1m([22m[90mpath[39m::[0mString; [90mkwargs[39m::[0m@Kwargs[90m{}[39m[0m[1m)[22m
+ [90m   @[39m [35mMain[39m [90m~/moon/src/pic/[39m[90m[4mrun.jl:286[24m[39m
+ [27] [0m[1mpicrun[22m[0m[1m([22m[90mpath[39m::[0mString[0m[1m)[22m
+ [90m   @[39m [35mMain[39m [90m~/moon/src/pic/[39m[90m[4mrun.jl:12[24m[39m
+ [28] top-level scope
+ [90m   @[39m [90m~/moon/src/[39m[90m[4mpictest.jl:50[24m[39m
+ [29] [0m[1minclude[22m[0m[1m([22m[90mmod[39m::[0mModule, [90m_path[39m::[0mString[0m[1m)[22m
+ [90m   @[39m [90mBase[39m [90m./[39m[90m[4mBase.jl:309[24m[39m
+ [30] [0m[1mexec_options[22m[0m[1m([22m[90mopts[39m::[0mBase.JLOptions[0m[1m)[22m
+ [90m   @[39m [90mBase[39m [90m./[39m[90m[4mclient.jl:344[24m[39m
+ [31] [0m[1m_start[22m[0m[1m([22m[0m[1m)[22m
+ [90m   @[39m [90mBase[39m [90m./[39m[90m[4mclient.jl:577[24m[39m
+in expression starting at ~/moon/src/pictest.jl:50
