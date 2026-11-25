@@ -1,6 +1,6 @@
-# Acoplador direccional SOI: comparación con Tidy3D
+# SOI directional coupler: Tidy3D comparison
 
-Reproduce el ejemplo de [acoplador direccional](https://www.flexcompute.com/tidy3d/examples/notebooks/DirectionalCoupler/) de Tidy3D. Brazos de silicio (n = 3.48, 0.22 µm de espesor, paredes laterales de 30°) sobre óxido (n = 1.45), con aire encima. El layout proviene del archivo `coupler.gds` de Tidy3D, dilatado 20 nm por lado. La luz entra por el puerto 1 (abajo a la izquierda). Buscamos la longitud de onda a la que la potencia se divide por igual entre los puertos 3 y 4. Tidy3D reporta 1.53 µm con una transmisión total de 0.990 con un nres=15 equivalente.
+Replicates Tidy3D's [directional coupler](https://www.flexcompute.com/tidy3d/examples/notebooks/DirectionalCoupler/) example. Silicon arms (n = 3.48, 0.22 µm thick, 30° sidewalls) on oxide (n = 1.45), air above. Layout from Tidy3D's `coupler.gds`, dilated by 20 nm per side. Light enters port 1 (lower left). We find the wavelength where power splits evenly between ports 3 and 4. Tidy3D reports 1.53 µm with total transmission 0.990 at equivalent nres=15.
 
 ```python
 # %%
@@ -83,7 +83,7 @@ def setup(path,  sidewall_angle=sidewall_angle):
         ("o4", x_port, -y_port, 0),
     ]:
         c.add_port(name, center=(x, y), width=w_wg, orientation=a, layer=WG)
-    c.plot(return_fig=True).savefig("layout.png")
+    c.plot(return_fig=True).savefig(os.path.join(here, "layout.png"))
 
     bbox = c.bbox_np().tolist()
     bbox[0].append(zmin)
@@ -138,4 +138,6 @@ lumi.gui()
 lumi.solve(path)
 ```
 
-![GUI](img/SOI_coupler.png)
+![layout](img/SOI_coupler_layout.png)
+
+[![GUI](img/SOI_coupler.png)](img/SOI_coupler.png)

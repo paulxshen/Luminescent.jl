@@ -1,4 +1,4 @@
-# Acoplador direccional (TFLN anisótropo): barrido de parámetros
+# Directional coupler (anisotropic TFLN): parameter sweep
 
 
 
@@ -97,7 +97,7 @@ def setup(path, wavelength, wavelengths,  length,gap, dx, dy, w_wg):
     for p in dut.ports:
         c.add_port(p.name, port=p)
     c.flatten()
-    c.plot(return_fig=True).savefig("layout.png")
+    c.plot(return_fig=True).savefig(os.path.join(here, "layout.png"))
 
     bbox = c.bbox_np().tolist()
     bbox[0].append(zmin)
@@ -171,4 +171,6 @@ for length in lengths:
     S31abs2_length.append(S31abs2)
     S41abs2_length.append(S41abs2)
 ```
+
+![layout](img/TFLN_coupler_layout.png)
 
