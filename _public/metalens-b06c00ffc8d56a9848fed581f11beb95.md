@@ -1,0 +1,243 @@
+# Metasurface: metalens unit cell library
+
+Silicon nanopillars on glass at 1550 nm. Sweep pillar radius to build a transmission phase library, then lay out a hyperbolic metalens from it
+
+```python
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+import gdsfactory as gf
+from gdsfactory.technology import LogicalLayer, LayerLevel, LayerStack
+import luminescent as lumi
+lumi.app()
+here = os.path.dirname(os.path.abspath(__file__))
+
+# simulation folder
+root = os.path.join(here, "runs")
+
+# dims [um]
+# length units are arbitrary so long as they're consistent
+P = 0.7  # periodicity, subwavelength in substrate (P < wavelength / n_sub) so no diffraction
+h = 1.0  # pillar height
+radii = np.linspace(0.08, 0.3, 4)  # pillar radii to sweep
+
+# wavelengths [um]
+# spectrum computed from single FDTD run. more wavelengths slightly increases runtime
+wavelength = 1.55
+bandwidth = 0.1
+nwls = 11
+wavelengths = np.linspace(wavelength - bandwidth / 2, wavelength + bandwidth / 2, nwls)
+
+# quarter circle polygon
+def quarter_circle(r, n=32):
+    t = np.linspace(0, np.pi / 2, n)
+    return [(0, 0)] + list(zip(r * np.cos(t), r * np.sin(t)))
+
+def setup(path, wavelength, wavelengths, P, h, r, plot=False):
+    # simulation parameters
+    nres = 8
+    shutoff = 3e-3
+    tmax = 1000  # max time [periods]
+    PML_decay = 0.001
+    shot_every = 10  # movie [periods]
+    views = [lumi.view("Ex", y=0), lumi.view("Ex", z=h / 2)]
+
+    # simulate 1/4 unit cell. x- y- are symmetry planes, x+ y+ are periodic cell edges (also symmetry planes)
+    # Ex polarized normal incidence: PEC on x walls, PMC on y walls
+    boundaries = ["PEC", "PMC", "PML"]
+
+    # margins
+    # gap keeps evanescent near field away from monitors
+    gap = 1.0
+    source_offset = 0.5
+
+    # vertical dims. illuminated from substrate side, transmits into air
+    z_o1 = -gap
+    z_o2 = h + gap
+    zmin = z_o1 - source_offset
+    zmax = z_o2
+
+    # materials
+    background = "air"
+    materials = lumi.MATERIALS
+    dx=.02
+    materials["Si"]['dx']=dx
+
+    # layers
+    PILLAR = 1, 0
+    SUB = 2, 0
+    layer_stack = LayerStack(
+        layers={
+            "pillar": LayerLevel(
+                layer=LogicalLayer(layer=PILLAR),
+                thickness=h,
+                zmin=0,
+                material="Si",
+                mesh_order=1,
+            ),
+            "sub": LayerLevel(
+                layer=LogicalLayer(layer=SUB),
+                thickness=-zmin,
+                zmin=zmin,
+                material="SiO2",
+                mesh_order=2,
+            ),
+        }
+    )
+
+    # make component in gdsfactory
+    # 1/4 of pillar unit cell
+    c = gf.Component()
+    c.add_polygon(quarter_circle(r), layer=PILLAR)
+    c.add_polygon([(0, 0), (0, P / 2), (P / 2, P / 2), (P / 2, 0)], layer=SUB)
+    if plot:
+        c.plot(return_fig=True).savefig(os.path.join(here, "layout.png"))
+
+    bbox = c.bbox_np().tolist()
+    bbox[0].append(zmin)
+    bbox[1].append(zmax)
+
+    # sources, monitors
+    # normally incident plane wave over 1/4 cell: Ex, Hy uniform. Hy = n Ex in medium of index n
+    nx = ny = round(P / 2 / dx)
+    a = np.ones((nx, ny))
+    frames = [
+        lumi.plane_frame(
+            "sub_wave",
+            start=[0, 0],
+            stop=[P / 2, P / 2],
+            boundaries=["PEC", "PMC"],
+            modes=[[{"Ex": a, "Hy": materials["SiO2"]["n"] * a}]],
+        ),
+        lumi.plane_frame(
+            "air_wave",
+            start=[0, 0],
+            stop=[P / 2, P / 2],
+            boundaries=["PEC", "PMC"],
+            modes=[[{"Ex": a, "Hy": a}]],
+        ),
+    ]
+
+    # basis rows: local x, local y, outward normal
+    basis_top = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    basis_bottom = [[-1, 0, 0], [0, 1, 0], [0, 0, -1]]
+
+    sources = [
+        lumi.source(
+            "o1", [0, 0, z_o1 - source_offset], basis_bottom,
+            frame="sub_wave",
+            mirror="x",
+            wl=wavelength,
+            bandwidth=max(max(wavelengths) - min(wavelengths), wavelength / 8),
+        )
+    ]
+
+    monitors = [
+        lumi.monitor("o1", [0, 0, z_o1], basis_bottom, frame="sub_wave", mirror="x"),
+        lumi.monitor("o2", [0, 0, z_o2], basis_top, frame="air_wave"),
+    ]
+
+    # writes .obj mesh files from gdsfactory component
+    c.flatten()
+    lumi.mesh(path, c, layer_stack, materials, zmin, zmax)
+
+    # writes setup file
+    lumi.setup(
+        path=path,
+        wl=wavelength,
+        wls=wavelengths,
+        materials=materials,
+        background=background,
+        boundaries=boundaries,
+        bbox=bbox,
+        #
+        frames=frames,
+        sources=sources,
+        monitors=monitors,
+        #
+        nres=nres,
+        PML_decay=PML_decay,
+        #
+        views=views,
+        shot_every=shot_every,
+        tmax=tmax,
+        shutoff=shutoff,
+    )
+
+paths = [os.path.join(root, f"r{r:.3f}") for r in radii]
+for i, (path, r) in enumerate(zip(paths, radii)):
+    setup(path, wavelength, wavelengths, P, h, r, plot=i == len(radii) - 1)
+```
+
+![layout](img/metalens_layout.png)
+
+```python
+for path in paths:
+    lumi.solve(path)
+```
+
+```python
+# S21 at center wavelength for each radius
+mid = nwls // 2
+S21 = []
+for path in paths:
+    sol = lumi.load(path)
+    o1 = sol["monitors"]["o1"]
+    o2 = sol["monitors"]["o2"]
+    # + denotes outgoing mode (wrt port monitor outward normal), - incoming
+    S21.append((o2["modal"][0]["+"] / o1["modal"][0]["-"])[mid])
+S21 = np.array(S21)
+
+# transmission relative to smallest pillar, oriented so larger pillars mean more phase delay
+t = S21 / S21[0]
+if np.unwrap(np.angle(t))[-1] < 0:
+    t = np.conj(t)
+delay = np.unwrap(np.angle(t))
+print(f"phase coverage: {delay.max() - delay.min():.2f} rad ({(delay.max() - delay.min()) / (2 * np.pi):.2f} x 2pi)")
+
+# pillar library: phase delay and transmission vs radius
+fig, ax = plt.subplots()
+ax.plot(radii, delay, "o-")
+ax.set_xlabel("pillar radius [um]")
+ax.set_ylabel("phase delay [rad]")
+ax2 = ax.twinx()
+ax2.plot(radii, np.abs(S21) ** 2, "s--", color="C1")
+ax2.set_ylabel("|S21|²", color="C1")
+fig.savefig(os.path.join(here, "library.png"), bbox_inches="tight")
+```
+
+```text
+phase coverage: 1.90 rad (0.30 x 2pi)
+```
+
+![library](img/metalens_library.png)
+
+```python
+D = 20  # lens diameter [um]
+f = 20  # focal length [um]
+
+# library transmission normalized to max amplitude
+lib = t * np.abs(S21) / np.abs(S21).max()
+
+PILLAR = 1, 0
+lens = gf.Component()
+xs = np.arange(-D / 2, D / 2 + P / 2, P)
+for x in xs:
+    for y in xs:
+        rho = np.hypot(x, y)
+        if rho > D / 2:
+            continue
+        # center delayed most: edge rays travel farther to focus
+        target = np.exp(-1j * 2 * np.pi / wavelength * (np.hypot(rho, f) - f))
+        r = radii[np.argmin(np.abs(lib - target))]
+        tt = np.linspace(0, 2 * np.pi, 64, endpoint=False)
+        lens.add_polygon(list(zip(x + r * np.cos(tt), y + r * np.sin(tt))), layer=PILLAR)
+
+lens.plot(return_fig=True).savefig(os.path.join(here, "lens.png"))
+lens.write_gds(os.path.join(root, "metalens.gds"))
+```
+
+![lens](img/metalens_lens.png)
+
+[![GUI](img/metalens.png)](img/metalens.png)

@@ -20,13 +20,13 @@
     <loc>http://pre.render/soi-coupler</loc>
   </url>
   <url>
-    <loc>http://pre.render/tfln-coupler</loc>
+    <loc>http://pre.render/gc</loc>
   </url>
   <url>
     <loc>http://pre.render/ring</loc>
   </url>
   <url>
-    <loc>http://pre.render/gc</loc>
+    <loc>http://pre.render/tfln-coupler</loc>
   </url>
   <url>
     <loc>http://pre.render/fss</loc>
@@ -36,6 +36,9 @@
   </url>
   <url>
     <loc>http://pre.render/stub-filter</loc>
+  </url>
+  <url>
+    <loc>http://pre.render/gc-invd</loc>
   </url>
   <url>
     <loc>http://pre.render/benchmark</loc>
