@@ -1,4 +1,4 @@
-# Acoplador direccional (TFLN anisótropo): barrido de parámetros
+# Directional coupler (anisotropic TFLN): parameter sweep
 
 
 
@@ -179,7 +179,7 @@ length: 9 um, S31 power 1.55um: 0.4757669442932983, S41 power 1.55um: 0.53608739
 length: 10 um, S31 power 1.55um: 0.523260367501176, S41 power 1.55um: 0.49059979009653654
 ```
 
-![diseño](img/TFLN_coupler_layout.png)
+![layout](img/TFLN_coupler_layout.png)
 
 ```python
 plt.figure()
@@ -191,5 +191,6 @@ plt.legend()
 plt.savefig(os.path.join(here, "sweep.png"))
 ```
 
-![barrido](img/TFLN_coupler_sweep.png)
+![sweep](img/TFLN_coupler_sweep.png)
 
+[![GUI](img/TFLN_coupler.png)](img/TFLN_coupler.png)
